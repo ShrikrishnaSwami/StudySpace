@@ -3,7 +3,9 @@
 import {
   Bell,
   BookOpen,
+  Brain,
   CalendarDays,
+  CheckSquare,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
@@ -12,14 +14,12 @@ import {
   Home,
   LogOut,
   Menu,
-  MessageCircle,
   Settings,
   Sparkles,
+  Upload,
+  User,
   X,
-  Brain,
-  Shield,
 } from "lucide-react";
-
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -28,27 +28,23 @@ import {
   type ReactNode,
 } from "react";
 
+import NotificationCenter from "@/components/NotificationCenter";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
-import NotificationCenter from "@/components/NotificationCenter";
 
 type AppShellProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   title?: string;
   description?: string;
 };
 
-type NavItem = {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{
-    size?: number;
-    strokeWidth?: number;
-    className?: string;
-  }>;
+type UserInfo = {
+  id: string;
+  email: string;
+  name: string;
 };
 
-const mainNavigation: NavItem[] = [
+const mainNavigation = [
   {
     label: "Dashboard",
     href: "/dashboard",
@@ -57,7 +53,7 @@ const mainNavigation: NavItem[] = [
   {
     label: "AI Tutor",
     href: "/ai-tutor",
-    icon: Sparkles,
+    icon: Brain,
   },
   {
     label: "Courses",
@@ -72,7 +68,7 @@ const mainNavigation: NavItem[] = [
   {
     label: "Quizzes",
     href: "/quizzes",
-    icon: GraduationCap,
+    icon: CheckSquare,
   },
   {
     label: "Calendar",
@@ -82,7 +78,7 @@ const mainNavigation: NavItem[] = [
   {
     label: "Homework",
     href: "/homework-uploader",
-    icon: FileText,
+    icon: Upload,
   },
   {
     label: "Notifications",
@@ -91,7 +87,7 @@ const mainNavigation: NavItem[] = [
   },
 ];
 
-const secondaryNavigation: NavItem[] = [
+const bottomNavigation = [
   {
     label: "Settings",
     href: "/settings",
@@ -99,16 +95,10 @@ const secondaryNavigation: NavItem[] = [
   },
 ];
 
-const adminNavigation: NavItem[] = [
-  {
-    label: "Admin",
-    href: "/admin",
-    icon: Shield,
-  },
-];
-
 export default function AppShell({
   children,
+  title,
+  description,
 }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -119,85 +109,102 @@ export default function AppShell({
   const [collapsed, setCollapsed] =
     useState(false);
 
-  const [userName, setUserName] =
-    useState("Student");
-
-  const [userEmail, setUserEmail] =
-    useState("");
+  const [user, setUser] =
+    useState<UserInfo | null>(null);
 
   const [isAdmin, setIsAdmin] =
     useState(false);
 
-  const [authLoading, setAuthLoading] =
+  const [loading, setLoading] =
     useState(true);
 
   useEffect(() => {
     let mounted = true;
 
     async function loadUser() {
-      try {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-        if (error || !user) {
-          router.replace("/login");
-          return;
-        }
+      if (!mounted) return;
 
-        if (!mounted) return;
-
-        const metadata = user.user_metadata || {};
-
-        const fullName =
-          typeof metadata.full_name === "string"
-            ? metadata.full_name.trim()
-            : "";
-
-        const email = user.email || "";
-
-        setUserName(
-          fullName ||
-            email.split("@")[0] ||
-            "Student"
-        );
-
-        setUserEmail(email);
-
-        setIsAdmin(isAdminEmail(email));
-      } catch (error) {
-        console.error(
-          "Failed to load authenticated user:",
-          error
-        );
-
+      if (!user) {
         router.replace("/login");
-      } finally {
-        if (mounted) {
-          setAuthLoading(false);
-        }
+        return;
       }
+
+      const email = user.email || "";
+
+      const metadata =
+        user.user_metadata as {
+          full_name?: string;
+          name?: string;
+        };
+
+      const name =
+        metadata.full_name ||
+        metadata.name ||
+        email.split("@")[0] ||
+        "Student";
+
+      setUser({
+        id: user.id,
+        email,
+        name,
+      });
+
+      setIsAdmin(isAdminEmail(email));
+      setLoading(false);
     }
 
     loadUser();
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!session?.user) {
+          router.replace("/login");
+          return;
+        }
+
+        const authUser = session.user;
+        const email = authUser.email || "";
+
+        const metadata =
+          authUser.user_metadata as {
+            full_name?: string;
+            name?: string;
+          };
+
+        const name =
+          metadata.full_name ||
+          metadata.name ||
+          email.split("@")[0] ||
+          "Student";
+
+        setUser({
+          id: authUser.id,
+          email,
+          name,
+        });
+
+        setIsAdmin(isAdminEmail(email));
+        setLoading(false);
+      }
+    );
+
     return () => {
       mounted = false;
+      subscription.unsubscribe();
     };
   }, [router]);
 
+  const sidebarIsOpen = sidebarOpen && !pathname;
+
   async function handleLogout() {
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error(
-        "Logout failed:",
-        error
-      );
-    } finally {
-      router.replace("/login");
-    }
+    await supabase.auth.signOut();
+    router.replace("/login");
   }
 
   function isActive(href: string) {
@@ -211,26 +218,20 @@ export default function AppShell({
     );
   }
 
-  function closeMobileSidebar() {
-    setSidebarOpen(false);
-  }
-
-  if (authLoading) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#080611]">
-        <div className="flex flex-col items-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/10">
-            <Brain
-              size={22}
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-violet-400/20 bg-violet-500/10">
+            <GraduationCap
+              size={24}
               className="text-violet-400"
             />
           </div>
 
-          <div className="mt-4 h-5 w-5 animate-spin rounded-full border-2 border-white/10 border-t-violet-400" />
-
-          <p className="mt-3 text-xs text-white/35">
-            Loading StudySpace...
-          </p>
+          <div className="h-1.5 w-24 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full w-1/2 animate-pulse rounded-full bg-violet-500" />
+          </div>
         </div>
       </div>
     );
@@ -243,66 +244,42 @@ export default function AppShell({
         <button
           type="button"
           aria-label="Close sidebar"
-          onClick={closeMobileSidebar}
+          onClick={() => setSidebarOpen(false)}
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`
-          fixed inset-y-0 left-0 z-50
-          flex flex-col
-          border-r border-white/[0.07]
-          bg-[#0b0713]/95
-          backdrop-blur-2xl
-          transition-all duration-300
-          lg:translate-x-0
-          ${
-            sidebarOpen
-              ? "translate-x-0"
-              : "-translate-x-full"
-          }
-          ${
-            collapsed
-              ? "w-[76px]"
-              : "w-[260px]"
-          }
-        `}
+        className={[
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/[0.07] bg-[#0b0813]/95 backdrop-blur-xl transition-all duration-300",
+          collapsed ? "w-[78px]" : "w-[260px]",
+          sidebarOpen
+            ? "translate-x-0"
+            : "-translate-x-full lg:translate-x-0",
+        ].join(" ")}
       >
         {/* Logo */}
-        <div
-          className={`
-            flex h-[72px] shrink-0 items-center
-            border-b border-white/[0.07]
-            ${
-              collapsed
-                ? "justify-center px-3"
-                : "justify-between px-5"
-            }
-          `}
-        >
+        <div className="flex h-[76px] items-center border-b border-white/[0.07] px-4">
           <Link
             href="/dashboard"
-            onClick={closeMobileSidebar}
-            className="flex items-center gap-3"
+            className="flex min-w-0 items-center gap-3"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg shadow-violet-500/20">
-              <Brain
-                size={19}
-                strokeWidth={2.4}
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-700 shadow-lg shadow-violet-500/20">
+              <GraduationCap
+                size={22}
                 className="text-white"
               />
             </div>
 
             {!collapsed && (
-              <div className="overflow-hidden">
-                <div className="whitespace-nowrap text-[15px] font-bold tracking-tight text-white">
+              <div className="min-w-0">
+                <div className="truncate text-[17px] font-bold tracking-tight">
                   StudySpace
                 </div>
 
-                <div className="whitespace-nowrap text-[9px] font-medium uppercase tracking-[0.18em] text-violet-400/70">
-                  Your academic OS
+                <div className="truncate text-[10px] uppercase tracking-[0.18em] text-white/30">
+                  Student workspace
                 </div>
               </div>
             )}
@@ -310,90 +287,46 @@ export default function AppShell({
 
           <button
             type="button"
-            onClick={() =>
-              setCollapsed((current) => !current)
-            }
-            className="hidden h-7 w-7 items-center justify-center rounded-lg text-white/25 transition hover:bg-white/5 hover:text-white/70 lg:flex"
-            aria-label={
-              collapsed
-                ? "Expand sidebar"
-                : "Collapse sidebar"
-            }
+            onClick={() => setSidebarOpen(false)}
+            className="ml-auto rounded-lg p-2 text-white/40 hover:bg-white/5 hover:text-white lg:hidden"
           >
-            {collapsed ? (
-              <ChevronRight size={15} />
-            ) : (
-              <ChevronLeft size={15} />
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={closeMobileSidebar}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/35 transition hover:bg-white/5 hover:text-white lg:hidden"
-            aria-label="Close sidebar"
-          >
-            <X size={17} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto px-3 py-5">
-          <div className="space-y-1">
-            {!collapsed && (
-              <div className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/25">
-                Workspace
-              </div>
-            )}
+          {!collapsed && (
+            <div className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/25">
+              Workspace
+            </div>
+          )}
 
+          <nav className="space-y-1">
             {mainNavigation.map((item) => {
-              const active = isActive(
-                item.href
-              );
-
               const Icon = item.icon;
+              const active = isActive(item.href);
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={closeMobileSidebar}
-                  title={
-                    collapsed
-                      ? item.label
-                      : undefined
-                  }
-                  className={`
-                    group relative flex h-11 items-center
-                    rounded-xl
-                    text-sm font-medium
-                    transition-all duration-150
-                    ${
-                      collapsed
-                        ? "justify-center px-2"
-                        : "gap-3 px-3"
-                    }
-                    ${
-                      active
-                        ? "bg-violet-500/12 text-violet-200"
-                        : "text-white/45 hover:bg-white/[0.04] hover:text-white/85"
-                    }
-                  `}
+                  title={collapsed ? item.label : undefined}
+                  className={[
+                    "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all",
+                    active
+                      ? "bg-violet-500/15 text-violet-300 shadow-[inset_2px_0_0_#8b5cf6]"
+                      : "text-white/50 hover:bg-white/[0.04] hover:text-white",
+                  ].join(" ")}
                 >
-                  {active && (
-                    <span className="absolute left-0 h-5 w-0.5 rounded-full bg-violet-400" />
-                  )}
-
                   <Icon
                     size={18}
-                    strokeWidth={
-                      active ? 2.2 : 1.8
-                    }
-                    className={
+                    className={[
+                      "shrink-0 transition-colors",
                       active
                         ? "text-violet-400"
-                        : "text-white/35 transition group-hover:text-white/65"
-                    }
+                        : "text-white/35 group-hover:text-white/70",
+                    ].join(" ")}
                   />
 
                   {!collapsed && (
@@ -402,15 +335,13 @@ export default function AppShell({
                     </span>
                   )}
 
-                  {collapsed && (
-                    <span className="pointer-events-none absolute left-[calc(100%+10px)] z-[100] hidden whitespace-nowrap rounded-lg border border-white/10 bg-[#171021] px-2.5 py-1.5 text-xs text-white shadow-xl group-hover:block">
-                      {item.label}
-                    </span>
+                  {!collapsed && active && (
+                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-violet-400" />
                   )}
                 </Link>
               );
             })}
-          </div>
+          </nav>
 
           {/* Admin */}
           {isAdmin && (
@@ -421,71 +352,29 @@ export default function AppShell({
                 </div>
               )}
 
-              {adminNavigation.map((item) => {
-                const active = isActive(
-                  item.href
-                );
+              <Link
+                href="/admin"
+                title={collapsed ? "Admin" : undefined}
+                className={[
+                  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all",
+                  isActive("/admin")
+                    ? "bg-violet-500/15 text-violet-300 shadow-[inset_2px_0_0_#8b5cf6]"
+                    : "text-white/50 hover:bg-white/[0.04] hover:text-white",
+                ].join(" ")}
+              >
+                <Sparkles
+                  size={18}
+                  className="shrink-0 text-violet-400"
+                />
 
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeMobileSidebar}
-                    title={
-                      collapsed
-                        ? item.label
-                        : undefined
-                    }
-                    className={`
-                      group relative flex h-11 items-center rounded-xl text-sm font-medium transition-all
-                      ${
-                        collapsed
-                          ? "justify-center px-2"
-                          : "gap-3 px-3"
-                      }
-                      ${
-                        active
-                          ? "bg-violet-500/12 text-violet-200"
-                          : "text-white/45 hover:bg-white/[0.04] hover:text-white/85"
-                      }
-                    `}
-                  >
-                    {active && (
-                      <span className="absolute left-0 h-5 w-0.5 rounded-full bg-violet-400" />
-                    )}
-
-                    <Icon
-                      size={18}
-                      strokeWidth={
-                        active ? 2.2 : 1.8
-                      }
-                      className={
-                        active
-                          ? "text-violet-400"
-                          : "text-white/35"
-                      }
-                    />
-
-                    {!collapsed && (
-                      <span>
-                        {item.label}
-                      </span>
-                    )}
-
-                    {collapsed && (
-                      <span className="pointer-events-none absolute left-[calc(100%+10px)] z-[100] hidden whitespace-nowrap rounded-lg border border-white/10 bg-[#171021] px-2.5 py-1.5 text-xs text-white shadow-xl group-hover:block">
-                        {item.label}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
+                {!collapsed && (
+                  <span>Admin</span>
+                )}
+              </Link>
             </div>
           )}
 
-          {/* Settings */}
+          {/* Bottom navigation */}
           <div className="mt-7">
             {!collapsed && (
               <div className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/25">
@@ -493,225 +382,165 @@ export default function AppShell({
               </div>
             )}
 
-            {secondaryNavigation.map(
-              (item) => {
-                const active = isActive(
-                  item.href
-                );
-
+            <nav className="space-y-1">
+              {bottomNavigation.map((item) => {
                 const Icon = item.icon;
+                const active = isActive(item.href);
 
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    onClick={closeMobileSidebar}
-                    title={
-                      collapsed
-                        ? item.label
-                        : undefined
-                    }
-                    className={`
-                      group relative flex h-11 items-center rounded-xl text-sm font-medium transition-all
-                      ${
-                        collapsed
-                          ? "justify-center px-2"
-                          : "gap-3 px-3"
-                      }
-                      ${
-                        active
-                          ? "bg-violet-500/12 text-violet-200"
-                          : "text-white/45 hover:bg-white/[0.04] hover:text-white/85"
-                      }
-                    `}
+                    title={collapsed ? item.label : undefined}
+                    className={[
+                      "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all",
+                      active
+                        ? "bg-violet-500/15 text-violet-300 shadow-[inset_2px_0_0_#8b5cf6]"
+                        : "text-white/50 hover:bg-white/[0.04] hover:text-white",
+                    ].join(" ")}
                   >
-                    {active && (
-                      <span className="absolute left-0 h-5 w-0.5 rounded-full bg-violet-400" />
-                    )}
-
                     <Icon
                       size={18}
-                      strokeWidth={
-                        active ? 2.2 : 1.8
-                      }
-                      className={
-                        active
-                          ? "text-violet-400"
-                          : "text-white/35"
-                      }
+                      className="shrink-0"
                     />
 
                     {!collapsed && (
-                      <span>
-                        {item.label}
-                      </span>
-                    )}
-
-                    {collapsed && (
-                      <span className="pointer-events-none absolute left-[calc(100%+10px)] z-[100] hidden whitespace-nowrap rounded-lg border border-white/10 bg-[#171021] px-2.5 py-1.5 text-xs text-white shadow-xl group-hover:block">
-                        {item.label}
-                      </span>
+                      <span>{item.label}</span>
                     )}
                   </Link>
                 );
-              }
-            )}
+              })}
+            </nav>
           </div>
         </div>
 
-        {/* User section */}
-        <div className="shrink-0 border-t border-white/[0.07] p-3">
+        {/* User card */}
+        <div className="border-t border-white/[0.07] p-3">
           <div
-            className={`
-              flex items-center rounded-xl
-              bg-white/[0.025]
-              ${
-                collapsed
-                  ? "justify-center p-2"
-                  : "gap-3 px-3 py-2.5"
-              }
-            `}
+            className={[
+              "flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.025] p-2.5",
+              collapsed
+                ? "justify-center"
+                : "",
+            ].join(" ")}
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/30 to-fuchsia-500/20 text-xs font-bold text-violet-200 ring-1 ring-white/10">
-              {userName
-                .charAt(0)
-                .toUpperCase()}
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-purple-700 text-xs font-bold">
+              {user?.name
+                ?.charAt(0)
+                .toUpperCase() || "S"}
             </div>
 
             {!collapsed && (
-              <>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-white/80">
-                    {userName}
-                  </p>
-
-                  <p className="mt-0.5 truncate text-[10px] text-white/30">
-                    {userEmail}
-                  </p>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium text-white/85">
+                  {user?.name}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/25 transition hover:bg-red-500/10 hover:text-red-400"
-                  aria-label="Log out"
-                  title="Log out"
-                >
-                  <LogOut size={15} />
-                </button>
-              </>
+                <div className="truncate text-[11px] text-white/30">
+                  {user?.email}
+                </div>
+              </div>
             )}
 
-            {collapsed && (
+            {!collapsed && (
               <button
                 type="button"
                 onClick={handleLogout}
-                className="hidden"
+                title="Sign out"
+                className="rounded-lg p-2 text-white/30 transition hover:bg-red-500/10 hover:text-red-400"
               >
-                <LogOut size={15} />
+                <LogOut size={16} />
               </button>
             )}
           </div>
-
-          {collapsed && (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="mt-2 flex h-9 w-full items-center justify-center rounded-xl text-white/25 transition hover:bg-red-500/10 hover:text-red-400"
-              aria-label="Log out"
-              title="Log out"
-            >
-              <LogOut size={15} />
-            </button>
-          )}
         </div>
+
+        {/* Collapse button */}
+        <button
+          type="button"
+          onClick={() => setCollapsed((value) => !value)}
+          className="absolute -right-3 top-[88px] hidden h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-[#151021] text-white/50 shadow-lg hover:text-white lg:flex"
+          title={
+            collapsed
+              ? "Expand sidebar"
+              : "Collapse sidebar"
+          }
+        >
+          {collapsed ? (
+            <ChevronRight size={14} />
+          ) : (
+            <ChevronLeft size={14} />
+          )}
+        </button>
       </aside>
 
-      {/* Main application */}
+      {/* Main content */}
       <div
-        className={`
-          min-h-screen transition-[padding] duration-300
-          ${
-            collapsed
-              ? "lg:pl-[76px]"
-              : "lg:pl-[260px]"
-          }
-        `}
+        className={[
+          "min-h-screen transition-all duration-300",
+          collapsed
+            ? "lg:pl-[78px]"
+            : "lg:pl-[260px]",
+        ].join(" ")}
       >
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 h-[72px] border-b border-white/[0.07] bg-[#080611]/80 backdrop-blur-xl">
-          <div className="flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() =>
-                  setSidebarOpen(true)
-                }
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-white/55 transition hover:bg-white/[0.07] hover:text-white lg:hidden"
-                aria-label="Open navigation"
-              >
-                <Menu size={19} />
-              </button>
+        {/* Topbar */}
+        <header className="sticky top-0 z-30 flex h-[76px] items-center border-b border-white/[0.07] bg-[#080611]/80 px-4 backdrop-blur-xl sm:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                setSidebarOpen(true)
+              }
+              className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-2.5 text-white/60 hover:text-white lg:hidden"
+              aria-label="Open navigation"
+            >
+              <Menu size={19} />
+            </button>
 
-              <div className="hidden sm:block">
-                <p className="text-xs text-white/25">
+            <div className="min-w-0">
+              {title ? (
+                <h1 className="truncate text-lg font-semibold tracking-tight text-white sm:text-xl">
+                  {title}
+                </h1>
+              ) : (
+                <h1 className="truncate text-lg font-semibold tracking-tight text-white sm:text-xl">
                   StudySpace
+                </h1>
+              )}
+
+              {description && (
+                <p className="mt-0.5 hidden truncate text-xs text-white/35 sm:block">
+                  {description}
                 </p>
-
-                <p className="mt-0.5 text-sm font-medium text-white/70">
-                  {pathname === "/dashboard"
-                    ? "Dashboard"
-                    : pathname
-                        .split("/")
-                        .filter(Boolean)
-                        .pop()
-                        ?.replace(
-                          /-/g,
-                          " "
-                        )
-                        .replace(
-                          /\b\w/g,
-                          (letter) =>
-                            letter.toUpperCase()
-                        ) ||
-                      "Workspace"}
-                </p>
-              </div>
+              )}
             </div>
+          </div>
 
-            <div className="flex items-center gap-2">
-              <NotificationCenter />
+          <div className="flex items-center gap-2">
+            <NotificationCenter />
 
-              <div className="mx-1 hidden h-7 w-px bg-white/[0.07] sm:block" />
+            <Link
+              href="/settings"
+              className="hidden h-9 w-9 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-white/45 transition hover:bg-white/[0.05] hover:text-white sm:flex"
+              title="Settings"
+            >
+              <Settings size={17} />
+            </Link>
 
-              <Link
-                href="/settings"
-                className="flex items-center gap-2 rounded-xl border border-transparent px-2 py-1.5 transition hover:border-white/10 hover:bg-white/[0.04]"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500/30 to-fuchsia-500/20 text-[11px] font-bold text-violet-200">
-                  {userName
-                    .charAt(0)
-                    .toUpperCase()}
-                </div>
-
-                <div className="hidden max-w-[150px] text-left sm:block">
-                  <p className="truncate text-xs font-semibold text-white/75">
-                    {userName}
-                  </p>
-
-                  <p className="truncate text-[10px] text-white/25">
-                    {isAdmin
-                      ? "Administrator"
-                      : "Student"}
-                  </p>
-                </div>
-              </Link>
-            </div>
+            <Link
+              href="/settings"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-purple-700 text-xs font-bold shadow-lg shadow-violet-500/10"
+              title={user?.name || "Profile"}
+            >
+              {user?.name
+                ?.charAt(0)
+                .toUpperCase() || "S"}
+            </Link>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="min-h-[calc(100vh-72px)]">
+        <main className="min-h-[calc(100vh-76px)]">
           {children}
         </main>
       </div>
