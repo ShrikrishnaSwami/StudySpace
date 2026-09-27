@@ -49,3 +49,28 @@ button {
 ::-webkit-scrollbar-thumb:hover {
   background: #6d3fc1;
 }
+
+.input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.7rem 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+  outline: none;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.input::placeholder {
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.input:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.input option {
+  background: #120d20;
+  color: white;
+}
