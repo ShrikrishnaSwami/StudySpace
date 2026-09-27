@@ -190,57 +190,59 @@ export async function uploadHomeworkFile(
     .replace(/[^a-zA-Z0-9._-]/g, "_")
     .replace(/_+/g, "_");
 
-  const path = `${user.id}/${homeworkId}/${safeName}`;
+  const path =
+    `${user.id}/${homeworkId}/${safeName}`;
 
-  console.log("Uploading homework file:", {
-    bucket: "homework",
-    path,
-    fileName: file.name,
-    fileType: file.type,
-    fileSize: file.size,
-  });
+  console.log("1. Uploading file:", path);
 
-  const { data, error } = await supabase.storage
-    .from("homework")
-    .upload(path, file, {
-      contentType:
-        file.type || "application/octet-stream",
-      upsert: false,
-    });
+  const { error: uploadError } =
+    await supabase.storage
+      .from("homework")
+      .upload(path, file, {
+        contentType:
+          file.type ||
+          "application/octet-stream",
+        upsert: false,
+      });
 
-  if (error) {
+  if (uploadError) {
     console.error(
-      "Supabase Storage upload failed:",
-      error
+      "Storage upload failed:",
+      uploadError
     );
 
     throw new Error(
-      `Storage upload failed: ${error.message}`
+      `Storage upload failed: ${uploadError.message}`
     );
   }
 
   console.log(
-    "Homework file uploaded successfully:",
-    data
+    "2. Storage upload successful"
   );
 
+  /*
+   * Update the homework database row.
+   */
   const { data: updatedHomework, error: updateError } =
     await supabase
       .from("homework")
       .update({
         file_path: path,
         file_name: file.name,
-        file_type: file.type || null,
+        file_type:
+          file.type || null,
         file_size: file.size,
-        updated_at: new Date().toISOString(),
+        updated_at:
+          new Date().toISOString(),
       })
       .eq("id", homeworkId)
-      .select()
+      .eq("user_id", user.id)
+      .select("*")
       .single();
 
   if (updateError) {
     console.error(
-      "Homework database update failed:",
+      "Database update failed:",
       updateError
     );
 
@@ -249,17 +251,41 @@ export async function uploadHomeworkFile(
       .remove([path]);
 
     throw new Error(
-      `Homework record update failed: ${updateError.message}`
+      `Could not attach file to homework: ${updateError.message}`
     );
   }
 
   console.log(
-    "Homework database record updated:",
+    "3. Database updated:",
     updatedHomework
+  );
+
+  /*
+   * Verify the actual database value.
+   */
+  if (!updatedHomework.file_path) {
+    console.error(
+      "CRITICAL: file_path is still empty:",
+      updatedHomework
+    );
+
+    await supabase.storage
+      .from("homework")
+      .remove([path]);
+
+    throw new Error(
+      "The file uploaded, but StudySpace could not attach it to the homework record."
+    );
+  }
+
+  console.log(
+    "4. File successfully attached:",
+    updatedHomework.file_path
   );
 
   return updatedHomework as Homework;
 }
+
 export async function getHomeworkDownloadUrl(
   filePath: string
 ) {

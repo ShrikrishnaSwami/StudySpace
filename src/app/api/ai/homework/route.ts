@@ -279,74 +279,85 @@ Rules:
      * --------------------------------------------------
      */
 
-    const response =
-      await ai.models.generateContent({
-        model:
-          process.env.GEMINI_MODEL ||
-          "gemini-3.8-flash",
+    let response;
 
-        contents: [
+const primaryModel =
+  process.env.GEMINI_MODEL ||
+  "gemini-3.8-flash";
+
+const fallbackModel =
+  process.env.GEMINI_FALLBACK_MODEL ||
+  "gemini-2.5-flash";
+
+async function generateHomeworkAnalysis(
+  model: string
+) {
+  return ai.models.generateContent({
+    model,
+
+    contents: [
+      {
+        role: "user",
+        parts: [
           {
-            role: "user",
-            parts: [
-              {
-                inlineData: {
-                  mimeType,
-                  data: base64,
-                },
-              },
-              {
-                text: prompt,
-              },
-            ],
+            inlineData: {
+              mimeType,
+              data: base64,
+            },
+          },
+          {
+            text: prompt,
           },
         ],
+      },
+    ],
 
-        config: {
-          temperature: 0.3,
-          maxOutputTokens: 4096,
-        },
-      });
+    config: {
+      temperature: 0.3,
+      maxOutputTokens: 4096,
+    },
+  });
+}
 
-    const raw =
-      response.text?.trim();
+try {
+  console.log(
+    `Trying Gemini homework model: ${primaryModel}`
+  );
 
-    if (!raw) {
-      throw new Error(
-        "Gemini returned an empty response."
+  response =
+    await generateHomeworkAnalysis(
+      primaryModel
+    );
+} catch (primaryError) {
+  console.error(
+    `Primary Gemini model failed:`,
+    primaryError
+  );
+
+  console.log(
+    `Trying fallback Gemini model: ${fallbackModel}`
+  );
+
+  try {
+    response =
+      await generateHomeworkAnalysis(
+        fallbackModel
       );
-    }
-
-    console.log(
-      "Gemini homework response received."
+  } catch (fallbackError) {
+    console.error(
+      `Fallback Gemini model failed:`,
+      fallbackError
     );
 
-    /*
-     * --------------------------------------------------
-     * PARSE RESPONSE
-     * --------------------------------------------------
-     */
+    throw new Error(
+      "Gemini is temporarily unavailable. Please wait a moment and try analyzing the homework again."
+    );
+  }
+}
 
-    let result;
-
-    try {
-      result = JSON.parse(
-        cleanJson(raw)
-      );
-    } catch {
-      console.error(
-        "Gemini returned invalid JSON:",
-        raw
-      );
-
-      return NextResponse.json(
-        {
-          error:
-            "Gemini returned an invalid analysis. Please try again.",
-        },
-        { status: 502 }
-      );
-    }
+const result = JSON.parse(
+  cleanJson(response.text || "{}")
+);
 
     /*
      * --------------------------------------------------
