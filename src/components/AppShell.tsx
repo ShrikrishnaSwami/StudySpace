@@ -33,7 +33,9 @@ import { isAdminEmail } from "@/lib/admin";
 import NotificationCenter from "@/components/NotificationCenter";
 
 type AppShellProps = {
-  children: ReactNode;
+  children: React.ReactNode;
+  title?: string;
+  description?: string;
 };
 
 type NavItem = {
