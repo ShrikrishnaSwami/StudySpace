@@ -2,100 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 import { generateAIResponse } from "@/lib/gemini";
-import { getCourseAIContext } from "@/lib/ai-context";
-import { formatCourseAIContext } from "@/lib/ai-context-format";
-export const runtime = "nodejs";
+import { getStudentAIContext } from "@/lib/ai-context";
+import { formatStudentAIContext } from "@/lib/ai-context-format";
 
-type TutorMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
-
-const MAX_MESSAGE_LENGTH = 6000;
-const MAX_HISTORY_MESSAGES = 20;
-
-const SYSTEM_INSTRUCTION = `
-You are StudySpace AI Tutor.
-
-You are an intelligent university study assistant.
-
-StudySpace may provide you with information retrieved from
-the student's actual StudySpace account.
-
-This information can include:
-
-- course information
-- course notes
-- course materials
-- assignments
-- quizzes
-- homework
-- calendar events
-- study sessions
-- academic goals
-
-IMPORTANT DATA RULES:
-
-1. Treat supplied StudySpace context as the student's actual
-   stored information.
-
-2. Use that information when answering questions about the
-   student's courses, notes, materials, assignments, or
-   academic planning.
-
-3. Never claim that information exists in the student's
-   StudySpace data unless it was actually supplied to you.
-
-4. Never invent notes, assignments, grades, deadlines,
-   professor information, or course policies.
-
-5. If the requested information is not present in the supplied
-   context, say that you could not find it in the available
-   StudySpace data.
-
-6. Distinguish between:
-   - information from the student's StudySpace data
-   - general academic knowledge
-   - your own explanation or reasoning
-
-7. If the student asks what their notes say, prioritize their
-   stored notes over general knowledge.
-
-8. If the student's notes contain an error, explain the issue
-   respectfully rather than silently changing what their notes
-   say.
-
-TEACHING PRINCIPLES:
-
-1. Explain concepts clearly and logically.
-2. Adapt explanations to the student's level.
-3. Break difficult problems into manageable steps.
-4. For homework, prefer hints and guided reasoning when
-   appropriate.
-5. Ask concise clarifying questions when necessary.
-6. Correct mistakes respectfully.
-7. Use examples when useful.
-8. Use Markdown for readable answers.
-9. Use LaTeX-style mathematical notation when useful.
-10. Avoid unnecessarily long answers.
-
-When solving academic problems:
-
-- Identify what the problem is asking.
-- State the relevant concept or formula.
-- Work through the reasoning.
-- Give the final answer clearly.
-- Mention important assumptions.
-
-You are a tutor, not a replacement for the student's own learning.
-`;
-
-function getSupabaseServerClient(token: string) {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-  const key =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+function createSupabaseServerClient(token: string) {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!url || !key) {
     throw new Error(
@@ -117,69 +29,80 @@ function getSupabaseServerClient(token: string) {
   });
 }
 
-export async function POST(
-  request: NextRequest
-) {
+type RequestBody = {
+  message?: string;
+  courseId?: string | null;
+  conversationId?: string | null;
+};
+
+export async function POST(request: NextRequest) {
   try {
+    /*
+     * -------------------------------------------------------
+     * AUTHENTICATION
+     * -------------------------------------------------------
+     */
+
     const authorization =
       request.headers.get("authorization");
 
-    if (
-      !authorization ||
-      !authorization.startsWith("Bearer ")
-    ) {
+    if (!authorization?.startsWith("Bearer ")) {
       return NextResponse.json(
         {
           error:
-            "You must be signed in to use the AI Tutor.",
+            "Missing or invalid authorization token.",
         },
         { status: 401 }
       );
     }
 
     const token =
-      authorization.slice(7);
+      authorization.replace("Bearer ", "").trim();
 
-    const supabase =
-      getSupabaseServerClient(token);
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
-
-    if (userError || !user) {
+    if (!token) {
       return NextResponse.json(
         {
-          error:
-            "Your session has expired. Please sign in again.",
+          error: "Missing authentication token.",
         },
         { status: 401 }
       );
     }
 
-    const body = await request.json();
+    const supabase =
+      createSupabaseServerClient(token);
+
+    const {
+      data: { user },
+      error: userError,
+    } =
+      await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      return NextResponse.json(
+        {
+          error: "Your session has expired.",
+        },
+        { status: 401 }
+      );
+    }
+
+    /*
+     * -------------------------------------------------------
+     * REQUEST BODY
+     * -------------------------------------------------------
+     */
+
+    const body =
+      (await request.json()) as RequestBody;
 
     const message =
-      typeof body.message === "string"
-        ? body.message.trim()
-        : "";
-
-    const conversationId =
-      typeof body.conversationId === "string"
-        ? body.conversationId
-        : null;
+      body.message?.trim() || "";
 
     const courseId =
-      typeof body.courseId === "string"
-        ? body.courseId
-        : null;
+      body.courseId || null;
 
-    const history = Array.isArray(
-      body.history
-    )
-      ? (body.history as TutorMessage[])
-      : [];
+    const conversationId =
+      body.conversationId || null;
 
     if (!message) {
       return NextResponse.json(
@@ -191,107 +114,430 @@ export async function POST(
       );
     }
 
-    if (
-      message.length >
-      MAX_MESSAGE_LENGTH
-    ) {
+    if (message.length > 12000) {
       return NextResponse.json(
         {
           error:
-            "Your message is too long.",
+            "Message is too long. Please keep it under 12,000 characters.",
         },
-        { status: 413 }
+        { status: 400 }
       );
     }
 
-let courseContext = "";
+    /*
+     * -------------------------------------------------------
+     * VERIFY CONVERSATION
+     * -------------------------------------------------------
+     */
 
-if (courseId) {
-  try {
-    const context = await getCourseAIContext(
-      token,
-      courseId
-    );
+    if (conversationId) {
+      const {
+        data: conversation,
+        error: conversationError,
+      } = await supabase
+        .from("ai_tutor_conversations")
+        .select("id, user_id, course_id")
+        .eq("id", conversationId)
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-    courseContext =
-      formatCourseAIContext(context);
-  } catch (error) {
-    console.error(
-      "Failed to load AI course context:",
-      error
-    );
+      if (conversationError) {
+        return NextResponse.json(
+          {
+            error:
+              conversationError.message,
+          },
+          { status: 500 }
+        );
+      }
 
-    courseContext = `
-COURSE CONTEXT
+      if (!conversation) {
+        return NextResponse.json(
+          {
+            error:
+              "Conversation not found.",
+          },
+          { status: 404 }
+        );
+      }
+    }
 
-The student selected a course, but additional
-course information could not be loaded.
-Do not invent course-specific information.
-`;
-  }
-}
+    /*
+     * -------------------------------------------------------
+     * LOAD FULL STUDYSPACE CONTEXT
+     * -------------------------------------------------------
+     *
+     * The AI can now see:
+     *
+     * Courses
+     * Notes
+     * Materials
+     * Assignments
+     * Quizzes
+     * Quiz attempts
+     * Homework
+     * Calendar
+     *
+     * If a course is selected, the context is narrowed
+     * to that course where appropriate.
+     */
 
-    const safeHistory =
-      history
-        .filter(
-          (item) =>
-            item &&
-            (item.role === "user" ||
-              item.role === "assistant") &&
-            typeof item.content ===
-              "string"
-        )
-        .slice(
-          -MAX_HISTORY_MESSAGES
+    let studySpaceContext = "";
+
+    try {
+      const context =
+        await getStudentAIContext(
+          token,
+          courseId
         );
 
-    const conversationHistory =
-      safeHistory.length > 0
-        ? safeHistory
+      studySpaceContext =
+        formatStudentAIContext(context);
+    } catch (contextError) {
+      console.error(
+        "Failed to load StudySpace AI context:",
+        contextError
+      );
+
+      studySpaceContext = `
+========================
+STUDYSPACE CONTEXT
+========================
+
+The student's StudySpace data could not be loaded.
+
+Do NOT invent:
+- courses
+- assignments
+- deadlines
+- grades
+- quizzes
+- quiz results
+- homework
+- notes
+- calendar events
+
+You may still answer using general academic
+knowledge, but clearly state when student-specific
+information is unavailable.
+`;
+    }
+
+    /*
+     * -------------------------------------------------------
+     * LOAD RECENT CONVERSATION HISTORY
+     * -------------------------------------------------------
+     */
+
+    let conversationHistory = "";
+
+    if (conversationId) {
+      const {
+        data: messages,
+        error: messagesError,
+      } = await supabase
+        .from("ai_tutor_messages")
+        .select("role, content, created_at")
+        .eq(
+          "conversation_id",
+          conversationId
+        )
+        .eq("user_id", user.id)
+        .order("created_at", {
+          ascending: false,
+        })
+        .limit(20);
+
+      if (messagesError) {
+        console.error(
+          "Could not load conversation history:",
+          messagesError.message
+        );
+      } else {
+        const orderedMessages =
+          [...(messages || [])].reverse();
+
+        conversationHistory =
+          orderedMessages
             .map(
               (item) =>
-                `${item.role === "user" ? "Student" : "Tutor"}: ${item.content}`
+                `${item.role === "user" ? "STUDENT" : "AI TUTOR"}: ${item.content}`
             )
-            .join("\n\n")
-        : "No previous conversation.";
+            .join("\n\n");
+      }
+    }
 
-    const prompt = `
-${courseContext}
+    /*
+     * -------------------------------------------------------
+     * SYSTEM INSTRUCTION
+     * -------------------------------------------------------
+     */
 
-PREVIOUS CONVERSATION
+    const systemInstruction = `
+You are StudySpace AI Tutor.
 
-${conversationHistory}
+You are an academic tutor, study planner,
+and learning assistant built into StudySpace.
 
-CURRENT STUDENT MESSAGE
+Your job is to help the student understand
+their courses and make better decisions about
+their studying.
 
-${message}
+========================================
+STUDENT DATA RULES
+========================================
 
-Respond as the StudySpace AI Tutor.
+StudySpace has supplied real data belonging
+to the current student.
+
+Treat supplied StudySpace data as factual
+student-specific information.
+
+NEVER invent student-specific information.
+
+Do not invent:
+- courses
+- professors
+- assignments
+- assignment deadlines
+- grades
+- quiz results
+- homework
+- notes
+- course materials
+- calendar events
+- study sessions
+- progress percentages
+
+If the required information is not present,
+say that it is not available.
+
+You may use general academic knowledge to
+explain concepts or solve problems.
+
+Clearly distinguish between:
+
+1. Stored StudySpace information
+2. General academic knowledge
+3. Your recommendations
+
+========================================
+STUDY RECOMMENDATIONS
+========================================
+
+When recommending what the student should study,
+consider their actual:
+
+- upcoming assignments
+- assignment priorities
+- assignment progress
+- upcoming calendar events
+- course progress
+- quiz history
+- homework
+- course notes
+- course materials
+- target grades
+
+Do not recommend that the student completed
+something unless the supplied data shows it.
+
+When dates are available, prioritize work based
+on urgency and workload.
+
+If several tasks compete for attention, explain
+the reasoning behind the suggested order.
+
+========================================
+ACADEMIC TUTORING
+========================================
+
+Teach rather than simply giving answers.
+
+For mathematics, physics, chemistry,
+computer science, and other technical subjects:
+
+- show the important reasoning
+- explain formulas
+- walk through calculations
+- identify mistakes when possible
+- use examples when useful
+
+For conceptual questions:
+
+- explain clearly
+- use intuitive examples
+- connect ideas to the student's notes when
+  relevant
+- avoid unnecessary jargon
+
+========================================
+COURSE NOTES
+========================================
+
+When the student asks about something covered
+in their StudySpace notes:
+
+1. Prefer their stored notes.
+2. Explain the material clearly.
+3. If their notes appear incomplete, supplement
+   them with general knowledge.
+4. Make it clear when information comes from
+   general knowledge rather than their notes.
+
+Never pretend that general knowledge came from
+the student's notes.
+
+========================================
+QUIZZES
+========================================
+
+If quiz information is available, you may use it
+to identify areas where the student may need more
+practice.
+
+Do not invent topic performance if the supplied
+data does not contain enough information.
+
+If the student asks for practice questions,
+you may create them based on the relevant course
+material.
+
+========================================
+HOMEWORK
+========================================
+
+If homework records contain AI analysis,
+you may use the stored:
+
+- summaries
+- explanations
+- solutions
+- hints
+
+Do not claim that an uploaded homework file
+contains information that is not present in
+the supplied context.
+
+========================================
+CALENDAR
+========================================
+
+Use calendar information when helping the
+student plan their time.
+
+For example:
+
+Student:
+"What should I study tonight?"
+
+Consider:
+- upcoming deadlines
+- upcoming quizzes
+- scheduled classes
+- study events
+- workload
+- course progress
+
+Do not invent free time that is not supported
+by the calendar data.
+
+========================================
+CONVERSATION
+========================================
+
+Use recent conversation history to maintain
+continuity.
+
+If the student refers to something discussed
+earlier in the conversation, use the history
+provided below.
+
+Do not confuse conversation history with
+StudySpace database records.
+
+========================================
+RESPONSE STYLE
+========================================
+
+Be:
+
+- helpful
+- clear
+- encouraging
+- concise when possible
+- detailed when necessary
+
+Avoid unnecessarily long responses.
+
+Use headings and bullet points when they make
+the answer easier to understand.
+
+Do not constantly remind the student that you
+are an AI.
+
+Do not mention internal database tables,
+Supabase, API routes, or implementation details
+unless the student explicitly asks about them.
+
+========================================
+STUDYSPACE DATA
+========================================
+
+${studySpaceContext}
+
+========================================
+RECENT CONVERSATION
+========================================
+
+${
+  conversationHistory ||
+  "No previous conversation messages are available."
+}
 `;
+
+    /*
+     * -------------------------------------------------------
+     * GENERATE RESPONSE
+     * -------------------------------------------------------
+     */
 
     const answer =
       await generateAIResponse({
-        systemInstruction:
-          SYSTEM_INSTRUCTION,
-        prompt,
+        systemInstruction,
+        prompt: message,
       });
+
+    /*
+     * -------------------------------------------------------
+     * SAVE MESSAGES
+     * -------------------------------------------------------
+     *
+     * The frontend currently saves messages too,
+     * so we intentionally DO NOT save them here.
+     *
+     * This prevents duplicate messages.
+     */
 
     return NextResponse.json({
       answer,
+      courseId,
       conversationId,
     });
   } catch (error) {
     console.error(
-      "StudySpace Tutor API error:",
+      "AI Tutor API error:",
       error
     );
 
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Something went wrong while contacting the AI Tutor.";
+
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "The AI Tutor failed to respond.",
+        error: message,
       },
       { status: 500 }
     );
