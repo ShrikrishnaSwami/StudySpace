@@ -1316,6 +1316,8 @@ function CourseAssignmentsSection({
   assignments: Assignment[];
   onToggle: (assignment: Assignment) => void;
 }) {
+  const router = useRouter();
+
   return (
     <div className="space-y-5">
       <SectionHeader
@@ -1330,8 +1332,7 @@ function CourseAssignmentsSection({
           description="Assignments you create from the main Assignments page will appear here."
           action="Open assignments"
           onClick={() => {
-            window.location.href =
-              "/assignments";
+            router.push("/assignments");
           }}
         />
       ) : (
