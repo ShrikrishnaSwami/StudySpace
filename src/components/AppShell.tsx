@@ -5,7 +5,6 @@ import {
   BookOpen,
   Brain,
   CalendarDays,
-  Check,
   CheckSquare,
   ChevronLeft,
   ChevronRight,
@@ -61,7 +60,6 @@ const mainNavigation = [
     label: "AI Tutor",
     href: "/ai-tutor",
     icon: Brain,
-    badge: "AI",
   },
   {
     label: "Courses",
@@ -98,7 +96,7 @@ const bottomNavigation = [
   },
 ];
 
-function getNotificationIcon(type: Notification["type"]) {
+function notificationIcon(type: Notification["type"]) {
   switch (type) {
     case "assignment_due":
     case "assignment_overdue":
@@ -122,7 +120,7 @@ function getNotificationIcon(type: Notification["type"]) {
 
 function relativeTime(dateString: string) {
   const date = new Date(dateString);
-  const difference = Math.max(0, Date.now() - date.getTime());
+  const difference = Date.now() - date.getTime();
 
   const seconds = Math.floor(difference / 1000);
 
@@ -158,6 +156,10 @@ function relativeTime(dateString: string) {
   });
 }
 
+/* -------------------------------------------------------------------------- */
+/* Notifications                                                              */
+/* -------------------------------------------------------------------------- */
+
 function NotificationDropdown({
   onClose,
 }: {
@@ -168,7 +170,6 @@ function NotificationDropdown({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [markingAll, setMarkingAll] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -180,9 +181,7 @@ function NotificationDropdown({
           getUnreadNotificationCount(),
         ]);
 
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
 
         setNotifications(notificationData);
         setUnreadCount(unread);
@@ -207,9 +206,7 @@ function NotificationDropdown({
     };
   }, []);
 
-  async function handleNotificationClick(
-    notification: Notification
-  ) {
+  async function handleNotificationClick(notification: Notification) {
     try {
       if (!notification.read) {
         await markNotificationRead(notification.id);
@@ -240,185 +237,148 @@ function NotificationDropdown({
   }
 
   async function handleMarkAllRead() {
-    if (markingAll || unreadCount === 0) {
-      return;
-    }
-
     try {
-      setMarkingAll(true);
-
       await markAllNotificationsRead();
-
-      const now = new Date().toISOString();
 
       setNotifications((current) =>
         current.map((item) => ({
           ...item,
           read: true,
-          read_at: now,
+          read_at: new Date().toISOString(),
         }))
       );
 
       setUnreadCount(0);
     } catch (error) {
       console.error("Failed to mark notifications read:", error);
-    } finally {
-      setMarkingAll(false);
     }
   }
 
   return (
-    <div className="absolute right-0 top-12 z-[100] w-[380px] max-w-[calc(100vw-24px)] overflow-hidden rounded-2xl border border-white/[0.09] bg-[#100c19]/98 shadow-2xl shadow-black/60 backdrop-blur-2xl">
+    <div className="absolute right-0 top-12 z-[100] w-[360px] max-w-[calc(100vw-24px)] overflow-hidden border border-white/[0.1] bg-[#17151c] shadow-2xl shadow-black/50">
       {/* Header */}
-      <div className="border-b border-white/[0.07] px-4 py-3.5">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold text-white">
-                Notifications
-              </h3>
+      <div className="flex items-center justify-between border-b border-white/[0.08] px-4 py-3.5">
+        <div>
+          <h3 className="text-sm font-semibold text-white">
+            Notifications
+          </h3>
 
-              {unreadCount > 0 && (
-                <span className="rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[9px] font-bold text-violet-300">
-                  {unreadCount}
-                </span>
-              )}
-            </div>
+          <p className="mt-0.5 text-[11px] text-white/30">
+            {unreadCount > 0
+              ? `${unreadCount} unread`
+              : "You're all caught up"}
+          </p>
+        </div>
 
-            <p className="mt-0.5 text-[11px] text-white/30">
-              {unreadCount > 0
-                ? "You have new activity"
-                : "You're all caught up"}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1">
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                onClick={handleMarkAllRead}
-                disabled={markingAll}
-                className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-violet-300 transition hover:bg-violet-500/10 disabled:opacity-50"
-              >
-                <Check size={12} />
-                {markingAll ? "Marking..." : "Mark all read"}
-              </button>
-            )}
-
+        <div className="flex items-center gap-1">
+          {unreadCount > 0 && (
             <button
               type="button"
-              onClick={onClose}
-              aria-label="Close notifications"
-              className="rounded-lg p-1.5 text-white/30 transition hover:bg-white/[0.06] hover:text-white"
+              onClick={handleMarkAllRead}
+              className="px-2 py-1.5 text-[11px] font-medium text-white/45 transition hover:text-white"
             >
-              <X size={15} />
+              Mark all read
             </button>
-          </div>
+          )}
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 text-white/30 transition hover:text-white"
+            aria-label="Close notifications"
+          >
+            <X size={15} />
+          </button>
         </div>
       </div>
 
       {/* Notifications */}
-      <div className="max-h-[430px] overflow-y-auto">
+      <div className="max-h-[420px] overflow-y-auto">
         {loading ? (
-          <div className="space-y-1 p-3">
-            {[1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="flex gap-3 rounded-xl px-2 py-3"
-              >
-                <div className="h-9 w-9 shrink-0 animate-pulse rounded-xl bg-white/[0.06]" />
-
-                <div className="min-w-0 flex-1">
-                  <div className="h-3 w-32 animate-pulse rounded bg-white/[0.06]" />
-                  <div className="mt-2 h-2.5 w-full animate-pulse rounded bg-white/[0.04]" />
-                  <div className="mt-1.5 h-2.5 w-2/3 animate-pulse rounded bg-white/[0.03]" />
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center justify-center px-6 py-12">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/10 border-t-white/60" />
           </div>
         ) : notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.035]">
-              <Bell size={19} className="text-white/25" />
-            </div>
+          <div className="px-6 py-12 text-center">
+            <Bell
+              size={20}
+              className="mx-auto text-white/20"
+            />
 
-            <p className="mt-4 text-sm font-medium text-white/70">
+            <p className="mt-3 text-sm font-medium text-white/60">
               Nothing new
             </p>
 
-            <p className="mt-1 max-w-[220px] text-xs leading-5 text-white/30">
-              Important activity from your workspace will appear here.
+            <p className="mt-1 text-xs text-white/25">
+              You&apos;re all caught up.
             </p>
           </div>
         ) : (
-          <div className="p-2">
-            {notifications.map((notification) => {
-              const Icon = getNotificationIcon(notification.type);
+          notifications.map((notification) => {
+            const Icon = notificationIcon(notification.type);
 
-              return (
-                <button
-                  key={notification.id}
-                  type="button"
-                  onClick={() => handleNotificationClick(notification)}
-                  className={`group flex w-full gap-3 rounded-xl px-3 py-3 text-left transition ${
-                    !notification.read
-                      ? "bg-violet-500/[0.055] hover:bg-violet-500/[0.09]"
-                      : "hover:bg-white/[0.035]"
-                  }`}
-                >
-                  <div
-                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                      !notification.read
-                        ? "bg-violet-500/15 text-violet-300"
-                        : "bg-white/[0.045] text-white/30"
-                    }`}
-                  >
-                    <Icon size={15} />
-                  </div>
+            return (
+              <button
+                key={notification.id}
+                type="button"
+                onClick={() =>
+                  handleNotificationClick(notification)
+                }
+                className={[
+                  "flex w-full gap-3 border-b border-white/[0.06] px-4 py-3.5 text-left transition",
+                  "hover:bg-white/[0.035]",
+                  !notification.read
+                    ? "bg-white/[0.025]"
+                    : "",
+                ].join(" ")}
+              >
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center border border-white/[0.07] bg-white/[0.03] text-white/35">
+                  <Icon size={15} />
+                </div>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <p
-                        className={`line-clamp-1 text-xs font-semibold ${
-                          notification.read
-                            ? "text-white/60"
-                            : "text-white"
-                        }`}
-                      >
-                        {notification.title}
-                      </p>
-
-                      {!notification.read && (
-                        <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400 shadow-[0_0_8px_rgba(139,92,246,0.8)]" />
-                      )}
-                    </div>
-
-                    {notification.message && (
-                      <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/35">
-                        {notification.message}
-                      </p>
-                    )}
-
-                    <p className="mt-1.5 text-[10px] text-white/20">
-                      {relativeTime(notification.created_at)}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p
+                      className={[
+                        "line-clamp-1 text-xs font-semibold",
+                        notification.read
+                          ? "text-white/60"
+                          : "text-white",
+                      ].join(" ")}
+                    >
+                      {notification.title}
                     </p>
+
+                    {!notification.read && (
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white/80" />
+                    )}
                   </div>
-                </button>
-              );
-            })}
-          </div>
+
+                  {notification.message && (
+                    <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-white/30">
+                      {notification.message}
+                    </p>
+                  )}
+
+                  <p className="mt-1.5 text-[10px] text-white/20">
+                    {relativeTime(notification.created_at)}
+                  </p>
+                </div>
+              </button>
+            );
+          })
         )}
       </div>
 
       {/* Footer */}
-      <div className="border-t border-white/[0.07] p-2">
+      <div className="border-t border-white/[0.08] p-2">
         <button
           type="button"
           onClick={() => {
             onClose();
             router.push("/notifications");
           }}
-          className="w-full rounded-xl px-3 py-2.5 text-xs font-semibold text-violet-300 transition hover:bg-violet-500/10"
+          className="w-full px-3 py-2.5 text-xs font-medium text-white/40 transition hover:bg-white/[0.04] hover:text-white/70"
         >
           View all notifications
         </button>
@@ -438,7 +398,10 @@ function NotificationButton() {
       const count = await getUnreadNotificationCount();
       setUnreadCount(count);
     } catch (error) {
-      console.error("Failed to load notification count:", error);
+      console.error(
+        "Failed to load notification count:",
+        error
+      );
     }
   }, []);
 
@@ -467,41 +430,57 @@ function NotificationButton() {
       }
     }
 
-    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick
+    );
 
     return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick
+      );
     };
   }, []);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div
+      ref={containerRef}
+      className="relative"
+    >
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-label="Notifications"
         aria-expanded={open}
-        className={`relative flex h-10 w-10 items-center justify-center rounded-xl border transition ${
+        className={[
+          "relative flex h-9 w-9 items-center justify-center border transition",
           open
-            ? "border-violet-400/20 bg-violet-500/10 text-violet-200"
-            : "border-white/[0.07] bg-white/[0.025] text-white/50 hover:bg-white/[0.05] hover:text-white"
-        }`}
+            ? "border-white/[0.15] bg-white/[0.07] text-white"
+            : "border-white/[0.08] bg-transparent text-white/40 hover:bg-white/[0.04] hover:text-white/75",
+        ].join(" ")}
       >
         <Bell size={17} />
 
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex min-w-[18px] items-center justify-center rounded-full border-2 border-[#080611] bg-violet-500 px-1 text-[9px] font-bold leading-[13px] text-white shadow-lg shadow-violet-500/20">
+          <span className="absolute -right-1.5 -top-1.5 flex min-w-[16px] items-center justify-center border border-[#111016] bg-white px-1 text-[8px] font-bold leading-[13px] text-[#17151c]">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
       {open && (
-        <NotificationDropdown onClose={() => setOpen(false)} />
+        <NotificationDropdown
+          onClose={() => setOpen(false)}
+        />
       )}
     </div>
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* Navigation                                                                 */
+/* -------------------------------------------------------------------------- */
 
 function NavigationLink({
   item,
@@ -526,23 +505,27 @@ function NavigationLink({
       href={item.href}
       onClick={onClick}
       title={collapsed ? item.label : undefined}
-      className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
+      className={[
+        "group relative flex items-center gap-3 px-3 py-2.5 text-sm transition",
+        collapsed ? "justify-center" : "",
         active
-          ? "bg-violet-500/[0.13] text-violet-200"
-          : "text-white/45 hover:bg-white/[0.04] hover:text-white"
-      } ${collapsed ? "justify-center" : ""}`}
+          ? "bg-white/[0.07] text-white"
+          : "text-white/40 hover:bg-white/[0.035] hover:text-white/75",
+      ].join(" ")}
     >
       {active && (
-        <span className="absolute bottom-2.5 left-0 top-2.5 w-0.5 rounded-r-full bg-violet-400" />
+        <span className="absolute bottom-2 left-0 top-2 w-0.5 bg-white/80" />
       )}
 
       <Icon
-        size={18}
-        className={`shrink-0 transition-colors ${
+        size={17}
+        strokeWidth={active ? 2 : 1.8}
+        className={[
+          "shrink-0 transition-colors",
           active
-            ? "text-violet-400"
-            : "text-white/30 group-hover:text-white/65"
-        }`}
+            ? "text-white"
+            : "text-white/30 group-hover:text-white/60",
+        ].join(" ")}
       />
 
       {!collapsed && (
@@ -552,25 +535,19 @@ function NavigationLink({
           </span>
 
           {item.badge && (
-            <span
-              className={`rounded-md px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider ${
-                active
-                  ? "bg-violet-400/15 text-violet-300"
-                  : "bg-white/[0.05] text-white/25"
-              }`}
-            >
+            <span className="text-[8px] font-medium uppercase tracking-wider text-white/25">
               {item.badge}
             </span>
-          )}
-
-          {active && !item.badge && (
-            <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_7px_rgba(139,92,246,0.7)]" />
           )}
         </>
       )}
     </Link>
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* App Shell                                                                  */
+/* -------------------------------------------------------------------------- */
 
 export default function AppShell({
   children,
@@ -581,10 +558,14 @@ export default function AppShell({
   const router = useRouter();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const [collapsed, setCollapsed] = useState(() =>
     typeof window !== "undefined" &&
-    window.localStorage.getItem("studyspace-sidebar-collapsed") === "true"
+    window.localStorage.getItem(
+      "studyspace-sidebar-collapsed"
+    ) === "true"
   );
+
   const [user, setUser] = useState<UserInfo | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -598,23 +579,6 @@ export default function AppShell({
 
   useEffect(() => {
     let mounted = true;
-
-    async function loadUser() {
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
-
-      if (!mounted) {
-        return;
-      }
-
-      if (!authUser) {
-        router.replace("/login");
-        return;
-      }
-
-      updateUser(authUser);
-    }
 
     function updateUser(authUser: {
       id: string;
@@ -644,22 +608,37 @@ export default function AppShell({
       setLoading(false);
     }
 
-    void loadUser();
+    async function loadUser() {
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
-      if (!session?.user) {
+      if (!authUser) {
         router.replace("/login");
         return;
       }
 
-      updateUser(session.user);
-    });
+      updateUser(authUser);
+    }
+
+    void loadUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!mounted) return;
+
+        if (!session?.user) {
+          router.replace("/login");
+          return;
+        }
+
+        updateUser(session.user);
+      }
+    );
 
     return () => {
       mounted = false;
@@ -685,23 +664,17 @@ export default function AppShell({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#080611]">
-        <div className="flex flex-col items-center">
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-400/20 bg-violet-500/10 shadow-xl shadow-violet-500/10">
-            <div className="absolute inset-0 rounded-2xl bg-violet-500/10 blur-xl" />
-
+      <div className="flex min-h-screen items-center justify-center bg-[#111016] text-white">
+        <div className="text-center">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center border border-white/10 bg-white/[0.04]">
             <GraduationCap
-              size={25}
-              className="relative text-violet-300"
+              size={20}
+              className="text-white/60"
             />
           </div>
 
-          <div className="mt-5 h-1 w-20 overflow-hidden rounded-full bg-white/[0.07]">
-            <div className="h-full w-1/2 animate-pulse rounded-full bg-violet-500" />
-          </div>
-
-          <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-white/20">
-            StudySpace
+          <p className="mt-4 text-xs text-white/25">
+            Loading StudySpace...
           </p>
         </div>
       </div>
@@ -709,53 +682,55 @@ export default function AppShell({
   }
 
   return (
-    <div className="min-h-screen bg-[#080611] text-white">
+    <div className="min-h-screen bg-[#111016] text-white">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <button
           type="button"
           aria-label="Close navigation"
           onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/[0.07] bg-[#0b0813]/95 shadow-2xl shadow-black/20 backdrop-blur-2xl transition-all duration-300 ${
-          collapsed ? "w-[76px]" : "w-[252px]"
-        } ${
+        className={[
+          "fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/[0.08] bg-[#15141a]",
+          "transition-all duration-200",
+          collapsed ? "w-[72px]" : "w-[244px]",
           sidebarOpen
             ? "translate-x-0"
-            : "-translate-x-full lg:translate-x-0"
-        }`}
+            : "-translate-x-full lg:translate-x-0",
+        ].join(" ")}
       >
         {/* Brand */}
-        <div className="flex h-[76px] items-center border-b border-white/[0.07] px-4">
+        <div className="flex h-[68px] items-center border-b border-white/[0.08] px-4">
           <Link
             href="/dashboard"
             onClick={() => setSidebarOpen(false)}
-            className={`group flex min-w-0 items-center ${
-              collapsed ? "mx-auto" : "gap-3"
-            }`}
+            className={[
+              "flex min-w-0 items-center",
+              collapsed
+                ? "mx-auto"
+                : "gap-3",
+            ].join(" ")}
           >
-            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-purple-700 shadow-lg shadow-violet-500/20">
-              <div className="absolute inset-0 rounded-xl bg-violet-400/20 blur-md" />
-
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center border border-white/[0.1] bg-white/[0.06]">
               <GraduationCap
-                size={21}
-                className="relative text-white"
+                size={19}
+                className="text-white/75"
               />
             </div>
 
             {!collapsed && (
               <div className="min-w-0">
-                <div className="truncate text-[17px] font-bold tracking-tight text-white">
+                <div className="truncate text-[16px] font-semibold tracking-tight">
                   StudySpace
                 </div>
 
-                <div className="mt-0.5 truncate text-[9px] font-medium uppercase tracking-[0.18em] text-white/25">
-                  Student workspace
+                <div className="mt-0.5 truncate text-[10px] text-white/25">
+                  Your student workspace
                 </div>
               </div>
             )}
@@ -765,21 +740,21 @@ export default function AppShell({
             type="button"
             onClick={() => setSidebarOpen(false)}
             aria-label="Close navigation"
-            className="ml-auto rounded-lg p-2 text-white/35 transition hover:bg-white/[0.05] hover:text-white lg:hidden"
+            className="ml-auto p-2 text-white/30 transition hover:text-white lg:hidden"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto px-3 py-5">
+        <div className="flex-1 overflow-y-auto px-2.5 py-5">
           {!collapsed && (
-            <div className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-white/20">
+            <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/20">
               Workspace
             </div>
           )}
 
-          <nav className="space-y-1">
+          <nav className="space-y-0.5">
             {mainNavigation.map((item) => (
               <NavigationLink
                 key={item.href}
@@ -795,7 +770,7 @@ export default function AppShell({
           {isAdmin && (
             <div className="mt-7">
               {!collapsed && (
-                <div className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-white/20">
+                <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/20">
                   Administration
                 </div>
               )}
@@ -804,25 +779,27 @@ export default function AppShell({
                 href="/admin"
                 onClick={() => setSidebarOpen(false)}
                 title={collapsed ? "Admin" : undefined}
-                className={`group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all ${
-                  collapsed ? "justify-center" : ""
-                } ${
+                className={[
+                  "group relative flex items-center gap-3 px-3 py-2.5 text-sm transition",
+                  collapsed ? "justify-center" : "",
                   isActive("/admin")
-                    ? "bg-violet-500/[0.13] text-violet-200"
-                    : "text-white/45 hover:bg-white/[0.04] hover:text-white"
-                }`}
+                    ? "bg-white/[0.07] text-white"
+                    : "text-white/40 hover:bg-white/[0.035] hover:text-white/75",
+                ].join(" ")}
               >
                 {isActive("/admin") && (
-                  <span className="absolute bottom-2.5 left-0 top-2.5 w-0.5 rounded-r-full bg-violet-400" />
+                  <span className="absolute bottom-2 left-0 top-2 w-0.5 bg-white/80" />
                 )}
 
                 <Sparkles
-                  size={18}
-                  className="shrink-0 text-violet-400"
+                  size={17}
+                  className="shrink-0 text-white/40"
                 />
 
                 {!collapsed && (
-                  <span className="font-medium">Admin</span>
+                  <span className="font-medium">
+                    Admin
+                  </span>
                 )}
               </Link>
             </div>
@@ -831,12 +808,12 @@ export default function AppShell({
           {/* Account */}
           <div className="mt-7">
             {!collapsed && (
-              <div className="mb-3 px-3 text-[9px] font-bold uppercase tracking-[0.2em] text-white/20">
+              <div className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/20">
                 Account
               </div>
             )}
 
-            <nav className="space-y-1">
+            <nav className="space-y-0.5">
               {bottomNavigation.map((item) => (
                 <NavigationLink
                   key={item.href}
@@ -851,16 +828,17 @@ export default function AppShell({
         </div>
 
         {/* User */}
-        <div className="border-t border-white/[0.07] p-3">
+        <div className="border-t border-white/[0.08] p-3">
           <div
-            className={`flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.025] p-2.5 ${
-              collapsed ? "justify-center" : ""
-            }`}
+            className={[
+              "flex items-center gap-3",
+              collapsed ? "justify-center" : "",
+            ].join(" ")}
           >
             <Link
               href="/settings"
               title={collapsed ? user?.name : undefined}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-purple-700 text-xs font-bold shadow-lg shadow-violet-500/10"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.07] text-xs font-semibold text-white/75 transition hover:bg-white/[0.1]"
             >
               {user?.name?.charAt(0).toUpperCase() || "S"}
             </Link>
@@ -871,7 +849,7 @@ export default function AppShell({
                   href="/settings"
                   className="min-w-0 flex-1"
                 >
-                  <div className="truncate text-sm font-medium text-white/85 transition hover:text-white">
+                  <div className="truncate text-sm font-medium text-white/75 transition hover:text-white">
                     {user?.name}
                   </div>
 
@@ -884,7 +862,7 @@ export default function AppShell({
                   type="button"
                   onClick={handleLogout}
                   title="Sign out"
-                  className="rounded-lg p-2 text-white/25 transition hover:bg-red-500/10 hover:text-red-400"
+                  className="p-2 text-white/25 transition hover:text-red-300"
                 >
                   <LogOut size={16} />
                 </button>
@@ -893,56 +871,57 @@ export default function AppShell({
           </div>
         </div>
 
-        {/* Collapse button */}
+        {/* Collapse */}
         <button
           type="button"
-          onClick={() => setCollapsed((value) => !value)}
+          onClick={() =>
+            setCollapsed((value) => !value)
+          }
           aria-label={
-            collapsed ? "Expand sidebar" : "Collapse sidebar"
+            collapsed
+              ? "Expand sidebar"
+              : "Collapse sidebar"
           }
           title={
-            collapsed ? "Expand sidebar" : "Collapse sidebar"
+            collapsed
+              ? "Expand sidebar"
+              : "Collapse sidebar"
           }
-          className="absolute -right-3 top-[86px] hidden h-7 w-7 items-center justify-center rounded-full border border-white/[0.1] bg-[#151021] text-white/45 shadow-xl transition hover:border-violet-400/20 hover:text-white lg:flex"
+          className="absolute -right-3 top-[76px] hidden h-6 w-6 items-center justify-center border border-white/[0.12] bg-[#19181f] text-white/35 transition hover:text-white lg:flex"
         >
           {collapsed ? (
-            <ChevronRight size={14} />
+            <ChevronRight size={13} />
           ) : (
-            <ChevronLeft size={14} />
+            <ChevronLeft size={13} />
           )}
         </button>
       </aside>
 
       {/* Main */}
       <div
-        className={`min-h-screen transition-all duration-300 ${
-          collapsed ? "lg:pl-[76px]" : "lg:pl-[252px]"
-        }`}
+        className={[
+          "min-h-screen transition-all duration-200",
+          collapsed
+            ? "lg:pl-[72px]"
+            : "lg:pl-[244px]",
+        ].join(" ")}
       >
         {/* Top bar */}
-        <header className="sticky top-0 z-30 flex h-[76px] items-center border-b border-white/[0.07] bg-[#080611]/80 px-4 backdrop-blur-2xl sm:px-6">
+        <header className="sticky top-0 z-30 flex min-h-[68px] items-center border-b border-white/[0.08] bg-[#111016]/95 px-4 sm:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
               aria-label="Open navigation"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-white/55 transition hover:bg-white/[0.05] hover:text-white lg:hidden"
+              className="flex h-9 w-9 items-center justify-center border border-white/[0.08] text-white/45 transition hover:bg-white/[0.04] hover:text-white lg:hidden"
             >
-              <Menu size={19} />
+              <Menu size={18} />
             </button>
 
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="truncate text-lg font-semibold tracking-tight text-white sm:text-xl">
-                  {title || "StudySpace"}
-                </h1>
-
-                {pathname === "/ai-tutor" && (
-                  <span className="hidden rounded-md bg-violet-500/10 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-violet-300 sm:inline-block">
-                    AI
-                  </span>
-                )}
-              </div>
+              <h1 className="truncate text-lg font-semibold tracking-tight text-white">
+                {title || "StudySpace"}
+              </h1>
 
               {description && (
                 <p className="mt-0.5 hidden max-w-xl truncate text-xs text-white/30 sm:block">
@@ -958,19 +937,20 @@ export default function AppShell({
             <Link
               href="/settings"
               title="Settings"
-              className={`hidden h-10 w-10 items-center justify-center rounded-xl border transition sm:flex ${
+              className={[
+                "hidden h-9 w-9 items-center justify-center border transition sm:flex",
                 pathname === "/settings"
-                  ? "border-violet-400/20 bg-violet-500/10 text-violet-200"
-                  : "border-white/[0.07] bg-white/[0.025] text-white/40 hover:bg-white/[0.05] hover:text-white"
-              }`}
+                  ? "border-white/[0.15] bg-white/[0.07] text-white"
+                  : "border-white/[0.08] text-white/35 hover:bg-white/[0.04] hover:text-white",
+              ].join(" ")}
             >
-              <Settings size={17} />
+              <Settings size={16} />
             </Link>
 
             <Link
               href="/settings"
               title={user?.name || "Profile"}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-purple-700 text-xs font-bold shadow-lg shadow-violet-500/10 ring-2 ring-transparent transition hover:ring-violet-400/20"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.07] text-xs font-semibold text-white/75 transition hover:bg-white/[0.1]"
             >
               {user?.name?.charAt(0).toUpperCase() || "S"}
             </Link>
@@ -978,7 +958,7 @@ export default function AppShell({
         </header>
 
         {/* Page content */}
-        <main className="min-h-[calc(100vh-76px)]">
+        <main className="min-h-[calc(100vh-68px)]">
           {children}
         </main>
       </div>
