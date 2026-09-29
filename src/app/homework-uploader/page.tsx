@@ -11,14 +11,19 @@ import {
 
 import {
   AlertCircle,
-  BookOpen,
+  ArrowUpRight,
   Brain,
+  BookOpen,
+  Check,
   CheckCircle2,
   Clock3,
   Download,
   File,
   FileImage,
   FileText,
+  Filter,
+  GraduationCap,
+  Lightbulb,
   Loader2,
   Plus,
   Search,
@@ -26,8 +31,6 @@ import {
   Trash2,
   Upload,
   X,
-  Lightbulb,
-  GraduationCap,
 } from "lucide-react";
 
 import AppShell from "@/components/AppShell";
@@ -90,21 +93,15 @@ function formatDate(date: string) {
 }
 
 function getFileIcon(fileType: string | null) {
-  if (fileType?.startsWith("image/")) {
-    return FileImage;
-  }
-
-  if (fileType === "application/pdf") {
-    return FileText;
-  }
-
+  if (fileType?.startsWith("image/")) return FileImage;
+  if (fileType === "application/pdf") return FileText;
   return File;
 }
 
 function getStatusLabel(status: Homework["status"]) {
   switch (status) {
     case "uploaded":
-      return "Uploaded";
+      return "Ready";
     case "analyzing":
       return "Analyzing";
     case "analyzed":
@@ -122,16 +119,27 @@ function getStatusClass(status: Homework["status"]) {
   switch (status) {
     case "analyzing":
       return "border-amber-400/20 bg-amber-400/10 text-amber-300";
-
     case "analyzed":
     case "completed":
       return "border-emerald-400/20 bg-emerald-400/10 text-emerald-300";
-
     case "archived":
       return "border-slate-400/20 bg-slate-400/10 text-slate-300";
-
     default:
       return "border-violet-400/20 bg-violet-400/10 text-violet-300";
+  }
+}
+
+function getStatusDot(status: Homework["status"]) {
+  switch (status) {
+    case "analyzing":
+      return "bg-amber-300";
+    case "analyzed":
+    case "completed":
+      return "bg-emerald-300";
+    case "archived":
+      return "bg-slate-300";
+    default:
+      return "bg-violet-300";
   }
 }
 
@@ -145,26 +153,24 @@ export default function HomeworkUploaderPage() {
   const [analyzing, setAnalyzing] = useState(false);
 
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "ready" | "analyzed" | "analyzing"
+  >("all");
+
   const [selectedHomework, setSelectedHomework] =
     useState<Homework | null>(null);
 
-  const [showUploadModal, setShowUploadModal] =
-    useState(false);
+  const [deleteTarget, setDeleteTarget] =
+    useState<Homework | null>(null);
 
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [error, setError] = useState("");
 
   const [title, setTitle] = useState("");
-  const [description, setDescription] =
-    useState("");
-
-  const [courseId, setCourseId] =
-    useState("");
-
-  const [assignmentId, setAssignmentId] =
-    useState("");
-
-  const [selectedFile, setSelectedFile] =
-    useState<File | null>(null);
+  const [description, setDescription] = useState("");
+  const [courseId, setCourseId] = useState("");
+  const [assignmentId, setAssignmentId] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const loadHomework = useCallback(async () => {
     try {
@@ -180,54 +186,35 @@ export default function HomeworkUploaderPage() {
 
         supabase
           .from("courses")
-          .select(
-            "id, code, name, professor"
-          )
+          .select("id, code, name, professor")
           .order("name"),
 
         supabase
           .from("assignments")
-          .select(
-            "id, title, course_id, due_date"
-          )
+          .select("id, title, course_id, due_date")
           .order("due_date", {
             ascending: true,
           }),
       ]);
 
-      setHomework(homeworkResult);
-
       if (coursesResult.error) {
-        throw new Error(
-          coursesResult.error.message
-        );
+        throw new Error(coursesResult.error.message);
       }
 
       if (assignmentsResult.error) {
-        throw new Error(
-          assignmentsResult.error.message
-        );
+        throw new Error(assignmentsResult.error.message);
       }
 
-      setCourses(
-        (coursesResult.data ||
-          []) as Course[]
-      );
-
-      setAssignments(
-        (assignmentsResult.data ||
-          []) as Assignment[]
-      );
+      setHomework(homeworkResult);
+      setCourses((coursesResult.data || []) as Course[]);
+      setAssignments((assignmentsResult.data || []) as Assignment[]);
     } catch (err) {
-      console.error(
-        "Failed to load homework:",
-        err
-      );
+      console.error("Failed to load homework:", err);
 
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to load homework."
+          : "Failed to load homework.",
       );
     } finally {
       setLoading(false);
@@ -241,65 +228,67 @@ export default function HomeworkUploaderPage() {
 
     queueMicrotask(load);
 
-    return () => {
-      // The queued task is harmless if the component unmounts before it runs.
-    };
+    return () => {};
   }, [loadHomework]);
 
   const filteredHomework = useMemo(() => {
-    const query =
-      search.trim().toLowerCase();
-
-    if (!query) {
-      return homework;
-    }
+    const query = search.trim().toLowerCase();
 
     return homework.filter((item) => {
-      const course =
-        courses.find(
-          (courseItem) =>
-            courseItem.id ===
-            item.course_id
-        );
-
-      return (
-        item.title
-          .toLowerCase()
-          .includes(query) ||
-        item.description
-          .toLowerCase()
-          .includes(query) ||
-        item.file_name
-          ?.toLowerCase()
-          .includes(query) ||
-        course?.name
-          ?.toLowerCase()
-          .includes(query) ||
-        course?.code
-          ?.toLowerCase()
-          .includes(query)
+      const course = courses.find(
+        (courseItem) => courseItem.id === item.course_id,
       );
+
+      const matchesSearch =
+        !query ||
+        item.title.toLowerCase().includes(query) ||
+        item.description.toLowerCase().includes(query) ||
+        item.file_name?.toLowerCase().includes(query) ||
+        course?.name?.toLowerCase().includes(query) ||
+        course?.code?.toLowerCase().includes(query);
+
+      let matchesStatus = true;
+
+      if (statusFilter === "ready") {
+        matchesStatus = item.status === "uploaded";
+      }
+
+      if (statusFilter === "analyzed") {
+        matchesStatus =
+          item.status === "analyzed" ||
+          item.status === "completed";
+      }
+
+      if (statusFilter === "analyzing") {
+        matchesStatus = item.status === "analyzing";
+      }
+
+      return matchesSearch && matchesStatus;
     });
-  }, [
-    homework,
-    courses,
-    search,
-  ]);
+  }, [homework, courses, search, statusFilter]);
 
   const analyzedCount = homework.filter(
     (item) =>
       item.status === "analyzed" ||
-      item.status === "completed"
+      item.status === "completed",
   ).length;
 
-  const uploadedCount = homework.filter(
-    (item) =>
-      item.status === "uploaded"
+  const readyCount = homework.filter(
+    (item) => item.status === "uploaded",
+  ).length;
+
+  const analyzingCount = homework.filter(
+    (item) => item.status === "analyzing",
   ).length;
 
   const totalFiles = homework.filter(
-    (item) => item.file_path
+    (item) => item.file_path,
   ).length;
+
+  const analysisRate =
+    homework.length > 0
+      ? Math.round((analyzedCount / homework.length) * 100)
+      : 0;
 
   function resetUploadForm() {
     setTitle("");
@@ -309,36 +298,39 @@ export default function HomeworkUploaderPage() {
     setSelectedFile(null);
   }
 
-  function handleFileChange(
-    event: ChangeEvent<HTMLInputElement>
-  ) {
-    const file =
-      event.target.files?.[0];
+  function openUploadModal() {
+    setError("");
+    resetUploadForm();
+    setShowUploadModal(true);
+  }
 
-    if (!file) {
-      return;
-    }
+  function closeUploadModal() {
+    if (uploading) return;
+
+    setShowUploadModal(false);
+    setError("");
+    resetUploadForm();
+  }
+
+  function handleFileChange(
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
 
     setError("");
 
     if (file.size > MAX_FILE_SIZE) {
-      setError(
-        "Files must be smaller than 20 MB."
-      );
-
+      setError("Files must be smaller than 20 MB.");
       event.target.value = "";
       return;
     }
 
-    if (
-      !ACCEPTED_FILE_TYPES.includes(
-        file.type
-      )
-    ) {
+    if (!ACCEPTED_FILE_TYPES.includes(file.type)) {
       setError(
-        "Unsupported file type. Please upload a PDF, TXT, PNG, JPG, JPEG, or WEBP file."
+        "Unsupported file type. Please upload a PDF, TXT, PNG, JPG, JPEG, or WEBP file.",
       );
-
       event.target.value = "";
       return;
     }
@@ -346,135 +338,68 @@ export default function HomeworkUploaderPage() {
     setSelectedFile(file);
 
     if (!title.trim()) {
-      const withoutExtension =
-        file.name.replace(
-          /\.[^/.]+$/,
-          ""
-        );
+      const withoutExtension = file.name.replace(
+        /\.[^/.]+$/,
+        "",
+      );
 
       setTitle(withoutExtension);
     }
   }
 
-  async function handleUpload(
-    event: FormEvent
-  ) {
+  async function handleUpload(event: FormEvent) {
     event.preventDefault();
 
     if (!selectedFile) {
-      setError(
-        "Please select a homework file."
-      );
+      setError("Please select a homework file.");
       return;
     }
 
     if (!title.trim()) {
-      setError(
-        "Please enter a homework title."
-      );
+      setError("Please enter a homework title.");
       return;
     }
 
     setUploading(true);
     setError("");
 
-    let record: Homework | null =
-      null;
+    let record: Homework | null = null;
 
     try {
-      /*
-       * ----------------------------------------
-       * 1. Create database record
-       * ----------------------------------------
-       */
-
       record = await createHomework({
         title,
         description,
-        course_id:
-          courseId || null,
-        assignment_id:
-          assignmentId || null,
+        course_id: courseId || null,
+        assignment_id: assignmentId || null,
       });
 
-      console.log(
-        "Homework record created:",
-        record
+      const uploadedHomework = await uploadHomeworkFile(
+        selectedFile,
+        record.id,
       );
 
-      /*
-       * ----------------------------------------
-       * 2. Upload actual file
-       * ----------------------------------------
-       */
-
-      const uploadedHomework =
-        await uploadHomeworkFile(
-          selectedFile,
-          record.id
-        );
-
-      console.log(
-        "Homework file attached:",
-        uploadedHomework
-      );
-
-      /*
-       * ----------------------------------------
-       * 3. Verify file_path
-       * ----------------------------------------
-       */
-
-      if (
-        !uploadedHomework.file_path
-      ) {
+      if (!uploadedHomework.file_path) {
         throw new Error(
-          "The file uploaded, but the homework record was not linked to the file."
+          "The file uploaded, but the homework record was not linked to the file.",
         );
       }
 
-      /*
-       * ----------------------------------------
-       * 4. Refresh from Supabase
-       * ----------------------------------------
-       */
+      const refreshedHomework = await getHomework();
 
-      const refreshedHomework =
-        await getHomework();
-
-      setHomework(
-        refreshedHomework
-      );
+      setHomework(refreshedHomework);
 
       const freshRecord =
         refreshedHomework.find(
-          (item) =>
-            item.id ===
-            uploadedHomework.id
+          (item) => item.id === uploadedHomework.id,
         ) || uploadedHomework;
 
-      /*
-       * ----------------------------------------
-       * 5. Show uploaded homework
-       * ----------------------------------------
-       */
-
-      setSelectedHomework(
-        freshRecord
-      );
+      setSelectedHomework(freshRecord);
 
       resetUploadForm();
       setShowUploadModal(false);
     } catch (err) {
-      console.error(
-        "Homework upload failed:",
-        err
-      );
+      console.error("Homework upload failed:", err);
 
-      /*
-       * If the database record was created
-       * but the upload failed, clean it up.
-       */
       if (record?.id) {
         await supabase
           .from("homework")
@@ -485,220 +410,117 @@ export default function HomeworkUploaderPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to upload homework."
+          : "Failed to upload homework.",
       );
     } finally {
       setUploading(false);
     }
   }
 
-  async function analyzeHomework(
-    item: Homework
-  ) {
+  async function analyzeHomework(item: Homework) {
     setAnalyzing(true);
     setError("");
 
     try {
-      /*
-       * ----------------------------------------
-       * Make sure the UI has a file path
-       * ----------------------------------------
-       */
-
       if (!item.file_path) {
-        /*
-         * Before immediately failing, reload
-         * the record from Supabase. This fixes
-         * stale React state.
-         */
+        const freshHomework = await getHomework();
 
-        const freshHomework =
-          await getHomework();
-
-        const freshItem =
-          freshHomework.find(
-            (homeworkItem) =>
-              homeworkItem.id ===
-              item.id
-          );
+        const freshItem = freshHomework.find(
+          (homeworkItem) => homeworkItem.id === item.id,
+        );
 
         if (!freshItem?.file_path) {
           throw new Error(
-            "This homework record does not have a file attached. Please upload the file again."
+            "This homework record does not have a file attached. Please upload the file again.",
           );
         }
 
         item = freshItem;
-
-        setHomework(
-          freshHomework
-        );
+        setHomework(freshHomework);
       }
 
-      /*
-       * ----------------------------------------
-       * Set analyzing state
-       * ----------------------------------------
-       */
-
-      await updateHomework(
-        item.id,
-        {
-          status: "analyzing",
-        }
-      );
+      await updateHomework(item.id, {
+        status: "analyzing",
+      });
 
       setHomework((current) =>
-        current.map(
-          (homeworkItem) =>
-            homeworkItem.id ===
-            item.id
-              ? {
-                  ...homeworkItem,
-                  status:
-                    "analyzing",
-                }
-              : homeworkItem
-        )
+        current.map((homeworkItem) =>
+          homeworkItem.id === item.id
+            ? {
+                ...homeworkItem,
+                status: "analyzing",
+              }
+            : homeworkItem,
+        ),
       );
 
-      /*
-       * ----------------------------------------
-       * Get authenticated session
-       * ----------------------------------------
-       */
+      setSelectedHomework((current) =>
+        current?.id === item.id
+          ? {
+              ...current,
+              status: "analyzing",
+            }
+          : current,
+      );
 
       const {
-        data: {
-          session,
-        },
-      } =
-        await supabase.auth.getSession();
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (
-        !session?.access_token
-      ) {
+      if (!session?.access_token) {
         throw new Error(
-          "Your session has expired. Please log in again."
+          "Your session has expired. Please log in again.",
         );
       }
 
-      /*
-       * ----------------------------------------
-       * Find course
-       * ----------------------------------------
-       */
+      const course = courses.find(
+        (courseItem) => courseItem.id === item.course_id,
+      );
 
-      const course =
-        courses.find(
-          (courseItem) =>
-            courseItem.id ===
-            item.course_id
-        );
+      const response = await fetch("/api/ai/homework", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          homeworkId: item.id,
+          title: item.title,
+          description: item.description,
+          courseName: course?.name || "",
+          courseCode: course?.code || "",
+        }),
+      });
 
-      /*
-       * ----------------------------------------
-       * Send homework ID to server
-       * ----------------------------------------
-       */
-
-      const response =
-        await fetch(
-          "/api/ai/homework",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-
-              Authorization:
-                `Bearer ${session.access_token}`,
-            },
-
-            body: JSON.stringify({
-              homeworkId:
-                item.id,
-
-              title:
-                item.title,
-
-              description:
-                item.description,
-
-              courseName:
-                course?.name ||
-                "",
-
-              courseCode:
-                course?.code ||
-                "",
-            }),
-          }
-        );
-
-      const data =
-        await response.json();
+      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.error ||
-            "Homework analysis failed."
+          data.error || "Homework analysis failed.",
         );
       }
 
-      /*
-       * ----------------------------------------
-       * Save analysis
-       * ----------------------------------------
-       */
-
-      const updated =
-        await updateHomework(
-          item.id,
-          {
-            status:
-              "analyzed",
-
-            ai_summary:
-              data.summary ||
-              "",
-
-            ai_solution:
-              data.solution ||
-              "",
-
-            ai_explanation:
-              data.explanation ||
-              "",
-
-            ai_hints:
-              Array.isArray(
-                data.hints
-              )
-                ? data.hints
-                : [],
-          }
-        );
+      const updated = await updateHomework(item.id, {
+        status: "analyzed",
+        ai_summary: data.summary || "",
+        ai_solution: data.solution || "",
+        ai_explanation: data.explanation || "",
+        ai_hints: Array.isArray(data.hints)
+          ? data.hints
+          : [],
+      });
 
       setHomework((current) =>
-        current.map(
-          (homeworkItem) =>
-            homeworkItem.id ===
-            item.id
-              ? updated
-              : homeworkItem
-        )
+        current.map((homeworkItem) =>
+          homeworkItem.id === item.id
+            ? updated
+            : homeworkItem,
+        ),
       );
 
-      setSelectedHomework(
-        updated
-      );
+      setSelectedHomework(updated);
     } catch (err) {
-      console.error(
-        "Homework analysis failed:",
-        err
-      );
+      console.error("Homework analysis failed:", err);
 
       const message =
         err instanceof Error
@@ -707,189 +529,161 @@ export default function HomeworkUploaderPage() {
 
       setError(message);
 
-      await updateHomework(
-        item.id,
-        {
-          status: "uploaded",
-        }
-      ).catch(() => {});
+      await updateHomework(item.id, {
+        status: "uploaded",
+      }).catch(() => {});
 
       setHomework((current) =>
-        current.map(
-          (homeworkItem) =>
-            homeworkItem.id ===
-            item.id
-              ? {
-                  ...homeworkItem,
-                  status:
-                    "uploaded",
-                }
-              : homeworkItem
-        )
+        current.map((homeworkItem) =>
+          homeworkItem.id === item.id
+            ? {
+                ...homeworkItem,
+                status: "uploaded",
+              }
+            : homeworkItem,
+        ),
+      );
+
+      setSelectedHomework((current) =>
+        current?.id === item.id
+          ? {
+              ...current,
+              status: "uploaded",
+            }
+          : current,
       );
     } finally {
       setAnalyzing(false);
     }
   }
 
-  async function handleOpenFile(
-    item: Homework
-  ) {
+  async function handleOpenFile(item: Homework) {
     try {
       setError("");
 
       if (!item.file_path) {
         throw new Error(
-          "This homework does not have an attached file."
+          "This homework does not have an attached file.",
         );
       }
 
-      const url =
-        await getHomeworkDownloadUrl(
-          item.file_path
-        );
+      const url = await getHomeworkDownloadUrl(
+        item.file_path,
+      );
 
       window.open(
         url,
         "_blank",
-        "noopener,noreferrer"
+        "noopener,noreferrer",
       );
     } catch (err) {
-      console.error(
-        "Could not open homework:",
-        err
-      );
+      console.error("Could not open homework:", err);
 
       setError(
         err instanceof Error
           ? err.message
-          : "Could not open homework file."
+          : "Could not open homework file.",
       );
     }
   }
 
-  async function handleDelete(
-    item: Homework
-  ) {
-    const confirmed =
-      window.confirm(
-        `Delete "${item.title}"? This cannot be undone.`
-      );
+  async function confirmDelete() {
+    if (!deleteTarget) return;
 
-    if (!confirmed) {
-      return;
-    }
+    const item = deleteTarget;
 
     try {
       setError("");
 
-      await deleteHomework(
-        item.id
-      );
+      await deleteHomework(item.id);
 
       setHomework((current) =>
         current.filter(
-          (homeworkItem) =>
-            homeworkItem.id !==
-            item.id
-        )
+          (homeworkItem) => homeworkItem.id !== item.id,
+        ),
       );
 
-      if (
-        selectedHomework?.id ===
-        item.id
-      ) {
-        setSelectedHomework(
-          null
-        );
+      if (selectedHomework?.id === item.id) {
+        setSelectedHomework(null);
       }
+
+      setDeleteTarget(null);
     } catch (err) {
-      console.error(
-        "Failed to delete homework:",
-        err
-      );
+      console.error("Failed to delete homework:", err);
 
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to delete homework."
+          : "Failed to delete homework.",
       );
     }
   }
 
-  function getCourse(
-    courseId: string | null
-  ) {
-    if (!courseId) {
-      return null;
-    }
+  function getCourse(courseId: string | null) {
+    if (!courseId) return null;
 
     return courses.find(
-      (course) =>
-        course.id === courseId
+      (course) => course.id === courseId,
+    );
+  }
+
+  function getAssignment(assignmentId: string | null) {
+    if (!assignmentId) return null;
+
+    return assignments.find(
+      (assignment) => assignment.id === assignmentId,
     );
   }
 
   return (
     <AppShell>
       <div className="min-h-full">
-        {/* ---------------------------------------- */}
         {/* HEADER */}
-        {/* ---------------------------------------- */}
-
-        <div className="border-b border-white/[0.06] bg-black/10">
-          <div className="mx-auto max-w-[1500px] px-5 py-7 sm:px-8">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <div className="mb-2 flex items-center gap-2 text-sm text-violet-300">
+        <header className="border-b border-white/[0.06]">
+          <div className="mx-auto max-w-[1500px] px-5 py-7 sm:px-8 lg:py-9">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="min-w-0">
+                <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-violet-300/80">
                   <GraduationCap className="h-4 w-4" />
-                  StudySpace
+                  Academic workspace
                 </div>
 
-                <h1 className="text-3xl font-semibold tracking-tight text-white">
+                <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                   Homework
                 </h1>
 
-                <p className="mt-2 max-w-2xl text-sm text-white/45">
-                  Upload assignments, keep them
-                  organized, and let your AI tutor
-                  explain what you need to know.
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-white/40 sm:text-[15px]">
+                  Keep your coursework together, then use AI
+                  to understand the problems instead of just
+                  getting an answer.
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={() => {
-                  setError("");
-                  setShowUploadModal(true);
-                }}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-medium text-white shadow-lg shadow-violet-950/30 transition hover:bg-violet-500"
+                onClick={openUploadModal}
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-medium text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-500 active:scale-[0.98]"
               >
                 <Plus className="h-4 w-4" />
                 Upload homework
               </button>
             </div>
           </div>
-        </div>
+        </header>
 
-        <div className="mx-auto max-w-[1500px] px-5 py-6 sm:px-8">
-          {/* ---------------------------------------- */}
+        <main className="mx-auto max-w-[1500px] px-5 py-6 sm:px-8 sm:py-8">
           {/* ERROR */}
-          {/* ---------------------------------------- */}
-
           {error && (
-            <div className="mb-5 flex items-start gap-3 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
+            <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-400/20 bg-red-400/[0.07] px-4 py-3 text-sm text-red-200">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
 
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 {error}
               </div>
 
               <button
                 type="button"
-                onClick={() =>
-                  setError("")
-                }
+                onClick={() => setError("")}
                 className="text-red-300/60 transition hover:text-red-200"
               >
                 <X className="h-4 w-4" />
@@ -897,383 +691,404 @@ export default function HomeworkUploaderPage() {
             </div>
           )}
 
-          {/* ---------------------------------------- */}
-          {/* STATS */}
-          {/* ---------------------------------------- */}
+          {/* OVERVIEW */}
+          <section className="mb-8">
+            <div className="grid overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025] sm:grid-cols-2 xl:grid-cols-4">
+              <div className="border-b border-white/[0.06] p-5 sm:border-r xl:border-b-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/35">
+                    Total files
+                  </span>
 
-          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="rounded-xl bg-violet-500/10 p-2.5">
-                  <FileText className="h-5 w-5 text-violet-300" />
+                  <FileText className="h-4 w-4 text-white/25" />
                 </div>
 
-                <span className="text-xs text-white/30">
-                  Total
-                </span>
-              </div>
-
-              <div className="text-2xl font-semibold text-white">
-                {homework.length}
-              </div>
-
-              <div className="mt-1 text-xs text-white/40">
-                Homework files
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="rounded-xl bg-emerald-500/10 p-2.5">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+                <div className="mt-4 text-2xl font-semibold tracking-tight text-white">
+                  {homework.length}
                 </div>
 
-                <span className="text-xs text-white/30">
-                  AI
-                </span>
+                <p className="mt-1 text-xs text-white/35">
+                  Uploaded to your workspace
+                </p>
               </div>
 
-              <div className="text-2xl font-semibold text-white">
-                {analyzedCount}
-              </div>
+              <div className="border-b border-white/[0.06] p-5 xl:border-r xl:border-b-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/35">
+                    AI analyzed
+                  </span>
 
-              <div className="mt-1 text-xs text-white/40">
-                Files analyzed
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="rounded-xl bg-amber-500/10 p-2.5">
-                  <Clock3 className="h-5 w-5 text-amber-300" />
+                  <Sparkles className="h-4 w-4 text-violet-300/60" />
                 </div>
 
-                <span className="text-xs text-white/30">
-                  Pending
-                </span>
-              </div>
+                <div className="mt-4 flex items-end gap-2">
+                  <span className="text-2xl font-semibold tracking-tight text-white">
+                    {analyzedCount}
+                  </span>
 
-              <div className="text-2xl font-semibold text-white">
-                {uploadedCount}
-              </div>
-
-              <div className="mt-1 text-xs text-white/40">
-                Waiting for analysis
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="rounded-xl bg-cyan-500/10 p-2.5">
-                  <Upload className="h-5 w-5 text-cyan-300" />
+                  <span className="pb-1 text-xs text-white/30">
+                    / {homework.length}
+                  </span>
                 </div>
 
-                <span className="text-xs text-white/30">
-                  Storage
-                </span>
+                <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/[0.06]">
+                  <div
+                    className="h-full rounded-full bg-violet-500 transition-all"
+                    style={{
+                      width: `${analysisRate}%`,
+                    }}
+                  />
+                </div>
               </div>
 
-              <div className="text-2xl font-semibold text-white">
-                {totalFiles}
+              <div className="border-b border-white/[0.06] p-5 sm:border-r sm:border-b-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/35">
+                    Ready to analyze
+                  </span>
+
+                  <Clock3 className="h-4 w-4 text-amber-300/60" />
+                </div>
+
+                <div className="mt-4 text-2xl font-semibold tracking-tight text-white">
+                  {readyCount}
+                </div>
+
+                <p className="mt-1 text-xs text-white/35">
+                  Waiting for your review
+                </p>
               </div>
 
-              <div className="mt-1 text-xs text-white/40">
-                Files attached
+              <div className="p-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/35">
+                    Processing
+                  </span>
+
+                  <Brain className="h-4 w-4 text-cyan-300/60" />
+                </div>
+
+                <div className="mt-4 text-2xl font-semibold tracking-tight text-white">
+                  {analyzingCount}
+                </div>
+
+                <p className="mt-1 text-xs text-white/35">
+                  Currently being analyzed
+                </p>
               </div>
             </div>
-          </div>
+          </section>
 
-          {/* ---------------------------------------- */}
-          {/* SEARCH */}
-          {/* ---------------------------------------- */}
+          {/* TOOLBAR */}
+          <section className="mb-6">
+            <div className="flex flex-col gap-3 lg:flex-row">
+              <div className="relative min-w-0 flex-1">
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/25" />
 
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/25" />
+                <input
+                  value={search}
+                  onChange={(event) =>
+                    setSearch(event.target.value)
+                  }
+                  placeholder="Search homework, files, or courses..."
+                  className="input h-11 pl-10"
+                />
+              </div>
 
-              <input
-                value={search}
-                onChange={(event) =>
-                  setSearch(
-                    event.target.value
-                  )
-                }
-                placeholder="Search homework..."
-                className="input pl-10"
-              />
+              <div className="flex items-center gap-2 overflow-x-auto rounded-xl border border-white/[0.07] bg-white/[0.025] p-1">
+                <div className="hidden px-2 sm:block">
+                  <Filter className="h-4 w-4 text-white/25" />
+                </div>
+
+                {[
+                  ["all", "All"],
+                  ["ready", "Ready"],
+                  ["analyzed", "Analyzed"],
+                  ["analyzing", "Analyzing"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() =>
+                      setStatusFilter(
+                        value as
+                          | "all"
+                          | "ready"
+                          | "analyzed"
+                          | "analyzing",
+                      )
+                    }
+                    className={`whitespace-nowrap rounded-lg px-3 py-2 text-xs font-medium transition ${
+                      statusFilter === value
+                        ? "bg-white/[0.09] text-white"
+                        : "text-white/40 hover:bg-white/[0.04] hover:text-white/70"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void loadHomework()}
+                className="h-11 rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 text-sm text-white/50 transition hover:bg-white/[0.06] hover:text-white"
+              >
+                Refresh
+              </button>
             </div>
+          </section>
 
-            <button
-              type="button"
-              onClick={() =>
-                loadHomework()
-              }
-              className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-sm text-white/65 transition hover:bg-white/[0.06] hover:text-white"
-            >
-              Refresh
-            </button>
-          </div>
-
-          {/* ---------------------------------------- */}
-          {/* LOADING */}
-          {/* ---------------------------------------- */}
-
+          {/* CONTENT */}
           {loading ? (
-            <div className="flex min-h-[300px] items-center justify-center">
+            <div className="flex min-h-[360px] items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.02]">
               <div className="flex items-center gap-3 text-sm text-white/40">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading homework...
+                Loading your homework...
               </div>
             </div>
-          ) : filteredHomework.length ===
-            0 ? (
-            <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.02] px-6 py-20 text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-500/10">
-                <BookOpen className="h-7 w-7 text-violet-300" />
+          ) : filteredHomework.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.018] px-6 py-24 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-400/10 bg-violet-500/[0.07]">
+                {search || statusFilter !== "all" ? (
+                  <Search className="h-6 w-6 text-violet-300" />
+                ) : (
+                  <Upload className="h-6 w-6 text-violet-300" />
+                )}
               </div>
 
-              <h2 className="text-lg font-medium text-white">
-                {search
-                  ? "No homework found"
-                  : "No homework yet"}
+              <h2 className="mt-5 text-lg font-semibold text-white">
+                {search || statusFilter !== "all"
+                  ? "Nothing matches your filters"
+                  : "Your homework workspace is empty"}
               </h2>
 
-              <p className="mx-auto mt-2 max-w-md text-sm text-white/40">
-                {search
-                  ? "Try a different search."
-                  : "Upload your first homework file and StudySpace will keep everything organized for you."}
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-white/35">
+                {search || statusFilter !== "all"
+                  ? "Try a different search or status filter."
+                  : "Upload a homework file and StudySpace will organize it and give you an AI-powered explanation when you're ready."}
               </p>
 
-              {!search && (
+              {!search && statusFilter === "all" && (
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowUploadModal(
-                      true
-                    )
-                  }
-                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
+                  onClick={openUploadModal}
+                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-500"
                 >
                   <Upload className="h-4 w-4" />
-                  Upload homework
+                  Upload your first file
                 </button>
               )}
             </div>
           ) : (
-            /* ---------------------------------------- */
-            /* HOMEWORK GRID */
-            /* ---------------------------------------- */
+            <div className="space-y-3">
+              {filteredHomework.map((item) => {
+                const course = getCourse(item.course_id);
+                const assignment = getAssignment(
+                  item.assignment_id,
+                );
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
-              {filteredHomework.map(
-                (item) => {
-                  const course =
-                    getCourse(
-                      item.course_id
-                    );
+                const Icon = getFileIcon(item.file_type);
+                const isAnalyzing =
+                  item.status === "analyzing";
 
-                  const Icon =
-                    getFileIcon(
-                      item.file_type
-                    );
-
-                  const isAnalyzing =
-                    item.status ===
-                    "analyzing";
-
-                  return (
-                    <div
-                      key={item.id}
-                      className="group overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.025] transition hover:border-violet-400/20 hover:bg-white/[0.035]"
-                    >
-                      <div className="p-5">
-                        <div className="mb-4 flex items-start justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-3">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
-                              <Icon className="h-5 w-5 text-violet-300" />
-                            </div>
-
-                            <div className="min-w-0">
-                              <h3 className="truncate text-sm font-medium text-white">
-                                {item.title}
-                              </h3>
-
-                              <p className="mt-1 truncate text-xs text-white/35">
-                                {item.file_name ||
-                                  "No file"}
-                              </p>
-                            </div>
-                          </div>
-
-                          <span
-                            className={`shrink-0 rounded-full border px-2.5 py-1 text-[11px] ${getStatusClass(
-                              item.status
-                            )}`}
-                          >
-                            {getStatusLabel(
-                              item.status
-                            )}
-                          </span>
+                return (
+                  <article
+                    key={item.id}
+                    className="group rounded-2xl border border-white/[0.07] bg-white/[0.025] transition hover:border-violet-400/15 hover:bg-white/[0.035]"
+                  >
+                    <div className="flex flex-col gap-5 p-5 lg:flex-row lg:items-center">
+                      {/* FILE */}
+                      <div className="flex min-w-0 flex-1 items-start gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.04]">
+                          <Icon className="h-5 w-5 text-violet-300" />
                         </div>
 
-                        {course && (
-                          <div className="mb-3 inline-flex items-center gap-1.5 rounded-lg bg-white/[0.04] px-2.5 py-1.5 text-xs text-white/50">
-                            <BookOpen className="h-3.5 w-3.5" />
-                            {course.code} ·{" "}
-                            {course.name}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h2 className="truncate text-sm font-semibold text-white">
+                              {item.title}
+                            </h2>
+
+                            <span
+                              className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium ${getStatusClass(
+                                item.status,
+                              )}`}
+                            >
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${getStatusDot(
+                                  item.status,
+                                )}`}
+                              />
+                              {getStatusLabel(item.status)}
+                            </span>
                           </div>
-                        )}
 
-                        {item.description && (
-                          <p className="mb-4 line-clamp-2 text-sm leading-6 text-white/45">
-                            {item.description}
-                          </p>
-                        )}
+                          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/30">
+                            <span className="truncate">
+                              {item.file_name || "No file attached"}
+                            </span>
 
-                        <div className="mb-4 flex items-center gap-3 text-xs text-white/30">
-                          <span>
-                            {formatFileSize(
-                              item.file_size
+                            <span className="text-white/15">
+                              •
+                            </span>
+
+                            <span>
+                              {formatFileSize(item.file_size)}
+                            </span>
+
+                            <span className="text-white/15">
+                              •
+                            </span>
+
+                            <span>
+                              {formatDate(item.created_at)}
+                            </span>
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {course && (
+                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/45">
+                                <BookOpen className="h-3 w-3" />
+                                {course.code}
+                              </span>
                             )}
-                          </span>
 
-                          <span>•</span>
-
-                          <span>
-                            {formatDate(
-                              item.created_at
+                            {assignment && (
+                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/45">
+                                {assignment.title}
+                              </span>
                             )}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedHomework(
-                                item
-                              )
-                            }
-                            className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-xs font-medium text-white/65 transition hover:bg-white/[0.07] hover:text-white"
-                          >
-                            View details
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={
-                              isAnalyzing
-                            }
-                            onClick={() =>
-                              analyzeHomework(
-                                item
-                              )
-                            }
-                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-3 py-2.5 text-xs font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {isAnalyzing ? (
-                              <>
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                Analyzing
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="h-3.5 w-3.5" />
-                                Analyze
-                              </>
-                            )}
-                          </button>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between border-t border-white/[0.05] px-5 py-3">
+                      {/* DESCRIPTION */}
+                      <div className="hidden max-w-sm flex-1 xl:block">
+                        {item.description ? (
+                          <p className="line-clamp-2 text-xs leading-5 text-white/35">
+                            {item.description}
+                          </p>
+                        ) : (
+                          <span className="text-xs text-white/20">
+                            No description
+                          </span>
+                        )}
+                      </div>
+
+                      {/* ACTIONS */}
+                      <div className="flex shrink-0 items-center gap-2 border-t border-white/[0.06] pt-4 lg:border-0 lg:pt-0">
                         <button
                           type="button"
                           onClick={() =>
-                            handleOpenFile(
-                              item
-                            )
+                            setSelectedHomework(item)
                           }
-                          className="inline-flex items-center gap-1.5 text-xs text-white/40 transition hover:text-white"
+                          className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.025] px-3 text-xs font-medium text-white/55 transition hover:bg-white/[0.07] hover:text-white"
                         >
-                          <Download className="h-3.5 w-3.5" />
-                          Open file
+                          View
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isAnalyzing}
+                          onClick={() =>
+                            void analyzeHomework(item)
+                          }
+                          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-3 text-xs font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {isAnalyzing ? (
+                            <>
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              Analyzing
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="h-3.5 w-3.5" />
+                              Analyze
+                            </>
+                          )}
                         </button>
 
                         <button
                           type="button"
                           onClick={() =>
-                            handleDelete(
-                              item
-                            )
+                            setDeleteTarget(item)
                           }
-                          className="rounded-lg p-1.5 text-white/25 transition hover:bg-red-500/10 hover:text-red-300"
+                          className="flex h-9 w-9 items-center justify-center rounded-lg text-white/20 transition hover:bg-red-500/10 hover:text-red-300"
                           title="Delete homework"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
-                  );
-                }
-              )}
+                  </article>
+                );
+              })}
             </div>
           )}
-        </div>
 
-        {/* ======================================== */}
+          {/* FOOTER INFO */}
+          {!loading && homework.length > 0 && (
+            <div className="mt-5 flex flex-col gap-2 text-xs text-white/25 sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                Showing {filteredHomework.length} of{" "}
+                {homework.length} homework files
+              </span>
+
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300/50" />
+                {totalFiles} files stored
+              </span>
+            </div>
+          )}
+        </main>
+
         {/* UPLOAD MODAL */}
-        {/* ======================================== */}
-
         {showUploadModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-            <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#100b19] shadow-2xl shadow-black/50">
-              <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-5">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
+            <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#100b19] shadow-2xl shadow-black/60">
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.06] bg-[#100b19]/95 px-6 py-5 backdrop-blur">
                 <div>
-                  <h2 className="text-lg font-semibold text-white">
-                    Upload homework
-                  </h2>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
+                      <Upload className="h-4 w-4 text-violet-300" />
+                    </div>
 
-                  <p className="mt-1 text-xs text-white/35">
-                    PDF, TXT, PNG, JPG, JPEG, or WEBP ·
-                    max 20 MB
+                    <h2 className="text-lg font-semibold text-white">
+                      Upload homework
+                    </h2>
+                  </div>
+
+                  <p className="mt-2 text-xs text-white/30">
+                    PDF, TXT, PNG, JPG, JPEG, or WEBP · max
+                    20 MB
                   </p>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!uploading) {
-                      setShowUploadModal(
-                        false
-                      );
-                      setError("");
-                    }
-                  }}
-                  className="rounded-lg p-2 text-white/35 transition hover:bg-white/[0.05] hover:text-white"
+                  onClick={closeUploadModal}
+                  disabled={uploading}
+                  className="rounded-lg p-2 text-white/30 transition hover:bg-white/[0.05] hover:text-white disabled:opacity-30"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
               <form
-                onSubmit={
-                  handleUpload
-                }
+                onSubmit={handleUpload}
                 className="space-y-5 p-6"
               >
                 <div>
-                  <label className="mb-2 block text-xs font-medium text-white/60">
+                  <label className="mb-2 block text-xs font-medium text-white/55">
                     Title
                   </label>
 
                   <input
                     value={title}
                     onChange={(event) =>
-                      setTitle(
-                        event.target
-                          .value
-                      )
+                      setTitle(event.target.value)
                     }
                     placeholder="e.g. Physics Problem Set 3"
                     className="input"
@@ -1282,17 +1097,14 @@ export default function HomeworkUploaderPage() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-xs font-medium text-white/60">
+                  <label className="mb-2 block text-xs font-medium text-white/55">
                     Description
                   </label>
 
                   <textarea
                     value={description}
                     onChange={(event) =>
-                      setDescription(
-                        event.target
-                          .value
-                      )
+                      setDescription(event.target.value)
                     }
                     placeholder="Optional notes about this homework..."
                     rows={3}
@@ -1303,59 +1115,42 @@ export default function HomeworkUploaderPage() {
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-2 block text-xs font-medium text-white/60">
+                    <label className="mb-2 block text-xs font-medium text-white/55">
                       Course
                     </label>
 
                     <select
                       value={courseId}
                       onChange={(event) => {
-                        setCourseId(
-                          event.target
-                            .value
-                        );
-                        setAssignmentId(
-                          ""
-                        );
+                        setCourseId(event.target.value);
+                        setAssignmentId("");
                       }}
                       className="input"
                       disabled={uploading}
                     >
-                      <option value="">
-                        No course
-                      </option>
+                      <option value="">No course</option>
 
-                      {courses.map(
-                        (course) => (
-                          <option
-                            key={
-                              course.id
-                            }
-                            value={
-                              course.id
-                            }
-                          >
-                            {course.code} ·{" "}
-                            {course.name}
-                          </option>
-                        )
-                      )}
+                      {courses.map((course) => (
+                        <option
+                          key={course.id}
+                          value={course.id}
+                        >
+                          {course.code} · {course.name}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-xs font-medium text-white/60">
+                    <label className="mb-2 block text-xs font-medium text-white/55">
                       Assignment
                     </label>
 
                     <select
-                      value={
-                        assignmentId
-                      }
+                      value={assignmentId}
                       onChange={(event) =>
                         setAssignmentId(
-                          event.target
-                            .value
+                          event.target.value,
                         )
                       }
                       className="input"
@@ -1370,60 +1165,44 @@ export default function HomeworkUploaderPage() {
                           (assignment) =>
                             !courseId ||
                             assignment.course_id ===
-                              courseId
+                              courseId,
                         )
-                        .map(
-                          (
-                            assignment
-                          ) => (
-                            <option
-                              key={
-                                assignment.id
-                              }
-                              value={
-                                assignment.id
-                              }
-                            >
-                              {
-                                assignment.title
-                              }
-                            </option>
-                          )
-                        )}
+                        .map((assignment) => (
+                          <option
+                            key={assignment.id}
+                            value={assignment.id}
+                          >
+                            {assignment.title}
+                          </option>
+                        ))}
                     </select>
                   </div>
                 </div>
 
-                {/* FILE DROP AREA */}
-
+                {/* FILE PICKER */}
                 <label className="block cursor-pointer">
                   <input
                     type="file"
                     className="hidden"
                     accept=".pdf,.txt,.png,.jpg,.jpeg,.webp,application/pdf,text/plain,image/png,image/jpeg,image/webp"
-                    onChange={
-                      handleFileChange
-                    }
-                    disabled={
-                      uploading
-                    }
+                    onChange={handleFileChange}
+                    disabled={uploading}
                   />
 
                   <div
                     className={`rounded-2xl border border-dashed p-8 text-center transition ${
                       selectedFile
                         ? "border-violet-400/30 bg-violet-500/[0.06]"
-                        : "border-white/[0.12] bg-white/[0.02] hover:border-violet-400/30 hover:bg-violet-500/[0.04]"
+                        : "border-white/[0.1] bg-white/[0.018] hover:border-violet-400/25 hover:bg-violet-500/[0.03]"
                     }`}
                   >
                     {selectedFile ? (
                       <>
-                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500/10">
                           {(() => {
-                            const Icon =
-                              getFileIcon(
-                                selectedFile.type
-                              );
+                            const Icon = getFileIcon(
+                              selectedFile.type,
+                            );
 
                             return (
                               <Icon className="h-6 w-6 text-violet-300" />
@@ -1431,15 +1210,13 @@ export default function HomeworkUploaderPage() {
                           })()}
                         </div>
 
-                        <div className="text-sm font-medium text-white">
-                          {
-                            selectedFile.name
-                          }
+                        <div className="mt-4 break-all text-sm font-medium text-white">
+                          {selectedFile.name}
                         </div>
 
-                        <div className="mt-1 text-xs text-white/35">
+                        <div className="mt-1 text-xs text-white/30">
                           {formatFileSize(
-                            selectedFile.size
+                            selectedFile.size,
                           )}
                         </div>
 
@@ -1449,16 +1226,17 @@ export default function HomeworkUploaderPage() {
                       </>
                     ) : (
                       <>
-                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.04]">
-                          <Upload className="h-6 w-6 text-white/40" />
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.04]">
+                          <Upload className="h-6 w-6 text-white/35" />
                         </div>
 
-                        <div className="text-sm font-medium text-white/75">
+                        <div className="mt-4 text-sm font-medium text-white/75">
                           Choose a homework file
                         </div>
 
                         <div className="mt-1 text-xs text-white/30">
-                          PDF, TXT, PNG, JPG, JPEG, WEBP
+                          Drag and drop isn&apos;t required — just
+                          choose a file
                         </div>
                       </>
                     )}
@@ -1466,26 +1244,18 @@ export default function HomeworkUploaderPage() {
                 </label>
 
                 {error && (
-                  <div className="rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm text-red-200">
-                    {error}
+                  <div className="flex gap-2 rounded-xl border border-red-400/20 bg-red-400/[0.07] p-3 text-sm text-red-200">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{error}</span>
                   </div>
                 )}
 
                 <div className="flex justify-end gap-3 border-t border-white/[0.06] pt-5">
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!uploading) {
-                        setShowUploadModal(
-                          false
-                        );
-                        setError("");
-                      }
-                    }}
-                    className="rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm text-white/55 transition hover:bg-white/[0.04] hover:text-white"
-                    disabled={
-                      uploading
-                    }
+                    onClick={closeUploadModal}
+                    disabled={uploading}
+                    className="rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm text-white/50 transition hover:bg-white/[0.04] hover:text-white disabled:opacity-40"
                   >
                     Cancel
                   </button>
@@ -1517,34 +1287,46 @@ export default function HomeworkUploaderPage() {
           </div>
         )}
 
-        {/* ======================================== */}
         {/* DETAILS MODAL */}
-        {/* ======================================== */}
-
         {selectedHomework && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-            <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-2xl border border-white/[0.08] bg-[#100b19] shadow-2xl shadow-black/60">
-              <div className="flex items-start justify-between border-b border-white/[0.06] px-6 py-5">
+          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+            <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#100b19] shadow-2xl shadow-black/60">
+              <div className="flex shrink-0 items-start justify-between border-b border-white/[0.06] px-6 py-5">
                 <div className="min-w-0">
-                  <div className="mb-2 flex items-center gap-2">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
                     <span
-                      className={`rounded-full border px-2.5 py-1 text-[11px] ${getStatusClass(
-                        selectedHomework.status
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] ${getStatusClass(
+                        selectedHomework.status,
                       )}`}
                     >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${getStatusDot(
+                          selectedHomework.status,
+                        )}`}
+                      />
                       {getStatusLabel(
-                        selectedHomework.status
+                        selectedHomework.status,
                       )}
                     </span>
+
+                    {getCourse(
+                      selectedHomework.course_id,
+                    ) && (
+                      <span className="rounded-full bg-white/[0.04] px-2.5 py-1 text-[11px] text-white/40">
+                        {
+                          getCourse(
+                            selectedHomework.course_id,
+                          )?.code
+                        }
+                      </span>
+                    )}
                   </div>
 
-                  <h2 className="truncate text-xl font-semibold text-white">
-                    {
-                      selectedHomework.title
-                    }
+                  <h2 className="truncate text-xl font-semibold text-white sm:text-2xl">
+                    {selectedHomework.title}
                   </h2>
 
-                  <p className="mt-1 text-xs text-white/35">
+                  <p className="mt-1 truncate text-xs text-white/30">
                     {selectedHomework.file_name ||
                       "No file attached"}
                   </p>
@@ -1553,35 +1335,31 @@ export default function HomeworkUploaderPage() {
                 <button
                   type="button"
                   onClick={() =>
-                    setSelectedHomework(
-                      null
-                    )
+                    setSelectedHomework(null)
                   }
-                  className="rounded-lg p-2 text-white/35 transition hover:bg-white/[0.05] hover:text-white"
+                  className="ml-4 shrink-0 rounded-lg p-2 text-white/30 transition hover:bg-white/[0.05] hover:text-white"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              <div className="max-h-[calc(90vh-100px)] overflow-y-auto p-6">
-                <div className="grid grid-cols-1 gap-5 lg:grid-cols-[280px_1fr]">
-                  {/* SIDEBAR */}
-
-                  <div className="space-y-4">
+              <div className="min-h-0 overflow-y-auto p-5 sm:p-6">
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-[260px_1fr]">
+                  {/* LEFT */}
+                  <aside className="space-y-3">
                     <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-4">
-                      <div className="mb-3 text-xs font-medium uppercase tracking-wider text-white/30">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/25">
                         File
                       </div>
 
-                      <div className="flex items-center gap-3">
+                      <div className="mt-4 flex items-center gap-3">
                         {(() => {
-                          const Icon =
-                            getFileIcon(
-                              selectedHomework.file_type
-                            );
+                          const Icon = getFileIcon(
+                            selectedHomework.file_type,
+                          );
 
                           return (
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10">
                               <Icon className="h-5 w-5 text-violet-300" />
                             </div>
                           );
@@ -1593,9 +1371,9 @@ export default function HomeworkUploaderPage() {
                               "No file"}
                           </div>
 
-                          <div className="mt-1 text-xs text-white/35">
+                          <div className="mt-1 text-xs text-white/30">
                             {formatFileSize(
-                              selectedHomework.file_size
+                              selectedHomework.file_size,
                             )}
                           </div>
                         </div>
@@ -1604,14 +1382,14 @@ export default function HomeworkUploaderPage() {
                       <button
                         type="button"
                         onClick={() =>
-                          handleOpenFile(
-                            selectedHomework
+                          void handleOpenFile(
+                            selectedHomework,
                           )
                         }
                         disabled={
                           !selectedHomework.file_path
                         }
-                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-xs font-medium text-white/65 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2.5 text-xs font-medium text-white/60 transition hover:bg-white/[0.07] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <Download className="h-3.5 w-3.5" />
                         Open file
@@ -1619,52 +1397,73 @@ export default function HomeworkUploaderPage() {
                     </div>
 
                     {getCourse(
-                      selectedHomework.course_id
+                      selectedHomework.course_id,
                     ) && (
                       <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-4">
-                        <div className="mb-3 text-xs font-medium uppercase tracking-wider text-white/30">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/25">
                           Course
                         </div>
 
-                        {(() => {
-                          const course =
+                        <div className="mt-3 text-sm font-semibold text-white">
+                          {
                             getCourse(
-                              selectedHomework.course_id
-                            );
+                              selectedHomework.course_id,
+                            )?.code
+                          }
+                        </div>
 
-                          return (
-                            <>
-                              <div className="text-sm font-medium text-white">
-                                {course?.code}
-                              </div>
+                        <div className="mt-1 text-xs leading-5 text-white/35">
+                          {
+                            getCourse(
+                              selectedHomework.course_id,
+                            )?.name
+                          }
+                        </div>
 
-                              <div className="mt-1 text-xs leading-5 text-white/40">
-                                {course?.name}
-                              </div>
+                        {getCourse(
+                          selectedHomework.course_id,
+                        )?.professor && (
+                          <div className="mt-2 text-xs text-white/25">
+                            {
+                              getCourse(
+                                selectedHomework.course_id,
+                              )?.professor
+                            }
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                              {course?.professor && (
-                                <div className="mt-2 text-xs text-white/30">
-                                  {course.professor}
-                                </div>
-                              )}
-                            </>
-                          );
-                        })()}
+                    {getAssignment(
+                      selectedHomework.assignment_id,
+                    ) && (
+                      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-4">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-white/25">
+                          Assignment
+                        </div>
+
+                        <div className="mt-3 text-sm font-medium text-white">
+                          {
+                            getAssignment(
+                              selectedHomework.assignment_id,
+                            )?.title
+                          }
+                        </div>
                       </div>
                     )}
 
                     <button
                       type="button"
                       onClick={() =>
-                        analyzeHomework(
-                          selectedHomework
+                        void analyzeHomework(
+                          selectedHomework,
                         )
                       }
                       disabled={
                         analyzing ||
                         !selectedHomework.file_path
                       }
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {analyzing ? (
                         <>
@@ -1678,147 +1477,169 @@ export default function HomeworkUploaderPage() {
                         </>
                       )}
                     </button>
-                  </div>
+                  </aside>
 
-                  {/* AI CONTENT */}
-
-                  <div className="space-y-5">
+                  {/* RIGHT */}
+                  <section className="space-y-4">
                     {selectedHomework.description && (
-                      <section className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
-                        <h3 className="mb-3 text-sm font-semibold text-white">
-                          Description
-                        </h3>
+                      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
+                        <div className="mb-3 flex items-center gap-2">
+                          <BookOpen className="h-4 w-4 text-white/30" />
+
+                          <h3 className="text-sm font-semibold text-white">
+                            Your notes
+                          </h3>
+                        </div>
 
                         <p className="whitespace-pre-wrap text-sm leading-7 text-white/50">
-                          {
-                            selectedHomework.description
-                          }
+                          {selectedHomework.description}
                         </p>
-                      </section>
+                      </div>
                     )}
 
                     {selectedHomework.ai_summary ? (
                       <>
-                        <section className="rounded-2xl border border-violet-400/15 bg-violet-500/[0.05] p-5">
-                          <div className="mb-3 flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-violet-300" />
+                        <div className="rounded-2xl border border-violet-400/15 bg-violet-500/[0.045] p-5">
+                          <div className="mb-4 flex items-center gap-2">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10">
+                              <Sparkles className="h-4 w-4 text-violet-300" />
+                            </div>
 
-                            <h3 className="text-sm font-semibold text-white">
-                              AI Summary
-                            </h3>
+                            <div>
+                              <h3 className="text-sm font-semibold text-white">
+                                AI Summary
+                              </h3>
+
+                              <p className="text-[11px] text-white/25">
+                                Key ideas from your homework
+                              </p>
+                            </div>
                           </div>
 
                           <p className="whitespace-pre-wrap text-sm leading-7 text-white/60">
-                            {
-                              selectedHomework.ai_summary
-                            }
+                            {selectedHomework.ai_summary}
                           </p>
-                        </section>
+                        </div>
 
                         {selectedHomework.ai_explanation && (
-                          <section className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
-                            <div className="mb-3 flex items-center gap-2">
-                              <Brain className="h-4 w-4 text-cyan-300" />
+                          <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
+                            <div className="mb-4 flex items-center gap-2">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-400/10">
+                                <Brain className="h-4 w-4 text-cyan-300" />
+                              </div>
 
-                              <h3 className="text-sm font-semibold text-white">
-                                Explanation
-                              </h3>
+                              <div>
+                                <h3 className="text-sm font-semibold text-white">
+                                  Explanation
+                                </h3>
+
+                                <p className="text-[11px] text-white/25">
+                                  How to understand the problem
+                                </p>
+                              </div>
                             </div>
 
                             <div className="whitespace-pre-wrap text-sm leading-7 text-white/55">
-                              {
-                                selectedHomework.ai_explanation
-                              }
+                              {selectedHomework.ai_explanation}
                             </div>
-                          </section>
+                          </div>
                         )}
 
                         {selectedHomework.ai_solution && (
-                          <section className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
-                            <div className="mb-3 flex items-center gap-2">
-                              <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                          <div className="rounded-2xl border border-emerald-400/10 bg-emerald-400/[0.025] p-5">
+                            <div className="mb-4 flex items-center gap-2">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-400/10">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+                              </div>
 
-                              <h3 className="text-sm font-semibold text-white">
-                                Solution
-                              </h3>
+                              <div>
+                                <h3 className="text-sm font-semibold text-white">
+                                  Solution
+                                </h3>
+
+                                <p className="text-[11px] text-white/25">
+                                  AI-generated solution approach
+                                </p>
+                              </div>
                             </div>
 
                             <div className="whitespace-pre-wrap text-sm leading-7 text-white/55">
-                              {
-                                selectedHomework.ai_solution
-                              }
+                              {selectedHomework.ai_solution}
                             </div>
-                          </section>
+                          </div>
                         )}
 
                         {selectedHomework.ai_hints &&
                           selectedHomework.ai_hints.length >
                             0 && (
-                            <section className="rounded-2xl border border-amber-400/15 bg-amber-400/[0.04] p-5">
+                            <div className="rounded-2xl border border-amber-400/10 bg-amber-400/[0.025] p-5">
                               <div className="mb-4 flex items-center gap-2">
-                                <Lightbulb className="h-4 w-4 text-amber-300" />
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-400/10">
+                                  <Lightbulb className="h-4 w-4 text-amber-300" />
+                                </div>
 
-                                <h3 className="text-sm font-semibold text-white">
-                                  Hints
-                                </h3>
+                                <div>
+                                  <h3 className="text-sm font-semibold text-white">
+                                    Hints
+                                  </h3>
+
+                                  <p className="text-[11px] text-white/25">
+                                    Helpful steps without giving
+                                    everything away
+                                  </p>
+                                </div>
                               </div>
 
                               <div className="space-y-3">
                                 {selectedHomework.ai_hints.map(
-                                  (
-                                    hint,
-                                    index
-                                  ) => (
+                                  (hint, index) => (
                                     <div
                                       key={`${selectedHomework.id}-hint-${index}`}
                                       className="flex gap-3"
                                     >
-                                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-400/10 text-[11px] font-medium text-amber-300">
-                                        {index +
-                                          1}
+                                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-400/10 text-[11px] font-semibold text-amber-300">
+                                        {index + 1}
                                       </div>
 
                                       <p className="pt-0.5 text-sm leading-6 text-white/50">
-                                        {
-                                          hint
-                                        }
+                                        {hint}
                                       </p>
                                     </div>
-                                  )
+                                  ),
                                 )}
                               </div>
-                            </section>
+                            </div>
                           )}
                       </>
                     ) : (
-                      <div className="flex min-h-[300px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.015] px-6 text-center">
-                        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-500/10">
+                      <div className="flex min-h-[440px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.015] px-6 text-center">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-400/10 bg-violet-500/[0.06]">
                           <Sparkles className="h-7 w-7 text-violet-300" />
                         </div>
 
-                        <h3 className="text-base font-medium text-white">
+                        <h3 className="mt-5 text-base font-semibold text-white">
                           Ready for AI analysis
                         </h3>
 
                         <p className="mt-2 max-w-md text-sm leading-6 text-white/35">
-                          StudySpace can read your
-                          uploaded homework and explain
-                          the concepts, solution approach,
+                          StudySpace can analyze your uploaded
+                          homework and break it down into a
+                          summary, explanation, solution approach,
                           and useful hints.
                         </p>
 
                         <button
                           type="button"
                           onClick={() =>
-                            analyzeHomework(
-                              selectedHomework
+                            void analyzeHomework(
+                              selectedHomework,
                             )
                           }
                           disabled={
                             analyzing ||
                             !selectedHomework.file_path
                           }
-                          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {analyzing ? (
                             <>
@@ -1834,15 +1655,57 @@ export default function HomeworkUploaderPage() {
                         </button>
 
                         {!selectedHomework.file_path && (
-                          <p className="mt-3 text-xs text-red-300/70">
-                            No file is attached to this
-                            homework record.
+                          <p className="mt-3 text-xs text-red-300/60">
+                            No file is attached to this homework
+                            record.
                           </p>
                         )}
                       </div>
                     )}
-                  </div>
+                  </section>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* DELETE CONFIRMATION */}
+        {deleteTarget && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
+            <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#100b19] p-6 shadow-2xl shadow-black/60">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10">
+                <Trash2 className="h-5 w-5 text-red-300" />
+              </div>
+
+              <h2 className="mt-5 text-lg font-semibold text-white">
+                Delete this homework?
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-white/40">
+                This will permanently remove{" "}
+                <span className="text-white/65">
+                  “{deleteTarget.title}”
+                </span>{" "}
+                and its associated homework record.
+              </p>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget(null)}
+                  className="rounded-xl border border-white/[0.08] px-4 py-2.5 text-sm text-white/55 transition hover:bg-white/[0.04] hover:text-white"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => void confirmDelete()}
+                  className="inline-flex items-center gap-2 rounded-xl bg-red-500/90 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete homework
+                </button>
               </div>
             </div>
           </div>

@@ -15,6 +15,7 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
+  ChevronRight,
   Clock3,
   FileText,
   Flame,
@@ -32,20 +33,27 @@ import {
 
 import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
+
 import {
   getCalendarEvents,
   type CalendarEvent,
 } from "@/lib/calendar";
+
 import {
   getNotifications,
   type Notification,
 } from "@/lib/notifications";
+
 import {
   completeStudyRecommendation,
   deleteStudyRecommendation,
   getStudyRecommendations,
   type StudyRecommendation,
 } from "@/lib/study-recommendations";
+
+/* =========================================================
+   TYPES
+========================================================= */
 
 type Course = {
   id: string;
@@ -85,6 +93,10 @@ type Homework = {
   status: string;
   created_at: string;
 };
+
+/* =========================================================
+   HELPERS
+========================================================= */
 
 function formatDate(dateString: string) {
   const date = new Date(dateString);
@@ -129,13 +141,8 @@ function formatTime(dateString: string) {
 function getGreeting() {
   const hour = new Date().getHours();
 
-  if (hour < 12) {
-    return "Good morning";
-  }
-
-  if (hour < 18) {
-    return "Good afternoon";
-  }
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
 
   return "Good evening";
 }
@@ -161,8 +168,7 @@ function isUpcoming(dateString: string) {
   return (
     timestamp >= Date.now() &&
     timestamp <=
-      Date.now() +
-        7 * 24 * 60 * 60 * 1000
+      Date.now() + 7 * 24 * 60 * 60 * 1000
   );
 }
 
@@ -213,6 +219,10 @@ function priorityLabel(
   );
 }
 
+/* =========================================================
+   SMALL UI COMPONENTS
+========================================================= */
+
 function ProgressBar({
   value,
 }: {
@@ -224,9 +234,9 @@ function ProgressBar({
   );
 
   return (
-    <div className="h-2 overflow-hidden rounded-full bg-white/[0.06]">
+    <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
       <div
-        className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all"
+        className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500"
         style={{
           width: `${safeValue}%`,
         }}
@@ -235,12 +245,166 @@ function ProgressBar({
   );
 }
 
+function SectionHeader({
+  title,
+  description,
+  icon,
+  action,
+}: {
+  title: string;
+  description?: string;
+  icon?: React.ReactNode;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-white/[0.06] px-5 py-4 sm:px-6">
+      <div className="flex min-w-0 items-center gap-3">
+        {icon && (
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-white/50">
+            {icon}
+          </div>
+        )}
+
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-semibold tracking-[-0.01em] text-white">
+            {title}
+          </h2>
+
+          {description && (
+            <p className="mt-0.5 truncate text-xs text-white/30">
+              {description}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {action}
+    </div>
+  );
+}
+
+function Stat({
+  icon,
+  value,
+  label,
+  detail,
+  iconClass,
+}: {
+  icon: React.ReactNode;
+  value: string | number;
+  label: string;
+  detail: string;
+  iconClass: string;
+}) {
+  return (
+    <div className="group bg-[#0b0910] p-5 transition-colors hover:bg-[#100d17] sm:p-6">
+      <div className="flex items-start justify-between">
+        <div
+          className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconClass}`}
+        >
+          {icon}
+        </div>
+
+        <span className="text-[10px] font-medium uppercase tracking-[0.16em] text-white/20">
+          {detail}
+        </span>
+      </div>
+
+      <div className="mt-5">
+        <p className="text-3xl font-semibold tracking-[-0.04em] text-white">
+          {value}
+        </p>
+
+        <p className="mt-1 text-xs text-white/35">
+          {label}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.035] text-white/20">
+        {icon}
+      </div>
+
+      <p className="mt-4 text-sm font-medium text-white/65">
+        {title}
+      </p>
+
+      <p className="mt-1 max-w-xs text-xs leading-5 text-white/25">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+function AIDataChip({
+  label,
+  active,
+}: {
+  label: string;
+  active: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-black/20 px-3 py-2">
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${
+          active
+            ? "bg-emerald-400"
+            : "bg-white/15"
+        }`}
+      />
+
+      <span className="text-[11px] text-white/40">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function BellEmptyIcon() {
+  return (
+    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.035]">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        className="h-5 w-5 text-white/20"
+      >
+        <path
+          d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  );
+}
+
+/* =========================================================
+   DASHBOARD
+========================================================= */
+
 export default function DashboardPage() {
   const [loading, setLoading] =
     useState(true);
 
-  const [generatingRecommendations, setGeneratingRecommendations] =
-    useState(false);
+  const [
+    generatingRecommendations,
+    setGeneratingRecommendations,
+  ] = useState(false);
 
   const [userName, setUserName] =
     useState("Student");
@@ -271,6 +435,10 @@ export default function DashboardPage() {
 
   const [error, setError] =
     useState<string | null>(null);
+
+  /* =======================================================
+     LOAD DASHBOARD
+  ======================================================= */
 
   const loadDashboard =
     useCallback(async () => {
@@ -331,11 +499,6 @@ export default function DashboardPage() {
               ascending: true,
             }),
 
-          /*
-           * IMPORTANT:
-           * quizzes.topic is NOT queried because
-           * that column does not exist in your schema.
-           */
           supabase
             .from("quizzes")
             .select(
@@ -435,20 +598,16 @@ export default function DashboardPage() {
     }, []);
 
   useEffect(() => {
-    const timeout = window.setTimeout(
-      loadDashboard,
-      0
-    );
+    const timeout =
+      window.setTimeout(
+        loadDashboard,
+        0
+      );
 
     return () => {
       window.clearTimeout(timeout);
     };
   }, [loadDashboard]);
-
-  /*
-   * Refresh dashboard periodically so the
-   * study plan and workload don't become stale.
-   */
 
   useEffect(() => {
     const interval =
@@ -462,11 +621,9 @@ export default function DashboardPage() {
     };
   }, [loadDashboard]);
 
-  /*
-   * -------------------------------------------------------
-   * DERIVED DATA
-   * -------------------------------------------------------
-   */
+  /* =======================================================
+     DERIVED DATA
+  ======================================================= */
 
   const activeAssignments =
     useMemo(
@@ -586,17 +743,16 @@ export default function DashboardPage() {
         !notification.read
     ).length;
 
-  /*
-   * -------------------------------------------------------
-   * GENERATE AI STUDY PLAN
-   * -------------------------------------------------------
-   */
+  /* =======================================================
+     GENERATE AI PLAN
+  ======================================================= */
 
   async function generateRecommendations() {
     try {
       setGeneratingRecommendations(
         true
       );
+
       setError(null);
 
       const {
@@ -656,11 +812,9 @@ export default function DashboardPage() {
     }
   }
 
-  /*
-   * -------------------------------------------------------
-   * COMPLETE RECOMMENDATION
-   * -------------------------------------------------------
-   */
+  /* =======================================================
+     COMPLETE RECOMMENDATION
+  ======================================================= */
 
   async function handleCompleteRecommendation(
     id: string
@@ -679,8 +833,7 @@ export default function DashboardPage() {
               recommendation.id === id
                 ? {
                     ...recommendation,
-                    completed:
-                      true,
+                    completed: true,
                   }
                 : recommendation
           )
@@ -698,11 +851,9 @@ export default function DashboardPage() {
     }
   }
 
-  /*
-   * -------------------------------------------------------
-   * DELETE RECOMMENDATION
-   * -------------------------------------------------------
-   */
+  /* =======================================================
+     DELETE RECOMMENDATION
+  ======================================================= */
 
   async function handleDeleteRecommendation(
     id: string
@@ -734,76 +885,99 @@ export default function DashboardPage() {
     }
   }
 
+  /* =======================================================
+     LOADING
+  ======================================================= */
+
   if (loading) {
     return (
       <AppShell>
         <div className="flex min-h-[70vh] items-center justify-center">
-          <div className="flex items-center gap-3 text-sm text-white/50">
-            <Loader2 className="h-5 w-5 animate-spin text-violet-400" />
-            Loading your StudySpace...
+          <div className="flex flex-col items-center">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-violet-400/10 bg-violet-500/[0.06]">
+              <Loader2 className="h-5 w-5 animate-spin text-violet-400" />
+            </div>
+
+            <p className="mt-4 text-sm font-medium text-white/60">
+              Loading StudySpace
+            </p>
+
+            <p className="mt-1 text-xs text-white/25">
+              Preparing your workspace...
+            </p>
           </div>
         </div>
       </AppShell>
     );
   }
 
+  /* =======================================================
+     PAGE
+  ======================================================= */
+
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1600px] space-y-6 p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-[1500px] space-y-8 px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-9">
 
-        {/* ------------------------------------------------ */}
-        {/* HEADER */}
-        {/* ------------------------------------------------ */}
+        {/* =================================================
+            HERO
+        ================================================= */}
 
-        <section className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.025] p-6 shadow-2xl shadow-black/20 sm:p-8">
-          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-600/20 blur-3xl" />
+        <section className="relative overflow-hidden">
+          <div className="pointer-events-none absolute -left-24 -top-32 h-80 w-80 rounded-full bg-violet-600/[0.08] blur-3xl" />
 
-          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="pointer-events-none absolute -right-24 -top-20 h-72 w-72 rounded-full bg-purple-500/[0.06] blur-3xl" />
+
+          <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <div className="mb-2 flex items-center gap-2 text-sm text-violet-300">
-                <Sparkles className="h-4 w-4" />
-                StudySpace
+              <div className="mb-3 inline-flex items-center gap-2 text-xs font-medium text-violet-300/80">
+                <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-violet-500/10">
+                  <Sparkles className="h-3.5 w-3.5" />
+                </span>
+
+                Your academic workspace
               </div>
 
-              <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+              <h1 className="text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl lg:text-[42px]">
                 {getGreeting()},{" "}
-                <span className="text-violet-300">
+                <span className="text-white/45">
                   {userName}
                 </span>
               </h1>
 
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/45">
-                Here&apos;s what is happening across
-                your courses, workload, schedule,
-                and study plan.
+              <p className="mt-3 max-w-xl text-sm leading-6 text-white/40">
+                Here&apos;s what deserves your
+                attention today. Your courses,
+                deadlines, schedule, and AI study
+                plan are all in one place.
               </p>
             </div>
 
             <button
               type="button"
               onClick={loadDashboard}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.08]"
+              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.035] px-4 text-xs font-medium text-white/70 transition hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-white"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-3.5 w-3.5" />
               Refresh
             </button>
           </div>
         </section>
 
-        {/* ------------------------------------------------ */}
-        {/* ERROR */}
-        {/* ------------------------------------------------ */}
+        {/* =================================================
+            ERROR
+        ================================================= */}
 
         {error && (
-          <div className="flex items-start gap-3 rounded-2xl border border-red-400/20 bg-red-500/[0.07] p-4 text-sm text-red-200">
-            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+          <div className="flex items-start gap-3 rounded-2xl border border-red-400/15 bg-red-500/[0.06] p-4">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
 
-            <div className="flex-1">
-              <p className="font-medium">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-red-200">
                 Something went wrong
               </p>
 
-              <p className="mt-1 text-red-200/60">
+              <p className="mt-1 text-xs leading-5 text-red-200/50">
                 {error}
               </p>
             </div>
@@ -813,124 +987,91 @@ export default function DashboardPage() {
               onClick={() =>
                 setError(null)
               }
-              className="text-red-200/50 transition hover:text-red-200"
+              className="text-red-200/40 transition hover:text-red-200"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
         )}
 
-        {/* ------------------------------------------------ */}
-        {/* STATS */}
-        {/* ------------------------------------------------ */}
+        {/* =================================================
+            STATS
+        ================================================= */}
 
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5">
-            <div className="flex items-center justify-between">
-              <div className="rounded-xl bg-violet-500/10 p-2.5">
-                <BookOpen className="h-5 w-5 text-violet-400" />
-              </div>
+        <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.07] lg:grid-cols-4">
+          <Stat
+            icon={
+              <BookOpen className="h-4 w-4 text-violet-300" />
+            }
+            value={courses.length}
+            label="Active courses"
+            detail="courses"
+            iconClass="bg-violet-500/10"
+          />
 
-              <TrendingUp className="h-4 w-4 text-white/20" />
-            </div>
+          <Stat
+            icon={
+              <Target className="h-4 w-4 text-cyan-300" />
+            }
+            value={`${averageProgress}%`}
+            label="Average progress"
+            detail="overall"
+            iconClass="bg-cyan-500/10"
+          />
 
-            <p className="mt-5 text-3xl font-semibold text-white">
-              {courses.length}
-            </p>
+          <Stat
+            icon={
+              <ListChecks className="h-4 w-4 text-orange-300" />
+            }
+            value={activeAssignments.length}
+            label="Active assignments"
+            detail="active"
+            iconClass="bg-orange-500/10"
+          />
 
-            <p className="mt-1 text-sm text-white/40">
-              Active courses
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5">
-            <div className="flex items-center justify-between">
-              <div className="rounded-xl bg-cyan-500/10 p-2.5">
-                <Target className="h-5 w-5 text-cyan-400" />
-              </div>
-
-              <span className="text-xs text-white/30">
-                overall
-              </span>
-            </div>
-
-            <p className="mt-5 text-3xl font-semibold text-white">
-              {averageProgress}%
-            </p>
-
-            <p className="mt-1 text-sm text-white/40">
-              Average course progress
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5">
-            <div className="flex items-center justify-between">
-              <div className="rounded-xl bg-orange-500/10 p-2.5">
-                <ListChecks className="h-5 w-5 text-orange-400" />
-              </div>
-
-              <span className="text-xs text-white/30">
-                active
-              </span>
-            </div>
-
-            <p className="mt-5 text-3xl font-semibold text-white">
-              {activeAssignments.length}
-            </p>
-
-            <p className="mt-1 text-sm text-white/40">
-              Active assignments
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5">
-            <div className="flex items-center justify-between">
-              <div className="rounded-xl bg-emerald-500/10 p-2.5">
-                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-              </div>
-
-              <span className="text-xs text-white/30">
-                total
-              </span>
-            </div>
-
-            <p className="mt-5 text-3xl font-semibold text-white">
-              {completedAssignments.length}
-            </p>
-
-            <p className="mt-1 text-sm text-white/40">
-              Completed assignments
-            </p>
-          </div>
+          <Stat
+            icon={
+              <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+            }
+            value={completedAssignments.length}
+            label="Completed assignments"
+            detail="done"
+            iconClass="bg-emerald-500/10"
+          />
         </section>
 
-        {/* ------------------------------------------------ */}
-        {/* AI STUDY PLAN */}
-        {/* ------------------------------------------------ */}
+        {/* =================================================
+            AI STUDY PLAN
+        ================================================= */}
 
-        <section className="overflow-hidden rounded-3xl border border-violet-400/10 bg-gradient-to-br from-violet-500/[0.08] via-white/[0.025] to-fuchsia-500/[0.05] shadow-xl shadow-violet-950/10">
-          <div className="border-b border-white/[0.07] p-5 sm:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <section className="relative overflow-hidden rounded-2xl border border-violet-400/[0.12] bg-[#0d0a15]">
+
+          <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-violet-600/[0.08] blur-3xl" />
+
+          <div className="relative border-b border-white/[0.06] px-5 py-5 sm:px-6 lg:px-7">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+
               <div className="flex items-start gap-4">
-                <div className="rounded-2xl bg-violet-500/15 p-3">
-                  <Brain className="h-6 w-6 text-violet-300" />
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-violet-400/10 bg-violet-500/[0.08]">
+                  <Brain className="h-5 w-5 text-violet-300" />
                 </div>
 
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-xl font-semibold text-white">
-                      Your Study Plan
+                    <h2 className="text-xl font-semibold tracking-[-0.025em] text-white">
+                      Your focus for today
                     </h2>
 
-                    <span className="rounded-full border border-violet-400/20 bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-violet-300">
+                    <span className="rounded-full border border-violet-400/15 bg-violet-500/[0.08] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-violet-300">
                       AI powered
                     </span>
                   </div>
 
                   <p className="mt-1 max-w-2xl text-sm leading-6 text-white/40">
-                    Recommendations based on your
-                    actual courses, deadlines,
-                    quizzes, homework, and schedule.
+                    StudySpace looks at your workload,
+                    deadlines, courses, quizzes, homework,
+                    and schedule to figure out what deserves
+                    your attention next.
                   </p>
                 </div>
               </div>
@@ -943,16 +1084,16 @@ export default function DashboardPage() {
                 disabled={
                   generatingRecommendations
                 }
-                className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-950/30 transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-semibold text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {generatingRecommendations ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     Analyzing...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-4 w-4" />
+                    <Sparkles className="h-3.5 w-3.5" />
                     Generate study plan
                   </>
                 )}
@@ -962,19 +1103,19 @@ export default function DashboardPage() {
 
           {activeRecommendations.length ===
           0 ? (
-            <div className="p-8 text-center sm:p-12">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-violet-400/10 bg-violet-500/[0.08]">
-                <Sparkles className="h-7 w-7 text-violet-300" />
+            <div className="relative px-6 py-14 text-center sm:py-16">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-400/10 bg-violet-500/[0.07]">
+                <Sparkles className="h-6 w-6 text-violet-300" />
               </div>
 
-              <h3 className="mt-5 text-lg font-semibold text-white">
-                No active study recommendations
+              <h3 className="mt-5 text-base font-semibold text-white">
+                Your study plan is waiting
               </h3>
 
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-white/40">
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-white/35">
                 Let StudySpace analyze your current
-                workload and build a personalized
-                study plan.
+                academic workload and turn it into
+                a focused list of things to work on.
               </p>
 
               <button
@@ -985,207 +1126,207 @@ export default function DashboardPage() {
                 disabled={
                   generatingRecommendations
                 }
-                className="mt-5 inline-flex items-center gap-2 rounded-xl border border-violet-400/20 bg-violet-500/10 px-4 py-2.5 text-sm font-medium text-violet-200 transition hover:bg-violet-500/15 disabled:opacity-50"
+                className="mt-6 inline-flex items-center gap-2 rounded-xl border border-violet-400/15 bg-violet-500/[0.07] px-4 py-2.5 text-xs font-medium text-violet-200 transition hover:bg-violet-500/[0.12] disabled:opacity-50"
               >
-                <Zap className="h-4 w-4" />
+                <Zap className="h-3.5 w-3.5" />
                 Analyze my workload
               </button>
             </div>
           ) : (
-            <div className="grid gap-3 p-4 sm:p-5 lg:grid-cols-2">
+            <div className="relative grid gap-3 p-4 sm:p-5 lg:grid-cols-2">
+
               {activeRecommendations
                 .slice(0, 6)
-                .map(
-                  (recommendation) => {
-                    const priority =
-                      priorityClasses(
-                        recommendation.priority
-                      );
+                .map((recommendation) => {
+                  const priority =
+                    priorityClasses(
+                      recommendation.priority
+                    );
 
-                    const course =
-                      courses.find(
-                        (item) =>
-                          item.id ===
-                          recommendation.course_id
-                      );
+                  const course =
+                    courses.find(
+                      (item) =>
+                        item.id ===
+                        recommendation.course_id
+                    );
 
-                    const busy =
-                      actionId ===
-                      recommendation.id;
+                  const busy =
+                    actionId ===
+                    recommendation.id;
 
-                    return (
-                      <div
-                        key={
-                          recommendation.id
-                        }
-                        className="group rounded-2xl border border-white/[0.07] bg-black/20 p-4 transition hover:border-white/[0.12] hover:bg-black/30"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div
-                            className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${priority.dot}`}
-                          />
+                  return (
+                    <div
+                      key={
+                        recommendation.id
+                      }
+                      className="group rounded-xl border border-white/[0.06] bg-black/20 p-4 transition hover:border-white/[0.11] hover:bg-black/30"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div
+                          className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${priority.dot}`}
+                        />
 
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-start justify-between gap-2">
-                              <div>
-                                <h3 className="font-semibold text-white">
-                                  {
-                                    recommendation.title
-                                  }
-                                </h3>
+                        <div className="min-w-0 flex-1">
 
-                                {course && (
-                                  <p className="mt-1 text-xs text-violet-300">
-                                    {course.code ||
-                                      course.name}
-                                  </p>
-                                )}
-                              </div>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <h3 className="text-sm font-semibold text-white">
+                                {
+                                  recommendation.title
+                                }
+                              </h3>
 
-                              <span
-                                className={`rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${priority.badge}`}
-                              >
-                                {priorityLabel(
-                                  recommendation.priority
-                                )}
-                              </span>
+                              {course && (
+                                <p className="mt-1 text-[11px] font-medium text-violet-300/80">
+                                  {course.code ||
+                                    course.name}
+                                </p>
+                              )}
                             </div>
 
-                            <p className="mt-3 text-sm leading-6 text-white/65">
-                              {
-                                recommendation.recommendation
-                              }
-                            </p>
+                            <span
+                              className={`shrink-0 rounded-full border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider ${priority.badge}`}
+                            >
+                              {priorityLabel(
+                                recommendation.priority
+                              )}
+                            </span>
+                          </div>
 
-                            {recommendation.reason && (
-                              <div className="mt-3 rounded-xl border border-white/[0.05] bg-white/[0.025] px-3 py-2.5">
-                                <p className="text-xs leading-5 text-white/40">
-                                  <span className="font-medium text-white/55">
-                                    Why:
-                                  </span>{" "}
-                                  {
-                                    recommendation.reason
-                                  }
-                                </p>
-                              </div>
+                          <p className="mt-3 text-xs leading-5 text-white/55">
+                            {
+                              recommendation.recommendation
+                            }
+                          </p>
+
+                          {recommendation.reason && (
+                            <div className="mt-3 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2">
+                              <p className="text-[11px] leading-5 text-white/30">
+                                <span className="font-medium text-white/50">
+                                  Why:
+                                </span>{" "}
+                                {
+                                  recommendation.reason
+                                }
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="mt-3 flex flex-wrap items-center gap-3 text-[10px] text-white/25">
+                            {recommendation.estimated_minutes && (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Clock3 className="h-3 w-3" />
+                                {
+                                  recommendation.estimated_minutes
+                                }{" "}
+                                min
+                              </span>
                             )}
 
-                            <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-white/35">
-                              {recommendation.estimated_minutes && (
-                                <span className="inline-flex items-center gap-1.5">
-                                  <Clock3 className="h-3.5 w-3.5" />
-                                  {
-                                    recommendation.estimated_minutes
-                                  }{" "}
-                                  min
-                                </span>
-                              )}
-
-                              {recommendation.suggested_date && (
-                                <span className="inline-flex items-center gap-1.5">
-                                  <CalendarDays className="h-3.5 w-3.5" />
-                                  {formatShortDate(
-                                    recommendation.suggested_date
-                                  )}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="mt-4 flex items-center gap-2 border-t border-white/[0.06] pt-3">
-                              <button
-                                type="button"
-                                disabled={
-                                  busy
-                                }
-                                onClick={() =>
-                                  handleCompleteRecommendation(
-                                    recommendation.id
-                                  )
-                                }
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/15 bg-emerald-500/[0.07] px-3 py-2 text-xs font-medium text-emerald-300 transition hover:bg-emerald-500/15 disabled:opacity-50"
-                              >
-                                {busy ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                ) : (
-                                  <Check className="h-3.5 w-3.5" />
+                            {recommendation.suggested_date && (
+                              <span className="inline-flex items-center gap-1.5">
+                                <CalendarDays className="h-3 w-3" />
+                                {formatShortDate(
+                                  recommendation.suggested_date
                                 )}
-                                Complete
-                              </button>
+                              </span>
+                            )}
+                          </div>
 
-                              <button
-                                type="button"
-                                disabled={
-                                  busy
-                                }
-                                onClick={() =>
-                                  handleDeleteRecommendation(
-                                    recommendation.id
-                                  )
-                                }
-                                className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-white/30 transition hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                Remove
-                              </button>
-                            </div>
+                          <div className="mt-4 flex items-center gap-2 border-t border-white/[0.05] pt-3">
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() =>
+                                handleCompleteRecommendation(
+                                  recommendation.id
+                                )
+                              }
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/10 bg-emerald-500/[0.06] px-3 py-1.5 text-[11px] font-medium text-emerald-300 transition hover:bg-emerald-500/[0.12] disabled:opacity-50"
+                            >
+                              {busy ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                <Check className="h-3 w-3" />
+                              )}
+
+                              Complete
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() =>
+                                handleDeleteRecommendation(
+                                  recommendation.id
+                                )
+                              }
+                              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium text-white/25 transition hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              Remove
+                            </button>
                           </div>
                         </div>
                       </div>
-                    );
-                  }
-                )}
+                    </div>
+                  );
+                })}
             </div>
           )}
         </section>
 
-        {/* ------------------------------------------------ */}
-        {/* MAIN GRID */}
-        {/* ------------------------------------------------ */}
+        {/* =================================================
+            TODAY + UPCOMING
+        ================================================= */}
 
-        <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
+        <div className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
 
           {/* TODAY */}
-          <section className="rounded-3xl border border-white/[0.08] bg-white/[0.025]">
-            <div className="flex items-center justify-between border-b border-white/[0.07] p-5">
-              <div>
-                <h2 className="font-semibold text-white">
-                  Today&apos;s schedule
-                </h2>
 
-                <p className="mt-1 text-xs text-white/35">
-                  {todayEvents.length
-                    ? `${todayEvents.length} event${todayEvents.length === 1 ? "" : "s"} today`
-                    : "Nothing scheduled today"}
-                </p>
-              </div>
+          <section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0b0910]">
+            <SectionHeader
+              title="Today"
+              description={
+                todayEvents.length
+                  ? `${todayEvents.length} event${
+                      todayEvents.length ===
+                      1
+                        ? ""
+                        : "s"
+                    } scheduled`
+                  : "Your schedule for today"
+              }
+              icon={
+                <CalendarDays className="h-4 w-4 text-violet-300" />
+              }
+            />
 
-              <CalendarDays className="h-5 w-5 text-violet-400" />
-            </div>
-
-            {todayEvents.length === 0 ? (
-              <div className="p-8 text-center">
-                <CalendarDays className="mx-auto h-8 w-8 text-white/15" />
-
-                <p className="mt-3 text-sm text-white/40">
-                  Your calendar is clear today.
-                </p>
-              </div>
+            {todayEvents.length ===
+            0 ? (
+              <EmptyState
+                icon={
+                  <CalendarDays className="h-5 w-5" />
+                }
+                title="Your calendar is clear"
+                description="Nothing is scheduled for today. Enjoy the breathing room or use it to get ahead."
+              />
             ) : (
               <div className="divide-y divide-white/[0.05]">
                 {todayEvents.map(
                   (event) => (
                     <div
                       key={event.id}
-                      className="flex items-center gap-4 p-4"
+                      className="group flex items-center gap-4 px-5 py-4 transition hover:bg-white/[0.015]"
                     >
-                      <div className="w-20 shrink-0 text-right">
+                      <div className="w-16 shrink-0 text-right">
                         <p className="text-xs font-medium text-white/60">
                           {formatTime(
                             event.start_at
                           )}
                         </p>
 
-                        <p className="mt-1 text-[10px] text-white/25">
+                        <p className="mt-1 text-[10px] text-white/20">
                           {formatTime(
                             event.end_at
                           )}
@@ -1193,7 +1334,7 @@ export default function DashboardPage() {
                       </div>
 
                       <div
-                        className="h-10 w-1 rounded-full"
+                        className="h-9 w-0.5 shrink-0 rounded-full"
                         style={{
                           backgroundColor:
                             event.color ||
@@ -1202,18 +1343,18 @@ export default function DashboardPage() {
                       />
 
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-white">
+                        <p className="truncate text-sm font-medium text-white/80">
                           {event.title}
                         </p>
 
                         {event.subtitle && (
-                          <p className="mt-1 truncate text-xs text-white/35">
+                          <p className="mt-1 truncate text-xs text-white/30">
                             {event.subtitle}
                           </p>
                         )}
                       </div>
 
-                      <span className="hidden rounded-full bg-white/[0.04] px-2 py-1 text-[10px] text-white/30 sm:inline-flex">
+                      <span className="hidden rounded-md bg-white/[0.03] px-2 py-1 text-[9px] uppercase tracking-wider text-white/20 sm:inline-flex">
                         {event.event_type}
                       </span>
                     </div>
@@ -1224,30 +1365,25 @@ export default function DashboardPage() {
           </section>
 
           {/* UPCOMING */}
-          <section className="rounded-3xl border border-white/[0.08] bg-white/[0.025]">
-            <div className="flex items-center justify-between border-b border-white/[0.07] p-5">
-              <div>
-                <h2 className="font-semibold text-white">
-                  Coming up
-                </h2>
 
-                <p className="mt-1 text-xs text-white/35">
-                  Next 7 days
-                </p>
-              </div>
-
-              <FileText className="h-5 w-5 text-orange-400" />
-            </div>
+          <section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0b0910]">
+            <SectionHeader
+              title="Coming up"
+              description="Next 7 days"
+              icon={
+                <FileText className="h-4 w-4 text-orange-300" />
+              }
+            />
 
             {upcomingAssignments.length ===
             0 ? (
-              <div className="p-8 text-center">
-                <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-400/30" />
-
-                <p className="mt-3 text-sm text-white/40">
-                  No upcoming assignments.
-                </p>
-              </div>
+              <EmptyState
+                icon={
+                  <CheckCircle2 className="h-5 w-5" />
+                }
+                title="Nothing urgent"
+                description="You don't have any upcoming assignments in the next seven days."
+              />
             ) : (
               <div className="divide-y divide-white/[0.05]">
                 {upcomingAssignments.map(
@@ -1264,23 +1400,23 @@ export default function DashboardPage() {
                         key={
                           assignment.id
                         }
-                        className="p-4"
+                        className="group px-5 py-4 transition hover:bg-white/[0.015]"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-white">
+                            <p className="truncate text-sm font-medium text-white/80">
                               {
                                 assignment.title
                               }
                             </p>
 
-                            <p className="mt-1 text-xs text-violet-300">
+                            <p className="mt-1 truncate text-[11px] text-violet-300/70">
                               {course?.code ||
                                 "Assignment"}
                             </p>
                           </div>
 
-                          <span className="shrink-0 text-xs text-orange-300">
+                          <span className="shrink-0 rounded-md bg-orange-500/[0.07] px-2 py-1 text-[10px] font-medium text-orange-300">
                             {formatShortDate(
                               assignment.due_date
                             )}
@@ -1308,171 +1444,176 @@ export default function DashboardPage() {
           </section>
         </div>
 
-        {/* ------------------------------------------------ */}
-        {/* COURSE PROGRESS */}
-        {/* ------------------------------------------------ */}
+        {/* =================================================
+            COURSE PROGRESS
+        ================================================= */}
 
-        <section className="rounded-3xl border border-white/[0.08] bg-white/[0.025]">
-          <div className="flex items-center justify-between border-b border-white/[0.07] p-5">
-            <div>
-              <h2 className="font-semibold text-white">
-                Course progress
-              </h2>
+        <section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0b0910]">
+          <SectionHeader
+            title="Course progress"
+            description="Your current progress across active courses"
+            icon={
+              <GraduationCap className="h-4 w-4 text-violet-300" />
+            }
+          />
 
-              <p className="mt-1 text-xs text-white/35">
-                Your current progress across active courses
-              </p>
-            </div>
-
-            <GraduationCap className="h-5 w-5 text-violet-400" />
-          </div>
-
-          {courses.length === 0 ? (
-            <div className="p-8 text-center">
-              <BookOpen className="mx-auto h-8 w-8 text-white/15" />
-
-              <p className="mt-3 text-sm text-white/40">
-                Add a course to start tracking progress.
-              </p>
-            </div>
+          {courses.length ===
+          0 ? (
+            <EmptyState
+              icon={
+                <BookOpen className="h-5 w-5" />
+              }
+              title="No courses yet"
+              description="Add your first course to start tracking your academic progress."
+            />
           ) : (
-            <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
-              {courses.map((course) => {
-                const progress =
-                  Number(
-                    course.progress
-                  ) || 0;
+            <div className="grid gap-3 p-4 sm:p-5 md:grid-cols-2 xl:grid-cols-3">
+              {courses.map(
+                (course) => {
+                  const progress =
+                    Number(
+                      course.progress
+                    ) || 0;
 
-                return (
-                  <div
-                    key={course.id}
-                    className="rounded-2xl border border-white/[0.06] bg-black/15 p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <div
-                          className="h-9 w-9 shrink-0 rounded-xl"
-                          style={{
-                            backgroundColor:
-                              `${course.color || "#7c3aed"}25`,
-                            border: `1px solid ${course.color || "#7c3aed"}40`,
-                          }}
-                        />
+                  return (
+                    <div
+                      key={course.id}
+                      className="rounded-xl border border-white/[0.06] bg-black/15 p-4 transition hover:border-white/[0.1] hover:bg-black/25"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+                            style={{
+                              backgroundColor: `${
+                                course.color ||
+                                "#7c3aed"
+                              }18`,
+                              border: `1px solid ${
+                                course.color ||
+                                "#7c3aed"
+                              }30`,
+                            }}
+                          >
+                            <BookOpen
+                              className="h-4 w-4"
+                              style={{
+                                color:
+                                  course.color ||
+                                  "#a78bfa",
+                              }}
+                            />
+                          </div>
 
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-white">
-                            {course.code ||
-                              course.name}
-                          </p>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-white/80">
+                              {course.code ||
+                                course.name}
+                            </p>
 
-                          <p className="truncate text-xs text-white/35">
-                            {course.name}
-                          </p>
+                            <p className="truncate text-[11px] text-white/25">
+                              {course.name}
+                            </p>
+                          </div>
                         </div>
+
+                        <span className="text-sm font-semibold text-violet-300">
+                          {progress}%
+                        </span>
                       </div>
 
-                      <span className="text-sm font-semibold text-violet-300">
-                        {progress}%
-                      </span>
-                    </div>
+                      <div className="mt-4">
+                        <ProgressBar
+                          value={
+                            progress
+                          }
+                        />
+                      </div>
 
-                    <div className="mt-4">
-                      <ProgressBar
-                        value={
-                          progress
-                        }
-                      />
-                    </div>
+                      {course.target_grade !==
+                        null && (
+                        <div className="mt-3 flex items-center justify-between">
+                          <span className="text-[10px] text-white/20">
+                            Target grade
+                          </span>
 
-                    {course.target_grade !==
-                      null && (
-                      <p className="mt-2 text-[11px] text-white/30">
-                        Target grade:{" "}
-                        {
-                          course.target_grade
-                        }
-                        %
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
+                          <span className="text-[10px] font-medium text-white/40">
+                            {
+                              course.target_grade
+                            }
+                            %
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+              )}
             </div>
           )}
         </section>
 
-        {/* ------------------------------------------------ */}
-        {/* NOTIFICATIONS + AI STATUS */}
-        {/* ------------------------------------------------ */}
+        {/* =================================================
+            NOTIFICATIONS + AI
+        ================================================= */}
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-5 lg:grid-cols-2">
 
-          {/* Notifications */}
-          <section className="rounded-3xl border border-white/[0.08] bg-white/[0.025]">
-            <div className="flex items-center justify-between border-b border-white/[0.07] p-5">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="font-semibold text-white">
-                    Recent notifications
-                  </h2>
+          {/* NOTIFICATIONS */}
 
-                  {unreadNotifications >
-                    0 && (
-                    <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-semibold text-violet-300">
-                      {
-                        unreadNotifications
-                      }{" "}
-                      new
-                    </span>
-                  )}
-                </div>
-
-                <p className="mt-1 text-xs text-white/35">
-                  Updates from StudySpace
-                </p>
-              </div>
-
-              <ArrowRight className="h-4 w-4 text-white/20" />
-            </div>
+          <section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0b0910]">
+            <SectionHeader
+              title="Recent notifications"
+              description="Updates from StudySpace"
+              icon={
+                <Sparkles className="h-4 w-4 text-violet-300" />
+              }
+              action={
+                unreadNotifications >
+                0 ? (
+                  <span className="rounded-full border border-violet-400/10 bg-violet-500/[0.07] px-2 py-1 text-[9px] font-semibold text-violet-300">
+                    {unreadNotifications} new
+                  </span>
+                ) : null
+              }
+            />
 
             {notifications.length ===
             0 ? (
-              <div className="p-8 text-center">
-                <BellEmptyIcon />
-
-                <p className="mt-3 text-sm text-white/40">
-                  You&apos;re all caught up.
-                </p>
-              </div>
+              <EmptyState
+                icon={<BellEmptyIcon />}
+                title="You're all caught up"
+                description="New updates and reminders will appear here."
+              />
             ) : (
               <div className="divide-y divide-white/[0.05]">
                 {notifications
                   .slice(0, 5)
                   .map(
-                    (notification) => (
+                    (
+                      notification
+                    ) => (
                       <div
                         key={
                           notification.id
                         }
-                        className={`p-4 ${
+                        className={`px-5 py-4 transition hover:bg-white/[0.015] ${
                           !notification.read
-                            ? "bg-violet-500/[0.025]"
+                            ? "bg-violet-500/[0.015]"
                             : ""
                         }`}
                       >
                         <div className="flex gap-3">
-                          <div className="mt-0.5">
-                            <div className="h-2 w-2 rounded-full bg-violet-400" />
-                          </div>
+                          <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400" />
 
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-white">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-white/75">
                               {
                                 notification.title
                               }
                             </p>
 
-                            <p className="mt-1 text-xs leading-5 text-white/35">
+                            <p className="mt-1 text-xs leading-5 text-white/30">
                               {
                                 notification.message
                               }
@@ -1486,54 +1627,58 @@ export default function DashboardPage() {
             )}
           </section>
 
-          {/* AI status */}
-          <section className="relative overflow-hidden rounded-3xl border border-violet-400/10 bg-gradient-to-br from-violet-500/[0.08] to-fuchsia-500/[0.04] p-6">
-            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-violet-500/10 blur-3xl" />
+          {/* AI STATUS */}
+
+          <section className="relative overflow-hidden rounded-2xl border border-violet-400/[0.1] bg-[#0d0a15] p-6">
+            <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
 
             <div className="relative">
+
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-violet-500/15 p-2.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-400/10 bg-violet-500/[0.08]">
                   <Brain className="h-5 w-5 text-violet-300" />
                 </div>
 
                 <div>
-                  <p className="font-semibold text-white">
+                  <p className="text-sm font-semibold text-white">
                     StudySpace AI
                   </p>
 
-                  <p className="text-xs text-white/35">
+                  <p className="mt-0.5 text-[11px] text-white/25">
                     Academic intelligence
                   </p>
                 </div>
 
-                <div className="ml-auto flex items-center gap-1.5 rounded-full border border-emerald-400/10 bg-emerald-500/[0.06] px-2.5 py-1 text-[10px] text-emerald-300">
+                <div className="ml-auto flex items-center gap-1.5 rounded-full border border-emerald-400/10 bg-emerald-500/[0.05] px-2.5 py-1 text-[9px] font-medium uppercase tracking-wider text-emerald-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                   Active
                 </div>
               </div>
 
-              <h3 className="mt-6 text-xl font-semibold text-white">
+              <h3 className="mt-7 text-xl font-semibold tracking-[-0.025em] text-white">
                 Your study data is connected.
               </h3>
 
-              <p className="mt-2 text-sm leading-6 text-white/40">
+              <p className="mt-2 max-w-lg text-sm leading-6 text-white/35">
                 AI Tutor and Study Recommendations
-                can use your courses, notes,
-                assignments, quizzes, homework,
-                and calendar to provide more
-                relevant help.
+                can use your courses, assignments,
+                quizzes, homework, and calendar to
+                provide more relevant help.
               </p>
 
-              <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 <AIDataChip
                   label="Courses"
-                  active={courses.length > 0}
+                  active={
+                    courses.length > 0
+                  }
                 />
 
                 <AIDataChip
                   label="Assignments"
                   active={
-                    assignments.length > 0
+                    assignments.length >
+                    0
                   }
                 />
 
@@ -1555,23 +1700,22 @@ export default function DashboardPage() {
           </section>
         </div>
 
-        {/* ------------------------------------------------ */}
-        {/* FOOTER SUMMARY */}
-        {/* ------------------------------------------------ */}
+        {/* =================================================
+            FOOTER SUMMARY
+        ================================================= */}
 
-        <div className="flex flex-col gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-xs text-white/30 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-white/[0.05] pt-5 text-[11px] text-white/20 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
-            <Flame className="h-4 w-4 text-orange-400/70" />
+            <Flame className="h-3.5 w-3.5 text-orange-400/60" />
 
             {activeRecommendations.length >
             0 ? (
               <span>
                 You have{" "}
-                <span className="text-white/50">
+                <span className="text-white/40">
                   {
                     activeRecommendations.length
-                  }{" "}
-                  active AI recommendation
+                  } active AI recommendation
                   {activeRecommendations.length ===
                   1
                     ? ""
@@ -1595,49 +1739,5 @@ export default function DashboardPage() {
         </div>
       </div>
     </AppShell>
-  );
-}
-
-function AIDataChip({
-  label,
-  active,
-}: {
-  label: string;
-  active: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-black/15 px-3 py-2">
-      <div
-        className={`h-1.5 w-1.5 rounded-full ${
-          active
-            ? "bg-emerald-400"
-            : "bg-white/15"
-        }`}
-      />
-
-      <span className="text-[11px] text-white/40">
-        {label}
-      </span>
-    </div>
-  );
-}
-
-function BellEmptyIcon() {
-  return (
-    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.04]">
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        className="h-5 w-5 text-white/20"
-      >
-        <path
-          d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
   );
 }
