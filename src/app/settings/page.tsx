@@ -68,8 +68,11 @@ export default function SettingsPage() {
   const [pageError, setPageError] = useState("");
 
   const applyTheme = useCallback((theme: Theme) => {
-    if (typeof document !== "undefined") document.documentElement.dataset.theme = theme;
-    if (typeof window !== "undefined") window.localStorage.setItem("studyspace-theme", theme);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("studyspace-theme", theme);
+      const resolved = theme === "system" ? (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : theme;
+      document.documentElement.dataset.theme = resolved;
+    }
   }, []);
 
   useEffect(() => {
