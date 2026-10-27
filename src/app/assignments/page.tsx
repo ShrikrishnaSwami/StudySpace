@@ -29,6 +29,7 @@ type Course = {
 type Assignment = {
   id: string;
   user_id: string;
+  assigned_to?: string | null;
   course_id: string;
   title: string;
   description: string | null;
@@ -138,9 +139,9 @@ export default function AssignmentsPage() {
         supabase
           .from("assignments")
           .select(
-            "id, user_id, course_id, title, description, due_date, priority, status, progress, points, max_points, created_at, updated_at",
+            "id, user_id, assigned_to, course_id, title, description, due_date, priority, status, progress, points, max_points, created_at, updated_at",
           )
-          .eq("user_id", user.id)
+          .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`)
           .order("due_date", { ascending: true, nullsFirst: false }),
         supabase
           .from("courses")
@@ -152,7 +153,10 @@ export default function AssignmentsPage() {
       if (assignmentResult.error) throw assignmentResult.error;
       if (courseResult.error) throw courseResult.error;
 
-      const courseList = (courseResult.data ?? []) as Course[];
+      const ownCourses = (courseResult.data ?? []) as Course[];
+      const assignmentCourseIds = [...new Set((assignmentResult.data ?? []).map((item) => item.course_id).filter(Boolean))];
+      const extraCourseResult = assignmentCourseIds.length ? await supabase.from("courses").select("id, code, name").in("id", assignmentCourseIds) : { data: [], error: null };
+      const courseList = [...new Map([...ownCourses, ...((extraCourseResult.data ?? []) as Course[])].map((course) => [course.id, course])).values()];
       const courseMap = new Map(courseList.map((course) => [course.id, course]));
 
       const assignmentList = (assignmentResult.data ?? []).map((item) => ({
