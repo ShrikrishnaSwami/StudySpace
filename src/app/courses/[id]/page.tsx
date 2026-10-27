@@ -481,7 +481,7 @@ export default function CoursePage() {
   return (
     <AppShell
       title={course.name}
-      description={`${course.code} · ${course.professor || "Course workspace"}`}
+      description={`${course.code} · Your course workspace`}
     >
       <div className="min-h-[700px]">
         {/* Mobile course navigation */}
@@ -615,12 +615,6 @@ export default function CoursePage() {
                     </h1>
 
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/35">
-                      {course.professor && (
-                        <span>
-                          {course.professor}
-                        </span>
-                      )}
-
                       {course.room && (
                         <span>{course.room}</span>
                       )}
@@ -935,11 +929,6 @@ function OverviewSection({
           </div>
 
           <div className="mt-5 space-y-4">
-            <InfoRow
-              label="Professor"
-              value={course.professor || "Not set"}
-            />
-
             <InfoRow
               label="Credits"
               value={
@@ -1832,12 +1821,6 @@ function EditCourseModal({
           label="Course code"
           value={code}
           onChange={setCode}
-        />
-
-        <Input
-          label="Professor"
-          value={professor}
-          onChange={setProfessor}
         />
 
         <div className="grid grid-cols-2 gap-3">
