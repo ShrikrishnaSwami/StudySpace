@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   ArrowDownRight, ArrowUpRight, BookOpen, Brain, CalendarDays,
-  Check, ClipboardList, MoveUpRight, NotebookTabs, Sparkles, Clock3, FileText, GraduationCap, Zap,
+  Check, ClipboardList, MoveUpRight, NotebookTabs, Sparkles, Clock3, FileText, GraduationCap, Zap, CheckSquare, Upload,
 } from "lucide-react";
 
 const tools = [
@@ -13,6 +13,8 @@ const tools = [
   { number: "06", icon: Zap, title: "Flashcards & quizzes", text: "Turn review into short, focused practice sessions.", href: "/flashcards", tone: "lemon" },
   { number: "07", icon: Clock3, title: "Focus timer", text: "Give one task your attention, then take a breath.", href: "/focus", tone: "pink" },
   { number: "08", icon: GraduationCap, title: "Grades & GPA", text: "Keep track of the progress you are making.", href: "/grades", tone: "orange" },
+  { number: "09", icon: CheckSquare, title: "Practice quizzes", text: "Check what you know before the next big test.", href: "/quizzes", tone: "blue" },
+  { number: "10", icon: Upload, title: "Homework helper", text: "Bring homework into your workspace and keep it organized.", href: "/homework-uploader", tone: "pink" },
 ];
 
 export default function Home() {
