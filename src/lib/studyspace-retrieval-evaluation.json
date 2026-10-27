@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "description": "Synthetic retrieval evaluation cases. Contains no real student records.",
+  "cases": [
+    {
+      "id": "course-details",
+      "question": "What is the professor and schedule for COMP 101?",
+      "expectedSections": [
+        "STUDENT COURSES"
+      ]
+    },
+    {
+      "id": "assignment-deadline",
+      "question": "When is the database project due and what is its status?",
+      "expectedSections": [
+        "ASSIGNMENTS"
+      ]
+    },
+    {
+      "id": "note-concept",
+      "question": "Explain Newton's second law from my physics notes",
+      "expectedSections": [
+        "COURSE NOTES"
+      ]
+    },
+    {
+      "id": "quiz-performance",
+      "question": "What score did I get on my latest calculus quiz?",
+      "expectedSections": [
+        "QUIZ ATTEMPTS / PERFORMANCE"
+      ]
+    },
+    {
+      "id": "calendar-event",
+      "question": "What classes and study events are on my calendar?",
+      "expectedSections": [
+        "CALENDAR"
+      ]
+    }
+  ]
+}
