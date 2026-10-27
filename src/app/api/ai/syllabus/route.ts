@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     if (saveError || !saved) throw new Error(saveError?.message || "Could not save extracted syllabus.");
     return NextResponse.json({ import: saved, events, usage: quota });
   } catch (error) {
-    console.error("Syllabus extraction failed:", error);
+    console.error("Syllabus extraction request failed.");
     return NextResponse.json({ error: "Could not extract syllabus dates. Please check the file or text and try again." }, { status: 500 });
   }
 }
