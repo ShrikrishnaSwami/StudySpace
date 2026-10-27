@@ -15,7 +15,6 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://studyspace-git-main-shri-eaa8.vercel.app"),
   title: {
     default: "StudySpace — Make room for what matters",
     template: "%s | StudySpace",
