@@ -66,9 +66,9 @@ test("retrieval selects an individual matching note instead of the entire notes 
 test("semantic scores can retrieve a paraphrased note without keyword overlap", () => {
   const multiNoteContext = [
     separator, "COURSE NOTES", separator,
-    "NOTE 1\\nTitle:\\nNewton's Second Law\\nContent:\\nNet force equals mass multiplied by acceleration.",
-    "NOTE 2\\nTitle:\\nPhotosynthesis\\nContent:\\nPlants convert light energy into chemical energy.",
-  ].join("\\n").replace(/^/, "\\n");
+    "NOTE 1\nTitle:\nNewton's Second Law\nContent:\nNet force equals mass multiplied by acceleration.",
+    "NOTE 2\nTitle:\nPhotosynthesis\nContent:\nPlants convert light energy into chemical energy.",
+  ].join("\n").replace(/^/, "\n");
   const result = retrieveRelevantStudyContext(multiNoteContext, "How do plants make food from sunlight?", {
     semanticScores: {
       "COURSE NOTES::NOTE 1: Newton's Second Law": 0.12,
