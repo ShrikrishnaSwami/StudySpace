@@ -20,6 +20,7 @@ export async function DELETE(request: NextRequest) {
     });
     const { data: { user }, error: authError } = await authClient.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Your session is invalid. Sign in again." }, { status: 401 });
+    const userId = user.id;
 
     let body: { confirmation?: string };
     try { body = await request.json(); } catch { return NextResponse.json({ error: "Confirmation is required." }, { status: 400 }); }
@@ -46,7 +47,7 @@ export async function DELETE(request: NextRequest) {
           else filesToRemove.push(path);
         }
       }
-      await collectFiles(user.id, 0);
+      await collectFiles(userId, 0);
       for (let i = 0; i < filesToRemove.length; i += 100) {
         const { error } = await bucket.remove(filesToRemove.slice(i, i + 100));
         if (error) throw new Error(bucketName + ": " + error.message);
@@ -62,7 +63,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Account was not deleted because uploaded files could not be safely cleaned up. Please try again or contact support." }, { status: 500 });
     }
 
-    const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
+    const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
     if (deleteError) {
       console.error("Account deletion failed:", deleteError);
       return NextResponse.json({ error: "Uploaded files were cleaned up, but the account could not be deleted. Please contact support." }, { status: 500 });
