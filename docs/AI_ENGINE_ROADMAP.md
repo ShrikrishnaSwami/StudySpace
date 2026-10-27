@@ -10,6 +10,8 @@ The retrieval baseline now ranks individual records (for example, one note or as
 
 - Keeps category and record titles in each selected source label.
 - Uses direct term matches and weighted, hand-authored synonym expansion.
+- Filters generic category words (such as “notes” or “assignments”) when a query contains a specific topic, reducing unrelated record matches.
+- Uses a small overview fallback for category-only or unmatched questions.
 - Limits selected records and total prompt context.
 - Falls back to a small overview when there are no useful lexical matches.
 - Returns record-level source labels to the tutor API for display.
