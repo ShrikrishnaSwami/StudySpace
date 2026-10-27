@@ -990,9 +990,7 @@ function QuizGenerator({
               </span>
             </label>
 
-            <input
-              value={topic}
-              onChange={(event) =>
+            <input maxLength={180} value={topic} onChange={(event) =>
                 setTopic(event.target.value)
               }
               placeholder="e.g. Derivatives, Thermodynamics, Java arrays..."
