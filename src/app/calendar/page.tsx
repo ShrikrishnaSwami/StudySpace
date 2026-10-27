@@ -814,8 +814,7 @@ export default function CalendarPage() {
 
               <button type="button" aria-label="Refresh calendar events" onClick={refresh} disabled={refreshing}
                 className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-2.5 text-white/35 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
-                aria-label="Refresh calendar"
-              >
+                >
                 <RefreshCw
                   size={16}
                   className={
