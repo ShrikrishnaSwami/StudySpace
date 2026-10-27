@@ -71,7 +71,7 @@ export default function AdminPage() {
           <h1 className="text-3xl font-semibold tracking-tight">Admin dashboard</h1>
           <p className="mt-2 text-sm text-white/45">Total registered users on StudySpace.</p>
         </div>
-        <button onClick={() => void load()} disabled={loading}
+        <button type="button" aria-label="Refresh admin statistics" onClick={() => void load()} disabled={loading}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm hover:bg-white/[0.08] disabled:opacity-50">
           <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Refresh
         </button>
