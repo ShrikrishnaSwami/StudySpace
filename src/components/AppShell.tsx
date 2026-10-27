@@ -579,6 +579,20 @@ export default function AppShell({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const activeGroup = navigationGroups.find((group) =>
+      group.items.some((item) =>
+        pathname === item.href || pathname.startsWith(`${item.href}/`)
+      )
+    );
+    if (activeGroup) {
+      setExpandedGroups((current) => ({
+        ...current,
+        [activeGroup.label]: true,
+      }));
+    }
+  }, [pathname]);
+
+  useEffect(() => {
     window.localStorage.setItem(
       "studyspace-sidebar-collapsed",
       String(collapsed)
