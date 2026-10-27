@@ -1098,7 +1098,7 @@ export default function HomeworkUploaderPage() {
 
                 <div>
                   <label className="mb-2 block text-xs font-medium text-white/55">
-                    Description
+                    Assignment instructions / rubric
                   </label>
 
                   <textarea
@@ -1106,7 +1106,7 @@ export default function HomeworkUploaderPage() {
                     onChange={(event) =>
                       setDescription(event.target.value)
                     }
-                    placeholder="Optional notes about this homework..."
+                    placeholder="Paste assignment instructions or rubric criteria for more specific AI feedback..."
                     rows={3}
                     className="input resize-none"
                     disabled={uploading}
