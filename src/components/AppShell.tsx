@@ -34,7 +34,6 @@ import {
 } from "react";
 
 import { supabase } from "@/lib/supabase";
-import { isAdminEmail } from "@/lib/admin";
 import {
   getNotifications,
   getUnreadNotificationCount,
@@ -632,7 +631,7 @@ export default function AppShell({
         name,
       });
 
-      setIsAdmin(isAdminEmail(email));
+      setIsAdmin(false);
       setLoading(false);
     }
 
@@ -649,6 +648,20 @@ export default function AppShell({
       }
 
       updateUser(authUser);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) void verifyAdmin(session.access_token);
+    }
+
+    async function verifyAdmin(accessToken: string) {
+      try {
+        const response = await fetch("/api/admin/stats", {
+          headers: { Authorization: "Bearer " + accessToken },
+          cache: "no-store",
+        });
+        if (mounted) setIsAdmin(response.ok);
+      } catch {
+        if (mounted) setIsAdmin(false);
+      }
     }
 
     void loadUser();
@@ -665,6 +678,8 @@ export default function AppShell({
         }
 
         updateUser(session.user);
+        if (session.access_token) void verifyAdmin(session.access_token);
+        else setIsAdmin(false);
       }
     );
 
