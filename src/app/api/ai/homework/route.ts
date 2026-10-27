@@ -331,7 +331,7 @@ try {
     await generateHomeworkAnalysis(
       primaryModel
     );
-} catch (primaryError) {
+} catch {
   console.warn("Primary homework model failed", { model: primaryModel });
 
   console.log(
@@ -343,7 +343,7 @@ try {
       await generateHomeworkAnalysis(
         fallbackModel
       );
-  } catch (fallbackError) {
+  } catch {
     console.warn("Fallback homework model failed", { model: fallbackModel });
 
     throw new Error(
