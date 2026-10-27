@@ -64,3 +64,29 @@ export async function getAiUsage(userId: string) {
     remaining: Math.max(0, limit - (counts[feature] || 0)),
   }));
 }
+
+export async function consumeApiRateLimit(
+  userId: string,
+  routeKey: string,
+  limit = 120,
+  windowSeconds = 600,
+) {
+  const { data, error } = await adminClient().rpc("consume_api_rate_limit", {
+    p_user_id: userId,
+    p_route_key: routeKey,
+    p_limit: limit,
+    p_window_seconds: windowSeconds,
+  });
+  if (error) {
+    console.error("API rate limit check failed", { routeKey, code: error.code });
+    throw new Error("Request protection is temporarily unavailable.");
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) throw new Error("Request protection returned no result.");
+  return {
+    allowed: Boolean(row.allowed),
+    used: Number(row.used ?? 0),
+    remaining: Number(row.remaining ?? 0),
+    resetAt: row.reset_at ? new Date(row.reset_at).toISOString() : new Date(Date.now() + windowSeconds * 1000).toISOString(),
+  };
+}
