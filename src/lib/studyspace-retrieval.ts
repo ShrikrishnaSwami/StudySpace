@@ -58,7 +58,7 @@ const MAX_RECORD_CHARS = 3200;
 const MAX_CONTEXT_CHARS = 14500;
 
 function extractField(record: string, field: string): string {
-  const match = record.match(new RegExp("(?:^|\\n)" + field + ":\\s*\\n([^\\n]+)", "i"));
+  const match = record.match(new RegExp("(?:^|\\n)" + field + ":[ \\t]*(?:\\r?\\n[ \\t]*)?([^\\r\\n]+)", "i"));
   return match?.[1]?.trim() || "";
 }
 
