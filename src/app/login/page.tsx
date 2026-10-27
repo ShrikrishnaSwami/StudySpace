@@ -10,7 +10,7 @@ import {
   EyeOff,
   Lock,
   Mail,
-  Chrome,
+  Globe2,
   UserRound,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -141,7 +141,7 @@ export default function LoginPage() {
             <div className="mb-6 space-y-3">
               <button type="button" onClick={handleGoogleLogin} disabled={loading}
                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] py-3.5 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:opacity-60">
-                <Chrome size={18} /> Continue with Google
+                <Globe2 size={18} /> Continue with Google
               </button>
               <button type="button" onClick={handleGuestLogin} disabled={loading}
                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-purple-400/20 bg-purple-500/[0.07] py-3.5 text-sm font-semibold text-purple-200 transition hover:bg-purple-500/[0.13] disabled:opacity-60">
