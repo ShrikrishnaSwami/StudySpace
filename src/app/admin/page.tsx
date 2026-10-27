@@ -205,7 +205,7 @@ export default function AdminPage() {
               Quizzes
             </p>
             <p className="mt-2 text-2xl font-bold">
-              {liveActivity.length ? liveActivity[3].description.match(/\\d+/)?.[0] ?? "—" : "—"}
+              {liveActivity.length ? liveActivity[3].description.match(/\d+/)?.[0] ?? "—" : "—"}
             </p>
             <p className="mt-1 text-xs text-white/25">
               Live database count
@@ -217,7 +217,7 @@ export default function AdminPage() {
               Homework submissions
             </p>
             <p className="mt-2 text-2xl font-bold">
-              {liveActivity.length ? liveActivity[2].description.match(/\\d+/)?.[0] ?? "—" : "—"}
+              {liveActivity.length ? liveActivity[2].description.match(/\d+/)?.[0] ?? "—" : "—"}
             </p>
             <p className="mt-1 text-xs text-white/25">
               Across all courses
