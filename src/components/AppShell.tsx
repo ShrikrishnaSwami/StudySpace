@@ -8,6 +8,7 @@ import {
   CheckSquare,
   ChevronLeft,
   ChevronRight,
+  Clock3,
   ClipboardList,
   GraduationCap,
   Home,
@@ -16,6 +17,7 @@ import {
   Settings,
   Sparkles,
   Upload,
+  Users,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -50,71 +52,42 @@ type UserInfo = {
   name: string;
 };
 
-const mainNavigation = [
+const dashboardNavigation = {
+  label: "Dashboard",
+  href: "/dashboard",
+  icon: Home,
+};
+
+const navigationGroups = [
   {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: Home,
-  },
-  {
-    label: "AI Tutor",
-    href: "/ai-tutor",
+    label: "Learning",
     icon: Brain,
+    items: [
+      { label: "AI Tutor", href: "/ai-tutor", icon: Brain },
+      { label: "Courses", href: "/courses", icon: BookOpen },
+      { label: "Assignments", href: "/assignments", icon: ClipboardList },
+      { label: "Quizzes", href: "/quizzes", icon: CheckSquare },
+      { label: "Homework", href: "/homework-uploader", icon: Upload },
+    ],
   },
   {
-    label: "Courses",
-    href: "/courses",
+    label: "Study tools",
     icon: BookOpen,
+    items: [
+      { label: "Notes & resources", href: "/notes", icon: BookOpen },
+      { label: "AI flashcards", href: "/flashcards", icon: Brain },
+      { label: "Study groups", href: "/study-groups", icon: Users },
+    ],
   },
   {
-    label: "Assignments",
-    href: "/assignments",
-    icon: ClipboardList,
-  },
-  {
-    label: "Quizzes",
-    href: "/quizzes",
-    icon: CheckSquare,
-  },
-  {
-    label: "Calendar",
-    href: "/calendar",
+    label: "Planner & progress",
     icon: CalendarDays,
-  },
-  {
-    label: "Grades",
-    href: "/grades",
-    icon: GraduationCap,
-  },
-  {
-    label: "Notes & resources",
-    href: "/notes",
-    icon: BookOpen,
-  },
-  {
-    label: "AI flashcards",
-    href: "/flashcards",
-    icon: Brain,
-  },
-  {
-    label: "Study groups",
-    href: "/study-groups",
-    icon: BookOpen,
-  },
-  {
-    label: "Focus timer",
-    href: "/focus",
-    icon: CalendarDays,
-  },
-  {
-    label: "Progress",
-    href: "/analytics",
-    icon: Sparkles,
-  },
-  {
-    label: "Homework",
-    href: "/homework-uploader",
-    icon: Upload,
+    items: [
+      { label: "Calendar", href: "/calendar", icon: CalendarDays },
+      { label: "Grades & GPA", href: "/grades", icon: GraduationCap },
+      { label: "Focus timer", href: "/focus", icon: Clock3 },
+      { label: "Progress analytics", href: "/analytics", icon: Sparkles },
+    ],
   },
 ];
 
@@ -588,6 +561,11 @@ export default function AppShell({
   const router = useRouter();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    Learning: pathname.startsWith("/ai-tutor") || pathname.startsWith("/courses") || pathname.startsWith("/assignments") || pathname.startsWith("/quizzes") || pathname.startsWith("/homework-uploader"),
+    "Study tools": pathname.startsWith("/notes") || pathname.startsWith("/flashcards") || pathname.startsWith("/study-groups"),
+    "Planner & progress": pathname.startsWith("/calendar") || pathname.startsWith("/grades") || pathname.startsWith("/focus") || pathname.startsWith("/analytics"),
+  });
 
   const [collapsed, setCollapsed] = useState(() =>
     typeof window !== "undefined" &&
@@ -784,18 +762,73 @@ export default function AppShell({
             </div>
           )}
 
-          <nav className="space-y-0.5">
-            {mainNavigation.map((item) => (
-              <NavigationLink
-                key={item.href}
-                item={item}
-                active={isActive(item.href)}
-                collapsed={collapsed}
-                onClick={() => setSidebarOpen(false)}
-              />
-            ))}
-          </nav>
+          <nav className="space-y-1">
+            <NavigationLink
+              item={dashboardNavigation}
+              active={isActive(dashboardNavigation.href)}
+              collapsed={collapsed}
+              onClick={() => setSidebarOpen(false)}
+            />
 
+            {navigationGroups.map((group) => {
+              const GroupIcon = group.icon;
+              const expanded = expandedGroups[group.label] ?? false;
+              const groupActive = group.items.some((item) => isActive(item.href));
+
+              if (collapsed) {
+                return (
+                  <div key={group.label} className="space-y-0.5">
+                    {group.items.map((item) => (
+                      <NavigationLink
+                        key={item.href}
+                        item={item}
+                        active={isActive(item.href)}
+                        collapsed={collapsed}
+                        onClick={() => setSidebarOpen(false)}
+                      />
+                    ))}
+                  </div>
+                );
+              }
+
+              return (
+                <div key={group.label} className="pt-1">
+                  <button
+                    type="button"
+                    aria-expanded={expanded}
+                    onClick={() => setExpandedGroups((current) => ({
+                      ...current,
+                      [group.label]: !current[group.label],
+                    }))}
+                    className={[
+                      "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition",
+                      groupActive ? "text-white/80" : "text-white/45 hover:bg-white/[0.035] hover:text-white/80",
+                    ].join(" ")}
+                  >
+                    <GroupIcon size={16} className={groupActive ? "text-violet-300" : "text-white/35"} />
+                    <span className="min-w-0 flex-1 font-semibold">{group.label}</span>
+                    <ChevronRight
+                      size={15}
+                      className={["shrink-0 text-white/30 transition-transform", expanded ? "rotate-90" : ""].join(" ")}
+                    />
+                  </button>
+                  {expanded && (
+                    <div className="ml-3 mt-0.5 space-y-0.5 border-l border-white/[0.08] pl-2">
+                      {group.items.map((item) => (
+                        <NavigationLink
+                          key={item.href}
+                          item={item}
+                          active={isActive(item.href)}
+                          collapsed={false}
+                          onClick={() => setSidebarOpen(false)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
           {/* Admin */}
           {isAdmin && (
             <div className="mt-7">
