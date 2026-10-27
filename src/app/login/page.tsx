@@ -12,6 +12,7 @@ import {
   Mail,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { isAdminEmail } from "@/lib/admin";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,7 +41,8 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    const { data: { user } } = await supabase.auth.getUser();
+    router.push(isAdminEmail(user?.email) ? "/admin" : "/dashboard");
   }
 
   return (
