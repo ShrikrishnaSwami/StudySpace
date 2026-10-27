@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { consumeApiRateLimit } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 
 function createServerSupabase(token: string) {
@@ -53,6 +54,9 @@ export async function GET(
         { status: 401 }
       );
     }
+    const rate = await consumeApiRateLimit(user.id, "quiz-read", 180, 600);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many quiz requests. Please wait and try again." }, { status: 429 });
+
 
     const { id } = await context.params;
 
