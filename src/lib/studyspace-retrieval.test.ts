@@ -63,6 +63,25 @@ test("retrieval selects an individual matching note instead of the entire notes 
   assert.doesNotMatch(result.context, /Net force equals mass/);
 });
 
+test("semantic scores can retrieve a paraphrased note without keyword overlap", () => {
+  const multiNoteContext = [
+    separator, "COURSE NOTES", separator,
+    "NOTE 1\\nTitle:\\nNewton's Second Law\\nContent:\\nNet force equals mass multiplied by acceleration.",
+    "NOTE 2\\nTitle:\\nPhotosynthesis\\nContent:\\nPlants convert light energy into chemical energy.",
+  ].join("\\n").replace(/^/, "\\n");
+  const result = retrieveRelevantStudyContext(multiNoteContext, "How do plants make food from sunlight?", {
+    semanticScores: {
+      "COURSE NOTES::NOTE 1: Newton's Second Law": 0.12,
+      "COURSE NOTES::NOTE 2: Photosynthesis": 0.82,
+    },
+  });
+
+  assert.equal(result.strategy, "record-hybrid-semantic-v1");
+  assert.equal(result.sections[0]?.source, "NOTE 2: Photosynthesis");
+  assert.match(result.context, /Plants convert light energy into chemical energy/);
+  assert.doesNotMatch(result.context, /Net force equals mass/);
+});
+
 test("category-only questions use a small overview rather than unrelated lexical matches", () => {
   const result = retrieveRelevantStudyContext(context, "Show me my notes");
   assert.ok(result.sections.length > 0);
