@@ -960,7 +960,7 @@ export default function AssignmentWorkspacePage() {
           <div className="mt-5 flex items-start gap-2 rounded-lg border border-red-400/20 bg-red-400/5 px-4 py-3 text-sm text-red-300">
             <X className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{fileError}</span>
-            <button onClick={() => setFileError("")} className="ml-auto">
+            <button type="button" onClick={() => setFileError("")} aria-label="Dismiss file error" className="ml-auto">
               <X className="h-4 w-4" />
             </button>
           </div>
