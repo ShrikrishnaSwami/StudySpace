@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   ArrowDownRight, ArrowUpRight, BookOpen, Brain, CalendarDays,
-  Check, ClipboardList, MoveUpRight, NotebookTabs, Sparkles,
+  Check, ClipboardList, MoveUpRight, NotebookTabs, Sparkles, Clock3, FileText, GraduationCap, Zap,
 } from "lucide-react";
 
 const tools = [
@@ -9,6 +9,10 @@ const tools = [
   { number: "02", icon: BookOpen, title: "Courses", text: "All your classes, notes and useful bits in one place.", href: "/courses", tone: "blue" },
   { number: "03", icon: CalendarDays, title: "Calendar", text: "Make the week look less like a pile-up.", href: "/calendar", tone: "pink" },
   { number: "04", icon: Brain, title: "Study room", text: "Ask questions, untangle concepts, keep going.", href: "/ai-tutor", tone: "orange" },
+  { number: "05", icon: FileText, title: "Notes & resources", text: "Keep the useful stuff close. Find it when you need it.", href: "/notes", tone: "blue" },
+  { number: "06", icon: Zap, title: "Flashcards & quizzes", text: "Turn review into short, focused practice sessions.", href: "/flashcards", tone: "lemon" },
+  { number: "07", icon: Clock3, title: "Focus timer", text: "Give one task your attention, then take a breath.", href: "/focus", tone: "pink" },
+  { number: "08", icon: GraduationCap, title: "Grades & GPA", text: "Keep track of the progress you are making.", href: "/grades", tone: "orange" },
 ];
 
 export default function Home() {
@@ -52,6 +56,19 @@ export default function Home() {
       <section className="ss-toolkit" id="toolkit">
         <div className="ss-toolkit-head"><div><p className="ss-kicker">YOUR OPEN TABS, ORGANIZED</p><h2>Four tools.<br/><span>One less headache.</span></h2></div><p>Not a life coach. Not another productivity lecture. Just a handful of genuinely useful places to put the things you’re carrying around in your head.</p></div>
         <div className="ss-tools-grid">{tools.map(({number,icon:Icon,title,text,href,tone}) => <Link href={href} key={number} className={`ss-tool-card ss-tone-${tone}`}><div className="ss-tool-top"><span>{number} / TOOL</span><Icon size={21}/></div><h3>{title}</h3><p>{text}</p><div className="ss-tool-bottom"><span>OPEN TOOL</span><ArrowUpRight size={17}/></div></Link>)}</div>
+        <section className="ss-feature-strip" aria-label="StudySpace benefits">
+          <div className="ss-feature-intro">
+            <p className="ss-kicker">BUILT AROUND REAL STUDENT DAYS</p>
+            <h3>Less mental clutter.<br/><span>More room to learn.</span></h3>
+            <p>StudySpace brings your coursework and study habits into one calm workspace, so you can spend less time organizing the work and more time doing it.</p>
+            <Link href="/signup" className="ss-feature-link">Build your space <ArrowUpRight size={16}/></Link>
+          </div>
+          <div className="ss-feature-list">
+            <article className="ss-feature-item"><span className="ss-feature-number">01</span><div><b>See what matters next</b><p>Assignments, due dates and plans in one place.</p></div><CalendarDays size={19}/></article>
+            <article className="ss-feature-item"><span className="ss-feature-number">02</span><div><b>Learn in your own way</b><p>Use notes, flashcards and AI study tools when useful.</p></div><Brain size={19}/></article>
+            <article className="ss-feature-item"><span className="ss-feature-number">03</span><div><b>Notice your progress</b><p>Keep an eye on grades, completed work and momentum.</p></div><GraduationCap size={19}/></article>
+          </div>
+        </section>
         <div className="ss-bottom-banner"><span className="ss-banner-mark">S.</span><div><b>You don’t need a perfect system.</b><p>You just need somewhere to start.</p></div><Link href="/signup">Start here <ArrowUpRight size={17}/></Link></div>
       </section>
 
