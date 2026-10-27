@@ -205,13 +205,7 @@ export default function SignupPage() {
                     className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
                   />
 
-                  <input
-                    id="signup-password"
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={password}
-                    minLength={8}
-                    maxLength={128}
+                  <input id="signup-password" type={showPassword ? "text" : "password"} required value={password} minLength={8} maxLength={128}
                     autoComplete="new-password"
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="At least 8 characters"
