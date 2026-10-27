@@ -396,20 +396,9 @@ Return valid JSON only.
         saved || [],
     });
   } catch (error) {
-    console.error(
-      "AI recommendation error:",
-      error
-    );
-
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Could not generate study recommendations.";
-
+    console.error("AI recommendation request failed.");
     return NextResponse.json(
-      {
-        error: message,
-      },
+      { error: "Could not generate study recommendations. Please try again." },
       { status: 500 }
     );
   }
