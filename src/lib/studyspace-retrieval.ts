@@ -27,6 +27,11 @@ const STOP_WORDS = new Set([
 // Category words identify the kind of record, but are weak evidence that a
 // particular record answers the question. When a query has specific terms,
 // score those terms instead of letting "notes" match every note.
+const FILLER_QUERY_TOKENS = new Set([
+  "coming", "up", "show", "find", "list", "give", "tell", "display",
+  "information", "info", "overview", "study",
+]);
+
 const GENERIC_QUERY_TOKENS = new Set([
   "note", "notes", "material", "materials", "study", "guide",
   "course", "courses", "class", "classes", "subject", "subjects",
@@ -115,17 +120,29 @@ function splitRecords(context: string): RetrievedStudySection[] {
 function buildQueryWeights(queryTokens: string[]): Map<string, number> {
   const weights = new Map<string, number>();
   const uniqueTokens = [...new Set(queryTokens)];
-  const specificTokens = uniqueTokens.filter((token) => !GENERIC_QUERY_TOKENS.has(token));
+  const specificTokens = uniqueTokens.filter(
+    (token) => !GENERIC_QUERY_TOKENS.has(token) && !FILLER_QUERY_TOKENS.has(token),
+  );
+  const categoryTokens = uniqueTokens.filter(
+    (token) => GENERIC_QUERY_TOKENS.has(token) && !FILLER_QUERY_TOKENS.has(token),
+  );
 
-  // If a query includes a meaningful topic, don't let generic category terms
-  // pull in unrelated records. For category-only questions, retain all terms
-  // so lexical ranking can still help before the overview fallback.
-  const scoringTokens = specificTokens.length ? specificTokens : uniqueTokens;
+  // Prefer topic-specific terms, but still expand category terms into useful
+  // aliases (e.g. "events" -> "calendar") without letting generic words such
+  // as "notes" match every record.
+  const scoringTokens = specificTokens.length ? specificTokens : categoryTokens;
 
   for (const token of scoringTokens) {
-    weights.set(token, 1);
+    if (!GENERIC_QUERY_TOKENS.has(token) && !FILLER_QUERY_TOKENS.has(token)) {
+      weights.set(token, 1);
+    }
     for (const alias of TOKEN_SYNONYMS.get(token) || []) {
-      if (alias !== token && !weights.has(alias) && !GENERIC_QUERY_TOKENS.has(alias)) {
+      if (
+        alias !== token &&
+        !weights.has(alias) &&
+        !GENERIC_QUERY_TOKENS.has(alias) &&
+        !FILLER_QUERY_TOKENS.has(alias)
+      ) {
         weights.set(alias, 0.42);
       }
     }
