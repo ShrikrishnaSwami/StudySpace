@@ -55,6 +55,109 @@ export async function getNotifications(
   return (data || []) as Notification[];
 }
 
+/**
+ * Create missing in-app reminders for assignments due soon/overdue and
+ * quiz events starting within the next 24 hours. Runs when the dashboard
+ * is opened/refreshed; it does not send email.
+ */
+export async function syncAcademicReminders() {
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) throw new Error(authError.message);
+  if (!user) return 0;
+
+  const settings = user.user_metadata?.studyspace_settings || {};
+  const assignmentReminders = settings.assignmentReminders !== false;
+  const quizReminders = settings.quizReminders !== false;
+  if (!assignmentReminders && !quizReminders) return 0;
+
+  const now = new Date();
+  const soon = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const { data: existing, error: existingError } = await supabase
+    .from("notifications")
+    .select("type,metadata")
+    .eq("user_id", user.id)
+    .in("type", ["assignment_due", "assignment_overdue", "quiz_upcoming"])
+    .limit(1000);
+  if (existingError) throw new Error(existingError.message);
+
+  const existingKeys = new Set((existing || []).map((item) => {
+    const metadata = item.metadata as Record<string, unknown> | null;
+    return String(item.type) + ":" + String(metadata?.source_id || "");
+  }));
+  const pending: {
+    user_id: string;
+    type: NotificationType;
+    title: string;
+    message: string;
+    href: string;
+    metadata: Record<string, unknown>;
+  }[] = [];
+
+  if (assignmentReminders) {
+    const { data: assignments, error } = await supabase
+      .from("assignments")
+      .select("id,title,due_date,status")
+      .eq("user_id", user.id)
+      .neq("status", "completed")
+      .not("due_date", "is", null)
+      .lte("due_date", soon.toISOString())
+      .limit(250);
+    if (error) throw new Error(error.message);
+
+    for (const assignment of assignments || []) {
+      if (!assignment.due_date) continue;
+      const due = new Date(assignment.due_date);
+      if (Number.isNaN(due.getTime())) continue;
+      const overdue = due.getTime() < now.getTime();
+      const type: NotificationType = overdue ? "assignment_overdue" : "assignment_due";
+      const key = type + ":" + assignment.id;
+      if (existingKeys.has(key)) continue;
+      existingKeys.add(key);
+      pending.push({
+        user_id: user.id,
+        type,
+        title: overdue ? "Assignment overdue" : "Assignment due soon",
+        message: assignment.title + (overdue ? " is past its due date." : " is due within 24 hours."),
+        href: "/assignments/" + assignment.id,
+        metadata: { source_type: "assignment", source_id: assignment.id, due_date: assignment.due_date },
+      });
+    }
+  }
+
+  if (quizReminders) {
+    const { data: events, error } = await supabase
+      .from("calendar_events")
+      .select("id,title,start_at")
+      .eq("user_id", user.id)
+      .eq("event_type", "quiz")
+      .eq("enabled", true)
+      .gte("start_at", now.toISOString())
+      .lte("start_at", soon.toISOString())
+      .limit(100);
+    if (error) throw new Error(error.message);
+
+    for (const event of events || []) {
+      const key = "quiz_upcoming:" + event.id;
+      if (existingKeys.has(key)) continue;
+      existingKeys.add(key);
+      pending.push({
+        user_id: user.id,
+        type: "quiz_upcoming",
+        title: "Quiz coming up",
+        message: event.title + " starts within 24 hours.",
+        href: "/calendar",
+        metadata: { source_type: "calendar_event", source_id: event.id, start_at: event.start_at },
+      });
+    }
+  }
+
+  if (pending.length) {
+    const { error } = await supabase.from("notifications").insert(pending);
+    if (error) throw new Error(error.message);
+  }
+  return pending.length;
+}
+
 export async function getUnreadNotificationCount() {
   const {
     data: { user },
