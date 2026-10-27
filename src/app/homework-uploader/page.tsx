@@ -1097,9 +1097,7 @@ export default function HomeworkUploaderPage() {
                     Assignment instructions / rubric
                   </label>
 
-                  <textarea
-                    value={description}
-                    onChange={(event) =>
+                  <textarea maxLength={3000} value={description} onChange={(event) =>
                       setDescription(event.target.value)
                     }
                     placeholder="Paste assignment instructions or rubric criteria for more specific AI feedback..."
