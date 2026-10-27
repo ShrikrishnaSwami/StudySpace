@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { consumeApiRateLimit } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 import { isAdminEmail } from "@/lib/admin";
 
@@ -18,5 +19,8 @@ export async function GET(request: NextRequest) {
   const { data: { user }, error } = await client.auth.getUser(token);
   if (error || !user) return NextResponse.json({ error: "Session invalid." }, { status: 401 });
   if (!isAdminEmail(user.email)) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
+  const rate = await consumeApiRateLimit(user.id, "admin-check", 240, 3600);
+  if (!rate.allowed) return NextResponse.json({ error: "Too many admin checks. Please wait and try again." }, { status: 429 });
+
   return NextResponse.json({ authorized: true }, { headers: { "Cache-Control": "no-store" } });
 }
