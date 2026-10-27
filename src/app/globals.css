@@ -1405,18 +1405,19 @@ button, a, input, textarea, select { outline-offset: 3px; }
 /* Premium interaction layer                                                  */
 /* -------------------------------------------------------------------------- */
 :root {
-  color-scheme: dark;
   --ss-violet: #a78bfa;
   --ss-violet-bright: #c4b5fd;
   --ss-panel: rgba(20, 16, 31, .9);
   --ss-line: rgba(211, 198, 255, .12);
 }
 html { scroll-padding-top: 92px; }
-body {
+html:not([data-theme="light"]) body {
   background:
     radial-gradient(ellipse at 12% -18%, rgba(124, 58, 237, .13), transparent 38%),
     radial-gradient(ellipse at 88% 6%, rgba(76, 29, 149, .09), transparent 30%),
     var(--background);
+}
+body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
