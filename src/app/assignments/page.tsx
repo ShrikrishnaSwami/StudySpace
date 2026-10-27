@@ -35,7 +35,7 @@ type Assignment = {
   description: string | null;
   due_date: string | null;
   priority: "low" | "medium" | "high";
-  status: "not_started" | "in_progress" | "completed";
+  status: "pending" | "in_progress" | "completed";
   progress: number;
   points: number | null;
   max_points: number | null;
@@ -279,7 +279,7 @@ export default function AssignmentsPage() {
           description: description.trim() || null,
           due_date: dueDate || null,
           priority,
-          status: "not_started",
+          status: "pending",
           progress: 0,
         });
 
@@ -315,7 +315,7 @@ export default function AssignmentsPage() {
         ? "completed"
         : nextProgress > 0
           ? "in_progress"
-          : "not_started";
+          : "pending";
 
     const previous = assignments;
 
