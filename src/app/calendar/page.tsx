@@ -865,6 +865,8 @@ export default function CalendarPage() {
             <span>{error}</span>
 
             <button
+              type="button"
+              aria-label="Dismiss calendar error"
               onClick={() => setError("")}
               className="ml-auto text-red-300/50 hover:text-red-300"
             >
