@@ -24,6 +24,18 @@ const STOP_WORDS = new Set([
   "who", "why", "will", "with", "would", "you", "your",
 ]);
 
+// Category words identify the kind of record, but are weak evidence that a
+// particular record answers the question. When a query has specific terms,
+// score those terms instead of letting "notes" match every note.
+const GENERIC_QUERY_TOKENS = new Set([
+  "note", "notes", "material", "materials", "study", "guide",
+  "course", "courses", "class", "classes", "subject", "subjects",
+  "assignment", "assignments", "task", "tasks", "quiz", "quizzes",
+  "test", "tests", "exam", "exams", "assessment", "assessments",
+  "calendar", "event", "events", "homework", "resource", "resources",
+  "student", "data",
+]);
+
 const SYNONYM_GROUPS: string[][] = [
   ["assignment", "assignments", "task", "tasks", "coursework", "work"],
   ["due", "deadline", "deadlines", "finish", "submit", "submission", "submissions"],
@@ -102,10 +114,20 @@ function splitRecords(context: string): RetrievedStudySection[] {
 
 function buildQueryWeights(queryTokens: string[]): Map<string, number> {
   const weights = new Map<string, number>();
-  for (const token of new Set(queryTokens)) {
+  const uniqueTokens = [...new Set(queryTokens)];
+  const specificTokens = uniqueTokens.filter((token) => !GENERIC_QUERY_TOKENS.has(token));
+
+  // If a query includes a meaningful topic, don't let generic category terms
+  // pull in unrelated records. For category-only questions, retain all terms
+  // so lexical ranking can still help before the overview fallback.
+  const scoringTokens = specificTokens.length ? specificTokens : uniqueTokens;
+
+  for (const token of scoringTokens) {
     weights.set(token, 1);
     for (const alias of TOKEN_SYNONYMS.get(token) || []) {
-      if (alias !== token && !weights.has(alias)) weights.set(alias, 0.42);
+      if (alias !== token && !weights.has(alias) && !GENERIC_QUERY_TOKENS.has(alias)) {
+        weights.set(alias, 0.42);
+      }
     }
   }
   return weights;
