@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { consumeAiQuota } from "@/lib/api-security";
 
 import { createClient } from "@supabase/supabase-js";
 import { GoogleGenAI } from "@google/genai";
@@ -220,6 +221,11 @@ export async function POST(
      * BUILD GEMINI REQUEST
      * --------------------------------------------------
      */
+
+    const quota = await consumeAiQuota(user.id, "homework");
+    if (!quota.allowed) {
+      return NextResponse.json({ error: "You have reached today's AI homework limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
+    }
 
     const ai = getGeminiClient();
 
