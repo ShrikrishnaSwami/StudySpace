@@ -58,7 +58,7 @@ const MAX_RECORD_CHARS = 3200;
 const MAX_CONTEXT_CHARS = 14500;
 
 function extractField(record: string, field: string): string {
-  const match = record.match(new RegExp("(?:^|\\n)" + field + ":[ \\t]*(?:\\r?\\n[ \\t]*)?([^\\r\\n]+)", "i"));
+  const match = record.match(new RegExp("(?:^|\n)" + field + ":[ \\t]*(?:\r?\n[ \\t]*)?([^\r\n]+)", "i"));
   return match?.[1]?.trim() || "";
 }
 
@@ -115,7 +115,7 @@ function scoreRecord(queryWeights: Map<string, number>, queryTokens: string[], r
   if (!queryWeights.size) return 0;
   // Ignore the generated record marker and category label when scoring.
   // Words like "notes" in the question should not make every note equally relevant.
-  const searchableContent = record.content.replace(/^(?:COURSE|NOTE|RESOURCE|ASSIGNMENT|QUIZ|ATTEMPT|HOMEWORK|EVENT)\\s+\\d+\\s*\\r?\\n/i, "");
+  const searchableContent = record.content.replace(/^(?:COURSE|NOTE|RESOURCE|ASSIGNMENT|QUIZ|ATTEMPT|HOMEWORK|EVENT)\s+\d+\s*\r?\n/i, "");
   const tokens = tokenize(searchableContent);
   if (!tokens.length) return 0;
 
@@ -127,7 +127,7 @@ function scoreRecord(queryWeights: Map<string, number>, queryTokens: string[], r
   for (const [token, weight] of queryWeights) {
     const frequency = frequencies.get(token) || 0;
     if (frequency) score += weight * (1 + Math.log(1 + frequency)) * (1 + Math.log(1 + tokens.length / uniqueTokens.size));
-    const sourceTitle = record.source.replace(/^(?:COURSE|NOTE|RESOURCE|ASSIGNMENT|QUIZ|ATTEMPT|HOMEWORK|EVENT)\\s+\\d+\\s*:\\s*/i, "");
+    const sourceTitle = record.source.replace(/^(?:COURSE|NOTE|RESOURCE|ASSIGNMENT|QUIZ|ATTEMPT|HOMEWORK|EVENT)\s+\d+\s*:\s*/i, "");
     if (sourceTitle.toLowerCase().includes(token)) score += weight * (weight === 1 ? 3 : 1.2);
   }
 
