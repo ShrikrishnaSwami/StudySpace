@@ -43,7 +43,6 @@ type Course = {
   user_id: string;
   code: string;
   name: string;
-  professor: string | null;
   room: string | null;
   schedule: string | null;
   color: string | null;
@@ -1756,9 +1755,6 @@ function EditCourseModal({
 }) {
   const [name, setName] = useState(course.name);
   const [code, setCode] = useState(course.code);
-  const [professor, setProfessor] = useState(
-    course.professor || ""
-  );
   const [room, setRoom] = useState(course.room || "");
   const [schedule, setSchedule] = useState(
     course.schedule || ""
@@ -1787,7 +1783,6 @@ function EditCourseModal({
         .update({
           name: name.trim(),
           code: code.trim(),
-          professor: professor.trim() || null,
           room: room.trim() || null,
           schedule: schedule.trim() || null,
           progress: Number(progress),
