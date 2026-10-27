@@ -26,6 +26,12 @@ The system is not yet a language model trained by StudySpace. Owning the orchest
 4. **Tutor quality evaluation:** assess correctness, groundedness, clarity, step-by-step reasoning, and whether the answer uses the right course material. Keep private student records out of evaluation fixtures.
 5. **Model experiments:** benchmark candidate models on the same evaluation set, then consider fine-tuning on licensed or original educational examples if measured results justify it.
 
+## Retrieval evaluation baseline
+
+A small synthetic evaluation set lives in `src/lib/studyspace-retrieval-evaluation.json`. It covers course details, assignment deadlines, course notes, quiz performance, and calendar events; it contains no real student data. The regression tests are in `src/lib/studyspace-retrieval.test.ts`.
+
+Run them with `npm run test:retrieval` on a Node.js version that supports built-in TypeScript type stripping (Node 22.6+). The tests check expected-section retrieval, context/section bounds, empty-context behavior, and the unmatched-question fallback. This is an initial smoke-sized set, not a statistically meaningful benchmark; expand it with reviewed examples before comparing models or claiming quality improvements.
+
 ## Manual smoke checks
 
 Use a signed-in test account with at least two courses and some notes:
