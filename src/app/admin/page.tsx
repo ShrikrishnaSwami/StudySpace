@@ -18,7 +18,7 @@ import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
 
-const stats = [
+const initialStats = [
   {
     title: "Total Users",
     value: "1,284",
@@ -74,7 +74,7 @@ const activity = [
 
 export default function AdminPage() {
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
+  const [checking, setChecking] = useState(true);\n  const [stats, setStats] = useState(initialStats);\n  const [liveActivity, setLiveActivity] = useState(activity);
 
   useEffect(() => {
     async function checkAdmin() {
@@ -188,7 +188,7 @@ export default function AdminPage() {
               Quizzes
             </p>
             <p className="mt-2 text-2xl font-bold">
-              427
+              {liveActivity.length ? liveActivity[3].description.match(/\\d+/)?.[0] ?? "—" : "—"}
             </p>
             <p className="mt-1 text-xs text-white/25">
               31 created this month
@@ -200,7 +200,7 @@ export default function AdminPage() {
               Homework submissions
             </p>
             <p className="mt-2 text-2xl font-bold">
-              6,492
+              {liveActivity.length ? liveActivity[2].description.match(/\\d+/)?.[0] ?? "—" : "—"}
             </p>
             <p className="mt-1 text-xs text-white/25">
               Across all courses
@@ -212,7 +212,7 @@ export default function AdminPage() {
               Active today
             </p>
             <p className="mt-2 text-2xl font-bold">
-              936
+              {stats[1]?.value ?? "—"}
             </p>
             <p className="mt-1 text-xs text-emerald-400">
               72.9% of registered users
@@ -239,7 +239,7 @@ export default function AdminPage() {
             </div>
 
             <div className="divide-y divide-white/[0.05]">
-              {activity.map((item, index) => {
+              {liveActivity.map((item, index) => {
                 const Icon = item.icon;
 
                 return (
