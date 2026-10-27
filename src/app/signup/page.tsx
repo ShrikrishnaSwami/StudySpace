@@ -33,8 +33,8 @@ export default function SignupPage() {
     setError("");
     setSuccess("");
 
-    if (password.length < 6) {
-      setError("Your password must be at least 6 characters.");
+    if (password.length < 8) {
+      setError("Your password must be at least 8 characters.");
       setLoading(false);
       return;
     }
