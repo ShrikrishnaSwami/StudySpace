@@ -1,41 +1,46 @@
 {
-  "version": 1,
+  "version": 2,
   "description": "Synthetic retrieval evaluation cases. Contains no real student records.",
   "cases": [
     {
       "id": "course-details",
       "question": "What is the professor and schedule for COMP 101?",
-      "expectedSections": [
-        "STUDENT COURSES"
-      ]
+      "expectedSections": ["STUDENT COURSES"]
     },
     {
       "id": "assignment-deadline",
       "question": "When is the database project due and what is its status?",
-      "expectedSections": [
-        "ASSIGNMENTS"
-      ]
+      "expectedSections": ["ASSIGNMENTS"]
     },
     {
       "id": "note-concept",
       "question": "Explain Newton's second law from my physics notes",
-      "expectedSections": [
-        "COURSE NOTES"
-      ]
+      "expectedSections": ["COURSE NOTES"]
     },
     {
       "id": "quiz-performance",
       "question": "What score did I get on my latest calculus quiz?",
-      "expectedSections": [
-        "QUIZ ATTEMPTS / PERFORMANCE"
-      ]
+      "expectedSections": ["QUIZ ATTEMPTS / PERFORMANCE"]
     },
     {
       "id": "calendar-event",
       "question": "What classes and study events are on my calendar?",
-      "expectedSections": [
-        "CALENDAR"
-      ]
+      "expectedSections": ["CALENDAR"]
+    },
+    {
+      "id": "course-synonyms",
+      "question": "Who teaches COMP 101 and when do I attend?",
+      "expectedSections": ["STUDENT COURSES"]
+    },
+    {
+      "id": "assignment-synonyms",
+      "question": "What coursework must I finish and by what date?",
+      "expectedSections": ["ASSIGNMENTS"]
+    },
+    {
+      "id": "quiz-synonyms",
+      "question": "How did I perform on my calculus assessment?",
+      "expectedSections": ["QUIZ ATTEMPTS / PERFORMANCE"]
     }
   ]
 }
