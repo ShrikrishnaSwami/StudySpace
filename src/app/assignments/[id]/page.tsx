@@ -52,7 +52,7 @@ type Assignment = {
   description: string | null;
   due_date: string | null;
   priority: "low" | "medium" | "high";
-  status: "not_started" | "in_progress" | "completed";
+  status: "pending" | "in_progress" | "completed";
   progress: number;
   points: number | null;
   max_points: number | null;
@@ -1364,7 +1364,7 @@ export default function AssignmentWorkspacePage() {
                       ? "completed"
                       : progress > 0
                       ? "in_progress"
-                      : "not_started",
+                      : "pending",
                   });
                 }}
                 onTouchEnd={(event) => {
@@ -1375,7 +1375,7 @@ export default function AssignmentWorkspacePage() {
                       ? "completed"
                       : progress > 0
                       ? "in_progress"
-                      : "not_started",
+                      : "pending",
                   });
                 }}
                 className="mt-4 w-full accent-purple-400"
