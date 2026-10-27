@@ -70,6 +70,23 @@ test("category-only questions use a small overview rather than unrelated lexical
   assert.ok(result.sections.every((section) => section.title === "COURSE NOTES" || section.title === "STUDENT COURSES" || section.title === "ASSIGNMENTS" || section.title === "CALENDAR" || section.title === "QUIZ ATTEMPTS / PERFORMANCE" || section.title === "HOMEWORK"));
 });
 
+test("long notes are chunked and retrieve the relevant later section", () => {
+  const filler = "General orbital mechanics background explains reference frames and motion.\n".repeat(120);
+  const longContext = [
+    separator, "COURSE NOTES", separator,
+    "NOTE 1\nTitle:\nCelestial Mechanics\nContent:\n" +
+      filler +
+      "Lagrange points are locations where gravitational and orbital effects can balance. " +
+      "The L4 and L5 points can be stable in suitable systems.",
+  ].join("\n").replace(/^/, "\n");
+
+  const result = retrieveRelevantStudyContext(longContext, "Explain Lagrange points from my notes");
+  assert.equal(result.sections.length, 1);
+  assert.match(result.sections[0]?.source || "", /\(part \d+\)/);
+  assert.match(result.context, /Lagrange points are locations/);
+  assert.match(result.context, /L4 and L5 points can be stable/);
+});
+
 test("retrieval returns bounded context and section count", () => {
   const result = retrieveRelevantStudyContext(context, "Tell me about all my courses and assignments", {
     maxSections: 2,
