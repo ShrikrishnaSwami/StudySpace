@@ -785,9 +785,7 @@ export default function HomeworkUploaderPage() {
               <div className="relative min-w-0 flex-1">
                 <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/25" />
 
-                <input
-                  value={search}
-                  onChange={(event) =>
+                <input type="search" aria-label="Search homework submissions" value={search} onChange={(event) =>
                     setSearch(event.target.value)
                   }
                   placeholder="Search homework, files, or courses..."
