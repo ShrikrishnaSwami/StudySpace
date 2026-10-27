@@ -97,6 +97,11 @@ const mainNavigation = [
     icon: Brain,
   },
   {
+    label: "Study groups",
+    href: "/study-groups",
+    icon: BookOpen,
+  },
+  {
     label: "Focus timer",
     href: "/focus",
     icon: CalendarDays,
