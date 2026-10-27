@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await client.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Session expired." }, { status: 401 });
 
+    if (Number(request.headers.get("content-length") || 0) > 40000) return NextResponse.json({ error: "Request is too large. Keep the syllabus under 30,000 characters." }, { status: 413 });
     const body = await request.json();
     const title = typeof body.title === "string" ? body.title.trim().slice(0, 160) : "";
     const text = typeof body.text === "string" ? body.text.trim() : "";
