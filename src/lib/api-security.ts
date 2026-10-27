@@ -24,35 +24,37 @@ function adminClient() {
 
 export async function consumeAiQuota(userId: string, feature: AiFeature) {
   const limit = AI_DAILY_LIMITS[feature];
-  const client = adminClient();
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-  const { count, error: countError } = await client
-    .from("ai_usage_events")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("feature", feature)
-    .gte("created_at", since);
-
-  if (countError) throw new Error("Could not check AI usage: " + countError.message);
-  const used = count || 0;
-  const resetAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-  if (used >= limit) return { allowed: false, limit, used, remaining: 0, resetAt };
-
-  const { error: insertError } = await client.from("ai_usage_events").insert({ user_id: userId, feature });
-  if (insertError) throw new Error("Could not record AI usage: " + insertError.message);
-  return { allowed: true, limit, used: used + 1, remaining: Math.max(0, limit - used - 1), resetAt };
+  const { data, error } = await adminClient().rpc("consume_ai_quota", {
+    p_user_id: userId,
+    p_feature: feature,
+    p_limit: limit,
+  });
+  if (error) {
+    console.error("Atomic AI quota check failed", { feature, code: error.code });
+    throw new Error("AI usage controls are temporarily unavailable. Please try again.");
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row) throw new Error("AI usage controls returned no result.");
+  return {
+    allowed: Boolean(row.allowed),
+    limit: Number(row.limit_count ?? limit),
+    used: Number(row.used ?? 0),
+    remaining: Number(row.remaining ?? 0),
+    resetAt: row.reset_at ? new Date(row.reset_at).toISOString() : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  };
 }
 
 export async function getAiUsage(userId: string) {
-  const client = adminClient();
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const { data, error } = await client
+  const { data, error } = await adminClient()
     .from("ai_usage_events")
     .select("feature")
     .eq("user_id", userId)
     .gte("created_at", since);
-  if (error) throw new Error("Could not load AI usage: " + error.message);
+  if (error) {
+    console.error("AI usage read failed", { code: error.code });
+    throw new Error("Could not load AI usage.");
+  }
   const counts: Record<string, number> = {};
   for (const row of data || []) counts[row.feature] = (counts[row.feature] || 0) + 1;
   return Object.entries(AI_DAILY_LIMITS).map(([feature, limit]) => ({
