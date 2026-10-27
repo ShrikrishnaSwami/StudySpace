@@ -431,3 +431,50 @@ html[data-theme="light"] .ss-shell main .rounded-xl.border {
   box-shadow: 0 8px 26px rgba(35, 24, 55, .035);
 }
 
+
+
+/* Final accessibility and state consistency pass. */
+.ss-nav a:focus-visible,
+.ss-footer a:focus-visible,
+.ss-tool-card:focus-visible,
+.ss-cta:focus-visible,
+.ss-join:focus-visible {
+  outline-offset: 4px;
+}
+
+.ss-shell :is(button, input, textarea, select):focus-visible {
+  outline-color: #b8a1ff;
+}
+
+.ss-shell button:disabled,
+.ss-shell input:disabled,
+.ss-shell textarea:disabled,
+.ss-shell select:disabled {
+  filter: saturate(.75);
+}
+
+@media (hover: none) {
+  .ss-tool-card:hover,
+  .ss-cta:hover,
+  .ss-join:hover,
+  .ss-bottom-banner > a:hover {
+    transform: none;
+    filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .ss-kicker,
+  .ss-nav-center,
+  .ss-tool-top,
+  .ss-tool-bottom {
+    color: #d2c5f7;
+  }
+
+  .ss-shell main input,
+  .ss-shell main textarea,
+  .ss-shell main select {
+    border-color: rgba(196, 181, 253, .45) !important;
+  }
+}
+
