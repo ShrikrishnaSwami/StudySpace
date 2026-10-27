@@ -140,7 +140,7 @@ function buildQueryWeights(queryTokens: string[]): Map<string, number> {
       if (
         alias !== token &&
         !weights.has(alias) &&
-        !GENERIC_QUERY_TOKENS.has(alias) &&
+        (!GENERIC_QUERY_TOKENS.has(alias) || specificTokens.length === 0) &&
         !FILLER_QUERY_TOKENS.has(alias)
       ) {
         weights.set(alias, 0.42);
