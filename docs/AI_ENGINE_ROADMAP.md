@@ -24,7 +24,9 @@ The retrieval baseline now ranks individual records (for example, one note or as
 - Adds a Gemini embedding-based semantic scoring path for up to 40 category-balanced record/chunk candidates per tutor request.
 - Combines semantic similarity with the existing lexical ranking and preserves the same context limits and source labels.
 - Keeps semantic retrieval opt-in with `STUDYSPACE_SEMANTIC_RETRIEVAL=true`; when disabled or when the embedding service fails, the tutor falls back to lexical retrieval.
-- Uses `GEMINI_API_KEY` server-side only. Embeddings are generated per request in this prototype; persistent embedding storage and caching are not implemented, so enabling it adds latency and API usage.
+- Uses `GEMINI_API_KEY` server-side only. Document embeddings are persisted in `studyspace_ai_embeddings` and keyed by the SHA-256 hash of candidate text plus the embedding model. Unchanged candidates reuse cached vectors; new or changed candidates are embedded and cached. The question is embedded for each request.
+- The cache table has row-level security policies that scope every read/write to the authenticated user's own `auth.uid()`. It uses the caller's access token and publishable/anon key; no service-role key is required.
+- Cache writes are best-effort: if they fail, fresh vectors can still be used for the current request, and lexical retrieval remains the fallback if semantic retrieval fails.
 
 This is retrieval infrastructure, not a model trained by StudySpace. The Gemini embedding model supplies vectors; StudySpace performs candidate selection, cosine similarity, ranking, and fallback logic.
 
@@ -48,7 +50,7 @@ The test suite should be run locally after pulling `main`. A green local test ru
 
 1. Add reviewed, synthetic and anonymized evaluation examples and measure retrieval precision/recall.
 2. Extract and chunk actual uploaded document text with stable source metadata (document, page, course) where the existing upload pipeline supports text extraction.
-3. Benchmark the opt-in semantic retrieval path; then add persistent per-record embeddings and invalidation so unchanged records are not re-embedded on every question.
+3. Benchmark the opt-in semantic retrieval path and add explicit cleanup/invalidation for stale cached embeddings as source-record IDs become available in the formatted context.
 4. Benchmark generated answers for factual grounding, correctness, clarity, and citation accuracy.
 5. Consider fine-tuning only after a suitable licensed/original dataset and measurable target are available.
 
