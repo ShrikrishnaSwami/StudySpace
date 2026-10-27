@@ -161,6 +161,7 @@ function scoreRecord(queryWeights: Map<string, number>, queryTokens: string[], r
   const frequencies = new Map<string, number>();
   for (const token of tokens) frequencies.set(token, (frequencies.get(token) || 0) + 1);
   const uniqueTokens = new Set(tokens);
+  const categoryTokens = new Set(tokenize(record.title));
   let score = 0;
 
   for (const [token, weight] of queryWeights) {
@@ -168,6 +169,7 @@ function scoreRecord(queryWeights: Map<string, number>, queryTokens: string[], r
     if (frequency) score += weight * (1 + Math.log(1 + frequency)) * (1 + Math.log(1 + tokens.length / uniqueTokens.size));
     const sourceTitle = record.source.replace(/^(?:COURSE|NOTE|RESOURCE|ASSIGNMENT|QUIZ|ATTEMPT|HOMEWORK|EVENT)\s+\d+\s*:\s*/i, "");
     if (sourceTitle.toLowerCase().includes(token)) score += weight * (weight === 1 ? 3 : 1.2);
+    if (categoryTokens.has(token)) score += weight * 1.5;
   }
 
   const normalizedQuery = queryTokens.join(" ");
