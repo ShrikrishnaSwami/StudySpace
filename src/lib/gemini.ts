@@ -42,10 +42,18 @@ function configuredGeminiModels(task: AITask) {
     flashcards: fastModel,
     recommendations: fastModel,
   };
-  return {
-    primary: taskModel[task],
-    fallback: process.env.GEMINI_FALLBACK_MODEL || fastModel,
-  };
+  const primary = taskModel[task];
+  // A fallback must be a different model. A misconfigured environment variable
+  // must not silently make retries call the same overloaded model again.
+  const fallbackCandidates = [
+    process.env.GEMINI_FAST_MODEL,
+    process.env.GEMINI_FALLBACK_MODEL,
+    "gemini-3.5-flash-lite",
+    "gemini-3.6-flash",
+  ].map((value) => value?.trim()).filter((value): value is string => Boolean(value));
+  const fallback = fallbackCandidates.find((value) => value !== primary) || primary;
+
+  return { primary, fallback };
 }
 
 const taskGuidance: Record<AITask, string> = {
