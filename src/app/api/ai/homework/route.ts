@@ -417,18 +417,9 @@ const result = JSON.parse(
       hints,
     });
   } catch (error) {
-    console.error(
-      "Homework AI error:",
-      error
-    );
-
+    console.error("Homework AI request failed.");
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to analyze homework.",
-      },
+      { error: "Failed to analyze homework. Please try again." },
       { status: 500 }
     );
   }
