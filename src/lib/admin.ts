@@ -1,12 +1,7 @@
-export const ADMIN_EMAILS = [
-  "apha9213@gmail.com",
-];
+import "server-only";
 
 export function isAdminEmail(email?: string | null) {
-  if (!email) return false;
-
-  return ADMIN_EMAILS.some(
-    (adminEmail) =>
-      adminEmail.toLowerCase() === email.toLowerCase()
-  );
+  const configured = process.env.STUDYSPACE_ADMIN_EMAIL?.trim().toLowerCase();
+  const adminEmail = configured || "apha9213@gmail.com";
+  return Boolean(email && email.trim().toLowerCase() === adminEmail);
 }
