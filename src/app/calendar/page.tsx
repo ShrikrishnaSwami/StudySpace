@@ -1731,9 +1731,7 @@ function EventModal({
           <div>
             <FieldLabel>Description</FieldLabel>
 
-            <textarea
-              value={form.description}
-              onChange={(event) =>
+            <textarea maxLength={3000} value={form.description} onChange={(event) =>
                 update(
                   "description",
                   event.target.value
