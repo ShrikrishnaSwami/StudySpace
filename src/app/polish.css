@@ -326,3 +326,45 @@ main:has(form) form button[type="submit"]:active:not(:disabled) {
   }
 }
 
+
+
+/* Subtle interaction finish for existing cards and controls. */
+.ss-tool-card,
+.ss-feature-item,
+.ss-bottom-banner,
+.ss-note-card,
+.ss-shell main .rounded-2xl.border,
+.ss-shell main .rounded-xl.border {
+  transition:
+    border-color .2s var(--ss-ease),
+    box-shadow .2s var(--ss-ease),
+    background-color .2s var(--ss-ease);
+}
+
+.ss-shell main .rounded-2xl.border:hover,
+.ss-shell main .rounded-xl.border:hover {
+  border-color: rgba(167, 139, 250, .2) !important;
+}
+
+.ss-shell main a:not([class*="bg-"]) {
+  text-underline-offset: 3px;
+}
+
+.ss-shell main a:focus-visible,
+.ss-sidebar a:focus-visible,
+.ss-topbar a:focus-visible {
+  border-radius: 8px;
+}
+
+.ss-shell main input:disabled,
+.ss-shell main textarea:disabled,
+.ss-shell main select:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+}
+
+.ss-shell main ::selection {
+  background: rgba(167, 139, 250, .32);
+  color: #fff;
+}
+
