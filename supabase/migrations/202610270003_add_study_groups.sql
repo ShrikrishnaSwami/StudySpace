@@ -10,7 +10,7 @@ create policy "Members can view study groups" on public.study_groups for select 
 create policy "Students create their own study groups" on public.study_groups for insert to authenticated with check(owner_id=(select auth.uid()));
 create policy "Owners update their study groups" on public.study_groups for update to authenticated using(owner_id=(select auth.uid())) with check(owner_id=(select auth.uid()));
 create policy "Owners delete their study groups" on public.study_groups for delete to authenticated using(owner_id=(select auth.uid()));
-create policy "Users can view their own group membership" on public.study_group_members for select to authenticated using(user_id=(select auth.uid()));
+create policy "Members can view group membership" on public.study_group_members for select to authenticated using(user_id=(select auth.uid()));
 create policy "Group owners add initial membership" on public.study_group_members for insert to authenticated with check(user_id=(select auth.uid()) and exists(select 1 from public.study_groups g where g.id=group_id and g.owner_id=(select auth.uid())));
 create policy "Members can leave groups" on public.study_group_members for delete to authenticated using(user_id=(select auth.uid()) or exists(select 1 from public.study_groups g where g.id=group_id and g.owner_id=(select auth.uid())));
 create policy "Group members read posts" on public.study_group_posts for select to authenticated using(exists(select 1 from public.study_group_members m where m.group_id=study_group_posts.group_id and m.user_id=(select auth.uid())));
