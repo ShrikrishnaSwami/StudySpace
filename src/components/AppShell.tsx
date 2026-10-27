@@ -592,8 +592,8 @@ export default function AppShell({
   const commandInputRef = useRef<HTMLInputElement>(null);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     Learning: pathname.startsWith("/ai-tutor") || pathname.startsWith("/courses") || pathname.startsWith("/assignments") || pathname.startsWith("/quizzes") || pathname.startsWith("/homework-uploader"),
-    "Study tools": pathname.startsWith("/notes") || pathname.startsWith("/flashcards") || pathname.startsWith("/study-groups"),
-    "Planner & progress": pathname.startsWith("/calendar") || pathname.startsWith("/grades") || pathname.startsWith("/focus") || pathname.startsWith("/analytics"),
+    "Study tools": pathname.startsWith("/notes") || pathname.startsWith("/flashcards") || pathname.startsWith("/study-groups") || pathname.startsWith("/syllabus-importer"),
+    "Planner & progress": pathname.startsWith("/calendar") || pathname.startsWith("/planner") || pathname.startsWith("/grades") || pathname.startsWith("/focus") || pathname.startsWith("/analytics"),
   });
 
   const [collapsed, setCollapsed] = useState(() =>
