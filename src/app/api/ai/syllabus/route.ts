@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       if (!apiKey) throw new Error("Gemini is not configured on the server.");
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
-        model: process.env.GEMINI_MODEL || "gemini-3.8-flash",
+        model: process.env.GEMINI_REASONING_MODEL || process.env.GEMINI_MODEL || "gemini-3.8-flash",
         contents: [{ role: "user", parts: [{ inlineData: { mimeType: "application/pdf", data: fileBase64 } }, { text: systemInstruction + "\\n\\n" + prompt }] }],
         config: { temperature: 0.2, maxOutputTokens: 4096 },
       });
@@ -76,6 +76,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ import: saved, events, usage: quota });
   } catch (error) {
     console.error("Syllabus extraction failed:", error);
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Could not extract syllabus dates." }, { status: 500 });
+    return NextResponse.json({ error: "Could not extract syllabus dates. Please check the file or text and try again." }, { status: 500 });
   }
 }
