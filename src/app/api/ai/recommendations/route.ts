@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { consumeAiQuota } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 
 import { generateAIResponse } from "@/lib/gemini";
@@ -165,6 +166,11 @@ STUDENT DATA:
 
 ${formattedContext}
 `;
+
+    const quota = await consumeAiQuota(user.id, "recommendations");
+    if (!quota.allowed) {
+      return NextResponse.json({ error: "You have reached today's AI recommendations limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
+    }
 
     const response =
       await generateAIResponse({
