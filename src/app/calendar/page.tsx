@@ -1609,9 +1609,7 @@ function EventModal({
           <div>
             <FieldLabel>Title</FieldLabel>
 
-            <input
-              value={form.title}
-              onChange={(event) =>
+            <input maxLength={180} value={form.title} onChange={(event) =>
                 update("title", event.target.value)
               }
               placeholder="e.g. Physics Lecture"
