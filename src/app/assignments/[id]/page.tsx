@@ -238,6 +238,10 @@ export default function AssignmentWorkspacePage() {
     [submissions],
   );
 
+  useEffect(() => {
+    setSubmissionNote(activeSubmission?.submission_note ?? "");
+  }, [activeSubmission?.id, activeSubmission?.submission_note]);
+
   const activeSubmissionFiles = useMemo(
     () =>
       activeSubmission
@@ -291,39 +295,51 @@ export default function AssignmentWorkspacePage() {
 
   const loadFilesAndSubmissions = useCallback(async () => {
     setLoadingFiles(true);
+    setFileError("");
 
-    const [
-      workingResult,
-      submissionsResult,
-      submissionFilesResult,
-    ] = await Promise.all([
-      supabase
-        .from("assignment_attachments")
-        .select("*")
-        .eq("assignment_id", assignmentId)
-        .order("created_at", { ascending: false }),
+    try {
+      const [workingResult, submissionsResult] = await Promise.all([
+        supabase
+          .from("assignment_attachments")
+          .select("*")
+          .eq("assignment_id", assignmentId)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("assignment_submissions")
+          .select("*")
+          .eq("assignment_id", assignmentId)
+          .order("attempt_number", { ascending: false }),
+      ]);
 
-      supabase
-        .from("assignment_submissions")
-        .select("*")
-        .eq("assignment_id", assignmentId)
-        .order("attempt_number", { ascending: false }),
+      if (workingResult.error) throw workingResult.error;
+      if (submissionsResult.error) throw submissionsResult.error;
 
-      supabase
-        .from("assignment_submission_files")
-        .select("*")
-        .order("created_at", { ascending: false }),
-    ]);
+      const loadedSubmissions = (submissionsResult.data ?? []) as Submission[];
+      const submissionIds = loadedSubmissions.map((item) => item.id);
 
-    if (workingResult.error) console.error(workingResult.error);
-    if (submissionsResult.error) console.error(submissionsResult.error);
-    if (submissionFilesResult.error) console.error(submissionFilesResult.error);
+      const submissionFilesResult = submissionIds.length
+        ? await supabase
+            .from("assignment_submission_files")
+            .select("*")
+            .in("submission_id", submissionIds)
+            .order("created_at", { ascending: false })
+        : { data: [], error: null };
 
-    setWorkingFiles((workingResult.data ?? []) as WorkingFile[]);
-    setSubmissions((submissionsResult.data ?? []) as Submission[]);
-    setSubmissionFiles((submissionFilesResult.data ?? []) as SubmissionFile[]);
+      if (submissionFilesResult.error) throw submissionFilesResult.error;
 
-    setLoadingFiles(false);
+      setWorkingFiles((workingResult.data ?? []) as WorkingFile[]);
+      setSubmissions(loadedSubmissions);
+      setSubmissionFiles((submissionFilesResult.data ?? []) as SubmissionFile[]);
+    } catch (loadError) {
+      console.error("Failed to load assignment files and submissions:", loadError);
+      setFileError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Couldn't load assignment files and submission history. Please retry.",
+      );
+    } finally {
+      setLoadingFiles(false);
+    }
   }, [assignmentId]);
 
   useEffect(() => {
@@ -663,6 +679,54 @@ export default function AssignmentWorkspacePage() {
     setBusy(false);
   }
 
+  async function saveSubmissionDraft() {
+    if (!activeSubmission || activeSubmission.status === "submitted") return;
+
+    setBusy(true);
+    setError("");
+    setFileError("");
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setBusy(false);
+      router.push("/login");
+      return;
+    }
+
+    const nextStatus = activeSubmissionFiles.length > 0
+      ? "ready_to_submit"
+      : "draft";
+
+    const { data, error: saveError } = await supabase
+      .from("assignment_submissions")
+      .update({
+        submission_note: submissionNote.trim() || null,
+        status: nextStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", activeSubmission.id)
+      .eq("user_id", user.id)
+      .neq("status", "submitted")
+      .select("*")
+      .single();
+
+    if (saveError || !data) {
+      console.error(saveError);
+      setFileError(`Couldn't save this draft. ${saveError?.message ?? "This attempt may already be submitted."}`);
+      setBusy(false);
+      return;
+    }
+
+    setSubmissions((current) =>
+      current.map((item) => item.id === data.id ? (data as Submission) : item),
+    );
+    setNotice("Draft saved. You can come back and finish it later.");
+    setBusy(false);
+  }
+
   async function submitFinalWork() {
     if (!activeSubmission || !assignment) return;
 
@@ -680,6 +744,7 @@ export default function AssignmentWorkspacePage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
+      setBusy(false);
       router.push("/login");
       return;
     }
@@ -1135,6 +1200,13 @@ export default function AssignmentWorkspacePage() {
                         <p className="text-xs text-white/35">
                           {activeSubmissionFiles.length} final file(s) attached
                         </p>
+                        <button
+                          onClick={() => void saveSubmissionDraft()}
+                          disabled={busy}
+                          className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-medium text-white/75 transition hover:bg-white/[0.05] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Save draft
+                        </button>
                         <button
                           onClick={() => setConfirmSubmit(true)}
                           disabled={busy || activeSubmissionFiles.length === 0}
