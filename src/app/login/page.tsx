@@ -99,7 +99,7 @@ export default function LoginPage() {
       if (error) throw error;
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
-        const adminCheck = await fetch("/api/admin/stats", {
+        const adminCheck = await fetch("/api/admin/check", {
           headers: { Authorization: "Bearer " + session.access_token },
           cache: "no-store",
         });
