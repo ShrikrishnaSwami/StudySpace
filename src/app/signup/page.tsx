@@ -91,7 +91,7 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="ss-auth-page flex min-h-screen items-center justify-center px-6 py-12">
+    <main className=" flex min-h-screen items-center justify-center px-6 py-12">
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div className="absolute left-1/4 top-10 h-72 w-72 rounded-full bg-purple-600/10 blur-3xl" />
         <div className="absolute bottom-10 right-1/4 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
