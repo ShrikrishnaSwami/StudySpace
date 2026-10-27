@@ -41,6 +41,7 @@ import {
 
 import {
   getNotifications,
+  syncAcademicReminders,
   type Notification,
 } from "@/lib/notifications";
 
@@ -468,6 +469,9 @@ export default function DashboardPage() {
           "Student";
 
         setUserName(name);
+
+        // Refresh upcoming in-app reminders before reading the notification list.
+        await syncAcademicReminders().catch(() => 0);
 
         const [
           coursesResult,
