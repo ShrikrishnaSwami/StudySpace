@@ -20,7 +20,7 @@ export default function FlashcardsPage(){
   const patch={due_at:due.toISOString(),interval_days:interval,ease_factor:Number(nextEase.toFixed(2)),repetitions,last_reviewed_at:now.toISOString()};
   const {error}=await supabase.from("flashcards").update(patch).eq("id",card.id);if(error){setError("Could not save review: "+error.message);return;}
   const updated={...card,...patch};const next=cards.map(c=>c.id===card.id?updated:c).sort((a,b)=>new Date(a.due_at).getTime()-new Date(b.due_at).getTime()||a.position-b.position);setCards(next);setFlipped(false);
-  const dueIndex=next.findIndex(c=>c.id!==card.id&&new Date(c.due_at)<=due);setIndex(dueIndex>=0?dueIndex:Math.min(index+1,Math.max(0,next.length-1)));
+  const dueIndex=next.findIndex(c=>c.id!==card.id&&new Date(c.due_at)<=now);setIndex(dueIndex>=0?dueIndex:Math.min(index+1,Math.max(0,next.length-1)));
  }
  const dueCount=cards.filter(c=>!c.due_at||new Date(c.due_at)<=new Date()).length;
  const card=cards[index];
