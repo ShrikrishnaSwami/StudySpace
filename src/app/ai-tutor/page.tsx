@@ -95,6 +95,22 @@ const starterPrompts = [
     prompt:
       "Help me understand this homework problem step by step.",
   },
+  {
+    icon: Sparkles,
+    title: "Make a practice quiz",
+    description:
+      "Test my understanding with questions and answers.",
+    prompt:
+      "Create a short practice quiz from the course material available to you. Ask one question at a time, wait for my answer, then explain the result.",
+  },
+  {
+    icon: BookOpen,
+    title: "Create flashcards",
+    description:
+      "Turn key ideas into active-recall cards.",
+    prompt:
+      "Help me create a set of concise active-recall flashcards from the course material available to you. Show one card at a time and let me try to answer before revealing the explanation.",
+  },
 ];
 
 /* =========================================================
