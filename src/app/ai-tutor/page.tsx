@@ -56,6 +56,7 @@ type Message = {
   role: "user" | "assistant";
   content: string;
   created_at: string;
+  contextSources?: string[];
 };
 
 /* =========================================================
@@ -694,6 +695,9 @@ export default function AITutorPage() {
           content: result.answer,
           created_at:
             new Date().toISOString(),
+          contextSources: Array.isArray(result.retrieval?.sections)
+            ? result.retrieval.sections.filter((source: unknown): source is string => typeof source === "string")
+            : [],
         };
 
       setMessages((current) => [
@@ -1512,6 +1516,12 @@ export default function AITutorPage() {
                                 message.content
                               }
                             </div>
+                            {!isUser && message.contextSources && message.contextSources.length > 0 && (
+                              <div className="mt-3 border-t border-white/10 pt-2 text-xs text-white/45">
+                                <span className="font-medium text-white/60">StudySpace context:</span>{" "}
+                                {message.contextSources.join(" · ")}
+                              </div>
+                            )}
                           </div>
 
                           <div
