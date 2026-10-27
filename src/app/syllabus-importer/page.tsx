@@ -37,7 +37,7 @@ async function extractDocxText(file: File): Promise<string> {
    let xml: string;
    if (method === 0) xml = decoder.decode(compressed);
    else if (method === 8) {
-    const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream("deflate-raw" as CompressionFormat));
+    const stream = new Blob([compressed.buffer.slice(compressed.byteOffset, compressed.byteOffset + compressed.byteLength) as ArrayBuffer]).stream().pipeThrough(new DecompressionStream("deflate-raw" as CompressionFormat));
     xml = await new Response(stream).text();
    } else throw new Error("This Word document uses an unsupported compression format.");
    return xml.replace(/<w:tab\b[^>]*\/>/g, "\t").replace(/<w:br\b[^>]*\/>/g, "\n").replace(/<\/w:p>/g, "\n").replace(/<[^>]+>/g, "")
