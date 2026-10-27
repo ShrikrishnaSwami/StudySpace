@@ -39,6 +39,7 @@ function getGeminiClient() {
 
   return new GoogleGenAI({
     apiKey,
+    httpOptions: { timeout: 45000 },
   });
 }
 
