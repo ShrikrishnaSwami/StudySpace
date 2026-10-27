@@ -587,6 +587,9 @@ export default function AppShell({
   const router = useRouter();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [commandQuery, setCommandQuery] = useState("");
+  const commandInputRef = useRef<HTMLInputElement>(null);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     Learning: pathname.startsWith("/ai-tutor") || pathname.startsWith("/courses") || pathname.startsWith("/assignments") || pathname.startsWith("/quizzes") || pathname.startsWith("/homework-uploader"),
     "Study tools": pathname.startsWith("/notes") || pathname.startsWith("/flashcards") || pathname.startsWith("/study-groups"),
@@ -603,6 +606,27 @@ export default function AppShell({
   const [user, setUser] = useState<UserInfo | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    function handleCommandKeys(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setCommandOpen((open) => !open);
+      }
+      if (event.key === "Escape") setCommandOpen(false);
+    }
+    window.addEventListener("keydown", handleCommandKeys);
+    return () => window.removeEventListener("keydown", handleCommandKeys);
+  }, []);
+
+  useEffect(() => {
+    if (!commandOpen) {
+      setCommandQuery("");
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => commandInputRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [commandOpen]);
 
   useEffect(() => {
     const activeGroup = navigationGroups.find((group) =>
@@ -747,6 +771,56 @@ export default function AppShell({
 
   return (
     <div className="ss-shell min-h-screen bg-[#111016] text-white">
+      {commandOpen && (
+        <div
+          className="ss-command-backdrop fixed inset-0 z-[120] flex items-start justify-center px-4 pt-[14vh] sm:pt-[18vh]"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setCommandOpen(false);
+          }}
+        >
+          <section role="dialog" aria-modal="true" aria-label="Quick navigation" className="ss-command-panel w-full max-w-xl overflow-hidden rounded-2xl border border-white/[0.12] shadow-2xl shadow-black/60">
+            <div className="flex items-center gap-3 border-b border-white/[0.08] px-4">
+              <Search size={18} className="shrink-0 text-violet-300" />
+              <input ref={commandInputRef} value={commandQuery} onChange={(event) => setCommandQuery(event.target.value)} placeholder="Where do you want to go?" aria-label="Search StudySpace pages" className="h-14 min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30" />
+              <kbd className="rounded-md border border-white/[0.1] px-2 py-1 text-[10px] text-white/35">ESC</kbd>
+            </div>
+            <div className="max-h-[min(55vh,420px)] overflow-y-auto p-2">
+              <p className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/30">Quick navigation</p>
+              {[
+                dashboardNavigation,
+                ...navigationGroups.flatMap((group) => group.items),
+                ...bottomNavigation,
+                ...(isAdmin ? [{ label: "Admin", href: "/admin", icon: Sparkles }] : []),
+              ]
+                .filter((item, index, all) => all.findIndex((candidate) => candidate.href === item.href) === index)
+                .filter((item) => (item.label + " " + item.href).toLowerCase().includes(commandQuery.trim().toLowerCase()))
+                .map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link key={item.href} href={item.href} onClick={() => setCommandOpen(false)} className="group flex items-center gap-3 rounded-xl px-3 py-3 text-sm text-white/65 transition hover:bg-violet-400/[0.12] hover:text-white focus-visible:bg-violet-400/[0.12]">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.035] text-violet-200/80 transition group-hover:border-violet-300/20 group-hover:bg-violet-400/[0.1]"><Icon size={16} /></span>
+                      <span className="min-w-0 flex-1">{item.label}</span>
+                      <span className="text-[10px] text-white/25">{item.href}</span>
+                      <ArrowRight size={14} className="text-white/20 group-hover:text-violet-200" />
+                    </Link>
+                  );
+                })}
+              {![
+                dashboardNavigation,
+                ...navigationGroups.flatMap((group) => group.items),
+                ...bottomNavigation,
+                ...(isAdmin ? [{ label: "Admin", href: "/admin", icon: Sparkles }] : []),
+              ].filter((item, index, all) => all.findIndex((candidate) => candidate.href === item.href) === index)
+                .some((item) => (item.label + " " + item.href).toLowerCase().includes(commandQuery.trim().toLowerCase())) && (
+                  <p className="px-3 py-8 text-center text-sm text-white/35">No matching pages. Try another search.</p>
+                )}
+            </div>
+            <div className="flex items-center justify-between border-t border-white/[0.08] px-4 py-3 text-[10px] text-white/30"><span>STUDYSPACE QUICK JUMP</span><span><kbd className="rounded border border-white/[0.1] px-1.5 py-1">CTRL</kbd> + <kbd className="rounded border border-white/[0.1] px-1.5 py-1">K</kbd> to toggle</span></div>
+          </section>
+        </div>
+      )}
+
       {/* Mobile overlay */}
       {sidebarOpen && (
         <button
@@ -1051,6 +1125,9 @@ export default function AppShell({
           </div>
 
           <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setCommandOpen(true)} aria-label="Search pages and open quick navigation" className="ss-command-trigger hidden h-9 items-center gap-2 rounded-lg border border-white/[0.08] px-3 text-xs text-white/40 transition hover:border-violet-300/25 hover:bg-white/[0.04] hover:text-white sm:flex">
+              <Search size={14} /><span>Quick jump</span><kbd className="ml-2 rounded border border-white/[0.1] px-1.5 py-0.5 text-[9px] text-white/25">⌘K</kbd>
+            </button>
             <NotificationButton />
 
             <Link
