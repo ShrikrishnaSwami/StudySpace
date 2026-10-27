@@ -193,8 +193,6 @@ export async function uploadHomeworkFile(
   const path =
     `${user.id}/${homeworkId}/${safeName}`;
 
-  console.log("1. Uploading file:", path);
-
   const { error: uploadError } =
     await supabase.storage
       .from("homework")
@@ -215,10 +213,6 @@ export async function uploadHomeworkFile(
       `Storage upload failed: ${uploadError.message}`
     );
   }
-
-  console.log(
-    "2. Storage upload successful"
-  );
 
   /*
    * Update the homework database row.
