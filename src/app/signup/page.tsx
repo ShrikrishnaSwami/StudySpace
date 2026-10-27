@@ -29,8 +29,6 @@ export default function SignupPage() {
   async function handleSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    console.log("1. SIGNUP BUTTON PRESSED");
-
     setLoading(true);
     setError("");
     setSuccess("");
@@ -42,7 +40,6 @@ export default function SignupPage() {
     }
 
     try {
-      console.log("2. Sending signup request...");
 
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -54,31 +51,21 @@ export default function SignupPage() {
         },
       });
 
-      console.log("3. Supabase response:", data);
-      console.log("4. Supabase error:", error);
-
       if (error) {
-        console.error("SIGNUP ERROR:", error.message);
         setError(error.message);
         setLoading(false);
         return;
       }
 
-      console.log("5. SIGNUP SUCCESS");
-
       if (data.session) {
-        console.log("6. Session exists — going to dashboard");
         router.push("/dashboard");
         return;
       }
-
-      console.log("7. No session — account created");
 
       setSuccess("Account created successfully! You can now sign in.");
 
       setLoading(false);
     } catch (err) {
-      console.error("8. UNEXPECTED ERROR:", err);
 
       setError(
         err instanceof Error
