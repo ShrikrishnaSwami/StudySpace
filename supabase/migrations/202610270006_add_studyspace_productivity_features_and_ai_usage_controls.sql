@@ -62,11 +62,3 @@ create policy "Users manage own study plan items" on public.study_plan_items
 create index if not exists study_plan_items_user_starts_idx on public.study_plan_items(user_id, starts_at);
 create index if not exists study_plan_items_assignment_idx on public.study_plan_items(assignment_id);
 
-create table if not exists public.studyspace_feature_flags (
-  key text primary key,
-  enabled boolean not null default true,
-  updated_at timestamptz not null default now()
-);
-alter table public.studyspace_feature_flags enable row level security;
-revoke all on public.studyspace_feature_flags from anon, authenticated;
-grant all on public.studyspace_feature_flags to service_role;
