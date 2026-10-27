@@ -223,6 +223,7 @@ Never fabricate course-specific facts.
 Return JSON only.
 `,
       prompt,
+      task: "quiz",
     });
 
     const parsed = extractJson(response);
