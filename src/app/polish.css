@@ -220,3 +220,109 @@ main:has(form) form button[type="submit"]:active:not(:disabled) {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Responsive refinements: preserve the existing layout, reduce cramped edges. */
+@media (max-width: 960px) {
+  .ss-hero {
+    gap: clamp(24px, 4vw, 42px);
+  }
+
+  .ss-collage {
+    overflow: clip;
+  }
+
+  .ss-feature-strip {
+    gap: clamp(24px, 4vw, 42px);
+  }
+
+  .ss-feature-item {
+    gap: 14px;
+  }
+
+  .ss-feature-item > div {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .ss-nav {
+    gap: 12px;
+  }
+
+  .ss-wordmark {
+    gap: 8px;
+    font-size: 16px;
+  }
+
+  .ss-logo-shape {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ss-hero {
+    gap: 18px;
+  }
+
+  .ss-hero-actions {
+    gap: 14px;
+  }
+
+  .ss-cta {
+    justify-content: center;
+  }
+
+  .ss-tool-card {
+    overflow-wrap: anywhere;
+  }
+
+  .ss-feature-strip {
+    padding: 22px 18px;
+  }
+
+  .ss-feature-item {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .ss-bottom-banner {
+    align-items: flex-start;
+  }
+
+  .ss-bottom-banner > div {
+    min-width: 0;
+  }
+
+  .ss-footer {
+    row-gap: 14px;
+  }
+
+  .ss-shell main {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ss-shell main table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .ss-nav-actions {
+    gap: 8px;
+  }
+
+  .ss-join {
+    padding-inline: 10px;
+  }
+
+  .ss-hero h1 {
+    font-size: clamp(42px, 13vw, 54px);
+  }
+
+  .ss-tools-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
