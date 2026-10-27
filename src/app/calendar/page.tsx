@@ -812,9 +812,7 @@ export default function CalendarPage() {
                 </select>
               </div>
 
-              <button
-                onClick={refresh}
-                disabled={refreshing}
+              <button type="button" aria-label="Refresh calendar events" onClick={refresh} disabled={refreshing}
                 className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-2.5 text-white/35 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
                 aria-label="Refresh calendar"
               >
