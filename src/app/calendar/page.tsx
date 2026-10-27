@@ -775,9 +775,7 @@ export default function CalendarPage() {
                   className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/20"
                 />
 
-                <input
-                  value={search}
-                  onChange={(event) =>
+                <input type="search" aria-label="Search calendar events" value={search} onChange={(event) =>
                     setSearch(event.target.value)
                   }
                   placeholder="Search events..."
