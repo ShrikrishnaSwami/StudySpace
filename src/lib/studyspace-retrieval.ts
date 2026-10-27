@@ -1,5 +1,3 @@
-import "server-only";
-
 export type RetrievedStudySection = {
   title: string;
   content: string;
