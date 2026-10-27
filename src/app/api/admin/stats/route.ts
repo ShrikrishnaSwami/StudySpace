@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { consumeApiRateLimit } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,9 @@ export async function GET(request: NextRequest) {
     if (!user.email || user.email.trim().toLowerCase() !== ADMIN_EMAIL) {
       return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
     }
+    const rate = await consumeApiRateLimit(user.id, "admin-stats", 180, 3600);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many statistics requests. Please wait and try again." }, { status: 429 });
+
 
     let totalUsers = 0;
     let page = 1;
