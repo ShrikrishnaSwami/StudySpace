@@ -756,8 +756,7 @@ export default function CalendarPage() {
                 <ChevronRight size={18} />
               </button>
 
-              <button
-                onClick={goToday}
+              <button type="button" aria-label="Go to today" onClick={goToday}
                 className="ml-1 rounded-xl border border-white/[0.07] bg-white/[0.025] px-3.5 py-2.5 text-sm font-medium text-white/55 transition hover:bg-white/[0.06] hover:text-white"
               >
                 Today
