@@ -21,7 +21,7 @@ const context = [
   "ATTEMPT 1\nTitle: Calculus Quiz\nScore: 82 percent\nCorrect: 9\nTotal: 11",
   separator, "CALENDAR", separator,
   "EVENT 1\nTitle: Physics lecture\nDetails: Lecture and evening study session",
-].join("\n");
+].join("\n").replace(/^/, "\n");
 
 test("evaluation cases retrieve at least one expected section", () => {
   const failures: string[] = [];
