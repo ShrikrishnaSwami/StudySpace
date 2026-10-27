@@ -3,6 +3,8 @@ export type RetrievedStudySection = {
   source: string;
   content: string;
   score: number;
+  /** Stable identity shared by chunks from the same original record. */
+  groupId?: string;
 };
 
 export type StudyContextRetrieval = {
@@ -72,7 +74,53 @@ for (const group of SYNONYM_GROUPS) {
 const SECTION_SEPARATOR = /\n\s*={8,}\s*\n/g;
 const RECORD_START = /(?:^|\n)\s*(COURSE|NOTE|RESOURCE|ASSIGNMENT|QUIZ|ATTEMPT|HOMEWORK|EVENT)\s+\d+\s*(?=\n|$)/g;
 const MAX_RECORD_CHARS = 3200;
+const CHUNK_TARGET_CHARS = 1800;
+const CHUNK_OVERLAP_CHARS = 180;
 const MAX_CONTEXT_CHARS = 14500;
+
+function chunkRecord(record: string): string[] {
+  if (record.length <= MAX_RECORD_CHARS) return [record];
+
+  const chunks: string[] = [];
+  let start = 0;
+
+  while (start < record.length) {
+    let end = Math.min(start + CHUNK_TARGET_CHARS, record.length);
+
+    // Prefer a paragraph/line boundary when it does not make the chunk too small.
+    if (end < record.length) {
+      const boundary = record.lastIndexOf("\n", end);
+      if (boundary > start + CHUNK_TARGET_CHARS * 0.55) end = boundary;
+    }
+
+    const chunk = record.slice(start, end).trim();
+    if (chunk) chunks.push(chunk);
+    if (end >= record.length) break;
+
+    // Small overlap helps preserve meaning when a concept crosses a chunk boundary.
+    start = Math.max(start + 1, end - CHUNK_OVERLAP_CHARS);
+  }
+
+  return chunks;
+}
+
+function selectDistinctRecords(
+  records: RetrievedStudySection[],
+  maxSections: number,
+): RetrievedStudySection[] {
+  const selected: RetrievedStudySection[] = [];
+  const seen = new Set<string>();
+
+  for (const record of records) {
+    const key = record.groupId || record.title + ":" + record.source;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    selected.push(record);
+    if (selected.length >= maxSections) break;
+  }
+
+  return selected;
+}
 
 function extractField(record: string, field: string): string {
   const match = record.match(new RegExp("(?:^|\n)" + field + ":[ \\t]*(?:\r?\n[ \\t]*)?([^\r\n]+)", "i"));
@@ -91,7 +139,7 @@ function splitRecords(context: string): RetrievedStudySection[] {
     const body = parts[index + 1] || "";
     const starts = [...body.matchAll(RECORD_START)];
     if (!starts.length) {
-      if (body) records.push({ title: category, source: category, content: (category + "\n\n" + body).slice(0, MAX_RECORD_CHARS), score: 0 });
+      if (body) records.push({ title: category, source: category, content: (category + "\n\n" + body).slice(0, MAX_RECORD_CHARS), score: 0, groupId: category });
       index += 1;
       continue;
     }
@@ -104,12 +152,16 @@ function splitRecords(context: string): RetrievedStudySection[] {
       const heading = rawRecord.split(/\r?\n/, 1)[0].trim();
       const itemTitle = extractField(rawRecord, "Title") || extractField(rawRecord, "Name");
       const source = itemTitle ? `${heading}: ${itemTitle}` : heading;
-      records.push({
-        title: category,
-        source,
-        content: rawRecord.slice(0, MAX_RECORD_CHARS),
-        score: 0,
-      });
+      const chunks = chunkRecord(rawRecord);
+      for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex += 1) {
+        records.push({
+          title: category,
+          source: chunks.length > 1 ? `${source} (part ${chunkIndex + 1})` : source,
+          content: chunks[chunkIndex],
+          score: 0,
+          groupId: `${category}:${source}`,
+        });
+      }
     }
     index += 1;
   }
@@ -201,12 +253,14 @@ export function retrieveRelevantStudyContext(
   const ranked = records.map((record) => ({ ...record, score: scoreRecord(weights, queryTokens, record) }))
     .sort((a, b) => b.score - a.score);
 
-  let selected = ranked.filter((record) => record.score > 0).slice(0, maxSections);
+  let selected = selectDistinctRecords(ranked.filter((record) => record.score > 0), maxSections);
   if (!selected.length) {
-    selected = ranked.filter((record) => /STUDENT COURSES|ASSIGNMENTS|CALENDAR|COURSE NOTES|QUIZ ATTEMPTS|HOMEWORK/i.test(record.title))
-      .slice(0, Math.min(3, maxSections));
+    selected = selectDistinctRecords(
+      ranked.filter((record) => /STUDENT COURSES|ASSIGNMENTS|CALENDAR|COURSE NOTES|QUIZ ATTEMPTS|HOMEWORK/i.test(record.title)),
+      Math.min(3, maxSections),
+    );
   }
-  if (!selected.length) selected = ranked.slice(0, Math.min(2, maxSections));
+  if (!selected.length) selected = selectDistinctRecords(ranked, Math.min(2, maxSections));
 
   const output: string[] = [];
   let used = 0;
