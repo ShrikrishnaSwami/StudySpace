@@ -751,9 +751,7 @@ export default function AssignmentsPage() {
                   >
                     Title
                   </label>
-                  <input
-                    id="assignment-title"
-                    value={title}
+                  <input id="assignment-title" required maxLength={160} value={title}
                     onChange={(event) => setTitle(event.target.value)}
                     required
                     maxLength={200}
