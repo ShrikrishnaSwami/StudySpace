@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -27,6 +27,17 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [forgotPassword, setForgotPassword] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("error") === "oauth_callback") {
+      setError("Google sign-in could not be completed. Please try again or use email and password.");
+    }
+    if (params.get("account_deleted") === "1") {
+      setNotice("Your StudySpace account has been deleted.");
+    }
+  }, []);
 
   async function handleGoogleLogin() {
     setLoading(true);
@@ -158,6 +169,7 @@ export default function LoginPage() {
               <p className="mt-3 text-sm leading-6 text-zinc-400">
                 Continue where you left off and get back to studying.
               </p>
+              {notice && <p role="status" className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{notice}</p>}
             </div>
 
             <div className="mb-6 space-y-3">
