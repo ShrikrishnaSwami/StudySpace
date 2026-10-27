@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:retrieval": "node --conditions=react-server --experimental-strip-types --test src/lib/studyspace-retrieval.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.31.0",
