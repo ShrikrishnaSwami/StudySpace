@@ -200,10 +200,10 @@ export default function LoginPage() {
                   <p className="mt-2 text-sm leading-6 text-zinc-400">Enter your account email and we’ll send a secure reset link.</p>
                 </div>
                 <div>
-                  <label htmlFor="login-email" className="mb-2 block text-sm font-medium text-zinc-300">Email</label>
+                  <label htmlFor="reset-email" className="mb-2 block text-sm font-medium text-zinc-300">Email</label>
                   <div className="relative">
                     <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
-                    <input id="login-email" type="email" required autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" className="w-full rounded-xl border border-white/10 bg-black/20 py-3.5 pl-11 pr-4 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-purple-500/70"/>
+                    <input id="reset-email" type="email" required autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" className="w-full rounded-xl border border-white/10 bg-black/20 py-3.5 pl-11 pr-4 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-purple-500/70"/>
                   </div>
                 </div>
                 {error && <div role="alert" className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</div>}
@@ -216,7 +216,7 @@ export default function LoginPage() {
 
               {/* Email */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-zinc-300">
+                <label htmlFor="login-email" className="mb-2 block text-sm font-medium text-zinc-300">
                   Email
                 </label>
 
@@ -241,7 +241,7 @@ export default function LoginPage() {
 
               {/* Password */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-zinc-300">
+                <label htmlFor="login-password" className="mb-2 block text-sm font-medium text-zinc-300">
                   Password
                 </label>
 
