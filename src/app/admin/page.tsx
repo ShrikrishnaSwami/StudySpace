@@ -268,8 +268,8 @@ export default function AdminPage() {
                 </p>
               </div>
 
-              <button className="text-xs text-violet-400 hover:text-violet-300">
-                View all
+              <button onClick={() => router.push("/admin/grading")} className="text-xs text-violet-400 hover:text-violet-300">
+                Open grading queue →
               </button>
             </div>
 
