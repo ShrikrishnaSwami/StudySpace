@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       raw = response.text?.trim() || "";
       if (!raw) throw new Error("Gemini could not read the PDF. Try a clearer or text-based PDF.");
     } else {
-      raw = await generateAIResponse({ systemInstruction, prompt });
+      raw = await generateAIResponse({ systemInstruction, prompt, task: "syllabus" });
     }
     const parsed = JSON.parse(cleanJson(raw)) as { events?: unknown[] };
     const events = (Array.isArray(parsed.events) ? parsed.events : []).slice(0, 100).map((item) => {
