@@ -36,12 +36,12 @@ export default function SearchPage(){
    const [c,a,z,g,h,ev,d,n,r]=tasks;
    const mapped:Result[]=[
     ...((c.data||[]) as SearchRow[]).map(x=>({id:x.id,title:x.name||"Untitled course",detail:[x.code,x.description].filter(Boolean).join(" · "),type:"course",href:"/courses/"+x.id,date:x.created_at})),
-    ...((a.data||[]) as any[]).map(x=>({id:x.id,title:x.title||"Untitled assignment",detail:[x.status,x.description].filter(Boolean).join(" · "),type:"assignment",href:"/assignments/"+x.id,date:x.due_date})),
-    ...((z.data||[]) as any[]).map(x=>({id:x.id,title:x.title||"Untitled quiz",detail:x.description||"Quiz",type:"quiz",href:"/quizzes",date:x.created_at})),
-    ...((g.data||[]) as any[]).map(x=>({id:x.id,title:x.title||"Untitled grade item",detail:"Grade item · "+(x.category||"other"),type:"note",href:"/grades",date:x.assessment_date})),
-    ...((h.data||[]) as any[]).map(x=>({id:x.id,title:x.title||"Homework upload",detail:x.description||"Homework upload",type:"homework",href:"/homework-uploader",date:x.created_at})),
-    ...((ev.data||[]) as any[]).map(x=>({id:x.id,title:x.title||"Calendar event",detail:x.subtitle||"Calendar event",type:"event",href:"/calendar",date:x.start_at})),
-    ...((d.data||[]) as any[]).map(x=>({id:x.id,title:x.title||"Flashcard deck",detail:x.topic||"Flashcard deck",type:"deck",href:"/flashcards",date:x.created_at})),
+    ...((a.data||[]) as SearchRow[]).map(x=>({id:x.id,title:x.title||"Untitled assignment",detail:[x.status,x.description].filter(Boolean).join(" · "),type:"assignment",href:"/assignments/"+x.id,date:x.due_date})),
+    ...((z.data||[]) as SearchRow[]).map(x=>({id:x.id,title:x.title||"Untitled quiz",detail:x.description||"Quiz",type:"quiz",href:"/quizzes",date:x.created_at})),
+    ...((g.data||[]) as SearchRow[]).map(x=>({id:x.id,title:x.title||"Untitled grade item",detail:"Grade item · "+(x.category||"other"),type:"note",href:"/grades",date:x.assessment_date})),
+    ...((h.data||[]) as SearchRow[]).map(x=>({id:x.id,title:x.title||"Homework upload",detail:x.description||"Homework upload",type:"homework",href:"/homework-uploader",date:x.created_at})),
+    ...((ev.data||[]) as SearchRow[]).map(x=>({id:x.id,title:x.title||"Calendar event",detail:x.subtitle||"Calendar event",type:"event",href:"/calendar",date:x.start_at})),
+    ...((d.data||[]) as SearchRow[]).map(x=>({id:x.id,title:x.title||"Flashcard deck",detail:x.topic||"Flashcard deck",type:"deck",href:"/flashcards",date:x.created_at})),
    ];
    setResults(mapped.slice(0,60));
   }catch(e){setError(e instanceof Error?e.message:"Search could not be completed.");setResults([]);}finally{setBusy(false);}
