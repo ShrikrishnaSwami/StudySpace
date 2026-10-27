@@ -27,6 +27,8 @@ export default function AdminPage() {
         cache: "no-store",
       });
       const body = await response.json();
+      if (response.status === 403) { router.replace("/dashboard"); return; }
+      if (response.status === 401) { router.replace("/login"); return; }
       if (!response.ok) throw new Error(body.error || "Could not load total users.");
       setStats({ totalUsers: Number(body.totalUsers) || 0, generatedAt: body.generatedAt || "" });
     } catch (cause) {
