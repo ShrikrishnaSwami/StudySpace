@@ -19,7 +19,14 @@ The retrieval baseline now ranks individual records (for example, one note or as
 - Returns record-level source labels to the tutor API for display.
 - Only searches context already loaded for the authenticated student; it does not query another student's records.
 
-This is still deterministic lexical retrieval. It is not an embedding model, vector search, or a model trained by StudySpace.
+### Optional semantic retrieval
+
+- Adds a Gemini embedding-based semantic scoring path for up to 40 category-balanced record/chunk candidates per tutor request.
+- Combines semantic similarity with the existing lexical ranking and preserves the same context limits and source labels.
+- Keeps semantic retrieval opt-in with `STUDYSPACE_SEMANTIC_RETRIEVAL=true`; when disabled or when the embedding service fails, the tutor falls back to lexical retrieval.
+- Uses `GEMINI_API_KEY` server-side only. Embeddings are generated per request in this prototype; persistent embedding storage and caching are not implemented, so enabling it adds latency and API usage.
+
+This is retrieval infrastructure, not a model trained by StudySpace. The Gemini embedding model supplies vectors; StudySpace performs candidate selection, cosine similarity, ranking, and fallback logic.
 
 ## Model ownership
 
@@ -27,7 +34,7 @@ This is still deterministic lexical retrieval. It is not an embedding model, vec
 
 ## Evaluation
 
-Synthetic cases in `src/lib/studyspace-retrieval-evaluation.json` contain no real student records. Regression tests in `src/lib/studyspace-retrieval.test.ts` cover expected categories, paraphrased queries, individual note selection, retrieval from later chunks of long notes, context bounds, empty context, and unmatched-question fallback.
+Synthetic cases in `src/lib/studyspace-retrieval-evaluation.json` contain no real student records. Regression tests in `src/lib/studyspace-retrieval.test.ts` cover expected categories, paraphrased queries, semantic-score reranking, individual note selection, retrieval from later chunks of long notes, context bounds, empty context, and unmatched-question fallback.
 
 Run with:
 
@@ -41,7 +48,7 @@ The test suite should be run locally after pulling `main`. A green local test ru
 
 1. Add reviewed, synthetic and anonymized evaluation examples and measure retrieval precision/recall.
 2. Extract and chunk actual uploaded document text with stable source metadata (document, page, course) where the existing upload pipeline supports text extraction.
-3. Evaluate an embedding model and storage strategy for semantic retrieval, retaining lexical fallback.
+3. Benchmark the opt-in semantic retrieval path; then add persistent per-record embeddings and invalidation so unchanged records are not re-embedded on every question.
 4. Benchmark generated answers for factual grounding, correctness, clarity, and citation accuracy.
 5. Consider fine-tuning only after a suitable licensed/original dataset and measurable target are available.
 
