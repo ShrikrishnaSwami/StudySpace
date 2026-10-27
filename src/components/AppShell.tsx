@@ -14,6 +14,9 @@ import {
   Home,
   LogOut,
   Menu,
+  Search,
+  FileText,
+  CalendarClock,
   Settings,
   Sparkles,
   Upload,
@@ -64,6 +67,7 @@ const navigationGroups = [
     icon: Brain,
     items: [
       { label: "AI Tutor", href: "/ai-tutor", icon: Brain },
+      { label: "Search everything", href: "/search", icon: Search },
       { label: "Courses", href: "/courses", icon: BookOpen },
       { label: "Assignments", href: "/assignments", icon: ClipboardList },
       { label: "Quizzes", href: "/quizzes", icon: CheckSquare },
@@ -77,6 +81,7 @@ const navigationGroups = [
       { label: "Notes & resources", href: "/notes", icon: BookOpen },
       { label: "AI flashcards", href: "/flashcards", icon: Brain },
       { label: "Study groups", href: "/study-groups", icon: Users },
+      { label: "Syllabus importer", href: "/syllabus-importer", icon: FileText },
     ],
   },
   {
@@ -84,6 +89,7 @@ const navigationGroups = [
     icon: CalendarDays,
     items: [
       { label: "Calendar", href: "/calendar", icon: CalendarDays },
+      { label: "Smart study planner", href: "/planner", icon: CalendarClock },
       { label: "Grades & GPA", href: "/grades", icon: GraduationCap },
       { label: "Focus timer", href: "/focus", icon: Clock3 },
       { label: "Progress analytics", href: "/analytics", icon: Sparkles },
