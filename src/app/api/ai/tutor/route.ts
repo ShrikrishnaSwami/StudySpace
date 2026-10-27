@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { generateStudySpaceAnswer } from "@/lib/studyspace-ai";
 import { getStudentAIContext } from "@/lib/ai-context";
 import { formatStudentAIContext } from "@/lib/ai-context-format";
-import { retrieveRelevantStudyContext } from "@/lib/studyspace-retrieval";
+import { retrieveRelevantStudyContextHybrid } from "@/lib/studyspace-semantic-retrieval";
 
 function createSupabaseServerClient(token: string) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -232,7 +232,7 @@ information is unavailable.
      * -------------------------------------------------------
      * Keep prompts focused on relevant data already loaded for this student.
      */
-    const retrieval = retrieveRelevantStudyContext(studySpaceContext, message);
+    const retrieval = await retrieveRelevantStudyContextHybrid(studySpaceContext, message);
     const selectedStudySpaceContext = retrieval.context;
 
     /*
