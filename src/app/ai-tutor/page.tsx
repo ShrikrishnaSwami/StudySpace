@@ -1593,10 +1593,7 @@ export default function AITutorPage() {
             >
               <div className="relative rounded-2xl border border-white/[0.08] bg-white/[0.025] transition focus-within:border-violet-400/20 focus-within:bg-white/[0.035]">
 
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(event) =>
+                <textarea ref={textareaRef} aria-label="Message your AI tutor" maxLength={12000} value={input} onChange={(event) =>
                     setInput(
                       event.target.value
                     )
