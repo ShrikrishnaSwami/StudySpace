@@ -80,21 +80,24 @@ export default function AdminPage() {
 
   useEffect(() => {
     async function loadOverview() {
-      const [profiles, courses, assignments, submissions, quizzes] = await Promise.all([
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
+      const [courses, assignments, submissions, quizzes] = await Promise.all([
         supabase.from("courses").select("id", { count: "exact", head: true }),
-        supabase.from("assignments").select("id", { count: "exact", head: true }),
-        supabase.from("assignment_submissions").select("id", { count: "exact", head: true }),
+        supabase.from("assignments").select("id,user_id", { count: "exact" }),
+        supabase.from("assignment_submissions").select("id,user_id", { count: "exact" }),
         supabase.from("quizzes").select("id", { count: "exact", head: true }),
       ]);
+      const activeStudents = new Set([
+        ...((assignments.data ?? []).map((row: { user_id: string }) => row.user_id)),
+        ...((submissions.data ?? []).map((row: { user_id: string }) => row.user_id)),
+      ]).size;
       setStats([
-        { title: "Total Users", value: String(profiles.count ?? "—"), change: "Live count", icon: Users },
-        { title: "Active Students", value: String(profiles.count ?? "—"), change: "Registered profiles", icon: GraduationCap },
+        { title: "Total Users", value: "—", change: "Auth-only metric", icon: Users },
+        { title: "Active Students", value: String(activeStudents), change: "Users with coursework", icon: GraduationCap },
         { title: "Courses", value: String(courses.count ?? "—"), change: "Live count", icon: BookOpen },
         { title: "Assignments", value: String(assignments.count ?? "—"), change: "Live count", icon: CheckSquare },
       ]);
       setLiveActivity([
-        { icon: UserPlus, title: "Student profiles", description: `${profiles.count ?? 0} registered profiles`, time: "Live database count" },
+        { icon: UserPlus, title: "Students with coursework", description: `${activeStudents} unique student accounts`, time: "Live database count" },
         { icon: BookOpen, title: "Courses", description: `${courses.count ?? 0} courses in the database`, time: "Live database count" },
         { icon: ClipboardList, title: "Submissions", description: `${submissions.count ?? 0} submissions recorded`, time: "Live database count" },
         { icon: Activity, title: "Quizzes", description: `${quizzes.count ?? 0} quizzes created`, time: "Live database count" },
@@ -102,7 +105,6 @@ export default function AdminPage() {
     }
     void loadOverview();
     const channel = supabase.channel("admin-overview-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { void loadOverview(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "courses" }, () => { void loadOverview(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "assignments" }, () => { void loadOverview(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "assignment_submissions" }, () => { void loadOverview(); })
