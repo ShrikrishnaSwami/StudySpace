@@ -10,7 +10,7 @@ export type RetrievedStudySection = {
 export type StudyContextRetrieval = {
   context: string;
   sections: Array<{ title: string; source: string; score: number }>;
-  strategy: "record-lexical-expanded-v3";
+  strategy: "record-lexical-expanded-v3" | "record-hybrid-semantic-v1";
 };
 
 const STOP_WORDS = new Set([
@@ -169,6 +169,42 @@ function splitRecords(context: string): RetrievedStudySection[] {
   return records;
 }
 
+export type StudyContextEmbeddingCandidate = {
+  id: string;
+  title: string;
+  source: string;
+  text: string;
+};
+
+/** Return a bounded, category-balanced candidate set for semantic reranking. */
+export function getStudyContextEmbeddingCandidates(
+  context: string,
+  maxCandidates = 40,
+): StudyContextEmbeddingCandidate[] {
+  const records = splitRecords(context);
+  const selected: StudyContextEmbeddingCandidate[] = [];
+  const categoryCounts = new Map<string, number>();
+  const seen = new Set<string>();
+  const limit = Math.max(1, Math.min(maxCandidates, 60));
+
+  for (const record of records) {
+    const id = record.title + "::" + record.source;
+    if (seen.has(id)) continue;
+    const count = categoryCounts.get(record.title) || 0;
+    if (count >= 8) continue;
+    seen.add(id);
+    categoryCounts.set(record.title, count + 1);
+    selected.push({
+      id,
+      title: record.title,
+      source: record.source,
+      text: (record.title + "\\n" + record.source + "\\n" + record.content).slice(0, 2200),
+    });
+    if (selected.length >= limit) break;
+  }
+  return selected;
+}
+
 function buildQueryWeights(queryTokens: string[]): Map<string, number> {
   const weights = new Map<string, number>();
   const uniqueTokens = [...new Set(queryTokens)];
@@ -238,7 +274,7 @@ function scoreRecord(queryWeights: Map<string, number>, queryTokens: string[], r
 export function retrieveRelevantStudyContext(
   context: string,
   question: string,
-  options: { maxSections?: number; maxCharacters?: number } = {},
+  options: { maxSections?: number; maxCharacters?: number; semanticScores?: Record<string, number> } = {},
 ): StudyContextRetrieval {
   const maxSections = Math.max(1, Math.min(options.maxSections ?? 5, 8));
   const maxCharacters = Math.max(1000, Math.min(options.maxCharacters ?? MAX_CONTEXT_CHARS, 20000));
@@ -250,10 +286,18 @@ export function retrieveRelevantStudyContext(
   }
 
   const weights = buildQueryWeights(queryTokens);
-  const ranked = records.map((record) => ({ ...record, score: scoreRecord(weights, queryTokens, record) }))
-    .sort((a, b) => b.score - a.score);
+  const hasSemanticScores = Boolean(options.semanticScores && Object.keys(options.semanticScores).length);
+  const ranked = records.map((record) => {
+    const lexicalScore = scoreRecord(weights, queryTokens, record);
+    const semanticScore = options.semanticScores?.[record.title + "::" + record.source] ?? 0;
+    const semanticBoost = semanticScore >= 0.25 ? (semanticScore - 0.2) * 8 : 0;
+    return { ...record, score: lexicalScore + semanticBoost, lexicalScore, semanticScore };
+  }).sort((a, b) => b.score - a.score);
 
-  let selected = selectDistinctRecords(ranked.filter((record) => record.score > 0), maxSections);
+  let selected = selectDistinctRecords(
+    ranked.filter((record) => record.score > 0 && (!hasSemanticScores || record.semanticScore >= 0.28 || record.lexicalScore > 1.2)),
+    maxSections,
+  );
   if (!selected.length) {
     selected = selectDistinctRecords(
       ranked.filter((record) => /STUDENT COURSES|ASSIGNMENTS|CALENDAR|COURSE NOTES|QUIZ ATTEMPTS|HOMEWORK/i.test(record.title)),
@@ -278,6 +322,6 @@ export function retrieveRelevantStudyContext(
   return {
     context: output.join("\n\n") || "No relevant StudySpace context matched this question.",
     sections: selected.map(({ title, source, score }) => ({ title, source, score: Math.round(score * 100) / 100 })),
-    strategy: "record-lexical-expanded-v3",
+    strategy: hasSemanticScores ? "record-hybrid-semantic-v1" : "record-lexical-expanded-v3",
   };
 }
