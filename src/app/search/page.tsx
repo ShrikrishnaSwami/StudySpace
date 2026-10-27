@@ -17,7 +17,7 @@ const TYPES: Record<string,{label:string;icon:typeof Search}> = {
 export default function SearchPage(){
  const [query,setQuery]=useState(""); const [results,setResults]=useState<Result[]>([]);
  const [busy,setBusy]=useState(false); const [error,setError]=useState(""); const [searched,setSearched]=useState(false);
- async function search(e:FormEvent){e.preventDefault();const q=query.trim().replace(/[,%()]/g," ").replace(/\\s+/g," ");if(q.length<2){setError("Enter at least two characters.");return;}setBusy(true);setError("");setSearched(true);
+ async function search(e:FormEvent){e.preventDefault();const q=query.trim().replace(/[,%()]/g," ").replace(/\s+/g," ");if(q.length<2){setError("Enter at least two characters.");return;}setBusy(true);setError("");setSearched(true);
   try{
    const tasks=await Promise.all([
     supabase.from("courses").select("id,name,code,description,created_at").or("name.ilike.%"+q+"%,code.ilike.%"+q+"%,description.ilike.%"+q+"%").limit(12),
