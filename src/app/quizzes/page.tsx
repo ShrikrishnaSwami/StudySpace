@@ -1514,9 +1514,7 @@ function QuestionCard({
       </h2>
 
       {question.question_type === "short_answer" ? (
-        <textarea
-          value={answer}
-          onChange={(event) =>
+        <textarea maxLength={8000} value={answer} onChange={(event) =>
             onAnswer(event.target.value)
           }
           placeholder="Write your answer..."
