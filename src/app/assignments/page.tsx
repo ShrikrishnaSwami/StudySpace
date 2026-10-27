@@ -809,10 +809,7 @@ export default function AssignmentsPage() {
                     >
                       Due date
                     </label>
-                    <input
-                      id="assignment-due"
-                      type="date"
-                      value={dueDate}
+                    <input id="assignment-due" type="date" required value={dueDate}
                       onChange={(event) => setDueDate(event.target.value)}
                       className="w-full rounded-xl border border-white/10 bg-white/[0.035] px-3 py-3 text-sm text-white outline-none focus:border-purple-400/50"
                     />
