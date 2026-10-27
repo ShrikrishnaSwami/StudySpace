@@ -9,6 +9,7 @@ import {
 } from "react";
 import {
   CalendarDays,
+  Download,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -631,6 +632,39 @@ export default function CalendarPage() {
     return `${firstMonth} ${first.getFullYear()} – ${lastMonth} ${last.getFullYear()}`;
   }, [currentDate, view, weekDays]);
 
+  function exportCalendar() {
+    const escapeText = (value: string) => value
+      .replace(/\\/g, "\\\\")
+      .replace(/;/g, "\\;")
+      .replace(/,/g, "\\,")
+      .replace(/\r?\n/g, "\\n");
+    const toIcsDate = (value: string) => new Date(value)
+      .toISOString()
+      .replace(/[-:]/g, "")
+      .replace(/\\.\\d{3}Z$/, "Z");
+    const body = events.map((event) => [
+      "BEGIN:VEVENT",
+      "UID:" + event.id + "@studyspace",
+      "DTSTAMP:" + toIcsDate(new Date().toISOString()),
+      "DTSTART:" + toIcsDate(event.start_at),
+      "DTEND:" + toIcsDate(event.end_at),
+      "SUMMARY:" + escapeText(event.title),
+      event.description ? "DESCRIPTION:" + escapeText(event.description) : "",
+      event.location ? "LOCATION:" + escapeText(event.location) : "",
+      "END:VEVENT",
+    ].filter(Boolean).join("\r\n")).join("\r\n");
+    const content = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//StudySpace//Student Calendar//EN\r\nCALSCALE:GREGORIAN\r\n" + body + "\r\nEND:VCALENDAR";
+    const blob = new Blob([content], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "studyspace-calendar.ics";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <AppShell
       title="Calendar"
@@ -658,13 +692,24 @@ export default function CalendarPage() {
               </p>
             </div>
 
-            <button
-              onClick={() => openCreateModal()}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-500 active:scale-[0.98]"
-            >
-              <Plus size={17} />
-              Add event
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={exportCalendar}
+                disabled={events.length === 0}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.035] px-4 text-sm font-medium text-white/70 transition hover:bg-white/[0.07] disabled:opacity-40"
+                title="Export the events currently loaded in this calendar view"
+              >
+                <Download size={16} />
+                Export .ics
+              </button>
+              <button
+                onClick={() => openCreateModal()}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-500 active:scale-[0.98]"
+              >
+                <Plus size={17} />
+                Add event
+              </button>
+            </div>
           </div>
         </section>
 
