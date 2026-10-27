@@ -1,0 +1,222 @@
+/* StudySpace visual refinement layer.
+   Presentation-only rules: no new routes, controls, or product behavior. */
+
+:root {
+  --ss-radius-sm: 0.625rem;
+  --ss-radius-md: 0.875rem;
+  --ss-radius-lg: 1.125rem;
+  --ss-ease: cubic-bezier(.2, .7, .2, 1);
+  --ss-ring: 0 0 0 3px rgba(167, 139, 250, .18);
+}
+
+html {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-feature-settings: "ss01" on, "cv11" on;
+}
+
+img, video, canvas, svg {
+  flex-shrink: 0;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+h1, h2, h3, h4 {
+  text-wrap: balance;
+}
+
+a, button, input, textarea, select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid rgba(196, 181, 253, .95);
+  outline-offset: 3px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+::placeholder {
+  opacity: .78;
+}
+
+/* Landing page: consistent rhythm, refined borders and quieter hover states. */
+.ss-nav {
+  min-height: 76px;
+}
+
+.ss-wordmark {
+  transition: opacity .18s var(--ss-ease);
+}
+
+.ss-wordmark:hover {
+  opacity: .86;
+}
+
+.ss-logo-shape {
+  box-shadow: 0 8px 24px rgba(124, 58, 237, .22);
+}
+
+.ss-hero-copy,
+.ss-toolkit-head,
+.ss-feature-intro {
+  min-width: 0;
+}
+
+.ss-hero h1 {
+  text-wrap: balance;
+}
+
+.ss-hero-text,
+.ss-toolkit-head > p,
+.ss-feature-intro > p:not(.ss-kicker) {
+  text-wrap: pretty;
+}
+
+.ss-cta,
+.ss-join,
+.ss-bottom-banner > a {
+  min-height: 44px;
+  transition:
+    transform .2s var(--ss-ease),
+    filter .2s var(--ss-ease),
+    box-shadow .2s var(--ss-ease);
+}
+
+.ss-cta:hover,
+.ss-join:hover,
+.ss-bottom-banner > a:hover {
+  box-shadow: 0 12px 30px rgba(124, 58, 237, .28);
+}
+
+.ss-tool-card {
+  border-radius: var(--ss-radius-lg);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .08);
+}
+
+.ss-tool-card:focus-visible {
+  outline-offset: 4px;
+}
+
+.ss-feature-strip {
+  border-color: rgba(196, 181, 253, .14);
+}
+
+.ss-feature-item {
+  transition: background-color .18s var(--ss-ease);
+}
+
+.ss-feature-item:hover {
+  background: rgba(167, 139, 250, .055);
+}
+
+.ss-bottom-banner {
+  border-radius: var(--ss-radius-lg);
+}
+
+.ss-footer a {
+  transition: color .18s var(--ss-ease), opacity .18s var(--ss-ease);
+}
+
+.ss-footer a:hover {
+  opacity: .82;
+}
+
+/* Shared authenticated workspace surfaces. */
+.ss-sidebar,
+.ss-topbar,
+.ss-shell main .rounded-2xl.border,
+.ss-shell main .rounded-xl.border {
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+.ss-sidebar a,
+.ss-sidebar button,
+.ss-topbar button,
+.ss-topbar a {
+  transition:
+    color .16s var(--ss-ease),
+    background-color .16s var(--ss-ease),
+    border-color .16s var(--ss-ease);
+}
+
+.ss-shell main h1,
+.ss-shell main h2,
+.ss-shell main h3 {
+  letter-spacing: -.025em;
+}
+
+.ss-shell main input,
+.ss-shell main textarea,
+.ss-shell main select {
+  min-width: 0;
+  transition:
+    border-color .16s var(--ss-ease),
+    box-shadow .16s var(--ss-ease),
+    background-color .16s var(--ss-ease);
+}
+
+.ss-shell main input:focus,
+.ss-shell main textarea:focus,
+.ss-shell main select:focus {
+  box-shadow: var(--ss-ring);
+}
+
+.ss-shell main button:not(:disabled):active,
+.ss-topbar button:not(:disabled):active,
+.ss-sidebar button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+/* Auth pages: make the existing forms feel like one cohesive product. */
+main:has(form) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  min-height: 46px;
+}
+
+main:has(form) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus {
+  box-shadow: var(--ss-ring);
+}
+
+main:has(form) form button[type="submit"] {
+  min-height: 46px;
+  transition:
+    filter .18s var(--ss-ease),
+    transform .18s var(--ss-ease),
+    box-shadow .18s var(--ss-ease);
+}
+
+main:has(form) form button[type="submit"]:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+main:has(form) form button[type="submit"]:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
