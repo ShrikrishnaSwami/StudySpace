@@ -1,27 +1,36 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import {
-  AlertCircle,
-  ArrowRight,
-  ArrowUpRight,
+  ArrowLeft,
+  BookOpen,
   CalendarDays,
   Check,
   CheckCircle2,
   ChevronDown,
   Clock3,
-  Filter,
-  Flag,
+  Download,
+  File,
+  FileArchive,
+  FileImage,
+  FileSpreadsheet,
+  FileText,
+  FileType2,
+  GraduationCap,
   Loader2,
+  MessageSquare,
+  MoreHorizontal,
+  Paperclip,
+  Pencil,
   Plus,
-  Search,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 
-import AppShell from "@/components/AppShell";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 
 type Course = {
   id: string;
@@ -31,1407 +40,207 @@ type Course = {
 
 type Assignment = {
   id: string;
-  course_id: string;
   user_id: string;
+  course_id: string;
   title: string;
   description: string | null;
   due_date: string | null;
   priority: "low" | "medium" | "high";
-  status: "pending" | "in_progress" | "completed";
+  status: "not_started" | "in_progress" | "completed";
   progress: number;
   points: number | null;
   max_points: number | null;
   created_at: string;
   updated_at: string;
-  courses?: Course | null;
+  courses: Course | null;
 };
 
-type FilterType =
-  | "all"
-  | "upcoming"
-  | "overdue"
-  | "completed";
+type Attachment = {
+  id: string;
+  assignment_id: string;
+  user_id: string;
+  file_name: string;
+  storage_path: string;
+  file_type: string | null;
+  file_size: number;
+  created_at: string;
+};
 
-type SortType =
-  | "due"
-  | "priority"
-  | "progress";
+const supabase = createClient();
 
-export default function AssignmentsPage() {
-  const [assignments, setAssignments] =
-    useState<Assignment[]>([]);
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
-  const [courses, setCourses] =
-    useState<Course[]>([]);
+const ALLOWED_EXTENSIONS = [
+  "pdf",
+  "doc",
+  "docx",
+  "ppt",
+  "pptx",
+  "xls",
+  "xlsx",
+  "csv",
+  "txt",
+  "zip",
+  "png",
+  "jpg",
+  "jpeg",
+  "webp",
+];
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  if (bytes < 1024 * 1024 * 1024) {
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function formatDate(dateString: string | null) {
+  if (!dateString) return "No due date";
+
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) {
+    return "No due date";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatDateTime(dateString: string) {
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function getFileExtension(fileName: string) {
+  const parts = fileName.split(".");
+  return parts.length > 1 ? parts.pop()?.toLowerCase() ?? "" : "";
+}
+
+function getFileIcon(fileName: string) {
+  const extension = getFileExtension(fileName);
+
+  if (["png", "jpg", "jpeg", "webp"].includes(extension)) {
+    return FileImage;
+  }
+
+  if (["xls", "xlsx", "csv"].includes(extension)) {
+    return FileSpreadsheet;
+  }
+
+  if (["doc", "docx"].includes(extension)) {
+    return FileType2;
+  }
+
+  if (["ppt", "pptx"].includes(extension)) {
+    return FileText;
+  }
+
+  if (extension === "pdf") {
+    return FileText;
+  }
+
+  if (extension === "zip") {
+    return FileArchive;
+  }
+
+  return File;
+}
+
+function getPriorityLabel(priority: Assignment["priority"]) {
+  if (priority === "high") return "High priority";
+  if (priority === "medium") return "Medium priority";
+  return "Low priority";
+}
+
+function getPriorityClass(priority: Assignment["priority"]) {
+  if (priority === "high") {
+    return "border-red-400/20 bg-red-400/10 text-red-300";
+  }
+
+  if (priority === "medium") {
+    return "border-amber-400/20 bg-amber-400/10 text-amber-300";
+  }
+
+  return "border-white/10 bg-white/[0.04] text-white/55";
+}
+
+function getStatusLabel(status: Assignment["status"]) {
+  if (status === "completed") return "Completed";
+  if (status === "in_progress") return "In progress";
+  return "Not started";
+}
+
+function getStatusClass(status: Assignment["status"]) {
+  if (status === "completed") {
+    return "border-emerald-400/20 bg-emerald-400/10 text-emerald-300";
+  }
+
+  if (status === "in_progress") {
+    return "border-purple-400/20 bg-purple-400/10 text-purple-300";
+  }
+
+  return "border-white/10 bg-white/[0.04] text-white/55";
+}
+
+function isOverdue(assignment: Assignment) {
+  if (!assignment.due_date || assignment.status === "completed") {
+    return false;
+  }
+
+  return new Date(assignment.due_date).getTime() < Date.now();
+}
+
+export default function AssignmentWorkspacePage() {
+  const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const assignmentId = params?.id;
+
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const [loading, setLoading] = useState(true);
+  const [loadingFiles, setLoadingFiles] = useState(true);
+  const [error, setError] = useState("");
 
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] =
-    useState<FilterType>("all");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
-  const [sort, setSort] =
-    useState<SortType>("due");
+  const [updating, setUpdating] = useState(false);
 
-  const [showSort, setShowSort] =
-    useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const [showCreate, setShowCreate] =
-    useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
-  const [deleteTarget, setDeleteTarget] =
-    useState<Assignment | null>(null);
+  const loadAssignment = useCallback(async () => {
+    if (!assignmentId) return;
 
-  const [deleting, setDeleting] =
-    useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchData() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user || cancelled) {
-        if (!cancelled) {
-          setLoading(false);
-        }
-
-        return;
-      }
-
-      const [
-        assignmentResult,
-        courseResult,
-      ] = await Promise.all([
-        supabase
-          .from("assignments")
-          .select(`
-            *,
-            courses (
-              id,
-              code,
-              name
-            )
-          `)
-          .eq("user_id", user.id)
-          .order("due_date", {
-            ascending: true,
-          }),
-
-        supabase
-          .from("courses")
-          .select("id, code, name")
-          .eq("user_id", user.id)
-          .eq("archived", false)
-          .order("name"),
-      ]);
-
-      if (cancelled) return;
-
-      if (assignmentResult.error) {
-        console.error(
-          "Error loading assignments:",
-          assignmentResult.error
-        );
-      }
-
-      if (courseResult.error) {
-        console.error(
-          "Error loading courses:",
-          courseResult.error
-        );
-      }
-
-      setAssignments(
-        (assignmentResult.data as Assignment[]) || []
-      );
-
-      setCourses(
-        courseResult.data || []
-      );
-
-      setLoading(false);
-    }
-
-    void fetchData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  function isOverdue(
-    assignment: Assignment
-  ) {
-    if (!assignment.due_date) {
-      return false;
-    }
-
-    if (
-      assignment.status === "completed"
-    ) {
-      return false;
-    }
-
-    return (
-      new Date(assignment.due_date) <
-      new Date()
-    );
-  }
-
-  function getPriorityValue(
-    priority: Assignment["priority"]
-  ) {
-    if (priority === "high") return 3;
-    if (priority === "medium") return 2;
-
-    return 1;
-  }
-
-  const filteredAssignments =
-    useMemo(() => {
-      const query =
-        search.toLowerCase().trim();
-
-      const result = assignments.filter(
-        (assignment) => {
-          const matchesSearch =
-            !query ||
-            assignment.title
-              .toLowerCase()
-              .includes(query) ||
-            assignment.description
-              ?.toLowerCase()
-              .includes(query) ||
-            assignment.courses?.name
-              ?.toLowerCase()
-              .includes(query) ||
-            assignment.courses?.code
-              ?.toLowerCase()
-              .includes(query);
-
-          if (!matchesSearch) {
-            return false;
-          }
-
-          if (filter === "completed") {
-            return (
-              assignment.status ===
-              "completed"
-            );
-          }
-
-          if (filter === "overdue") {
-            return isOverdue(assignment);
-          }
-
-          if (filter === "upcoming") {
-            return (
-              assignment.status !==
-                "completed" &&
-              !isOverdue(assignment)
-            );
-          }
-
-          return true;
-        }
-      );
-
-      return [...result].sort(
-        (a, b) => {
-          if (sort === "priority") {
-            return (
-              getPriorityValue(b.priority) -
-              getPriorityValue(a.priority)
-            );
-          }
-
-          if (sort === "progress") {
-            return (
-              b.progress - a.progress
-            );
-          }
-
-          if (!a.due_date) return 1;
-          if (!b.due_date) return -1;
-
-          return (
-            new Date(
-              a.due_date
-            ).getTime() -
-            new Date(
-              b.due_date
-            ).getTime()
-          );
-        }
-      );
-    },
-    [
-      assignments,
-      search,
-      filter,
-      sort,
-    ]
-  );
-
-  const total = assignments.length;
-
-  const completed =
-    assignments.filter(
-      (assignment) =>
-        assignment.status ===
-        "completed"
-    ).length;
-
-  const overdue =
-    assignments.filter(
-      isOverdue
-    ).length;
-
-  const upcoming =
-    assignments.filter(
-      (assignment) =>
-        assignment.status !==
-          "completed" &&
-        !isOverdue(assignment)
-    ).length;
-
-  const inProgress =
-    assignments.filter(
-      (assignment) =>
-        assignment.status ===
-        "in_progress"
-    ).length;
-
-  const completionPercentage =
-    total > 0
-      ? Math.round(
-          (completed / total) * 100
-        )
-      : 0;
-
-  const attentionAssignments =
-    assignments
-      .filter(
-        (assignment) =>
-          assignment.status !==
-            "completed"
-      )
-      .sort((a, b) => {
-        if (
-          isOverdue(a) &&
-          !isOverdue(b)
-        ) {
-          return -1;
-        }
-
-        if (
-          !isOverdue(a) &&
-          isOverdue(b)
-        ) {
-          return 1;
-        }
-
-        if (
-          a.priority !==
-          b.priority
-        ) {
-          return (
-            getPriorityValue(
-              b.priority
-            ) -
-            getPriorityValue(
-              a.priority
-            )
-          );
-        }
-
-        if (
-          !a.due_date
-        )
-          return 1;
-
-        if (
-          !b.due_date
-        )
-          return -1;
-
-        return (
-          new Date(
-            a.due_date
-          ).getTime() -
-          new Date(
-            b.due_date
-          ).getTime()
-        );
-      })
-      .slice(0, 3);
-
-  async function updateAssignment(
-    id: string,
-    changes: Partial<Assignment>
-  ) {
-    const { error } =
-      await supabase
-        .from("assignments")
-        .update({
-          ...changes,
-          updated_at:
-            new Date().toISOString(),
-        })
-        .eq("id", id);
-
-    if (error) {
-      console.error(
-        "Error updating assignment:",
-        error
-      );
-
-      return;
-    }
-
-    setAssignments(
-      (current) =>
-        current.map(
-          (assignment) =>
-            assignment.id === id
-              ? {
-                  ...assignment,
-                  ...changes,
-                }
-              : assignment
-        )
-    );
-  }
-
-  async function deleteAssignment() {
-    if (!deleteTarget) return;
-
-    setDeleting(true);
-
-    const { error } =
-      await supabase
-        .from("assignments")
-        .delete()
-        .eq(
-          "id",
-          deleteTarget.id
-        );
-
-    if (error) {
-      console.error(
-        "Error deleting assignment:",
-        error
-      );
-
-      setDeleting(false);
-
-      return;
-    }
-
-    setAssignments(
-      (current) =>
-        current.filter(
-          (assignment) =>
-            assignment.id !==
-            deleteTarget.id
-        )
-    );
-
-    setDeleteTarget(null);
-    setDeleting(false);
-  }
-
-  function handleCreated(
-    assignment: Assignment
-  ) {
-    setAssignments(
-      (current) =>
-        [...current, assignment].sort(
-          (a, b) => {
-            if (!a.due_date) return 1;
-            if (!b.due_date) return -1;
-
-            return (
-              new Date(
-                a.due_date
-              ).getTime() -
-              new Date(
-                b.due_date
-              ).getTime()
-            );
-          }
-        )
-    );
-
-    setShowCreate(false);
-  }
-
-  return (
-    <AppShell
-      title="Assignments"
-      description="Keep track of what needs to get done."
-    >
-      <div className="mx-auto max-w-[1450px] space-y-7 pb-10">
-        {/* Header */}
-        <section className="border-b border-white/[0.08] pb-7">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.14em] text-white/25">
-                Academic workload
-              </p>
-
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                Assignments
-              </h1>
-
-              <p className="mt-2 max-w-xl text-sm leading-6 text-white/35">
-                See what is coming up, work through
-                it, and keep your progress in one
-                place.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                setShowCreate(true)
-              }
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500"
-            >
-              <Plus size={16} />
-              New assignment
-            </button>
-          </div>
-        </section>
-
-        {/* Overview */}
-        <section className="grid grid-cols-2 border-y border-white/[0.08] sm:grid-cols-5">
-          <OverviewStat
-            label="Total"
-            value={total}
-          />
-
-          <OverviewStat
-            label="Due soon"
-            value={upcoming}
-          />
-
-          <OverviewStat
-            label="In progress"
-            value={inProgress}
-          />
-
-          <OverviewStat
-            label="Overdue"
-            value={overdue}
-            danger={overdue > 0}
-          />
-
-          <OverviewStat
-            label="Completed"
-            value={completed}
-            success
-          />
-        </section>
-
-        {/* What needs attention */}
-        {!loading &&
-          attentionAssignments.length >
-            0 && (
-            <section>
-              <div className="mb-3 flex items-end justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-white">
-                    What needs your attention
-                  </p>
-
-                  <p className="mt-1 text-xs text-white/25">
-                    The assignments most worth
-                    looking at next.
-                  </p>
-                </div>
-
-                <Link
-                  href="/calendar"
-                  className="hidden items-center gap-1.5 text-xs font-medium text-white/30 transition hover:text-white sm:flex"
-                >
-                  Open calendar
-                  <ArrowRight size={13} />
-                </Link>
-              </div>
-
-              <div className="grid gap-2 lg:grid-cols-3">
-                {attentionAssignments.map(
-                  (assignment) => (
-                    <AttentionCard
-                      key={assignment.id}
-                      assignment={assignment}
-                      overdue={isOverdue(
-                        assignment
-                      )}
-                    />
-                  )
-                )}
-              </div>
-            </section>
-          )}
-
-        {/* Controls */}
-        <section className="border border-white/[0.08] bg-white/[0.02] p-3">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-            <div className="relative min-w-0 flex-1">
-              <Search
-                size={16}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/20"
-              />
-
-              <input
-                value={search}
-                onChange={(event) =>
-                  setSearch(
-                    event.target.value
-                  )
-                }
-                placeholder="Search assignments or courses..."
-                className="w-full rounded-lg border border-white/[0.07] bg-black/20 py-3 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-violet-500/40"
-              />
-            </div>
-
-            <div className="flex items-center gap-1 overflow-x-auto">
-              <FilterButton
-                active={
-                  filter === "all"
-                }
-                onClick={() =>
-                  setFilter("all")
-                }
-              >
-                All
-              </FilterButton>
-
-              <FilterButton
-                active={
-                  filter === "upcoming"
-                }
-                onClick={() =>
-                  setFilter(
-                    "upcoming"
-                  )
-                }
-              >
-                Upcoming
-              </FilterButton>
-
-              <FilterButton
-                active={
-                  filter === "overdue"
-                }
-                onClick={() =>
-                  setFilter(
-                    "overdue"
-                  )
-                }
-              >
-                Overdue
-              </FilterButton>
-
-              <FilterButton
-                active={
-                  filter === "completed"
-                }
-                onClick={() =>
-                  setFilter(
-                    "completed"
-                  )
-                }
-              >
-                Completed
-              </FilterButton>
-            </div>
-
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() =>
-                  setShowSort(
-                    (current) =>
-                      !current
-                  )
-                }
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.02] px-4 py-2.5 text-sm text-white/45 transition hover:bg-white/[0.05] hover:text-white sm:w-auto"
-              >
-                <Filter size={14} />
-                Sort
-                <ChevronDown
-                  size={13}
-                  className={
-                    showSort
-                      ? "rotate-180"
-                      : ""
-                  }
-                />
-              </button>
-
-              {showSort && (
-                <div className="absolute right-0 top-full z-20 mt-2 w-44 border border-white/[0.09] bg-[#17151c] p-1 shadow-2xl">
-                  <SortOption
-                    active={
-                      sort === "due"
-                    }
-                    onClick={() => {
-                      setSort("due");
-                      setShowSort(false);
-                    }}
-                  >
-                    Due date
-                  </SortOption>
-
-                  <SortOption
-                    active={
-                      sort === "priority"
-                    }
-                    onClick={() => {
-                      setSort(
-                        "priority"
-                      );
-                      setShowSort(false);
-                    }}
-                  >
-                    Priority
-                  </SortOption>
-
-                  <SortOption
-                    active={
-                      sort === "progress"
-                    }
-                    onClick={() => {
-                      setSort(
-                        "progress"
-                      );
-                      setShowSort(false);
-                    }}
-                  >
-                    Progress
-                  </SortOption>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* Results */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-white">
-              {filter === "all"
-                ? "Your assignments"
-                : filter === "upcoming"
-                  ? "Upcoming assignments"
-                  : filter === "overdue"
-                    ? "Overdue assignments"
-                    : "Completed assignments"}
-            </p>
-
-            <p className="mt-1 text-xs text-white/25">
-              {filteredAssignments.length}{" "}
-              {filteredAssignments.length ===
-              1
-                ? "assignment"
-                : "assignments"}
-              {search
-                ? " matching your search"
-                : ""}
-            </p>
-          </div>
-
-          {search && (
-            <button
-              type="button"
-              onClick={() =>
-                setSearch("")
-              }
-              className="text-xs text-white/30 transition hover:text-white"
-            >
-              Clear search
-            </button>
-          )}
-        </div>
-
-        {/* Content */}
-        {loading ? (
-          <div className="flex min-h-[350px] items-center justify-center border border-white/[0.07] bg-white/[0.02]">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2
-                size={23}
-                className="animate-spin text-violet-400"
-              />
-
-              <span className="text-xs text-white/25">
-                Loading assignments...
-              </span>
-            </div>
-          </div>
-        ) : filteredAssignments.length ===
-          0 ? (
-          <EmptyState
-            hasAssignments={
-              assignments.length > 0
-            }
-            onCreate={() =>
-              setShowCreate(true)
-            }
-            onClear={() => {
-              setSearch("");
-              setFilter("all");
-            }}
-          />
-        ) : (
-          <div className="space-y-2">
-            {filteredAssignments.map(
-              (assignment) => (
-                <AssignmentRow
-                  key={assignment.id}
-                  assignment={assignment}
-                  overdue={isOverdue(
-                    assignment
-                  )}
-                  onUpdate={
-                    updateAssignment
-                  }
-                  onDelete={() =>
-                    setDeleteTarget(
-                      assignment
-                    )
-                  }
-                />
-              )
-            )}
-          </div>
-        )}
-
-        {/* Create */}
-        {showCreate && (
-          <CreateAssignmentModal
-            courses={courses}
-            onClose={() =>
-              setShowCreate(false)
-            }
-            onCreated={handleCreated}
-          />
-        )}
-
-        {/* Delete */}
-        {deleteTarget && (
-          <DeleteAssignmentModal
-            assignment={deleteTarget}
-            deleting={deleting}
-            onCancel={() => {
-              if (!deleting) {
-                setDeleteTarget(null);
-              }
-            }}
-            onConfirm={
-              deleteAssignment
-            }
-          />
-        )}
-      </div>
-    </AppShell>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Overview                                                                   */
-/* -------------------------------------------------------------------------- */
-
-function OverviewStat({
-  label,
-  value,
-  danger = false,
-  success = false,
-}: {
-  label: string;
-  value: number;
-  danger?: boolean;
-  success?: boolean;
-}) {
-  return (
-    <div className="border-b border-white/[0.07] px-4 py-4 last:border-b-0 sm:border-b-0 sm:border-r sm:last:border-r-0">
-      <p className="text-2xl font-bold tracking-tight text-white">
-        {value}
-      </p>
-
-      <p
-        className={[
-          "mt-1 text-xs",
-          danger
-            ? "text-red-400"
-            : success
-              ? "text-emerald-400"
-              : "text-white/25",
-        ].join(" ")}
-      >
-        {label}
-      </p>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Attention cards                                                            */
-/* -------------------------------------------------------------------------- */
-
-function AttentionCard({
-  assignment,
-  overdue,
-}: {
-  assignment: Assignment;
-  overdue: boolean;
-}) {
-  const dueDate = assignment.due_date
-    ? new Date(assignment.due_date)
-    : null;
-
-  return (
-    <Link
-      href={`/assignments/${assignment.id}`}
-      className={[
-        "group block border p-4 transition",
-        overdue
-          ? "border-red-500/15 bg-red-500/[0.025] hover:border-red-500/30"
-          : "border-white/[0.08] bg-white/[0.02] hover:border-violet-500/25 hover:bg-white/[0.035]",
-      ].join(" ")}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <span
-          className={[
-            "text-[10px] font-semibold uppercase tracking-[0.12em]",
-            overdue
-              ? "text-red-400"
-              : "text-white/25",
-          ].join(" ")}
-        >
-          {overdue
-            ? "Overdue"
-            : assignment.priority ===
-                "high"
-              ? "High priority"
-              : "Coming up"}
-        </span>
-
-        <ArrowUpRight
-          size={14}
-          className="text-white/20 transition group-hover:text-white/60"
-        />
-      </div>
-
-      <h3 className="mt-3 truncate text-sm font-semibold text-white">
-        {assignment.title}
-      </h3>
-
-      <div className="mt-1 text-xs text-white/30">
-        {assignment.courses?.code ||
-          "No course"}
-      </div>
-
-      <div className="mt-4 flex items-center justify-between">
-        <span
-          className={[
-            "flex items-center gap-1.5 text-xs",
-            overdue
-              ? "text-red-400"
-              : "text-white/30",
-          ].join(" ")}
-        >
-          <CalendarDays size={12} />
-
-          {dueDate
-            ? formatDueDate(dueDate)
-            : "No due date"}
-        </span>
-
-        <span className="text-xs font-medium text-white/35">
-          {assignment.progress}%
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Filters                                                                    */
-/* -------------------------------------------------------------------------- */
-
-function FilterButton({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  children: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium transition",
-        active
-          ? "bg-white/[0.08] text-white"
-          : "text-white/30 hover:bg-white/[0.04] hover:text-white/70",
-      ].join(" ")}
-    >
-      {children}
-    </button>
-  );
-}
-
-function SortOption({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  children: React.ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition",
-        active
-          ? "bg-white/[0.06] text-white"
-          : "text-white/40 hover:bg-white/[0.04] hover:text-white",
-      ].join(" ")}
-    >
-      {children}
-
-      {active && (
-        <Check size={14} />
-      )}
-    </button>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Assignment row                                                             */
-/* -------------------------------------------------------------------------- */
-
-function AssignmentRow({
-  assignment,
-  overdue,
-  onUpdate,
-  onDelete,
-}: {
-  assignment: Assignment;
-  overdue: boolean;
-  onUpdate: (
-    id: string,
-    changes: Partial<Assignment>
-  ) => void;
-  onDelete: () => void;
-}) {
-  const completed =
-    assignment.status ===
-    "completed";
-
-  const dueDate =
-    assignment.due_date
-      ? new Date(
-          assignment.due_date
-        )
-      : null;
-
-  const priorityConfig = {
-    low: {
-      label: "Low",
-      text: "text-blue-300",
-      dot: "bg-blue-400",
-    },
-
-    medium: {
-      label: "Medium",
-      text: "text-amber-300",
-      dot: "bg-amber-400",
-    },
-
-    high: {
-      label: "High",
-      text: "text-red-300",
-      dot: "bg-red-400",
-    },
-  };
-
-  const priority =
-    priorityConfig[
-      assignment.priority
-    ];
-
-  return (
-    <div
-      className={[
-        "group border transition",
-        overdue
-          ? "border-red-500/15 bg-red-500/[0.02]"
-          : completed
-            ? "border-white/[0.055] bg-white/[0.012]"
-            : "border-white/[0.07] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.03]",
-      ].join(" ")}
-    >
-      <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center">
-        {/* Complete */}
-        <button
-          type="button"
-          onClick={() =>
-            onUpdate(
-              assignment.id,
-              {
-                status: completed
-                  ? "pending"
-                  : "completed",
-
-                progress:
-                  completed
-                    ? 0
-                    : 100,
-              }
-            )
-          }
-          aria-label={
-            completed
-              ? "Mark assignment incomplete"
-              : "Mark assignment complete"
-          }
-          className={[
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition",
-            completed
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-              : "border-white/[0.1] text-transparent hover:border-violet-400/40 hover:bg-violet-500/10 hover:text-violet-300",
-          ].join(" ")}
-        >
-          <Check size={16} />
-        </button>
-
-        {/* Main */}
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            {assignment.courses && (
-              <Link
-                href={`/courses/${assignment.course_id}`}
-                onClick={(event) =>
-                  event.stopPropagation()
-                }
-                className="text-[10px] font-bold uppercase tracking-[0.13em] text-violet-400 transition hover:text-violet-300"
-              >
-                {assignment.courses.code}
-              </Link>
-            )}
-
-            <span
-              className={[
-                "inline-flex items-center gap-1.5 text-[10px] font-medium",
-                priority.text,
-              ].join(" ")}
-            >
-              <span
-                className={[
-                  "h-1.5 w-1.5 rounded-full",
-                  priority.dot,
-                ].join(" ")}
-              />
-
-              {priority.label}
-            </span>
-
-            {overdue && (
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-red-400">
-                Overdue
-              </span>
-            )}
-
-            {assignment.status ===
-              "in_progress" &&
-              !overdue &&
-              !completed && (
-                <span className="text-[10px] font-medium text-violet-300">
-                  In progress
-                </span>
-              )}
-          </div>
-
-          <Link
-            href={`/assignments/${assignment.id}`}
-            className="mt-2 block"
-          >
-            <h3
-              className={[
-                "truncate text-[15px] font-semibold transition",
-                completed
-                  ? "text-white/30 line-through"
-                  : "text-white group-hover:text-violet-100",
-              ].join(" ")}
-            >
-              {assignment.title}
-            </h3>
-
-            {assignment.description && (
-              <p className="mt-1 line-clamp-1 max-w-2xl text-xs text-white/25">
-                {assignment.description}
-              </p>
-            )}
-          </Link>
-
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-            {dueDate && (
-              <span
-                className={[
-                  "flex items-center gap-1.5",
-                  overdue
-                    ? "font-medium text-red-400"
-                    : "text-white/30",
-                ].join(" ")}
-              >
-                <CalendarDays size={12} />
-
-                {formatDueDate(
-                  dueDate
-                )}
-
-                <span className="text-white/15">
-                  ·{" "}
-                  {dueDate.toLocaleTimeString(
-                    undefined,
-                    {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    }
-                  )}
-                </span>
-              </span>
-            )}
-
-            {assignment.max_points !==
-              null && (
-              <span className="text-white/25">
-                {assignment.points ??
-                  0}
-                /
-                {
-                  assignment.max_points
-                }{" "}
-                pts
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Progress */}
-        <div className="w-full shrink-0 lg:w-44">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-[10px] font-medium text-white/25">
-              Progress
-            </span>
-
-            <span className="text-xs font-semibold text-white/50">
-              {assignment.progress}%
-            </span>
-          </div>
-
-          <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-            <div
-              className={[
-                "h-full rounded-full transition-all",
-                completed
-                  ? "bg-emerald-500"
-                  : "bg-violet-500",
-              ].join(" ")}
-              style={{
-                width: `${assignment.progress}%`,
-              }}
-            />
-          </div>
-
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={assignment.progress}
-            onChange={(event) => {
-              const progress =
-                Number(
-                  event.target.value
-                );
-
-              onUpdate(
-                assignment.id,
-                {
-                  progress,
-
-                  status:
-                    progress === 100
-                      ? "completed"
-                      : progress > 0
-                        ? "in_progress"
-                        : "pending",
-                }
-              );
-            }}
-            className="mt-2 w-full accent-violet-500"
-          />
-        </div>
-
-        {/* Workspace */}
-        <Link
-          href={`/assignments/${assignment.id}`}
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-white/[0.08] px-3 py-2.5 text-xs font-medium text-white/40 transition hover:border-violet-500/25 hover:bg-violet-500/[0.05] hover:text-white lg:w-[125px]"
-        >
-          Work on it
-          <ArrowRight size={13} />
-        </Link>
-
-        {/* Delete */}
-        <button
-          type="button"
-          onClick={onDelete}
-          aria-label="Delete assignment"
-          title="Delete assignment"
-          className="self-end rounded-lg p-2 text-white/15 transition hover:bg-red-500/10 hover:text-red-400 lg:self-center"
-        >
-          <Trash2 size={15} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Empty state                                                                */
-/* -------------------------------------------------------------------------- */
-
-function EmptyState({
-  hasAssignments,
-  onCreate,
-  onClear,
-}: {
-  hasAssignments: boolean;
-  onCreate: () => void;
-  onClear: () => void;
-}) {
-  return (
-    <div className="flex min-h-[350px] flex-col items-center justify-center border border-dashed border-white/[0.08] bg-white/[0.015] px-6 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-white/30">
-        {hasAssignments ? (
-          <Search size={20} />
-        ) : (
-          <CheckCircle2 size={20} />
-        )}
-      </div>
-
-      <h3 className="mt-5 text-lg font-semibold text-white">
-        {hasAssignments
-          ? "Nothing matches"
-          : "No assignments yet"}
-      </h3>
-
-      <p className="mt-2 max-w-md text-sm leading-6 text-white/30">
-        {hasAssignments
-          ? "Try another search or switch your filter."
-          : "Add your first assignment and StudySpace will keep it connected to your courses and calendar."}
-      </p>
-
-      {hasAssignments ? (
-        <button
-          type="button"
-          onClick={onClear}
-          className="mt-5 rounded-lg border border-white/[0.08] px-4 py-2.5 text-sm font-medium text-white/50 transition hover:bg-white/[0.04] hover:text-white"
-        >
-          Clear filters
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={onCreate}
-          className="mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500"
-        >
-          <Plus size={15} />
-          Create assignment
-        </button>
-      )}
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Create modal                                                               */
-/* -------------------------------------------------------------------------- */
-
-function CreateAssignmentModal({
-  courses,
-  onClose,
-  onCreated,
-}: {
-  courses: Course[];
-  onClose: () => void;
-  onCreated: (
-    assignment: Assignment
-  ) => void;
-}) {
-  const [title, setTitle] =
-    useState("");
-
-  const [description, setDescription] =
-    useState("");
-
-  const [courseId, setCourseId] =
-    useState(
-      courses[0]?.id || ""
-    );
-
-  const [dueDate, setDueDate] =
-    useState("");
-
-  const [priority, setPriority] =
-    useState<
-      "low" | "medium" | "high"
-    >("medium");
-
-  const [maxPoints, setMaxPoints] =
-    useState("");
-
-  const [saving, setSaving] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
-
-  async function handleSubmit(
-    event: FormEvent
-  ) {
-    event.preventDefault();
-
-    if (!title.trim()) {
-      setError(
-        "Please enter an assignment title."
-      );
-
-      return;
-    }
-
-    if (!courseId) {
-      setError(
-        "Please select a course."
-      );
-
-      return;
-    }
-
-    setSaving(true);
+    setLoading(true);
     setError("");
 
     const {
@@ -1439,422 +248,1003 @@ function CreateAssignmentModal({
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setError(
-        "You must be logged in."
-      );
-
-      setSaving(false);
-
+      router.push("/login");
       return;
     }
 
-    const { data, error: insertError } =
-      await supabase
-        .from("assignments")
-        .insert({
-          user_id: user.id,
-          course_id: courseId,
-          title: title.trim(),
-          description:
-            description.trim() ||
-            null,
-
-          due_date: dueDate
-            ? new Date(
-                dueDate
-              ).toISOString()
-            : null,
-
+    const { data, error: assignmentError } = await supabase
+      .from("assignments")
+      .select(
+        `
+          id,
+          user_id,
+          course_id,
+          title,
+          description,
+          due_date,
           priority,
-
-          status: "pending",
-
-          progress: 0,
-
-          points: null,
-
-          max_points: maxPoints
-            ? Number(maxPoints)
-            : null,
-        })
-        .select(`
-          *,
+          status,
+          progress,
+          points,
+          max_points,
+          created_at,
+          updated_at,
           courses (
             id,
             code,
             name
           )
-        `)
-        .single();
+        `,
+      )
+      .eq("id", assignmentId)
+      .eq("user_id", user.id)
+      .single();
 
-    if (insertError) {
-      console.error(
-        insertError
-      );
-
-      setError(
-        insertError.message
-      );
-
-      setSaving(false);
-
+    if (assignmentError) {
+      console.error(assignmentError);
+      setError("We couldn't load this assignment.");
+      setLoading(false);
       return;
     }
 
-    onCreated(
-      data as Assignment
-    );
-  }
+    setAssignment(data as unknown as Assignment);
+    setLoading(false);
+  }, [assignmentId, router]);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
-      <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto border border-white/[0.09] bg-[#17151c] shadow-2xl shadow-black/50">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.07] bg-[#17151c] p-5 sm:p-6">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-violet-400">
-              New assignment
-            </p>
+  const loadAttachments = useCallback(async () => {
+    if (!assignmentId) return;
 
-            <h2 className="mt-1 text-xl font-semibold text-white">
-              Add something to your workload
-            </h2>
+    setLoadingFiles(true);
 
-            <p className="mt-1 text-xs text-white/25">
-              You can build a work plan after
-              creating it.
-            </p>
-          </div>
+    const { data, error: attachmentError } = await supabase
+      .from("assignment_attachments")
+      .select("*")
+      .eq("assignment_id", assignmentId)
+      .order("created_at", { ascending: false });
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 text-white/25 transition hover:text-white"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5 p-5 sm:p-6"
-        >
-          <Field label="Assignment title">
-            <input
-              autoFocus
-              value={title}
-              onChange={(event) =>
-                setTitle(
-                  event.target.value
-                )
-              }
-              placeholder="e.g. Physics Lab Report"
-              className="form-input"
-            />
-          </Field>
-
-          <Field label="Course">
-            <select
-              value={courseId}
-              onChange={(event) =>
-                setCourseId(
-                  event.target.value
-                )
-              }
-              className="form-input"
-            >
-              <option value="">
-                Select course
-              </option>
-
-              {courses.map(
-                (course) => (
-                  <option
-                    key={course.id}
-                    value={course.id}
-                  >
-                    {course.code} —{" "}
-                    {course.name}
-                  </option>
-                )
-              )}
-            </select>
-
-            {courses.length === 0 && (
-              <p className="mt-2 text-xs text-amber-400/80">
-                Add an active course before
-                creating an assignment.
-              </p>
-            )}
-          </Field>
-
-          <Field label="Description">
-            <textarea
-              value={description}
-              onChange={(event) =>
-                setDescription(
-                  event.target.value
-                )
-              }
-              rows={4}
-              placeholder="What do you need to complete?"
-              className="form-input resize-none"
-            />
-          </Field>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Due date">
-              <input
-                type="datetime-local"
-                value={dueDate}
-                onChange={(event) =>
-                  setDueDate(
-                    event.target.value
-                  )
-                }
-                className="form-input"
-              />
-            </Field>
-
-            <Field label="Max points">
-              <input
-                type="number"
-                min="0"
-                value={maxPoints}
-                onChange={(event) =>
-                  setMaxPoints(
-                    event.target.value
-                  )
-                }
-                placeholder="100"
-                className="form-input"
-              />
-            </Field>
-          </div>
-
-          <Field label="Priority">
-            <div className="grid grid-cols-3 gap-2">
-              {(
-                [
-                  "low",
-                  "medium",
-                  "high",
-                ] as const
-              ).map(
-                (option) => {
-                  const active =
-                    priority ===
-                    option;
-
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() =>
-                        setPriority(
-                          option
-                        )
-                      }
-                      className={[
-                        "border px-3 py-3 text-xs font-semibold capitalize transition",
-                        active
-                          ? option ===
-                            "high"
-                            ? "border-red-500/30 bg-red-500/10 text-red-300"
-                            : option ===
-                                "medium"
-                              ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-                              : "border-blue-500/30 bg-blue-500/10 text-blue-300"
-                          : "border-white/[0.07] text-white/30 hover:bg-white/[0.04] hover:text-white/60",
-                      ].join(" ")}
-                    >
-                      {option}
-                    </button>
-                  );
-                }
-              )}
-            </div>
-          </Field>
-
-          {error && (
-            <div className="border border-red-500/20 bg-red-500/10 px-4 py-3 text-xs leading-5 text-red-300">
-              {error}
-            </div>
-          )}
-
-          <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-white/[0.08] px-4 py-2.5 text-sm font-medium text-white/40 transition hover:bg-white/[0.04] hover:text-white"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              disabled={
-                saving ||
-                courses.length === 0
-              }
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {saving && (
-                <Loader2
-                  size={15}
-                  className="animate-spin"
-                />
-              )}
-
-              {saving
-                ? "Creating..."
-                : "Create assignment"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Delete modal                                                               */
-/* -------------------------------------------------------------------------- */
-
-function DeleteAssignmentModal({
-  assignment,
-  deleting,
-  onCancel,
-  onConfirm,
-}: {
-  assignment: Assignment;
-  deleting: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
-      <div className="w-full max-w-md border border-white/[0.09] bg-[#17151c] p-6 shadow-2xl shadow-black/50">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 text-red-400">
-          <Trash2 size={17} />
-        </div>
-
-        <h2 className="mt-5 text-lg font-semibold text-white">
-          Delete assignment?
-        </h2>
-
-        <p className="mt-2 text-sm leading-6 text-white/35">
-          This will permanently remove{" "}
-          <span className="font-medium text-white/65">
-            “{assignment.title}”
-          </span>
-          .
-        </p>
-
-        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={deleting}
-            className="rounded-lg border border-white/[0.08] px-4 py-2.5 text-sm font-medium text-white/40 transition hover:bg-white/[0.04] hover:text-white disabled:opacity-50"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={deleting}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
-          >
-            {deleting && (
-              <Loader2
-                size={14}
-                className="animate-spin"
-              />
-            )}
-
-            {deleting
-              ? "Deleting..."
-              : "Delete assignment"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Helpers                                                                    */
-/* -------------------------------------------------------------------------- */
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <label className="mb-2 block text-xs font-medium text-white/50">
-        {label}
-      </label>
-
-      {children}
-    </div>
-  );
-}
-
-function formatDueDate(
-  date: Date
-) {
-  const now = new Date();
-
-  const today = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  );
-
-  const tomorrow = new Date(
-    today
-  );
-
-  tomorrow.setDate(
-    tomorrow.getDate() + 1
-  );
-
-  const assignmentDay =
-    new Date(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate()
-    );
-
-  if (
-    assignmentDay.getTime() ===
-    today.getTime()
-  ) {
-    return "Today";
-  }
-
-  if (
-    assignmentDay.getTime() ===
-    tomorrow.getTime()
-  ) {
-    return "Tomorrow";
-  }
-
-  return date.toLocaleDateString(
-    undefined,
-    {
-      month: "short",
-      day: "numeric",
-      year:
-        date.getFullYear() !==
-        now.getFullYear()
-          ? "numeric"
-          : undefined,
+    if (attachmentError) {
+      console.error(attachmentError);
+      setLoadingFiles(false);
+      return;
     }
+
+    setAttachments((data ?? []) as Attachment[]);
+    setLoadingFiles(false);
+  }, [assignmentId]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadAssignment();
+      void loadAttachments();
+    });
+  }, [loadAssignment, loadAttachments]);
+
+  const daysUntilDue = useMemo(() => {
+    if (!assignment?.due_date) return null;
+
+    const now = new Date();
+    const due = new Date(assignment.due_date);
+
+    const startToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+
+    const startDue = new Date(
+      due.getFullYear(),
+      due.getMonth(),
+      due.getDate(),
+    );
+
+    return Math.ceil(
+      (startDue.getTime() - startToday.getTime()) /
+        (1000 * 60 * 60 * 24),
+    );
+  }, [assignment?.due_date]);
+
+  async function updateAssignment(
+    changes: Partial<Assignment>,
+  ) {
+    if (!assignment) return;
+
+    setUpdating(true);
+
+    const { data, error: updateError } = await supabase
+      .from("assignments")
+      .update({
+        ...changes,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", assignment.id)
+      .eq("user_id", assignment.user_id)
+      .select(
+        `
+          id,
+          user_id,
+          course_id,
+          title,
+          description,
+          due_date,
+          priority,
+          status,
+          progress,
+          points,
+          max_points,
+          created_at,
+          updated_at,
+          courses (
+            id,
+            code,
+            name
+          )
+        `,
+      )
+      .single();
+
+    if (updateError) {
+      console.error(updateError);
+      setError(updateError.message);
+      setUpdating(false);
+      return;
+    }
+
+    setAssignment(data as unknown as Assignment);
+    setUpdating(false);
+  }
+
+  async function handleProgressChange(progress: number) {
+    let status: Assignment["status"] = "not_started";
+
+    if (progress >= 100) {
+      status = "completed";
+      progress = 100;
+    } else if (progress > 0) {
+      status = "in_progress";
+    }
+
+    await updateAssignment({
+      progress,
+      status,
+    });
+  }
+
+  async function handleStatusChange(
+    status: Assignment["status"],
+  ) {
+    let progress = assignment?.progress ?? 0;
+
+    if (status === "completed") {
+      progress = 100;
+    }
+
+    if (status === "not_started") {
+      progress = 0;
+    }
+
+    await updateAssignment({
+      status,
+      progress,
+    });
+  }
+
+  function validateFile(file: File) {
+    const extension = getFileExtension(file.name);
+
+    if (!ALLOWED_EXTENSIONS.includes(extension)) {
+      return `.${extension || "file"} files aren't supported.`;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      return `${file.name} is larger than the 50 MB limit.`;
+    }
+
+    return "";
+  }
+
+  async function uploadFiles(files: FileList | File[]) {
+    if (!assignment) return;
+
+    setUploadError("");
+
+    const fileArray = Array.from(files);
+
+    if (!fileArray.length) return;
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      for (const file of fileArray) {
+        const validationError = validateFile(file);
+
+        if (validationError) {
+          setUploadError(validationError);
+          continue;
+        }
+
+        const safeFileName = file.name
+          .replace(/[^a-zA-Z0-9._-]/g, "_")
+          .replace(/_+/g, "_");
+
+        const uniqueName = `${Date.now()}_${crypto.randomUUID()}_${safeFileName}`;
+
+        const storagePath = `${user.id}/${assignment.id}/${uniqueName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("assignment-files")
+          .upload(storagePath, file, {
+            cacheControl: "3600",
+            contentType: file.type || "application/octet-stream",
+            upsert: false,
+          });
+
+        if (uploadError) {
+          console.error(uploadError);
+          setUploadError(
+            `Couldn't upload ${file.name}: ${uploadError.message}`,
+          );
+          continue;
+        }
+
+        const { error: metadataError } = await supabase
+          .from("assignment_attachments")
+          .insert({
+            assignment_id: assignment.id,
+            user_id: user.id,
+            file_name: file.name,
+            storage_path: storagePath,
+            file_type: file.type || null,
+            file_size: file.size,
+          });
+
+        if (metadataError) {
+          console.error(metadataError);
+
+          await supabase.storage
+            .from("assignment-files")
+            .remove([storagePath]);
+
+          setUploadError(
+            `The file uploaded but couldn't be saved to the assignment.`,
+          );
+
+          continue;
+        }
+      }
+
+      await loadAttachments();
+    } finally {
+      setUploading(false);
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  }
+
+  async function handleFileInput(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    if (event.target.files) {
+      await uploadFiles(event.target.files);
+    }
+  }
+
+  async function handleDrop(
+    event: React.DragEvent<HTMLDivElement>,
+  ) {
+    event.preventDefault();
+    setDragActive(false);
+
+    if (event.dataTransfer.files) {
+      await uploadFiles(event.dataTransfer.files);
+    }
+  }
+
+  async function downloadAttachment(
+    attachment: Attachment,
+  ) {
+    const { data, error: signedUrlError } = await supabase.storage
+      .from("assignment-files")
+      .createSignedUrl(attachment.storage_path, 60);
+
+    if (signedUrlError || !data?.signedUrl) {
+      setUploadError(
+        "Couldn't create a download link for this file.",
+      );
+      return;
+    }
+
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function deleteAttachment(
+    attachment: Attachment,
+  ) {
+    const confirmed = window.confirm(
+      `Remove "${attachment.file_name}" from this assignment?`,
+    );
+
+    if (!confirmed) return;
+
+    setUploadError("");
+
+    const { error: storageError } = await supabase.storage
+      .from("assignment-files")
+      .remove([attachment.storage_path]);
+
+    if (storageError) {
+      console.error(storageError);
+    }
+
+    const { error: metadataError } = await supabase
+      .from("assignment_attachments")
+      .delete()
+      .eq("id", attachment.id);
+
+    if (metadataError) {
+      console.error(metadataError);
+      setUploadError(
+        "The file could not be removed from the assignment.",
+      );
+      return;
+    }
+
+    setAttachments((current) =>
+      current.filter((file) => file.id !== attachment.id),
+    );
+  }
+
+  async function deleteAssignment() {
+    if (!assignment) return;
+
+    setDeleting(true);
+
+    for (const attachment of attachments) {
+      await supabase.storage
+        .from("assignment-files")
+        .remove([attachment.storage_path]);
+    }
+
+    const { error: deleteError } = await supabase
+      .from("assignments")
+      .delete()
+      .eq("id", assignment.id)
+      .eq("user_id", assignment.user_id);
+
+    if (deleteError) {
+      console.error(deleteError);
+      setError(deleteError.message);
+      setDeleting(false);
+      return;
+    }
+
+    router.push("/assignments");
+  }
+
+  function getDueMessage() {
+    if (!assignment?.due_date) {
+      return "No due date";
+    }
+
+    if (isOverdue(assignment)) {
+      return "Overdue";
+    }
+
+    if (daysUntilDue === 0) {
+      return "Due today";
+    }
+
+    if (daysUntilDue === 1) {
+      return "Due tomorrow";
+    }
+
+    if (daysUntilDue !== null && daysUntilDue > 1) {
+      return `Due in ${daysUntilDue} days`;
+    }
+
+    return formatDate(assignment.due_date);
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-[calc(100vh-80px)] px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1200px] items-center justify-center py-32">
+          <Loader2 className="h-6 w-6 animate-spin text-white/40" />
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !assignment) {
+    return (
+      <main className="min-h-[calc(100vh-80px)] px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1200px]">
+          <Link
+            href="/assignments"
+            className="mb-8 inline-flex items-center gap-2 text-sm text-white/50 transition hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to assignments
+          </Link>
+
+          <div className="rounded-2xl border border-red-400/20 bg-red-400/5 p-8">
+            <h1 className="text-xl font-semibold text-white">
+              Assignment unavailable
+            </h1>
+
+            <p className="mt-2 text-sm text-white/50">
+              {error || "We couldn't find this assignment."}
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <>
+      <main className="min-h-[calc(100vh-80px)] px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1200px]">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <Link
+              href="/assignments"
+              className="inline-flex items-center gap-2 text-sm text-white/50 transition hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to assignments
+            </Link>
+
+            <div className="relative">
+              <button
+                onClick={() => setShowMenu((value) => !value)}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-white/55 transition hover:bg-white/[0.07] hover:text-white"
+                aria-label="Assignment actions"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+
+              {showMenu && (
+                <div className="absolute right-0 top-11 z-30 w-44 rounded-xl border border-white/10 bg-[#17151d] p-1.5 shadow-2xl">
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowDeleteModal(true);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-red-300 transition hover:bg-red-400/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete assignment
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <section className="border-b border-white/10 pb-7">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  {assignment.courses && (
+                    <Link
+                      href={`/courses/${assignment.course_id}`}
+                      className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.03] px-2.5 py-1 text-xs font-medium text-white/60 transition hover:border-white/20 hover:text-white"
+                    >
+                      <BookOpen className="h-3.5 w-3.5" />
+                      {assignment.courses.code}
+                    </Link>
+                  )}
+
+                  <span
+                    className={`rounded-md border px-2.5 py-1 text-xs font-medium ${getPriorityClass(
+                      assignment.priority,
+                    )}`}
+                  >
+                    {getPriorityLabel(assignment.priority)}
+                  </span>
+                </div>
+
+                <h1 className="max-w-3xl text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                  {assignment.title}
+                </h1>
+
+                {assignment.courses && (
+                  <p className="mt-2 text-sm text-white/45">
+                    {assignment.courses.name}
+                  </p>
+                )}
+
+                <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-white/50">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" />
+                    <span>{getDueMessage()}</span>
+                  </div>
+
+                  {assignment.max_points !== null && (
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      <span>
+                        {assignment.max_points} points
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <Paperclip className="h-4 w-4" />
+                    <span>
+                      {attachments.length}{" "}
+                      {attachments.length === 1
+                        ? "file"
+                        : "files"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="shrink-0">
+                <select
+                  value={assignment.status}
+                  onChange={(event) =>
+                    handleStatusChange(
+                      event.target
+                        .value as Assignment["status"],
+                    )
+                  }
+                  disabled={updating}
+                  className={`cursor-pointer appearance-none rounded-lg border px-3 py-2 pr-8 text-sm font-medium outline-none transition ${getStatusClass(
+                    assignment.status,
+                  )}`}
+                >
+                  <option value="not_started">
+                    Not started
+                  </option>
+                  <option value="in_progress">
+                    In progress
+                  </option>
+                  <option value="completed">
+                    Completed
+                  </option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <div className="grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="space-y-8">
+              <section>
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-base font-semibold text-white">
+                      Description
+                    </h2>
+                    <p className="mt-1 text-sm text-white/40">
+                      What you need to complete.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/[0.025] p-5">
+                  {assignment.description ? (
+                    <p className="whitespace-pre-wrap text-sm leading-7 text-white/65">
+                      {assignment.description}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-white/35">
+                      No description has been added to this
+                      assignment.
+                    </p>
+                  )}
+                </div>
+              </section>
+
+              <section>
+                <div className="mb-4 flex items-end justify-between gap-4">
+                  <div>
+                    <h2 className="text-base font-semibold text-white">
+                      Assignment files
+                    </h2>
+                    <p className="mt-1 text-sm text-white/40">
+                      Keep everything you need for this assignment
+                      together.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      fileInputRef.current?.click()
+                    }
+                    disabled={uploading}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-white px-3.5 py-2 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {uploading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                    Add files
+                  </button>
+
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    hidden
+                    accept={ALLOWED_EXTENSIONS.map(
+                      (extension) => `.${extension}`,
+                    ).join(",")}
+                    onChange={handleFileInput}
+                  />
+                </div>
+
+                <div
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    setDragActive(true);
+                  }}
+                  onDragLeave={(event) => {
+                    event.preventDefault();
+                    setDragActive(false);
+                  }}
+                  onDrop={handleDrop}
+                  className={`mb-4 rounded-xl border border-dashed p-6 text-center transition ${
+                    dragActive
+                      ? "border-purple-400/50 bg-purple-400/10"
+                      : "border-white/10 bg-white/[0.02] hover:border-white/20"
+                  }`}
+                >
+                  <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.05] text-white/50">
+                    <Upload className="h-5 w-5" />
+                  </div>
+
+                  <p className="mt-3 text-sm font-medium text-white/70">
+                    Drop files here
+                  </p>
+
+                  <p className="mt-1 text-xs text-white/35">
+                    PDF, Word, PowerPoint, Excel, images, ZIP and
+                    more · up to 50 MB each
+                  </p>
+                </div>
+
+                {uploadError && (
+                  <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-400/20 bg-red-400/5 px-3.5 py-3 text-sm text-red-300">
+                    <X className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>{uploadError}</span>
+                  </div>
+                )}
+
+                <div className="overflow-hidden rounded-xl border border-white/10">
+                  {loadingFiles ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-5 w-5 animate-spin text-white/30" />
+                    </div>
+                  ) : attachments.length === 0 ? (
+                    <div className="px-6 py-12 text-center">
+                      <File className="mx-auto h-7 w-7 text-white/20" />
+                      <p className="mt-3 text-sm font-medium text-white/50">
+                        No files yet
+                      </p>
+                      <p className="mt-1 text-xs text-white/30">
+                        Upload your assignment materials here.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-white/10">
+                      {attachments.map((attachment) => {
+                        const Icon = getFileIcon(
+                          attachment.file_name,
+                        );
+
+                        return (
+                          <div
+                            key={attachment.id}
+                            className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-white/[0.025]"
+                          >
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.035] text-white/45">
+                              <Icon className="h-4 w-4" />
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className="truncate text-sm font-medium text-white/75"
+                                title={attachment.file_name}
+                              >
+                                {attachment.file_name}
+                              </p>
+
+                              <p className="mt-0.5 text-xs text-white/30">
+                                {formatFileSize(
+                                  attachment.file_size,
+                                )}{" "}
+                                ·{" "}
+                                {formatDateTime(
+                                  attachment.created_at,
+                                )}
+                              </p>
+                            </div>
+
+                            <div className="flex shrink-0 items-center gap-1">
+                              <button
+                                onClick={() =>
+                                  downloadAttachment(attachment)
+                                }
+                                className="flex h-8 w-8 items-center justify-center rounded-md text-white/40 transition hover:bg-white/[0.07] hover:text-white"
+                                title="Download"
+                              >
+                                <Download className="h-4 w-4" />
+                              </button>
+
+                              <button
+                                onClick={() =>
+                                  deleteAttachment(attachment)
+                                }
+                                className="flex h-8 w-8 items-center justify-center rounded-md text-white/30 transition hover:bg-red-400/10 hover:text-red-300"
+                                title="Remove"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <section>
+                <div className="mb-4">
+                  <h2 className="text-base font-semibold text-white">
+                    Study with this assignment
+                  </h2>
+                  <p className="mt-1 text-sm text-white/40">
+                    Use your course context while working through
+                    the assignment.
+                  </p>
+                </div>
+
+                <Link
+                  href={`/ai-tutor?course=${assignment.course_id}&assignment=${assignment.id}`}
+                  className="group flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.025] p-5 transition hover:border-purple-400/20 hover:bg-purple-400/[0.04]"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-400/10 text-purple-300">
+                    <MessageSquare className="h-5 w-5" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-white/75">
+                      Open AI Tutor
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-white/35">
+                      Ask questions about the course material or
+                      get help understanding the assignment.
+                    </p>
+                  </div>
+
+                  <ArrowLeft className="h-4 w-4 rotate-180 text-white/25 transition group-hover:translate-x-1 group-hover:text-white/60" />
+                </Link>
+              </section>
+            </div>
+
+            <aside className="space-y-5">
+              <section className="rounded-xl border border-white/10 bg-white/[0.025] p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-[0.12em] text-white/30">
+                      Progress
+                    </p>
+                    <p className="mt-1 text-2xl font-semibold text-white">
+                      {assignment.progress}%
+                    </p>
+                  </div>
+
+                  {assignment.status === "completed" && (
+                    <CheckCircle2 className="h-6 w-6 text-emerald-300" />
+                  )}
+                </div>
+
+                <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.07]">
+                  <div
+                    className="h-full rounded-full bg-purple-400 transition-all"
+                    style={{
+                      width: `${assignment.progress}%`,
+                    }}
+                  />
+                </div>
+
+                <div className="mt-5">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={assignment.progress}
+                    onChange={(event) =>
+                      setAssignment((current) =>
+                        current
+                          ? {
+                              ...current,
+                              progress: Number(
+                                event.target.value,
+                              ),
+                            }
+                          : current,
+                      )
+                    }
+                    onMouseUp={(event) =>
+                      handleProgressChange(
+                        Number(
+                          (event.target as HTMLInputElement)
+                            .value,
+                        ),
+                      )
+                    }
+                    onTouchEnd={(event) =>
+                      handleProgressChange(
+                        Number(
+                          (event.target as HTMLInputElement)
+                            .value,
+                        ),
+                      )
+                    }
+                    className="w-full accent-purple-400"
+                  />
+                </div>
+
+                <div className="mt-3 flex justify-between text-xs text-white/30">
+                  <span>Not started</span>
+                  <span>Complete</span>
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-white/10 bg-white/[0.025] p-5">
+                <p className="text-xs font-medium uppercase tracking-[0.12em] text-white/30">
+                  Due date
+                </p>
+
+                <div className="mt-4 flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.05] text-white/45">
+                    <Clock3 className="h-4 w-4" />
+                  </div>
+
+                  <div>
+                    <p
+                      className={`text-sm font-medium ${
+                        isOverdue(assignment)
+                          ? "text-red-300"
+                          : "text-white/75"
+                      }`}
+                    >
+                      {getDueMessage()}
+                    </p>
+
+                    {assignment.due_date && (
+                      <p className="mt-1 text-xs text-white/30">
+                        {formatDate(assignment.due_date)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              {assignment.max_points !== null && (
+                <section className="rounded-xl border border-white/10 bg-white/[0.025] p-5">
+                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-white/30">
+                    Grading
+                  </p>
+
+                  <div className="mt-4 flex items-end justify-between">
+                    <span className="text-2xl font-semibold text-white">
+                      {assignment.points ?? "—"}
+                    </span>
+
+                    <span className="pb-1 text-sm text-white/35">
+                      / {assignment.max_points} points
+                    </span>
+                  </div>
+                </section>
+              )}
+
+              <section className="rounded-xl border border-white/10 bg-white/[0.025] p-5">
+                <p className="text-xs font-medium uppercase tracking-[0.12em] text-white/30">
+                  Assignment
+                </p>
+
+                <div className="mt-4 space-y-3 text-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-white/35">
+                      Status
+                    </span>
+
+                    <span className="text-white/65">
+                      {getStatusLabel(assignment.status)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-white/35">
+                      Priority
+                    </span>
+
+                    <span className="text-white/65">
+                      {getPriorityLabel(assignment.priority)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-white/35">
+                      Files
+                    </span>
+
+                    <span className="text-white/65">
+                      {attachments.length}
+                    </span>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </div>
+      </main>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#17151d] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  Delete assignment?
+                </h2>
+
+                <p className="mt-2 text-sm leading-6 text-white/45">
+                  This will permanently delete{" "}
+                  <span className="text-white/70">
+                    {assignment.title}
+                  </span>{" "}
+                  and its uploaded files.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="text-white/30 transition hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-white/55 transition hover:bg-white/[0.05] hover:text-white"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={deleteAssignment}
+                disabled={deleting}
+                className="inline-flex items-center gap-2 rounded-lg bg-red-500/90 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-500 disabled:opacity-50"
+              >
+                {deleting && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                Delete assignment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

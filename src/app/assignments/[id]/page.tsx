@@ -1,35 +1,41 @@
+
 "use client";
 
-import {
-  ArrowLeft,
-  CalendarDays,
-  Check,
-  CheckCircle2,
-  ChevronDown,
-  Clock3,
-  ExternalLink,
-  Flag,
-  Loader2,
-  MessageSquare,
-  Play,
-  RefreshCw,
-  Sparkles,
-  Target,
-  Timer,
-  Trash2,
-  X,
-} from "lucide-react";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
+  type ChangeEvent,
+  type DragEvent,
 } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  BookOpen,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  Download,
+  File,
+  FileArchive,
+  FileImage,
+  FileSpreadsheet,
+  FileText,
+  FileType2,
+  Loader2,
+  MessageSquare,
+  Paperclip,
+  Plus,
+  Send,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 
-import AppShell from "@/components/AppShell";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 
 type Course = {
   id: string;
@@ -39,1448 +45,1353 @@ type Course = {
 
 type Assignment = {
   id: string;
-  course_id: string;
   user_id: string;
+  course_id: string;
   title: string;
   description: string | null;
   due_date: string | null;
   priority: "low" | "medium" | "high";
-  status: "pending" | "in_progress" | "completed";
+  status: "not_started" | "in_progress" | "completed";
   progress: number;
   points: number | null;
   max_points: number | null;
   created_at: string;
   updated_at: string;
-  courses?: Course | null;
+  courses: Course | null;
 };
 
-type Plan = {
-  title: string;
-  steps: string[];
-  estimate: string;
+type WorkingFile = {
+  id: string;
+  assignment_id: string;
+  user_id: string;
+  file_name: string;
+  storage_path: string;
+  file_type: string | null;
+  file_size: number;
+  created_at: string;
 };
 
-const quickPrompts = [
-  "Break this assignment into manageable steps.",
-  "Explain what this assignment is asking me to do.",
-  "Help me figure out where to start.",
-  "What should I focus on first?",
+type Submission = {
+  id: string;
+  assignment_id: string;
+  user_id: string;
+  attempt_number: number;
+  status: "draft" | "ready_to_submit" | "submitted";
+  submission_note: string | null;
+  submitted_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type SubmissionFile = {
+  id: string;
+  submission_id: string;
+  user_id: string;
+  file_name: string;
+  storage_path: string;
+  file_type: string | null;
+  file_size: number;
+  created_at: string;
+};
+
+const supabase = createClient();
+
+const WORK_BUCKET = "assignment-files";
+const SUBMISSION_BUCKET = "assignment-submissions";
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+
+const ALLOWED_EXTENSIONS = [
+  "pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx",
+  "csv", "txt", "zip", "png", "jpg", "jpeg", "webp",
 ];
 
+function fileExtension(name: string) {
+  return name.split(".").pop()?.toLowerCase() ?? "";
+}
+
+function formatSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatDate(value: string | null) {
+  if (!value) return "No due date";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "No due date";
+
+  return new Intl.DateTimeFormat("en-CA", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatDateTime(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("en-CA", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function FileIcon({ name }: { name: string }) {
+  const extension = fileExtension(name);
+  let Icon = File;
+
+  if (["png", "jpg", "jpeg", "webp"].includes(extension)) {
+    Icon = FileImage;
+  } else if (["xls", "xlsx", "csv"].includes(extension)) {
+    Icon = FileSpreadsheet;
+  } else if (["doc", "docx"].includes(extension)) {
+    Icon = FileType2;
+  } else if (["pdf", "ppt", "pptx", "txt"].includes(extension)) {
+    Icon = FileText;
+  } else if (extension === "zip") {
+    Icon = FileArchive;
+  }
+
+  return <Icon className="h-4 w-4" />;
+}
+
+function StatusLabel({ status }: { status: Submission["status"] }) {
+  const styles = {
+    draft: "border-white/10 bg-white/[0.04] text-white/60",
+    ready_to_submit: "border-amber-400/20 bg-amber-400/10 text-amber-300",
+    submitted: "border-emerald-400/20 bg-emerald-400/10 text-emerald-300",
+  };
+
+  const labels = {
+    draft: "Draft",
+    ready_to_submit: "Ready to submit",
+    submitted: "Submitted",
+  };
+
+  return (
+    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs ${styles[status]}`}>
+      {labels[status]}
+    </span>
+  );
+}
+
+function SectionHeading({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h2 className="text-base font-semibold text-white">{title}</h2>
+        <p className="mt-1 text-sm text-white/40">{description}</p>
+      </div>
+      {action}
+    </div>
+  );
+}
+
 export default function AssignmentWorkspacePage() {
-  const params = useParams();
+  const params = useParams<{ id: string }>();
   const router = useRouter();
 
-  const assignmentId =
-    typeof params.id === "string"
-      ? params.id
-      : "";
+  const workingInput = useRef<HTMLInputElement>(null);
+  const submissionInput = useRef<HTMLInputElement>(null);
 
-  const [assignment, setAssignment] =
-    useState<Assignment | null>(null);
+  const assignmentId = params.id;
+
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [workingFiles, setWorkingFiles] = useState<WorkingFile[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [submissionFiles, setSubmissionFiles] = useState<SubmissionFile[]>([]);
 
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [loadingFiles, setLoadingFiles] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [fileError, setFileError] = useState("");
+  const [dragTarget, setDragTarget] = useState<"working" | "submission" | null>(null);
+  const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [submissionNote, setSubmissionNote] = useState("");
+  const [currentTime, setCurrentTime] = useState<number | null>(null);
 
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResponse, setAiResponse] = useState("");
-  const [aiPrompt, setAiPrompt] = useState("");
+  useEffect(() => {
+    const updateCurrentTime = () => setCurrentTime(Date.now());
+    updateCurrentTime();
 
-  const [plan, setPlan] = useState<Plan | null>(null);
-  const [planLoading, setPlanLoading] = useState(false);
+    const interval = window.setInterval(updateCurrentTime, 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
-  const [showDelete, setShowDelete] =
-    useState(false);
+  const activeSubmission = useMemo(
+    () => submissions[0] ?? null,
+    [submissions],
+  );
 
-  const [timerRunning, setTimerRunning] =
-    useState(false);
+  const activeSubmissionFiles = useMemo(
+    () =>
+      activeSubmission
+        ? submissionFiles.filter((file) => file.submission_id === activeSubmission.id)
+        : [],
+    [activeSubmission, submissionFiles],
+  );
 
-  const [timerSeconds, setTimerSeconds] =
-    useState(25 * 60);
-
-  const [expandedDescription, setExpandedDescription] =
-    useState(false);
+  const isSubmitted = activeSubmission?.status === "submitted";
+  const isOverdue = Boolean(
+    assignment?.due_date &&
+    currentTime !== null &&
+    new Date(assignment.due_date).getTime() < currentTime &&
+    !isSubmitted,
+  );
 
   const loadAssignment = useCallback(async () => {
-    if (!assignmentId) return;
-
     setLoading(true);
+    setError("");
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      router.replace("/login");
+      router.push("/login");
       return;
     }
 
-    const { data, error } = await supabase
+    const { data, error: queryError } = await supabase
       .from("assignments")
       .select(`
-        *,
-        courses (
-          id,
-          code,
-          name
-        )
+        id, user_id, course_id, title, description, due_date,
+        priority, status, progress, points, max_points,
+        created_at, updated_at,
+        courses (id, code, name)
       `)
       .eq("id", assignmentId)
       .eq("user_id", user.id)
       .single();
 
-    if (error || !data) {
-      console.error(
-        "Could not load assignment:",
-        error
-      );
-
-      setAssignment(null);
-      setLoading(false);
-      return;
+    if (queryError) {
+      console.error(queryError);
+      setError("Couldn't load this assignment. Check that it exists and belongs to your account.");
+    } else {
+      setAssignment(data as unknown as Assignment);
     }
 
-    setAssignment(data as Assignment);
     setLoading(false);
   }, [assignmentId, router]);
 
+  const loadFilesAndSubmissions = useCallback(async () => {
+    setLoadingFiles(true);
+
+    const [
+      workingResult,
+      submissionsResult,
+      submissionFilesResult,
+    ] = await Promise.all([
+      supabase
+        .from("assignment_attachments")
+        .select("*")
+        .eq("assignment_id", assignmentId)
+        .order("created_at", { ascending: false }),
+
+      supabase
+        .from("assignment_submissions")
+        .select("*")
+        .eq("assignment_id", assignmentId)
+        .order("attempt_number", { ascending: false }),
+
+      supabase
+        .from("assignment_submission_files")
+        .select("*")
+        .order("created_at", { ascending: false }),
+    ]);
+
+    if (workingResult.error) console.error(workingResult.error);
+    if (submissionsResult.error) console.error(submissionsResult.error);
+    if (submissionFilesResult.error) console.error(submissionFilesResult.error);
+
+    setWorkingFiles((workingResult.data ?? []) as WorkingFile[]);
+    setSubmissions((submissionsResult.data ?? []) as Submission[]);
+    setSubmissionFiles((submissionFilesResult.data ?? []) as SubmissionFile[]);
+
+    setLoadingFiles(false);
+  }, [assignmentId]);
+
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
+    const timer = window.setTimeout(() => {
       void loadAssignment();
-    });
+      void loadFilesAndSubmissions();
+    }, 0);
 
-    return () => {
-      window.cancelAnimationFrame(frame);
-    };
-  }, [loadAssignment]);
+    return () => window.clearTimeout(timer);
+  }, [loadAssignment, loadFilesAndSubmissions]);
 
-  /* ---------------------------------------------------------------------- */
-  /* Timer                                                                  */
-  /* ---------------------------------------------------------------------- */
+  async function updateAssignment(changes: Partial<Assignment>) {
+    if (!assignment) return;
 
-  useEffect(() => {
-    if (!timerRunning) return;
+    setBusy(true);
+    setError("");
 
-    const interval = window.setInterval(() => {
-      setTimerSeconds((current) => {
-        if (current <= 1) {
-          window.clearInterval(interval);
-          setTimerRunning(false);
-          return 25 * 60;
-        }
+    const { data, error: updateError } = await supabase
+      .from("assignments")
+      .update({ ...changes, updated_at: new Date().toISOString() })
+      .eq("id", assignment.id)
+      .eq("user_id", assignment.user_id)
+      .select(`
+        id, user_id, course_id, title, description, due_date,
+        priority, status, progress, points, max_points,
+        created_at, updated_at,
+        courses (id, code, name)
+      `)
+      .single();
 
-        return current - 1;
-      });
-    }, 1000);
+    if (updateError) {
+      setError(updateError.message);
+    } else {
+      setAssignment(data as unknown as Assignment);
+    }
 
-    return () => {
-      window.clearInterval(interval);
-    };
-  }, [timerRunning]);
+    setBusy(false);
+  }
 
-  /* ---------------------------------------------------------------------- */
-  /* Assignment updates                                                     */
-  /* ---------------------------------------------------------------------- */
+  async function startNewAttempt() {
+    if (!assignment) return null;
 
-  async function updateAssignment(
-    changes: Partial<Assignment>
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      router.push("/login");
+      return null;
+    }
+
+    const nextAttempt =
+      Math.max(0, ...submissions.map((item) => item.attempt_number)) + 1;
+
+    const { data, error: insertError } = await supabase
+      .from("assignment_submissions")
+      .insert({
+        assignment_id: assignment.id,
+        user_id: user.id,
+        attempt_number: nextAttempt,
+        status: "draft",
+      })
+      .select("*")
+      .single();
+
+    if (insertError) {
+      console.error(insertError);
+      setError(`Couldn't start a submission: ${insertError.message}`);
+      return null;
+    }
+
+    const created = data as Submission;
+    setSubmissions((current) =>
+      [created, ...current].sort((a, b) => b.attempt_number - a.attempt_number),
+    );
+    setNotice(`Submission attempt ${nextAttempt} created.`);
+    return created;
+  }
+
+  async function validateAndUpload(
+    fileList: FileList | File[],
+    mode: "working" | "submission",
   ) {
     if (!assignment) return;
 
-    setSaving(true);
+    setFileError("");
+    setNotice("");
 
-    const next = {
-      ...changes,
-      updated_at: new Date().toISOString(),
-    };
+    const files = Array.from(fileList);
+    if (!files.length) return;
 
-    const { error } = await supabase
-      .from("assignments")
-      .update(next)
-      .eq("id", assignment.id)
-      .eq("user_id", assignment.user_id);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (error) {
-      console.error(
-        "Could not update assignment:",
-        error
-      );
-
-      setSaving(false);
+    if (!user) {
+      router.push("/login");
       return;
     }
 
-    setAssignment((current) =>
-      current
-        ? {
-            ...current,
-            ...changes,
-            updated_at: next.updated_at,
-          }
-        : current
-    );
+    if (mode === "submission" && activeSubmission?.status === "submitted") {
+      setFileError("This attempt is already submitted. Start a new attempt to upload revised files.");
+      return;
+    }
 
-    setSaving(false);
+    setBusy(true);
+
+    try {
+      let targetSubmission = activeSubmission;
+
+      if (mode === "submission" && !targetSubmission) {
+        const newSubmission = await startNewAttempt();
+        if (!newSubmission) return;
+        targetSubmission = newSubmission;
+      }
+
+      if (mode === "submission" && targetSubmission?.status === "submitted") {
+        const newSubmission = await startNewAttempt();
+        if (!newSubmission) return;
+        targetSubmission = newSubmission;
+      }
+
+      let uploadedCount = 0;
+
+      for (const file of files) {
+        const extension = fileExtension(file.name);
+
+        if (!ALLOWED_EXTENSIONS.includes(extension)) {
+          setFileError(`${file.name}: this file type isn't supported.`);
+          continue;
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+          setFileError(`${file.name}: maximum file size is 50 MB.`);
+          continue;
+        }
+
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const uniqueName = `${Date.now()}_${crypto.randomUUID()}_${safeName}`;
+
+        if (mode === "working") {
+          const storagePath = `${user.id}/${assignment.id}/${uniqueName}`;
+
+          const { error: storageError } = await supabase.storage
+            .from(WORK_BUCKET)
+            .upload(storagePath, file, {
+              contentType: file.type || "application/octet-stream",
+              upsert: false,
+            });
+
+          if (storageError) {
+            setFileError(`Couldn't upload ${file.name}: ${storageError.message}`);
+            continue;
+          }
+
+          const { error: metadataError } = await supabase
+            .from("assignment_attachments")
+            .insert({
+              assignment_id: assignment.id,
+              user_id: user.id,
+              file_name: file.name,
+              storage_path: storagePath,
+              file_type: file.type || null,
+              file_size: file.size,
+            });
+
+          if (metadataError) {
+            await supabase.storage.from(WORK_BUCKET).remove([storagePath]);
+            setFileError(`Couldn't save ${file.name} to the assignment.`);
+            continue;
+          }
+        } else {
+          if (!targetSubmission) continue;
+
+          const storagePath =
+            `${user.id}/${assignment.id}/${targetSubmission.id}/${uniqueName}`;
+
+          const { error: storageError } = await supabase.storage
+            .from(SUBMISSION_BUCKET)
+            .upload(storagePath, file, {
+              contentType: file.type || "application/octet-stream",
+              upsert: false,
+            });
+
+          if (storageError) {
+            setFileError(`Couldn't upload ${file.name}: ${storageError.message}`);
+            continue;
+          }
+
+          const { error: metadataError } = await supabase
+            .from("assignment_submission_files")
+            .insert({
+              submission_id: targetSubmission.id,
+              user_id: user.id,
+              file_name: file.name,
+              storage_path: storagePath,
+              file_type: file.type || null,
+              file_size: file.size,
+            });
+
+          if (metadataError) {
+            await supabase.storage.from(SUBMISSION_BUCKET).remove([storagePath]);
+            setFileError(`Couldn't save ${file.name} to the submission.`);
+            continue;
+          }
+
+          // The attempt becomes ready once it contains final files.
+          await supabase
+            .from("assignment_submissions")
+            .update({
+              status: "ready_to_submit",
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", targetSubmission.id)
+            .eq("user_id", user.id)
+            .neq("status", "submitted");
+        }
+
+        uploadedCount++;
+      }
+
+      await loadFilesAndSubmissions();
+
+      if (uploadedCount > 0) {
+        setNotice(
+          `${uploadedCount} file${uploadedCount === 1 ? "" : "s"} uploaded successfully.`,
+        );
+      }
+    } finally {
+      setBusy(false);
+      if (workingInput.current) workingInput.current.value = "";
+      if (submissionInput.current) submissionInput.current.value = "";
+    }
   }
 
-  async function setProgress(progress: number) {
-    const safeProgress = Math.max(
-      0,
-      Math.min(100, progress)
+  async function downloadFile(
+    bucket: string,
+    storagePath: string,
+    fileName: string,
+  ) {
+    const { data, error: urlError } = await supabase.storage
+      .from(bucket)
+      .createSignedUrl(storagePath, 60);
+
+    if (urlError || !data?.signedUrl) {
+      setFileError(`Couldn't create a download link for ${fileName}.`);
+      return;
+    }
+
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function removeWorkingFile(file: WorkingFile) {
+    if (!window.confirm(`Remove "${file.file_name}" from your working files?`)) {
+      return;
+    }
+
+    setBusy(true);
+
+    const { error: storageError } = await supabase.storage
+      .from(WORK_BUCKET)
+      .remove([file.storage_path]);
+
+    if (storageError) {
+      setFileError(`Couldn't remove the stored file: ${storageError.message}`);
+      setBusy(false);
+      return;
+    }
+
+    const { error: rowError } = await supabase
+      .from("assignment_attachments")
+      .delete()
+      .eq("id", file.id);
+
+    if (rowError) {
+      setFileError(`Couldn't remove the file record: ${rowError.message}`);
+    } else {
+      setWorkingFiles((current) => current.filter((item) => item.id !== file.id));
+    }
+
+    setBusy(false);
+  }
+
+  async function removeSubmissionFile(file: SubmissionFile) {
+    const submission = submissions.find((item) => item.id === file.submission_id);
+
+    if (!submission || submission.status === "submitted") {
+      setFileError("Submitted files are locked. Start a new attempt to make changes.");
+      return;
+    }
+
+    if (!window.confirm(`Remove "${file.file_name}" from this submission draft?`)) {
+      return;
+    }
+
+    setBusy(true);
+
+    const { error: storageError } = await supabase.storage
+      .from(SUBMISSION_BUCKET)
+      .remove([file.storage_path]);
+
+    if (storageError) {
+      setFileError(`Couldn't remove the stored file: ${storageError.message}`);
+      setBusy(false);
+      return;
+    }
+
+    const { error: rowError } = await supabase
+      .from("assignment_submission_files")
+      .delete()
+      .eq("id", file.id);
+
+    if (rowError) {
+      setFileError(`Couldn't remove the file record: ${rowError.message}`);
+    } else {
+      setSubmissionFiles((current) => current.filter((item) => item.id !== file.id));
+
+      const remaining = submissionFiles.filter(
+        (item) =>
+          item.submission_id === submission.id && item.id !== file.id,
+      );
+
+      const nextStatus = remaining.length ? "ready_to_submit" : "draft";
+
+      await supabase
+        .from("assignment_submissions")
+        .update({
+          status: nextStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", submission.id)
+        .eq("user_id", submission.user_id);
+
+      await loadFilesAndSubmissions();
+    }
+
+    setBusy(false);
+  }
+
+  async function submitFinalWork() {
+    if (!activeSubmission || !assignment) return;
+
+    if (activeSubmissionFiles.length === 0) {
+      setFileError("Add at least one final file before submitting.");
+      setConfirmSubmit(false);
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      router.push("/login");
+      return;
+    }
+
+    const { data, error: submitError } = await supabase
+      .from("assignment_submissions")
+      .update({
+        status: "submitted",
+        submitted_at: new Date().toISOString(),
+        submission_note: submissionNote.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", activeSubmission.id)
+      .eq("user_id", user.id)
+      .neq("status", "submitted")
+      .select("*")
+      .single();
+
+    if (submitError || !data) {
+      console.error(submitError);
+      setError(
+        `Submission failed. ${submitError?.message ?? "This attempt may already be submitted."}`,
+      );
+      setBusy(false);
+      setConfirmSubmit(false);
+      return;
+    }
+
+    setSubmissions((current) =>
+      current.map((item) => item.id === data.id ? (data as Submission) : item),
     );
+
+    setConfirmSubmit(false);
+    setNotice("Your assignment has been submitted successfully.");
+    setBusy(false);
 
     await updateAssignment({
-      progress: safeProgress,
-      status:
-        safeProgress === 100
-          ? "completed"
-          : safeProgress > 0
-            ? "in_progress"
-            : "pending",
+      status: "completed",
+      progress: 100,
     });
+    await loadFilesAndSubmissions();
   }
-
-  async function toggleComplete() {
-    if (!assignment) return;
-
-    if (assignment.status === "completed") {
-      await setProgress(
-        Math.min(assignment.progress, 99)
-      );
-    } else {
-      await setProgress(100);
-    }
-  }
-
-  /* ---------------------------------------------------------------------- */
-  /* AI                                                                      */
-  /* ---------------------------------------------------------------------- */
-
-  async function askAI(prompt: string) {
-    if (!assignment) return;
-
-    setAiLoading(true);
-    setAiResponse("");
-    setAiPrompt(prompt);
-
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.access_token) {
-        throw new Error(
-          "Your session has expired. Please sign in again."
-        );
-      }
-
-      const contextualPrompt = `
-You are helping a student with one specific assignment.
-
-Assignment:
-${assignment.title}
-
-Course:
-${assignment.courses?.code || "Unknown course"} — ${
-        assignment.courses?.name || "Unknown course"
-      }
-
-Description:
-${assignment.description || "No description was provided."}
-
-Due date:
-${
-  assignment.due_date
-    ? new Date(
-        assignment.due_date
-      ).toLocaleString()
-    : "No due date"
-}
-
-Priority:
-${assignment.priority}
-
-Current progress:
-${assignment.progress}%
-
-Student request:
-${prompt}
-
-Give practical academic help.
-Do not pretend you know details that are not provided.
-If the assignment description is incomplete, say what information is missing.
-Help the student understand and complete the work rather than simply doing the entire assignment for them.
-      `.trim();
-
-      const response = await fetch(
-        "/api/ai/tutor",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            message: contextualPrompt,
-            courseId:
-              assignment.course_id || null,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-            "The AI Tutor could not respond."
-        );
-      }
-
-      setAiResponse(
-        data.answer ||
-          "The AI Tutor did not return a response."
-      );
-    } catch (error) {
-      console.error(
-        "Assignment AI error:",
-        error
-      );
-
-      setAiResponse(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong while contacting the AI Tutor."
-      );
-    } finally {
-      setAiLoading(false);
-    }
-  }
-
-  async function generatePlan() {
-    if (!assignment) return;
-
-    setPlanLoading(true);
-
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session?.access_token) {
-        throw new Error(
-          "Your session has expired."
-        );
-      }
-
-      const prompt = `
-Create a practical step-by-step work plan for this assignment.
-
-Assignment:
-${assignment.title}
-
-Course:
-${assignment.courses?.code || "Unknown"} — ${
-        assignment.courses?.name || "Unknown"
-      }
-
-Description:
-${assignment.description || "No description provided."}
-
-Due:
-${
-  assignment.due_date
-    ? new Date(
-        assignment.due_date
-      ).toLocaleString()
-    : "No due date"
-}
-
-Current progress:
-${assignment.progress}%
-
-Return exactly this format:
-
-TITLE: [short plan title]
-ESTIMATE: [reasonable total effort estimate]
-STEP 1: [action]
-STEP 2: [action]
-STEP 3: [action]
-STEP 4: [action]
-STEP 5: [action]
-
-Only include as many steps as are actually useful.
-Do not invent requirements that are not present.
-      `.trim();
-
-      const response = await fetch(
-        "/api/ai/tutor",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            message: prompt,
-            courseId:
-              assignment.course_id || null,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ||
-            "Could not generate a plan."
-        );
-      }
-
-      const text = data.answer || "";
-
-      const titleMatch = text.match(
-        /TITLE:\s*(.+)/i
-      );
-
-      const estimateMatch = text.match(
-        /ESTIMATE:\s*(.+)/i
-      );
-
-      const steps = Array.from(
-        text.matchAll(
-          /STEP\s+\d+:\s*(.+)/gi
-        )
-      )
-        .map((match) => (match as RegExpMatchArray)[1]?.trim())
-        .filter((step): step is string => Boolean(step));
-
-      setPlan({
-        title:
-          titleMatch?.[1]?.trim() ||
-          "Suggested work plan",
-        estimate:
-          estimateMatch?.[1]?.trim() ||
-          "Based on the assignment details",
-        steps:
-          steps.length > 0
-            ? steps
-            : text
-                .split("\n")
-                .map((line: string) =>
-                  line
-                    .replace(/^[-*•]\s*/, "")
-                    .trim()
-                )
-                .filter(
-                  (line: string) =>
-                    line.length > 0
-                )
-                .slice(0, 6),
-      });
-    } catch (error) {
-      console.error(
-        "Plan generation error:",
-        error
-      );
-
-      setPlan({
-        title: "Plan unavailable",
-        estimate: "Try again",
-        steps: [
-          "Review the assignment description.",
-          "Identify what needs to be submitted.",
-          "Break the work into smaller tasks.",
-          "Complete and review each task.",
-        ],
-      });
-    } finally {
-      setPlanLoading(false);
-    }
-  }
-
-  /* ---------------------------------------------------------------------- */
-  /* Delete                                                                  */
-  /* ---------------------------------------------------------------------- */
 
   async function deleteAssignment() {
     if (!assignment) return;
 
-    setSaving(true);
+    if (!window.confirm("Delete this assignment and its submission records? This cannot be undone.")) {
+      return;
+    }
 
-    const { error } = await supabase
+    setBusy(true);
+
+    // Remove storage objects first; the DB cascade removes metadata and submissions.
+    const workingPaths = workingFiles.map((file) => file.storage_path);
+    const submittedPaths = submissionFiles.map((file) => file.storage_path);
+
+    if (workingPaths.length) {
+      const { error: e } = await supabase.storage.from(WORK_BUCKET).remove(workingPaths);
+      if (e) {
+        setError(`Couldn't remove working files: ${e.message}`);
+        setBusy(false);
+        return;
+      }
+    }
+
+    if (submittedPaths.length) {
+      const { error: e } = await supabase.storage.from(SUBMISSION_BUCKET).remove(submittedPaths);
+      if (e) {
+        setError(`Couldn't remove submission files: ${e.message}`);
+        setBusy(false);
+        return;
+      }
+    }
+
+    const { error: deleteError } = await supabase
       .from("assignments")
       .delete()
       .eq("id", assignment.id)
       .eq("user_id", assignment.user_id);
 
-    if (error) {
-      console.error(
-        "Could not delete assignment:",
-        error
-      );
-
-      setSaving(false);
+    if (deleteError) {
+      setError(deleteError.message);
+      setBusy(false);
       return;
     }
 
     router.push("/assignments");
   }
 
-  /* ---------------------------------------------------------------------- */
-  /* Derived values                                                          */
-  /* ---------------------------------------------------------------------- */
-
-  const dueInfo = useMemo(() => {
-    if (!assignment?.due_date) {
-      return {
-        label: "No due date",
-        detail: "",
-        overdue: false,
-      };
+  function handleDrop(event: DragEvent<HTMLDivElement>, mode: "working" | "submission") {
+    event.preventDefault();
+    setDragTarget(null);
+    if (event.dataTransfer.files.length) {
+      void validateAndUpload(event.dataTransfer.files, mode);
     }
-
-    const due = new Date(
-      assignment.due_date
-    );
-
-    const now = new Date();
-
-    const difference =
-      due.getTime() - now.getTime();
-
-    const hours = Math.round(
-      Math.abs(difference) / 36e5
-    );
-
-    const days = Math.floor(hours / 24);
-
-    if (
-      assignment.status !== "completed" &&
-      difference < 0
-    ) {
-      return {
-        label: "Overdue",
-        detail:
-          days > 0
-            ? `${days} day${days === 1 ? "" : "s"} late`
-            : `${hours} hour${hours === 1 ? "" : "s"} late`,
-        overdue: true,
-      };
-    }
-
-    if (difference < 24 * 60 * 60 * 1000) {
-      return {
-        label: "Due today",
-        detail: due.toLocaleTimeString(
-          undefined,
-          {
-            hour: "numeric",
-            minute: "2-digit",
-          }
-        ),
-        overdue: false,
-      };
-    }
-
-    if (
-      difference <
-      2 * 24 * 60 * 60 * 1000
-    ) {
-      return {
-        label: "Due tomorrow",
-        detail: due.toLocaleTimeString(
-          undefined,
-          {
-            hour: "numeric",
-            minute: "2-digit",
-          }
-        ),
-        overdue: false,
-      };
-    }
-
-    return {
-      label: due.toLocaleDateString(
-        undefined,
-        {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-        }
-      ),
-      detail: due.toLocaleTimeString(
-        undefined,
-        {
-          hour: "numeric",
-          minute: "2-digit",
-        }
-      ),
-      overdue: false,
-    };
-  }, [assignment]);
-
-  const priorityLabel =
-    assignment?.priority === "high"
-      ? "High priority"
-      : assignment?.priority === "medium"
-        ? "Medium priority"
-        : "Low priority";
-
-  const timerDisplay = `${Math.floor(
-    timerSeconds / 60
-  )
-    .toString()
-    .padStart(2, "0")}:${(
-    timerSeconds % 60
-  )
-    .toString()
-    .padStart(2, "0")}`;
+  }
 
   if (loading) {
     return (
-      <AppShell
-        title="Assignment"
-        description="Loading assignment..."
-      >
-        <div className="mx-auto flex min-h-[70vh] max-w-5xl items-center justify-center">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2
-              size={24}
-              className="animate-spin text-violet-400"
-            />
-            <p className="text-sm text-white/30">
-              Loading assignment...
-            </p>
-          </div>
-        </div>
-      </AppShell>
+      <main className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-white/40" />
+      </main>
     );
   }
 
   if (!assignment) {
     return (
-      <AppShell
-        title="Assignment"
-        description="This assignment could not be found."
-      >
-        <div className="mx-auto flex min-h-[70vh] max-w-5xl flex-col items-center justify-center px-6 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.03]">
-            <Target
-              size={22}
-              className="text-white/30"
-            />
-          </div>
-
-          <h2 className="mt-5 text-xl font-semibold text-white">
-            Assignment not found
-          </h2>
-
-          <p className="mt-2 max-w-md text-sm leading-6 text-white/35">
-            This assignment may have been deleted
-            or you may no longer have access to it.
-          </p>
-
-          <Link
-            href="/assignments"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500"
-          >
-            <ArrowLeft size={15} />
-            Back to assignments
-          </Link>
+      <main className="mx-auto max-w-3xl px-5 py-12">
+        <Link href="/assignments" className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-white">
+          <ArrowLeft className="h-4 w-4" /> Back to assignments
+        </Link>
+        <div className="mt-6 rounded-xl border border-red-400/20 bg-red-400/5 p-5 text-sm text-red-300">
+          {error || "Assignment not found."}
         </div>
-      </AppShell>
+      </main>
     );
   }
 
-  const completed =
-    assignment.status === "completed";
-
   return (
-    <AppShell
-      title="Assignment workspace"
-      description={
-        assignment.courses
-          ? `${assignment.courses.code} · ${assignment.courses.name}`
-          : "Work through your assignment"
-      }
-    >
-      <div className="mx-auto max-w-[1280px] space-y-6 pb-12">
-        {/* Back */}
-        <div className="flex items-center justify-between">
-          <Link
-            href="/assignments"
-            className="inline-flex items-center gap-2 text-sm text-white/35 transition hover:text-white"
-          >
-            <ArrowLeft size={16} />
-            All assignments
+    <main className="min-h-[calc(100vh-80px)] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1200px]">
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <Link href="/assignments" className="inline-flex items-center gap-2 text-sm text-white/50 transition hover:text-white">
+            <ArrowLeft className="h-4 w-4" /> All assignments
           </Link>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => void loadAssignment()}
-              title="Refresh"
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] text-white/30 transition hover:bg-white/[0.04] hover:text-white"
-            >
-              <RefreshCw size={15} />
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setShowDelete(true)
-              }
-              title="Delete assignment"
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] text-white/25 transition hover:border-red-500/20 hover:bg-red-500/5 hover:text-red-400"
-            >
-              <Trash2 size={15} />
-            </button>
-          </div>
+          <button
+            onClick={deleteAssignment}
+            disabled={busy}
+            className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/45 transition hover:border-red-400/20 hover:text-red-300 disabled:opacity-50"
+          >
+            <Trash2 className="h-4 w-4" /> Delete
+          </button>
         </div>
 
-        {/* Assignment header */}
-        <section className="border border-white/[0.08] bg-white/[0.025]">
-          <div className="p-6 sm:p-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0">
-                {assignment.courses && (
-                  <Link
-                    href={`/courses/${assignment.course_id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-violet-400 transition hover:text-violet-300"
-                  >
-                    {assignment.courses.code}
-                    <ExternalLink size={11} />
-                  </Link>
-                )}
-
-                <h1 className="mt-3 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                  {assignment.title}
-                </h1>
-
-                {assignment.description && (
-                  <div className="mt-4 max-w-3xl">
-                    <p
-                      className={[
-                        "text-sm leading-7 text-white/45",
-                        expandedDescription
-                          ? ""
-                          : "line-clamp-3",
-                      ].join(" ")}
-                    >
-                      {assignment.description}
-                    </p>
-
-                    {assignment.description.length >
-                      220 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedDescription(
-                            (current) =>
-                              !current
-                          )
-                        }
-                        className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-white/35 hover:text-white/70"
-                      >
-                        {expandedDescription
-                          ? "Show less"
-                          : "Read more"}
-                        <ChevronDown
-                          size={13}
-                          className={
-                            expandedDescription
-                              ? "rotate-180"
-                              : ""
-                          }
-                        />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  void toggleComplete()
-                }
-                disabled={saving}
-                className={[
-                  "inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition",
-                  completed
-                    ? "border border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
-                    : "bg-violet-600 text-white hover:bg-violet-500",
-                ].join(" ")}
+        <section className="border-b border-white/10 pb-7">
+          <div className="flex flex-wrap items-center gap-2">
+            {assignment.courses && (
+              <Link
+                href={`/courses/${assignment.course_id}`}
+                className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2.5 py-1 text-xs text-white/55 hover:text-white"
               >
-                {saving ? (
-                  <Loader2
-                    size={16}
-                    className="animate-spin"
-                  />
-                ) : completed ? (
-                  <CheckCircle2 size={16} />
-                ) : (
-                  <Check size={16} />
-                )}
-
-                {completed
-                  ? "Completed"
-                  : "Mark complete"}
-              </button>
-            </div>
-
-            {/* Metadata */}
-            <div className="mt-8 grid border-t border-white/[0.07] pt-6 sm:grid-cols-2 lg:grid-cols-4">
-              <InfoItem
-                icon={<CalendarDays size={15} />}
-                label="Due"
-                value={dueInfo.label}
-                detail={dueInfo.detail}
-                danger={dueInfo.overdue}
-              />
-
-              <InfoItem
-                icon={<Flag size={15} />}
-                label="Priority"
-                value={priorityLabel}
-                detail={
-                  assignment.status ===
-                  "in_progress"
-                    ? "In progress"
-                    : assignment.status ===
-                        "completed"
-                      ? "Finished"
-                      : "Not started"
-                }
-              />
-
-              <InfoItem
-                icon={<Target size={15} />}
-                label="Progress"
-                value={`${assignment.progress}%`}
-                detail={
-                  assignment.max_points !== null
-                    ? `${assignment.points ?? 0}/${assignment.max_points} points`
-                    : "No points recorded"
-                }
-              />
-
-              <InfoItem
-                icon={<Clock3 size={15} />}
-                label="Status"
-                value={
-                  assignment.status ===
-                  "completed"
-                    ? "Completed"
-                    : assignment.status ===
-                        "in_progress"
-                      ? "In progress"
-                      : "Not started"
-                }
-                detail={
-                  assignment.updated_at
-                    ? `Updated ${new Date(
-                        assignment.updated_at
-                      ).toLocaleDateString()}`
-                    : ""
-                }
-              />
-            </div>
+                <BookOpen className="h-3.5 w-3.5" />
+                {assignment.courses.code} · {assignment.courses.name}
+              </Link>
+            )}
+            <span className={`rounded-md border px-2.5 py-1 text-xs ${
+              assignment.priority === "high"
+                ? "border-red-400/20 bg-red-400/10 text-red-300"
+                : assignment.priority === "medium"
+                ? "border-amber-400/20 bg-amber-400/10 text-amber-300"
+                : "border-white/10 text-white/45"
+            }`}>
+              {assignment.priority} priority
+            </span>
           </div>
 
-          {/* Progress */}
-          <div className="border-t border-white/[0.07] px-6 py-5 sm:px-8">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-white/35">
-                Assignment progress
-              </span>
+          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            {assignment.title}
+          </h1>
 
-              <span className="text-sm font-semibold text-white">
-                {assignment.progress}%
-              </span>
-            </div>
-
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/[0.06]">
-              <div
-                className={[
-                  "h-full rounded-full transition-all duration-500",
-                  completed
-                    ? "bg-emerald-500"
-                    : "bg-violet-500",
-                ].join(" ")}
-                style={{
-                  width: `${assignment.progress}%`,
-                }}
-              />
-            </div>
-
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={assignment.progress}
-              onChange={(event) =>
-                void setProgress(
-                  Number(event.target.value)
-                )
-              }
-              className="mt-3 w-full accent-violet-500"
-            />
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/45">
+            <span className={`inline-flex items-center gap-2 ${isOverdue ? "text-red-300" : ""}`}>
+              <CalendarDays className="h-4 w-4" />
+              {isOverdue ? "Overdue · " : "Due "}
+              {formatDate(assignment.due_date)}
+            </span>
+            {assignment.max_points !== null && (
+              <span>{assignment.max_points} points</span>
+            )}
+            <span className="inline-flex items-center gap-2">
+              <Paperclip className="h-4 w-4" />
+              {workingFiles.length} working files
+            </span>
           </div>
+
+          {assignment.description && (
+            <p className="mt-5 max-w-3xl whitespace-pre-wrap text-sm leading-7 text-white/60">
+              {assignment.description}
+            </p>
+          )}
         </section>
 
-        {/* Main grid */}
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="space-y-6">
-            {/* Work plan */}
-            <section className="border border-white/[0.08] bg-white/[0.02]">
-              <div className="flex items-start justify-between gap-4 border-b border-white/[0.07] p-5 sm:p-6">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Target
-                      size={17}
-                      className="text-violet-400"
-                    />
+        {error && (
+          <div className="mt-5 rounded-lg border border-red-400/20 bg-red-400/5 px-4 py-3 text-sm text-red-300">
+            {error}
+          </div>
+        )}
 
-                    <h2 className="text-base font-semibold text-white">
-                      Work plan
-                    </h2>
-                  </div>
+        {notice && (
+          <div className="mt-5 flex items-center gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/5 px-4 py-3 text-sm text-emerald-300">
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            {notice}
+          </div>
+        )}
 
-                  <p className="mt-1 text-xs leading-5 text-white/30">
-                    Turn the assignment into smaller
-                    things you can actually finish.
-                  </p>
-                </div>
+        {fileError && (
+          <div className="mt-5 flex items-start gap-2 rounded-lg border border-red-400/20 bg-red-400/5 px-4 py-3 text-sm text-red-300">
+            <X className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{fileError}</span>
+            <button onClick={() => setFileError("")} className="ml-auto">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    void generatePlan()
+        <div className="grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-9">
+            {/* Working files are not submitted automatically. */}
+            <section>
+              <SectionHeading
+                title="Working files"
+                description="Notes, research, drafts and other materials you're still working on."
+                action={
+                  <button
+                    onClick={() => workingInput.current?.click()}
+                    disabled={busy}
+                    className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/65 transition hover:bg-white/[0.05] disabled:opacity-50"
+                  >
+                    <Plus className="h-4 w-4" /> Add files
+                  </button>
+                }
+              />
+
+              <input
+                ref={workingInput}
+                type="file"
+                multiple
+                hidden
+                accept={ALLOWED_EXTENSIONS.map((x) => `.${x}`).join(",")}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  if (event.target.files) {
+                    void validateAndUpload(event.target.files, "working");
                   }
-                  disabled={planLoading}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs font-medium text-white/55 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-50"
-                >
-                  {planLoading ? (
-                    <Loader2
-                      size={14}
-                      className="animate-spin"
-                    />
-                  ) : (
-                    <Sparkles size={14} />
-                  )}
+                }}
+              />
 
-                  {planLoading
-                    ? "Planning..."
-                    : plan
-                      ? "Regenerate"
-                      : "Build a plan"}
-                </button>
+              <div
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDragTarget("working");
+                }}
+                onDragLeave={() => setDragTarget(null)}
+                onDrop={(event) => handleDrop(event, "working")}
+                className={`mb-3 rounded-xl border border-dashed p-4 text-center text-xs transition ${
+                  dragTarget === "working"
+                    ? "border-purple-400/50 bg-purple-400/10 text-purple-200"
+                    : "border-white/10 text-white/35"
+                }`}
+              >
+                Drop working files here · up to 50 MB each
               </div>
 
-              {!plan ? (
-                <div className="p-6">
-                  <div className="border border-dashed border-white/[0.08] bg-white/[0.015] p-6 text-center">
-                    <Target
-                      size={20}
-                      className="mx-auto text-white/20"
-                    />
-
-                    <p className="mt-3 text-sm font-medium text-white/55">
-                      No plan yet
-                    </p>
-
-                    <p className="mx-auto mt-1 max-w-sm text-xs leading-5 text-white/25">
-                      StudySpace can look at the
-                      assignment details and turn them
-                      into a practical starting plan.
-                    </p>
+              <div className="overflow-hidden rounded-xl border border-white/10">
+                {loadingFiles ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-5 w-5 animate-spin text-white/30" />
                   </div>
-                </div>
-              ) : (
-                <div className="p-5 sm:p-6">
-                  <div className="flex flex-col gap-1 border-b border-white/[0.07] pb-4 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                      <h3 className="text-sm font-semibold text-white">
-                        {plan.title}
-                      </h3>
-
-                      <p className="mt-1 text-xs text-white/30">
-                        Estimated effort:{" "}
-                        {plan.estimate}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-5 space-y-3">
-                    {plan.steps.map(
-                      (step, index) => (
-                        <div
-                          key={`${step}-${index}`}
-                          className="flex gap-4"
-                        >
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.03] text-xs font-semibold text-white/45">
-                            {index + 1}
-                          </div>
-
-                          <div className="pt-1 text-sm leading-6 text-white/55">
-                            {step}
-                          </div>
+                ) : workingFiles.length === 0 ? (
+                  <p className="px-5 py-8 text-center text-sm text-white/35">
+                    No working files yet.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-white/[0.07]">
+                    {workingFiles.map((file) => (
+                      <div key={file.id} className="flex items-center gap-3 px-4 py-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-white/45">
+                          <FileIcon name={file.file_name} />
                         </div>
-                      )
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm text-white/75">{file.file_name}</p>
+                          <p className="mt-1 text-xs text-white/30">
+                            {formatSize(file.file_size)} · {formatDate(file.created_at)}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => downloadFile(WORK_BUCKET, file.storage_path, file.file_name)}
+                          title="Download"
+                          className="rounded-md p-2 text-white/35 hover:bg-white/[0.06] hover:text-white"
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => void removeWorkingFile(file)}
+                          title="Remove"
+                          className="rounded-md p-2 text-white/30 hover:bg-red-400/10 hover:text-red-300"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* Final submission and its history. */}
+            <section>
+              <SectionHeading
+                title="Final submission"
+                description="Only files in this section count as your submitted work."
+                action={
+                  isSubmitted ? (
+                    <button
+                      onClick={() => void startNewAttempt()}
+                      disabled={busy}
+                      className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/65 hover:bg-white/[0.05] disabled:opacity-50"
+                    >
+                      <Plus className="h-4 w-4" /> New attempt
+                    </button>
+                  ) : !activeSubmission ? (
+                    <button
+                      onClick={() => void startNewAttempt()}
+                      disabled={busy}
+                      className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:opacity-50"
+                    >
+                      <Plus className="h-4 w-4" /> Start submission
+                    </button>
+                  ) : (
+                    <StatusLabel status={activeSubmission.status} />
+                  )
+                }
+              />
+
+              {activeSubmission && (
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.025] p-4">
+                  <div>
+                    <p className="text-sm font-medium text-white/80">
+                      Attempt {activeSubmission.attempt_number}
+                    </p>
+                    <p className="mt-1 text-xs text-white/35">
+                      {activeSubmission.submitted_at
+                        ? `Submitted ${formatDateTime(activeSubmission.submitted_at)}`
+                        : `Created ${formatDateTime(activeSubmission.created_at)}`}
+                    </p>
+                  </div>
+                  <StatusLabel status={activeSubmission.status} />
+                </div>
+              )}
+
+              {!activeSubmission && (
+                <div className="rounded-xl border border-dashed border-white/10 px-5 py-9 text-center">
+                  <Send className="mx-auto h-6 w-6 text-white/25" />
+                  <p className="mt-3 text-sm text-white/55">No submission attempt yet</p>
+                  <p className="mt-1 text-xs text-white/35">
+                    Start an attempt when you&apos;re ready to prepare your final files.
+                  </p>
+                </div>
+              )}
+
+              {activeSubmission && (
+                <>
+                  <input
+                    ref={submissionInput}
+                    type="file"
+                    multiple
+                    hidden
+                    accept={ALLOWED_EXTENSIONS.map((x) => `.${x}`).join(",")}
+                    disabled={busy || isSubmitted}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      if (event.target.files) {
+                        void validateAndUpload(event.target.files, "submission");
+                      }
+                    }}
+                  />
+
+                  {!isSubmitted && (
+                    <div
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        setDragTarget("submission");
+                      }}
+                      onDragLeave={() => setDragTarget(null)}
+                      onDrop={(event) => handleDrop(event, "submission")}
+                      className={`mb-3 rounded-xl border border-dashed p-6 text-center transition ${
+                        dragTarget === "submission"
+                          ? "border-purple-400/50 bg-purple-400/10"
+                          : "border-white/10 bg-white/[0.015]"
+                      }`}
+                    >
+                      <Upload className="mx-auto h-5 w-5 text-white/35" />
+                      <p className="mt-2 text-sm text-white/65">
+                        Add your final files
+                      </p>
+                      <p className="mt-1 text-xs text-white/35">
+                        PDF, Word, PowerPoint, Excel, images, ZIP and more
+                      </p>
+                      <button
+                        onClick={() => submissionInput.current?.click()}
+                        disabled={busy}
+                        className="mt-4 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/70 hover:bg-white/[0.05] disabled:opacity-50"
+                      >
+                        Choose final files
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="overflow-hidden rounded-xl border border-white/10">
+                    {activeSubmissionFiles.length === 0 ? (
+                      <p className="px-5 py-7 text-center text-sm text-white/35">
+                        No final files attached to this attempt yet.
+                      </p>
+                    ) : (
+                      <div className="divide-y divide-white/[0.07]">
+                        {activeSubmissionFiles.map((file) => (
+                          <div key={file.id} className="flex items-center gap-3 px-4 py-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-400/[0.07] text-emerald-300/70">
+                              <FileIcon name={file.file_name} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm text-white/75">{file.file_name}</p>
+                              <p className="mt-1 text-xs text-white/30">
+                                {formatSize(file.file_size)} · {formatDate(file.created_at)}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => downloadFile(SUBMISSION_BUCKET, file.storage_path, file.file_name)}
+                              title="Download"
+                              className="rounded-md p-2 text-white/35 hover:bg-white/[0.06] hover:text-white"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                            {!isSubmitted && (
+                              <button
+                                onClick={() => void removeSubmissionFile(file)}
+                                title="Remove from draft"
+                                className="rounded-md p-2 text-white/30 hover:bg-red-400/10 hover:text-red-300"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-                </div>
+
+                  {!isSubmitted && (
+                    <div className="mt-4 rounded-xl border border-white/10 p-4">
+                      <label htmlFor="submission-note" className="text-sm font-medium text-white/70">
+                        Note to accompany your submission (optional)
+                      </label>
+                      <textarea
+                        id="submission-note"
+                        value={submissionNote}
+                        onChange={(event) => setSubmissionNote(event.target.value)}
+                        rows={3}
+                        maxLength={2000}
+                        placeholder="Add a note about your work..."
+                        className="mt-3 w-full resize-y rounded-lg border border-white/10 bg-black/10 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/25 focus:border-purple-400/40"
+                      />
+
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-white/35">
+                          {activeSubmissionFiles.length} final file(s) attached
+                        </p>
+                        <button
+                          onClick={() => setConfirmSubmit(true)}
+                          disabled={busy || activeSubmissionFiles.length === 0}
+                          className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <Send className="h-4 w-4" />
+                          Submit final work
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {isSubmitted && (
+                    <div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/[0.04] p-4">
+                      <div className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
+                        <div>
+                          <p className="text-sm font-medium text-emerald-200">
+                            This attempt has been submitted
+                          </p>
+                          <p className="mt-1 text-sm leading-6 text-white/45">
+                            The final files for this attempt are locked. If you need to make changes, create a new attempt.
+                          </p>
+                          {activeSubmission.submission_note && (
+                            <p className="mt-3 whitespace-pre-wrap text-sm text-white/60">
+                              {activeSubmission.submission_note}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </section>
 
-            {/* AI help */}
-            <section className="border border-white/[0.08] bg-white/[0.02]">
-              <div className="border-b border-white/[0.07] p-5 sm:p-6">
-                <div className="flex items-center gap-2">
-                  <MessageSquare
-                    size={17}
-                    className="text-violet-400"
-                  />
-
-                  <h2 className="text-base font-semibold text-white">
-                    Need help?
-                  </h2>
-                </div>
-
-                <p className="mt-1 text-xs leading-5 text-white/30">
-                  Ask the tutor about this assignment
-                  without losing its course context.
-                </p>
-              </div>
-
-              <div className="p-5 sm:p-6">
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {quickPrompts.map(
-                    (prompt) => (
-                      <button
-                        key={prompt}
-                        type="button"
-                        onClick={() =>
-                          void askAI(prompt)
-                        }
-                        disabled={aiLoading}
-                        className="border border-white/[0.07] bg-white/[0.02] p-3 text-left text-xs leading-5 text-white/45 transition hover:border-violet-500/20 hover:bg-violet-500/[0.04] hover:text-white/70 disabled:opacity-50"
-                      >
-                        {prompt}
-                      </button>
-                    )
-                  )}
-                </div>
-
-                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                  <input
-                    value={aiPrompt}
-                    onChange={(event) =>
-                      setAiPrompt(
-                        event.target.value
-                      )
-                    }
-                    onKeyDown={(event) => {
-                      if (
-                        event.key === "Enter" &&
-                        !event.shiftKey &&
-                        aiPrompt.trim()
-                      ) {
-                        event.preventDefault();
-
-                        void askAI(
-                          aiPrompt.trim()
-                        );
-                      }
-                    }}
-                    placeholder="Ask something about this assignment..."
-                    className="min-w-0 flex-1 rounded-lg border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-white/20 focus:border-violet-500/40"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (aiPrompt.trim()) {
-                        void askAI(
-                          aiPrompt.trim()
-                        );
-                      }
-                    }}
-                    disabled={
-                      aiLoading ||
-                      !aiPrompt.trim()
-                    }
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    {aiLoading ? (
-                      <Loader2
-                        size={15}
-                        className="animate-spin"
-                      />
-                    ) : (
-                      <Sparkles size={15} />
-                    )}
-
-                    Ask
-                  </button>
-                </div>
-
-                {aiResponse && (
-                  <div className="mt-5 border-l-2 border-violet-500/50 bg-violet-500/[0.04] px-5 py-4">
-                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-violet-300">
-                      <Sparkles size={13} />
-                      StudySpace Tutor
+            {submissions.length > 1 && (
+              <section>
+                <SectionHeading
+                  title="Submission history"
+                  description="Earlier attempts remain available for reference."
+                />
+                <div className="overflow-hidden rounded-xl border border-white/10">
+                  {submissions.map((submission) => (
+                    <div
+                      key={submission.id}
+                      className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.07] px-4 py-3 last:border-b-0"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-white/75">
+                          Attempt {submission.attempt_number}
+                        </p>
+                        <p className="mt-1 text-xs text-white/35">
+                          {submission.submitted_at
+                            ? `Submitted ${formatDateTime(submission.submitted_at)}`
+                            : `Created ${formatDateTime(submission.created_at)}`}
+                        </p>
+                      </div>
+                      <StatusLabel status={submission.status} />
                     </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
-                    <div className="whitespace-pre-wrap text-sm leading-7 text-white/55">
-                      {aiResponse}
-                    </div>
-                  </div>
-                )}
-              </div>
+            <section>
+              <SectionHeading
+                title="Get help"
+                description="Need help understanding the instructions or course concepts?"
+              />
+              <Link
+                href={`/ai-tutor?course=${assignment.course_id}&assignment=${assignment.id}`}
+                className="group flex items-center gap-4 rounded-xl border border-white/10 bg-white/[0.025] p-5 transition hover:border-purple-400/20 hover:bg-purple-400/[0.04]"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-400/10 text-purple-300">
+                  <MessageSquare className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-white/75">Open AI Tutor</p>
+                  <p className="mt-1 text-xs leading-5 text-white/35">
+                    Ask questions and work through the concepts step by step.
+                  </p>
+                </div>
+                <ArrowLeft className="h-4 w-4 rotate-180 text-white/25 transition group-hover:translate-x-1" />
+              </Link>
             </section>
           </div>
 
-          {/* Sidebar */}
-          <aside className="space-y-6">
-            {/* Focus timer */}
-            <section className="border border-white/[0.08] bg-white/[0.02] p-5">
+          <aside className="space-y-5">
+            <section className="rounded-xl border border-white/10 bg-white/[0.025] p-5">
               <div className="flex items-center justify-between">
+                <p className="text-xs font-medium uppercase tracking-[0.12em] text-white/35">
+                  Assignment progress
+                </p>
+                <span className="text-lg font-semibold text-white">{assignment.progress}%</span>
+              </div>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.07]">
+                <div
+                  className="h-full rounded-full bg-purple-400 transition-all"
+                  style={{ width: `${Math.min(100, Math.max(0, assignment.progress))}%` }}
+                />
+              </div>
+              <input
+                aria-label="Assignment progress"
+                type="range"
+                min="0"
+                max="100"
+                step="5"
+                value={assignment.progress}
+                disabled={busy || isSubmitted}
+                onChange={(event) => {
+                  const progress = Number(event.target.value);
+                  setAssignment((current) =>
+                    current ? { ...current, progress } : current,
+                  );
+                }}
+                onMouseUp={(event) => {
+                  const progress = Number((event.target as HTMLInputElement).value);
+                  void updateAssignment({
+                    progress,
+                    status: progress === 100
+                      ? "completed"
+                      : progress > 0
+                      ? "in_progress"
+                      : "not_started",
+                  });
+                }}
+                onTouchEnd={(event) => {
+                  const progress = Number((event.target as HTMLInputElement).value);
+                  void updateAssignment({
+                    progress,
+                    status: progress === 100
+                      ? "completed"
+                      : progress > 0
+                      ? "in_progress"
+                      : "not_started",
+                  });
+                }}
+                className="mt-4 w-full accent-purple-400"
+              />
+              <p className="mt-2 text-xs text-white/35">
+                Submitting final work marks the assignment complete.
+              </p>
+            </section>
+
+            <section className="rounded-xl border border-white/10 bg-white/[0.025] p-5">
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-white/35">
+                Due date
+              </p>
+              <div className="mt-4 flex items-start gap-3">
+                <Clock3 className={`mt-0.5 h-4 w-4 ${isOverdue ? "text-red-300" : "text-white/45"}`} />
                 <div>
-                  <div className="flex items-center gap-2">
-                    <Timer
-                      size={16}
-                      className="text-white/45"
-                    />
-
-                    <h2 className="text-sm font-semibold text-white">
-                      Focus timer
-                    </h2>
-                  </div>
-
-                  <p className="mt-1 text-[11px] text-white/25">
-                    A simple 25-minute work session.
+                  <p className={`text-sm font-medium ${isOverdue ? "text-red-300" : "text-white/75"}`}>
+                    {isOverdue ? "Past due" : assignment.due_date ? "Due date" : "No due date"}
                   </p>
+                  <p className="mt-1 text-xs text-white/35">{formatDate(assignment.due_date)}</p>
                 </div>
-              </div>
-
-              <div className="py-7 text-center">
-                <div className="font-mono text-4xl font-semibold tracking-tight text-white">
-                  {timerDisplay}
-                </div>
-
-                <p className="mt-2 text-[11px] text-white/25">
-                  {timerRunning
-                    ? "Stay with this assignment."
-                    : "Ready when you are."}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setTimerRunning(
-                      (current) => !current
-                    )
-                  }
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-white/[0.08] px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-white/[0.12]"
-                >
-                  {timerRunning ? (
-                    <>
-                      <Clock3 size={14} />
-                      Pause
-                    </>
-                  ) : (
-                    <>
-                      <Play size={14} />
-                      Start
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTimerRunning(false);
-                    setTimerSeconds(25 * 60);
-                  }}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/[0.08] text-white/30 transition hover:bg-white/[0.04] hover:text-white"
-                  title="Reset timer"
-                >
-                  <RefreshCw size={14} />
-                </button>
               </div>
             </section>
 
-            {/* Assignment checklist */}
-            <section className="border border-white/[0.08] bg-white/[0.02] p-5">
-              <div className="flex items-center gap-2">
-                <CheckCircle2
-                  size={16}
-                  className="text-white/45"
-                />
-
-                <h2 className="text-sm font-semibold text-white">
-                  Keep moving
-                </h2>
-              </div>
-
-              <div className="mt-5 space-y-3">
-                <ProgressAction
-                  done={assignment.progress >= 25}
-                  label="Get started"
-                  onClick={() =>
-                    void setProgress(
-                      Math.max(
-                        assignment.progress,
-                        25
-                      )
-                    )
-                  }
-                />
-
-                <ProgressAction
-                  done={assignment.progress >= 50}
-                  label="Halfway there"
-                  onClick={() =>
-                    void setProgress(
-                      Math.max(
-                        assignment.progress,
-                        50
-                      )
-                    )
-                  }
-                />
-
-                <ProgressAction
-                  done={assignment.progress >= 75}
-                  label="Final stretch"
-                  onClick={() =>
-                    void setProgress(
-                      Math.max(
-                        assignment.progress,
-                        75
-                      )
-                    )
-                  }
-                />
-
-                <ProgressAction
-                  done={assignment.progress === 100}
-                  label="Finish assignment"
-                  onClick={() =>
-                    void setProgress(100)
-                  }
-                />
+            <section className="rounded-xl border border-white/10 bg-white/[0.025] p-5">
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-white/35">
+                Current submission
+              </p>
+              <div className="mt-4">
+                {activeSubmission ? (
+                  <>
+                    <StatusLabel status={activeSubmission.status} />
+                    <p className="mt-3 text-sm text-white/65">
+                      Attempt {activeSubmission.attempt_number}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-white/35">
+                      {activeSubmission.status === "submitted"
+                        ? "Your files for this attempt are locked."
+                        : "Remember to submit your final files when you're ready."}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm leading-6 text-white/40">
+                    You haven&apos;t started a submission attempt yet.
+                  </p>
+                )}
               </div>
             </section>
 
-            {/* Course */}
-            {assignment.courses && (
-              <section className="border border-white/[0.08] bg-white/[0.02] p-5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/20">
-                  Course
+            {assignment.max_points !== null && (
+              <section className="rounded-xl border border-white/10 bg-white/[0.025] p-5">
+                <p className="text-xs font-medium uppercase tracking-[0.12em] text-white/35">
+                  Grading
                 </p>
-
-                <Link
-                  href={`/courses/${assignment.course_id}`}
-                  className="mt-3 block transition hover:opacity-80"
-                >
-                  <div className="text-lg font-semibold text-white">
-                    {assignment.courses.code}
-                  </div>
-
-                  <div className="mt-1 text-sm text-white/35">
-                    {assignment.courses.name}
-                  </div>
-                </Link>
-
-                <Link
-                  href={`/courses/${assignment.course_id}`}
-                  className="mt-5 inline-flex items-center gap-2 text-xs font-medium text-violet-400 transition hover:text-violet-300"
-                >
-                  Open course
-                  <ExternalLink size={12} />
-                </Link>
+                <div className="mt-4 flex items-end justify-between">
+                  <span className="text-2xl font-semibold text-white">
+                    {assignment.points ?? "—"}
+                  </span>
+                  <span className="pb-1 text-sm text-white/35">
+                    / {assignment.max_points} points
+                  </span>
+                </div>
               </section>
             )}
           </aside>
         </div>
       </div>
 
-      {/* Delete modal */}
-      {showDelete && (
-        <DeleteModal
-          assignment={assignment}
-          deleting={saving}
-          onCancel={() =>
-            !saving && setShowDelete(false)
-          }
-          onConfirm={() =>
-            void deleteAssignment()
-          }
-        />
-      )}
-    </AppShell>
-  );
-}
+      {confirmSubmit && activeSubmission && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#17151d] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Submit final work?</h2>
+                <p className="mt-2 text-sm leading-6 text-white/50">
+                  You&apos;ll submit {activeSubmissionFiles.length} file(s) in attempt {activeSubmission.attempt_number}.
+                  You won&apos;t be able to change these files after submitting. You can create another attempt later.
+                </p>
+                {isOverdue && (
+                  <p className="mt-3 text-sm text-red-300">
+                    This submission is past the assignment due date and will be marked late.
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => setConfirmSubmit(false)}
+                disabled={busy}
+                className="text-white/35 hover:text-white"
+                aria-label="Close confirmation"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-/* -------------------------------------------------------------------------- */
-/* Components                                                                 */
-/* -------------------------------------------------------------------------- */
-
-function InfoItem({
-  icon,
-  label,
-  value,
-  detail,
-  danger = false,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  detail: string;
-  danger?: boolean;
-}) {
-  return (
-    <div className="border-b border-white/[0.07] py-4 first:pt-0 last:border-b-0 sm:border-b-0 sm:border-r sm:px-5 sm:py-0 sm:first:pl-0 sm:last:border-r-0 sm:last:pr-0">
-      <div className="flex items-center gap-2 text-white/25">
-        {icon}
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em]">
-          {label}
-        </span>
-      </div>
-
-      <p
-        className={[
-          "mt-2 text-sm font-semibold",
-          danger
-            ? "text-red-400"
-            : "text-white",
-        ].join(" ")}
-      >
-        {value}
-      </p>
-
-      {detail && (
-        <p className="mt-1 text-[11px] text-white/25">
-          {detail}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function ProgressAction({
-  done,
-  label,
-  onClick,
-}: {
-  done: boolean;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center gap-3 text-left"
-    >
-      <span
-        className={[
-          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition",
-          done
-            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-            : "border-white/[0.1] text-transparent hover:border-violet-400/40",
-        ].join(" ")}
-      >
-        <Check size={12} />
-      </span>
-
-      <span
-        className={[
-          "text-xs transition",
-          done
-            ? "text-white/30 line-through"
-            : "text-white/50 hover:text-white/80",
-        ].join(" ")}
-      >
-        {label}
-      </span>
-    </button>
-  );
-}
-
-function DeleteModal({
-  assignment,
-  deleting,
-  onCancel,
-  onConfirm,
-}: {
-  assignment: Assignment;
-  deleting: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-md border border-white/[0.1] bg-[#17151c] shadow-2xl shadow-black/50">
-        <div className="flex items-start justify-between border-b border-white/[0.08] p-5">
-          <div>
-            <h2 className="text-base font-semibold text-white">
-              Delete assignment?
-            </h2>
-
-            <p className="mt-1 text-xs leading-5 text-white/30">
-              This will permanently remove{" "}
-              <span className="text-white/50">
-                {assignment.title}
-              </span>
-              .
-            </p>
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmSubmit(false)}
+                disabled={busy}
+                className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-white/60 hover:bg-white/[0.05]"
+              >
+                Go back
+              </button>
+              <button
+                onClick={() => void submitFinalWork()}
+                disabled={busy}
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-400 disabled:opacity-50"
+              >
+                {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                Confirm submission
+              </button>
+            </div>
           </div>
-
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={deleting}
-            className="p-1.5 text-white/25 transition hover:text-white disabled:opacity-40"
-          >
-            <X size={17} />
-          </button>
         </div>
+      )}
 
-        <div className="flex justify-end gap-2 p-5">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={deleting}
-            className="rounded-lg border border-white/[0.08] px-4 py-2.5 text-xs font-medium text-white/50 transition hover:bg-white/[0.04] hover:text-white disabled:opacity-40"
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            onClick={onConfirm}
-            disabled={deleting}
-            className="inline-flex items-center gap-2 rounded-lg bg-red-500/90 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-red-500 disabled:opacity-50"
-          >
-            {deleting && (
-              <Loader2
-                size={14}
-                className="animate-spin"
-              />
-            )}
-
-            Delete
-          </button>
+      {busy && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2 rounded-lg border border-white/10 bg-[#17151d] px-3 py-2 text-xs text-white/60 shadow-xl">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Saving changes…
         </div>
-      </div>
-    </div>
+      )}
+    </main>
   );
 }

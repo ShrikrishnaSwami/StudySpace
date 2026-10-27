@@ -198,7 +198,7 @@ export default function LoginPage() {
                 href="/signup"
                 className="font-medium text-purple-400 transition hover:text-purple-300"
               >
-                Create one
+                Create one 
               </Link>
             </p>
 
@@ -206,5 +206,5 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
-  );
+  );  
 }
