@@ -595,9 +595,7 @@ function InputField({
         {required && <span className="ml-1 text-violet-400">*</span>}
       </label>
 
-      <input
-        required={required}
-        value={value}
+      <input required={required} maxLength={160} value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         className="w-full rounded-xl border border-white/[0.08] bg-white/[0.035] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/20 hover:border-white/[0.12] focus:border-violet-500/50 focus:bg-white/[0.05]"
