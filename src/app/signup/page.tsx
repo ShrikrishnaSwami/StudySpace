@@ -42,11 +42,11 @@ export default function SignupPage() {
     try {
 
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim().toLowerCase(),
         password,
         options: {
           data: {
-            full_name: name,
+            full_name: name.trim().slice(0, 100),
           },
         },
       });
@@ -157,7 +157,8 @@ export default function SignupPage() {
                     type="text"
                     required
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    maxLength={100}
+                    onChange={(e) => setName(e.target.value.slice(0, 100))}
                     placeholder="Your name"
                     className="w-full rounded-xl border border-white/10 bg-black/20 py-3.5 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-purple-500/70 focus:ring-2 focus:ring-purple-500/10"
                   />
@@ -180,7 +181,9 @@ export default function SignupPage() {
                     type="email"
                     required
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    maxLength={254}
+                    autoComplete="email"
+                    onChange={(e) => setEmail(e.target.value.slice(0, 254))}
                     placeholder="you@example.com"
                     className="w-full rounded-xl border border-white/10 bg-black/20 py-3.5 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-purple-500/70 focus:ring-2 focus:ring-purple-500/10"
                   />
@@ -203,8 +206,11 @@ export default function SignupPage() {
                     type={showPassword ? "text" : "password"}
                     required
                     value={password}
+                    minLength={8}
+                    maxLength={128}
+                    autoComplete="new-password"
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 6 characters"
+                    placeholder="At least 8 characters"
                     className="w-full rounded-xl border border-white/10 bg-black/20 py-3.5 pl-11 pr-12 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-purple-500/70 focus:ring-2 focus:ring-purple-500/10"
                   />
 
