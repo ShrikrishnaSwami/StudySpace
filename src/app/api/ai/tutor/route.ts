@@ -537,10 +537,7 @@ ${
       error
     );
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Something went wrong while contacting the AI Tutor.";
+    const message = "The AI Tutor could not complete that request. Please try again.";
 
     return NextResponse.json(
       {
