@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
-  Bell, Check, Eye, Laptop, Lock, LogOut, Mail, Moon, Save, Shield, Sun, Trash2, User, RefreshCw,
+  Bell, Check, Download, Eye, Gauge, Laptop, Lock, LogOut, Mail, Moon, Save, Shield, Sparkles, Sun, Trash2, User, RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
@@ -66,6 +66,11 @@ export default function SettingsPage() {
   const [preferencesMessage, setPreferencesMessage] = useState("");
   const [securityMessage, setSecurityMessage] = useState("");
   const [pageError, setPageError] = useState("");
+  const [aiUsage, setAiUsage] = useState<{feature:string;limit:number;used:number;remaining:number}[]>([]);
+  const [usageError, setUsageError] = useState("");
+  const [loadingUsage, setLoadingUsage] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState("");
 
   const applyTheme = useCallback((theme: Theme) => {
     if (typeof window !== "undefined") {
@@ -101,6 +106,39 @@ export default function SettingsPage() {
     void load();
     return () => { alive = false; };
   }, [router, applyTheme]);
+
+  async function loadAiUsage() {
+    setLoadingUsage(true); setUsageError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Sign in again to view AI usage.");
+      const response = await fetch("/api/usage", { headers: { Authorization: "Bearer " + session.access_token }, cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Could not load AI usage.");
+      setAiUsage(payload.usage || []);
+    } catch (error) {
+      setUsageError(error instanceof Error ? error.message : "Could not load AI usage.");
+    } finally { setLoadingUsage(false); }
+  }
+
+  async function exportData() {
+    setExporting(true); setExportMessage("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Sign in again to export your data.");
+      const response = await fetch("/api/export", { headers: { Authorization: "Bearer " + session.access_token }, cache: "no-store" });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Could not export your data.");
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url; link.download = "studyspace-data-export.json"; link.click();
+      window.URL.revokeObjectURL(url);
+      setExportMessage("Your export was downloaded. Keep it somewhere private because it contains your academic data.");
+    } catch (error) {
+      setExportMessage(error instanceof Error ? error.message : "Could not export your data.");
+    } finally { setExporting(false); }
+  }
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -237,6 +275,18 @@ export default function SettingsPage() {
             {([{value:"dark",title:"Dark",description:"The original purple-black StudySpace look.",icon:Moon},{value:"light",title:"Light",description:"A brighter workspace.",icon:Sun},{value:"system",title:"System",description:"Follow your device appearance.",icon:Laptop}] as const).map(option=>{const Icon=option.icon;const active=preferences.theme===option.value;return <button key={option.value} type="button" aria-pressed={active} onClick={()=>chooseTheme(option.value)} className={`rounded-2xl border p-4 text-left transition ${active?"border-violet-400/40 bg-violet-500/10":"border-white/10 bg-white/[0.02] hover:bg-white/[0.05]"}`}><Icon size={19} className={active?"text-violet-300":"text-white/45"}/><p className="mt-3 text-sm font-medium text-white">{option.title}</p><p className="mt-1 text-xs leading-5 text-white/40">{option.description}</p>{active&&<p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-violet-300">Selected</p>}</button>})}
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4"><p aria-live="polite" className="text-xs text-emerald-300">{preferencesMessage}</p><button type="button" onClick={savePreferences} disabled={savingPreferences} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"><Save size={15}/>{savingPreferences?"Saving…":"Save preferences"}</button></div>
+        </Section>
+
+        <Section icon={Gauge} title="AI usage" description="View your rolling 24-hour generation limits.">
+          <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-white/50">Limits help protect availability and keep AI usage predictable.</p><button type="button" onClick={()=>void loadAiUsage()} disabled={loadingUsage} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs text-white/70 disabled:opacity-50"><RefreshCw size={14}/>{loadingUsage?"Refreshing…":"Refresh usage"}</button></div>
+          {usageError&&<p role="alert" className="text-xs text-red-300">{usageError}</p>}
+          {aiUsage.length===0&&!loadingUsage&&!usageError&&<button type="button" onClick={()=>void loadAiUsage()} className="rounded-xl border border-violet-400/20 px-4 py-2.5 text-sm text-violet-200">Load AI usage</button>}
+          <div className="grid gap-3 sm:grid-cols-2">{aiUsage.map(item=><div key={item.feature} className="rounded-xl border border-white/[0.08] p-4"><div className="flex items-center justify-between gap-3"><p className="text-sm font-medium capitalize text-white">{item.feature==="tutor"?"AI Tutor":item.feature==="quiz"?"Quiz generation":item.feature==="flashcards"?"Flashcard generation":item.feature==="homework"?"Homework analysis":item.feature==="syllabus"?"Syllabus importer":"Study recommendations"}</p><p className="text-xs tabular-nums text-white/45">{item.used}/{item.limit}</p></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-violet-500" style={{width:Math.min(100,item.used/Math.max(1,item.limit)*100)+"%"}}/></div><p className="mt-2 text-[11px] text-white/40">{item.remaining} requests remaining in the last 24 hours</p></div>)}</div>
+        </Section>
+
+        <Section icon={Download} title="Your data" description="Download a copy of the academic records associated with your account.">
+          <div className="flex flex-wrap items-center justify-between gap-4"><div className="min-w-0 flex-1"><p className="text-sm font-medium text-white">Export StudySpace data</p><p className="mt-1 text-xs leading-5 text-white/40">Downloads a JSON file with your accessible courses, assignments, quizzes, grades, study records, notes, and other available workspace data. This is an export, not a backup restore.</p></div><button type="button" onClick={()=>void exportData()} disabled={exporting} className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/80 hover:bg-white/[0.05] disabled:opacity-50"><Download size={15}/>{exporting?"Preparing…":"Export data"}</button></div>
+          {exportMessage&&<p role="status" className="text-xs text-white/55">{exportMessage}</p>}
         </Section>
 
         <Section icon={Shield} title="Account security" description="Actions that affect your entire StudySpace account.">
