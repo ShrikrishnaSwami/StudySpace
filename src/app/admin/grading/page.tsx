@@ -18,6 +18,13 @@ export default function AdminGradingPage() {
   const [checking, setChecking] = useState(true);
   const [loading, setLoading] = useState(true);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [courses, setCourses] = useState<{id:string;code:string;name:string}[]>([]);
+  const [newTitle, setNewTitle] = useState("");
+  const [newCourse, setNewCourse] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [newDueDate, setNewDueDate] = useState("");
+  const [newMaxPoints, setNewMaxPoints] = useState("100");
+  const [creating, setCreating] = useState(false);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [files, setFiles] = useState<FileRow[]>([]);
   const [grades, setGrades] = useState<Record<string, string>>({});
@@ -33,18 +40,20 @@ export default function AdminGradingPage() {
     if (authError || !user) { router.replace("/login"); return; }
     if (!isAdminEmail(user.email)) { router.replace("/dashboard"); return; }
 
-    const [a, s] = await Promise.all([
+    const [a, s, courseResult] = await Promise.all([
       supabase.from("assignments").select("id,title,course_id,user_id,max_points,due_date").order("created_at", { ascending: false }),
       supabase.from("assignment_submissions").select("id,assignment_id,user_id,attempt_number,status,submission_note,submitted_at,grade,feedback,graded_at").order("submitted_at", { ascending: false, nullsFirst: false }),
+      supabase.from("courses").select("id,code,name").order("code", { ascending: true }),
     ]);
-    if (a.error || s.error) {
-      setError(a.error?.message || s.error?.message || "Couldn't load grading data.");
+    if (a.error || s.error || courseResult.error) {
+      setError(a.error?.message || s.error?.message || courseResult.error?.message || "Couldn't load grading data.");
       setLoading(false); setChecking(false); return;
     }
     const assignmentRows = (a.data || []) as Assignment[];
     const assignmentMap = new Map(assignmentRows.map((item) => [item.id, item]));
     const submissionRows = ((s.data || []) as Submission[]).map((item) => ({ ...item, assignment: assignmentMap.get(item.assignment_id) }));
     setAssignments(assignmentRows);
+    setCourses((courseResult.data || []) as {id:string;code:string;name:string}[]);
     setSubmissions(submissionRows);
     setGrades(Object.fromEntries(submissionRows.map((item) => [item.id, item.grade == null ? "" : String(item.grade)])));
     setFeedback(Object.fromEntries(submissionRows.map((item) => [item.id, item.feedback || ""])));
@@ -77,6 +86,25 @@ export default function AdminGradingPage() {
     if (filter === "graded") return item.grade != null;
     return true;
   }), [submissions, filter]);
+
+
+  async function createInstructorAssignment(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setError(""); setMessage("");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !isAdminEmail(user.email)) { setError("Administrator authorization is required."); return; }
+    if (!newTitle.trim() || !newCourse || !studentId.trim()) { setError("Enter a title, course, and student account UUID."); return; }
+    const max = Number(newMaxPoints);
+    if (!Number.isFinite(max) || max <= 0) { setError("Maximum points must be greater than zero."); return; }
+    setCreating(true);
+    const { error: insertError } = await supabase.from("assignments").insert({
+      user_id: user.id, assigned_by: user.id, assigned_to: studentId.trim(), course_id: newCourse,
+      title: newTitle.trim(), due_date: newDueDate ? new Date(newDueDate + "T23:59:00").toISOString() : null,
+      max_points: max, priority: "medium", status: "pending", progress: 0,
+    });
+    if (insertError) setError(insertError.message);
+    else { setNewTitle(""); setStudentId(""); setNewDueDate(""); setNewMaxPoints("100"); setMessage("Assignment created and assigned to the student."); await load(); }
+    setCreating(false);
+  }
 
   async function saveGrade(item: Submission) {
     setSaving(item.id); setError(""); setMessage("");
@@ -120,6 +148,17 @@ export default function AdminGradingPage() {
         </div>
         <button onClick={() => void load()} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2.5 text-sm text-white/65 hover:bg-white/[0.05]"><RefreshCw className="h-4 w-4" />Refresh</button>
       </div>
+
+      <section className="rounded-2xl border border-violet-400/15 bg-violet-500/[0.035] p-5 sm:p-6">
+        <div className="mb-4"><h2 className="text-lg font-semibold">Create and assign work</h2><p className="mt-1 text-sm text-white/40">Use the student account UUID from Supabase Authentication → Users.</p></div>
+        <form onSubmit={createInstructorAssignment} className="grid gap-3 md:grid-cols-2">
+          <input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} required maxLength={200} placeholder="Assignment title" className="rounded-xl border border-white/10 bg-black/20 px-3.5 py-3 text-sm outline-none focus:border-violet-400/50" />
+          <select value={newCourse} onChange={(e) => setNewCourse(e.target.value)} required className="rounded-xl border border-white/10 bg-[#17151d] px-3.5 py-3 text-sm outline-none focus:border-violet-400/50"><option value="">Choose course</option>{courses.map((course) => <option key={course.id} value={course.id}>{course.code} — {course.name}</option>)}</select>
+          <input value={studentId} onChange={(e) => setStudentId(e.target.value)} required placeholder="Student account UUID" className="rounded-xl border border-white/10 bg-black/20 px-3.5 py-3 text-sm outline-none focus:border-violet-400/50" />
+          <div className="grid grid-cols-2 gap-3"><input type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} className="min-w-0 rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-sm outline-none focus:border-violet-400/50" /><input type="number" min="1" step="1" value={newMaxPoints} onChange={(e) => setNewMaxPoints(e.target.value)} required aria-label="Maximum points" className="min-w-0 rounded-xl border border-white/10 bg-black/20 px-3 py-3 text-sm outline-none focus:border-violet-400/50" /></div>
+          <div className="md:col-span-2"><button type="submit" disabled={creating || courses.length === 0} className="inline-flex items-center gap-2 rounded-xl bg-violet-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-400 disabled:opacity-50">{creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <GraduationCap className="h-4 w-4" />}{creating ? "Creating…" : "Create assignment for student"}</button>{courses.length === 0 && <p className="mt-2 text-xs text-amber-200/70">Create a course first, then return here.</p>}</div>
+        </form>
+      </section>
       <div className="grid gap-3 sm:grid-cols-3">
         {[["Total submissions", submissions.length],["Awaiting grade", submissions.filter((s) => s.status === "submitted" && s.grade == null).length],["Graded", submissions.filter((s) => s.grade != null).length]].map(([label, value]) => <div key={String(label)} className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5"><p className="text-sm text-white/40">{label}</p><p className="mt-2 text-3xl font-semibold">{value}</p></div>)}
       </div>
