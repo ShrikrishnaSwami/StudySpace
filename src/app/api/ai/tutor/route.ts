@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { generateStudySpaceAnswer } from "@/lib/studyspace-ai";
 import { getStudentAIContext } from "@/lib/ai-context";
 import { formatStudentAIContext } from "@/lib/ai-context-format";
+import { retrieveRelevantStudyContext } from "@/lib/studyspace-retrieval";
 
 function createSupabaseServerClient(token: string) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -224,6 +225,15 @@ knowledge, but clearly state when student-specific
 information is unavailable.
 `;
     }
+
+    /*
+     * -------------------------------------------------------
+     * RETRIEVE RELEVANT STUDY CONTEXT
+     * -------------------------------------------------------
+     * Keep prompts focused on relevant data already loaded for this student.
+     */
+    const retrieval = retrieveRelevantStudyContext(studySpaceContext, message);
+    const selectedStudySpaceContext = retrieval.context;
 
     /*
      * -------------------------------------------------------
@@ -486,7 +496,7 @@ unless the student explicitly asks about them.
 STUDYSPACE DATA
 ========================================
 
-${studySpaceContext}
+${selectedStudySpaceContext}
 
 ========================================
 RECENT CONVERSATION
@@ -530,6 +540,10 @@ ${
       answer,
       courseId,
       conversationId,
+      retrieval: {
+        strategy: retrieval.strategy,
+        sections: retrieval.sections.map((section) => section.title),
+      },
     });
   } catch (error) {
     console.error(
