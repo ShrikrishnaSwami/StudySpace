@@ -287,7 +287,7 @@ Return JSON only.
       questions,
     });
   } catch (error) {
-    console.error("Quiz generation error:", error);
+    console.error("Quiz generation request failed.");
 
     return NextResponse.json(
       {
