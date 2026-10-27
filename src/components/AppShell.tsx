@@ -82,6 +82,31 @@ const mainNavigation = [
     icon: CalendarDays,
   },
   {
+    label: "Grades",
+    href: "/grades",
+    icon: GraduationCap,
+  },
+  {
+    label: "Notes & resources",
+    href: "/notes",
+    icon: BookOpen,
+  },
+  {
+    label: "AI flashcards",
+    href: "/flashcards",
+    icon: Brain,
+  },
+  {
+    label: "Focus timer",
+    href: "/focus",
+    icon: CalendarDays,
+  },
+  {
+    label: "Progress",
+    href: "/analytics",
+    icon: Sparkles,
+  },
+  {
     label: "Homework",
     href: "/homework-uploader",
     icon: Upload,
