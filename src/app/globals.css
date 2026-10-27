@@ -1204,3 +1204,198 @@ html[data-theme="light"] .ss-sidebar a[aria-current="page"],
 html[data-theme="light"] .ss-sidebar [data-active="true"] { color: #6d28d9 !important; }
 html[data-theme="light"] input[type="range"] { accent-color: #7c3aed; }
 html[data-theme="light"] ::selection { background: rgba(124, 58, 237, .2); color: #211b31; }
+
+
+/* ==========================================================================
+   STUDYSPACE PREMIUM SYSTEM — October 2026
+   Layered on the existing design tokens to preserve page behavior and flows.
+   ========================================================================== */
+:root {
+  --background: #08070d;
+  --foreground: #f7f5ff;
+  --muted: #a7a0bb;
+  --muted-2: #777087;
+  --purple: #9b7bff;
+  --purple-light: #c4b5fd;
+  --purple-dark: #6d42d8;
+  --border: rgba(207, 194, 255, .12);
+  --surface: rgba(255, 255, 255, .035);
+  --surface-strong: rgba(255, 255, 255, .06);
+}
+html { background: #08070d; }
+body {
+  background:
+    radial-gradient(ellipse at 15% -12%, rgba(109, 66, 216, .12), transparent 38%),
+    radial-gradient(ellipse at 95% 22%, rgba(77, 55, 133, .07), transparent 32%),
+    #08070d;
+  color: var(--foreground);
+  letter-spacing: -.006em;
+}
+button, a, input, textarea, select { outline-offset: 3px; }
+:focus-visible { outline: 2px solid #b8a1ff; }
+::selection { background: rgba(155, 123, 255, .36); }
+
+/* Authenticated workspace */
+.ss-shell {
+  background: transparent !important;
+  color: #f7f5ff;
+}
+.ss-sidebar {
+  background: linear-gradient(180deg, rgba(18, 15, 29, .98), rgba(12, 10, 19, .98)) !important;
+  border-color: rgba(207, 194, 255, .1) !important;
+  box-shadow: 16px 0 55px rgba(0, 0, 0, .12);
+  backdrop-filter: blur(24px);
+}
+.ss-sidebar > div:first-child {
+  border-color: rgba(207, 194, 255, .09) !important;
+}
+.ss-sidebar a.group.relative.flex.items-center {
+  margin: 2px 0;
+  border-radius: 11px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.ss-sidebar a.group.relative.flex.items-center.bg-white\/\\[0\\.07\\] {
+  background: linear-gradient(100deg, rgba(139, 92, 246, .2), rgba(139, 92, 246, .06)) !important;
+  box-shadow: inset 0 0 0 1px rgba(167, 139, 250, .12);
+}
+.ss-sidebar a.group.relative.flex.items-center.bg-white\/\\[0\\.07\\] svg { color: #c4b5fd !important; }
+.ss-sidebar nav button { border-radius: 11px; }
+.ss-topbar {
+  background: rgba(9, 8, 15, .82) !important;
+  border-color: rgba(207, 194, 255, .1) !important;
+  backdrop-filter: blur(24px) saturate(140%);
+}
+.ss-topbar h1 { letter-spacing: -.035em; }
+.ss-topbar button, .ss-topbar a {
+  border-radius: 11px;
+}
+.ss-shell main {
+  color: #f7f5ff;
+}
+.ss-shell main .rounded-2xl.border,
+.ss-shell main .rounded-xl.border,
+.ss-shell main .rounded-lg.border {
+  border-color: rgba(207, 194, 255, .11) !important;
+}
+.ss-shell main .rounded-2xl.border {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .08);
+}
+.ss-shell main .bg-white\/\\[0\\.025\\],
+.ss-shell main .bg-white\/\\[0\\.03\\],
+.ss-shell main .bg-white\/\\[0\\.035\\],
+.ss-shell main .bg-white\/\\[0\\.04\\] {
+  background: linear-gradient(145deg, rgba(27, 22, 42, .68), rgba(16, 13, 25, .68)) !important;
+}
+.ss-shell main .bg-white\/\\[0\\.05\\],
+.ss-shell main .bg-white\/\\[0\\.06\\] {
+  background-color: rgba(255, 255, 255, .055) !important;
+}
+.ss-shell main button:not([aria-label="Close navigation"]) {
+  transition: background-color .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+.ss-shell main button:hover:not(:disabled) {
+  border-color: rgba(167, 139, 250, .3);
+}
+.ss-shell main button:disabled { cursor: not-allowed; opacity: .55; }
+.ss-shell main input,
+.ss-shell main textarea,
+.ss-shell main select {
+  border-color: rgba(207, 194, 255, .14);
+  border-radius: 12px;
+  background-color: rgba(8, 7, 14, .62);
+  color: #f7f5ff;
+}
+.ss-shell main input:focus,
+.ss-shell main textarea:focus,
+.ss-shell main select:focus {
+  border-color: rgba(167, 139, 250, .65);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, .12);
+}
+.ss-shell main input::placeholder,
+.ss-shell main textarea::placeholder { color: #777087; }
+.ss-shell main table { border-collapse: separate; border-spacing: 0; }
+.ss-shell main th { color: #aaa1c2; font-weight: 600; }
+.ss-shell main td, .ss-shell main th { border-color: rgba(207, 194, 255, .08); }
+.ss-shell main a { transition: color .18s ease, border-color .18s ease; }
+.ss-shell main a:hover { text-decoration-color: rgba(196, 181, 253, .6); }
+.ss-shell main h1, .ss-shell main h2, .ss-shell main h3 { letter-spacing: -.035em; }
+.ss-shell main .text-white\/25,
+.ss-shell main .text-white\/30,
+.ss-shell main .text-white\/35 { color: #8e87a4 !important; }
+.ss-shell main .text-white\/40,
+.ss-shell main .text-white\/45 { color: #a49bb9 !important; }
+
+/* Premium public landing page */
+.ss-home {
+  background:
+    radial-gradient(ellipse at 16% 0%, rgba(91, 53, 173, .32), transparent 42%),
+    radial-gradient(ellipse at 82% 20%, rgba(73, 46, 135, .2), transparent 35%),
+    #08070d;
+}
+.ss-nav {
+  max-width: 1320px;
+  border-color: rgba(207, 194, 255, .1);
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.ss-logo-shape {
+  border-radius: 12px;
+  background: linear-gradient(145deg, #c4b5fd, #7c3aed 62%, #4c1d95);
+  box-shadow: 0 8px 28px rgba(124, 58, 237, .28), inset 0 1px rgba(255,255,255,.35);
+}
+.ss-hero { max-width: 1320px; padding-top: 90px; padding-bottom: 94px; }
+.ss-hero h1 { line-height: .96; letter-spacing: -.075em; }
+.ss-hero h1 span { background: linear-gradient(100deg, #ddd6fe, #a78bfa 58%, #8b5cf6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ss-hero-text { color: #b5aec9; max-width: 520px; }
+.ss-cta, .ss-join {
+  border-color: rgba(196, 181, 253, .35);
+  background: linear-gradient(135deg, #9b7bff, #6d42d8);
+  box-shadow: 0 10px 32px rgba(109, 66, 216, .27), inset 0 1px rgba(255,255,255,.2);
+}
+.ss-collage:before {
+  background: linear-gradient(145deg, rgba(47, 34, 78, .94), rgba(18, 14, 31, .96));
+  border-color: rgba(196, 181, 253, .24);
+  box-shadow: 0 30px 100px rgba(0,0,0,.48), inset 0 1px rgba(255,255,255,.08);
+}
+.ss-note-card {
+  background: linear-gradient(145deg, rgba(34, 27, 52, .98), rgba(15, 12, 25, .98));
+  border-color: rgba(207, 194, 255, .18);
+  box-shadow: 0 28px 90px rgba(0,0,0,.5), inset 0 1px rgba(255,255,255,.06);
+}
+.ss-stamp, .ss-yellow-tile, .ss-blue-tile {
+  box-shadow: 0 16px 38px rgba(0,0,0,.32);
+  backdrop-filter: blur(16px);
+}
+.ss-ribbon { background: rgba(17, 13, 29, .78); border-color: rgba(207, 194, 255, .1); }
+.ss-toolkit { max-width: 1320px; }
+.ss-tool-card {
+  background: linear-gradient(145deg, rgba(30, 24, 46, .82), rgba(15, 12, 24, .88));
+  border-color: rgba(207, 194, 255, .12);
+  box-shadow: 0 10px 35px rgba(0,0,0,.08), inset 0 1px rgba(255,255,255,.025);
+}
+.ss-tool-card:hover {
+  border-color: rgba(196, 181, 253, .35);
+  box-shadow: 0 22px 50px rgba(0,0,0,.2);
+}
+.ss-bottom-banner {
+  border: 1px solid rgba(207, 194, 255, .14);
+  border-radius: 20px;
+  background: linear-gradient(110deg, rgba(124, 58, 237, .13), rgba(255,255,255,.025));
+}
+.ss-footer { border-color: rgba(207, 194, 255, .1); }
+
+@media (max-width: 900px) {
+  .ss-hero { padding-top: 62px; gap: 34px; }
+  .ss-toolkit-head { align-items: flex-start; flex-direction: column; gap: 18px; }
+  .ss-tools-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .ss-nav { padding-inline: 18px; }
+  .ss-nav-center { display: none; }
+  .ss-hero { padding: 54px 18px 62px; }
+  .ss-collage { min-height: 370px; }
+  .ss-toolkit { padding: 60px 18px; }
+  .ss-tools-grid { grid-template-columns: 1fr; }
+  .ss-ribbon { justify-content: flex-start; }
+}
