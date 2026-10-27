@@ -63,6 +63,13 @@ test("retrieval selects an individual matching note instead of the entire notes 
   assert.doesNotMatch(result.context, /Net force equals mass/);
 });
 
+test("category-only questions use a small overview rather than unrelated lexical matches", () => {
+  const result = retrieveRelevantStudyContext(context, "Show me my notes");
+  assert.ok(result.sections.length > 0);
+  assert.ok(result.sections.length <= 5);
+  assert.ok(result.sections.every((section) => section.title === "COURSE NOTES" || section.title === "STUDENT COURSES" || section.title === "ASSIGNMENTS" || section.title === "CALENDAR" || section.title === "QUIZ ATTEMPTS / PERFORMANCE" || section.title === "HOMEWORK"));
+});
+
 test("retrieval returns bounded context and section count", () => {
   const result = retrieveRelevantStudyContext(context, "Tell me about all my courses and assignments", {
     maxSections: 2,
