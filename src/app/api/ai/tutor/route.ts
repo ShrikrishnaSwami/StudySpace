@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { consumeAiQuota } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 
-import { generateAIResponse } from "@/lib/gemini";
+import { generateStudySpaceAnswer } from "@/lib/studyspace-ai";
 import { getStudentAIContext } from "@/lib/ai-context";
 import { formatStudentAIContext } from "@/lib/ai-context-format";
 
@@ -509,7 +509,7 @@ ${
       return NextResponse.json({ error: "You have reached today's AI tutor limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
     }
 
-    const answer = await generateAIResponse({
+    const answer = await generateStudySpaceAnswer({
         systemInstruction,
         prompt: message,
         task: "tutor",
