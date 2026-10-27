@@ -2,6 +2,7 @@
 
 import {
   Bell,
+  ArrowRight,
   BookOpen,
   Brain,
   CalendarDays,
