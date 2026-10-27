@@ -41,15 +41,36 @@ function sectionTitle(content: string, index: number): string {
 }
 
 function splitSections(context: string): RetrievedStudySection[] {
-  return context
-    .split(SECTION_SEPARATOR)
-    .map((content, index) => ({ content: content.trim(), index }))
-    .filter((item) => item.content.length > 0)
-    .map(({ content, index }) => ({
-      title: sectionTitle(content, index),
-      content: content.slice(0, MAX_SECTION_CHARS),
+  const parts = context.split(SECTION_SEPARATOR).map((part) => part.trim());
+  const sections: RetrievedStudySection[] = [];
+
+  // The context formatter places a separator above and below each section
+  // title. Pair that title with the following body so ranking never separates
+  // a heading from the student data it describes.
+  for (let index = 0; index < parts.length; index += 1) {
+    const part = parts[index];
+    if (!part) continue;
+
+    const isHeading = /^[A-Z][A-Z /_-]{2,}$/.test(part);
+    if (isHeading) {
+      const body = parts[index + 1] || "";
+      sections.push({
+        title: part,
+        content: (part + "\\n\\n" + body).slice(0, MAX_SECTION_CHARS),
+        score: 0,
+      });
+      index += 1;
+      continue;
+    }
+
+    sections.push({
+      title: sectionTitle(part, sections.length),
+      content: part.slice(0, MAX_SECTION_CHARS),
       score: 0,
-    }));
+    });
+  }
+
+  return sections;
 }
 
 function scoreSection(queryTokens: string[], section: RetrievedStudySection): number {
