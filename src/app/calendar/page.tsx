@@ -1408,6 +1408,8 @@ function EventDetails({
             </div>
 
             <button
+              type="button"
+              aria-label="Close event details"
               onClick={onClose}
               className="rounded-xl p-2 text-white/25 transition hover:bg-white/[0.05] hover:text-white"
             >
