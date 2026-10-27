@@ -1038,6 +1038,7 @@ export default function AssignmentWorkspacePage() {
                         <button
                           onClick={() => downloadFile(WORK_BUCKET, file.storage_path, file.file_name)}
                           title="Download"
+                          aria-label={`Download ${file.file_name}`}
                           className="rounded-md p-2 text-white/35 hover:bg-white/[0.06] hover:text-white"
                         >
                           <Download className="h-4 w-4" />
