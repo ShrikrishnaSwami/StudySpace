@@ -739,6 +739,8 @@ export default function CalendarPage() {
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex items-center gap-2">
               <button
+                type="button"
+                aria-label="Previous calendar period"
                 onClick={goPrevious}
                 className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-2.5 text-white/40 transition hover:bg-white/[0.06] hover:text-white"
               >
