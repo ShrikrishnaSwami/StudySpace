@@ -1716,9 +1716,7 @@ function EventModal({
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/20"
               />
 
-              <input
-                value={form.location}
-                onChange={(event) =>
+              <input maxLength={240} value={form.location} onChange={(event) =>
                   update(
                     "location",
                     event.target.value
