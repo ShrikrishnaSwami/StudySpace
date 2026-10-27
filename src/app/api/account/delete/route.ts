@@ -31,26 +31,31 @@ export async function DELETE(request: NextRequest) {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
 
-    // Homework uploads are stored under <auth-user-id>/<homework-id>/<filename>.
-    // Remove only this user's files before deleting their auth account.
-    const bucket = admin.storage.from("homework");
-    const filesToRemove: string[] = [];
-    async function collectFiles(prefix: string, depth: number): Promise<void> {
-      if (depth > 3) return;
-      const { data, error } = await bucket.list(prefix, { limit: 1000 });
-      if (error) throw new Error("Could not safely clean up uploaded files: " + error.message);
-      for (const item of data || []) {
-        const path = prefix ? prefix + "/" + item.name : item.name;
-        if (item.id === null) await collectFiles(path, depth + 1);
-        else filesToRemove.push(path);
+    // Each file bucket stores user-owned files under <auth-user-id>/...
+    // Clean all private upload buckets before deleting the auth account.
+    async function cleanBucket(bucketName: string): Promise<void> {
+      const bucket = admin.storage.from(bucketName);
+      const filesToRemove: string[] = [];
+      async function collectFiles(prefix: string, depth: number): Promise<void> {
+        if (depth > 4) return;
+        const { data, error } = await bucket.list(prefix, { limit: 1000 });
+        if (error) throw new Error(bucketName + ": " + error.message);
+        for (const item of data || []) {
+          const path = prefix ? prefix + "/" + item.name : item.name;
+          if (item.id === null) await collectFiles(path, depth + 1);
+          else filesToRemove.push(path);
+        }
+      }
+      await collectFiles(user.id, 0);
+      for (let i = 0; i < filesToRemove.length; i += 100) {
+        const { error } = await bucket.remove(filesToRemove.slice(i, i + 100));
+        if (error) throw new Error(bucketName + ": " + error.message);
       }
     }
 
     try {
-      await collectFiles(user.id, 0);
-      for (let i = 0; i < filesToRemove.length; i += 100) {
-        const { error } = await bucket.remove(filesToRemove.slice(i, i + 100));
-        if (error) throw new Error(error.message);
+      for (const bucketName of ["homework", "assignment-files", "assignment-submissions"]) {
+        await cleanBucket(bucketName);
       }
     } catch (cleanupError) {
       console.error("Account storage cleanup failed:", cleanupError);
