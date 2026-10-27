@@ -282,10 +282,14 @@ const primaryModel =
   process.env.GEMINI_MODEL ||
   "gemini-3.8-flash";
 
-const fallbackModel =
-  process.env.GEMINI_FAST_MODEL ||
-  process.env.GEMINI_FALLBACK_MODEL ||
-  "gemini-3.5-flash-lite";
+const fallbackModel = [
+  process.env.GEMINI_FAST_MODEL,
+  process.env.GEMINI_FALLBACK_MODEL,
+  "gemini-3.5-flash-lite",
+  "gemini-3.6-flash",
+]
+  .map((model) => model?.trim())
+  .find((model) => Boolean(model) && model !== primaryModel) || primaryModel;
 
 async function generateHomeworkAnalysis(
   model: string
@@ -328,10 +332,7 @@ try {
       primaryModel
     );
 } catch (primaryError) {
-  console.error(
-    `Primary Gemini model failed:`,
-    primaryError
-  );
+  console.warn("Primary homework model failed", { model: primaryModel });
 
   console.log(
     `Trying fallback Gemini model: ${fallbackModel}`
