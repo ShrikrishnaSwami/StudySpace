@@ -4,7 +4,7 @@ export const dynamic="force-dynamic";
 const ADMIN_EMAIL=(process.env.STUDYSPACE_ADMIN_EMAIL||"apha9213@gmail.com").toLowerCase();
 export async function GET(request:NextRequest){
  try{
-  const token=request.headers.get("authorization")?.replace(/^Bearer\\s+/i,""),url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const token=request.headers.get("authorization")?.replace(/^Bearer\s+/i,""),url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!token)return NextResponse.json({error:"Sign in required."},{status:401});if(!url||!key)return NextResponse.json({error:"Server-side Supabase admin configuration is missing."},{status:503});
   const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});const {data:{user},error:authError}=await client.auth.getUser(token);
   if(authError||!user)return NextResponse.json({error:"Session invalid. Sign in again."},{status:401});if(!user.email||user.email.toLowerCase()!==ADMIN_EMAIL)return NextResponse.json({error:"Administrator access required."},{status:403});
