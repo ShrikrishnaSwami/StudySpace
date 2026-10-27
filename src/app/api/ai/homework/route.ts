@@ -98,6 +98,7 @@ export async function POST(
      * --------------------------------------------------
      */
 
+    if (Number(request.headers.get("content-length") || 0) > 65536) return NextResponse.json({ error: "Request is too large." }, { status: 413 });
     const body = await request.json();
 
     const {
