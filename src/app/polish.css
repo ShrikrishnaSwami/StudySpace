@@ -368,3 +368,66 @@ main:has(form) form button[type="submit"]:active:not(:disabled) {
   color: #fff;
 }
 
+
+
+/* Light theme polish: keep the same hierarchy without washed-out text. */
+html[data-theme="light"] body {
+  background:
+    radial-gradient(ellipse at 12% -10%, rgba(139, 92, 246, .075), transparent 38%),
+    #f7f6fb;
+}
+
+html[data-theme="light"] .ss-sidebar {
+  box-shadow: 8px 0 28px rgba(38, 25, 65, .045);
+}
+
+html[data-theme="light"] .ss-topbar {
+  box-shadow: 0 8px 28px rgba(38, 25, 65, .035);
+}
+
+html[data-theme="light"] .ss-home .ss-nav,
+html[data-theme="light"] .ss-home .ss-footer {
+  border-color: rgba(35, 24, 55, .12);
+}
+
+html[data-theme="light"] .ss-home .ss-hero h1,
+html[data-theme="light"] .ss-home .ss-toolkit-head h2,
+html[data-theme="light"] .ss-home .ss-feature-intro h3 {
+  color: #211b31;
+}
+
+html[data-theme="light"] .ss-home .ss-ribbon {
+  background: #f0edf7;
+  color: #514761;
+}
+
+html[data-theme="light"] .ss-home .ss-tool-card {
+  background: linear-gradient(145deg, #fff, #f5f1fc);
+  border-color: rgba(35, 24, 55, .12);
+  box-shadow: 0 8px 24px rgba(35, 24, 55, .04);
+}
+
+html[data-theme="light"] .ss-home .ss-tool-card:hover {
+  border-color: rgba(124, 58, 237, .3);
+  box-shadow: 0 14px 32px rgba(70, 42, 120, .09);
+}
+
+html[data-theme="light"] .ss-home .ss-feature-strip,
+html[data-theme="light"] .ss-home .ss-bottom-banner {
+  border-color: rgba(124, 58, 237, .2);
+}
+
+html[data-theme="light"] .ss-home .ss-feature-item:hover {
+  background: rgba(124, 58, 237, .055);
+}
+
+html[data-theme="light"] .ss-home .ss-footer > span,
+html[data-theme="light"] .ss-home .ss-footer > a:last-child {
+  color: #625b72;
+}
+
+html[data-theme="light"] .ss-shell main .rounded-2xl.border,
+html[data-theme="light"] .ss-shell main .rounded-xl.border {
+  box-shadow: 0 8px 26px rgba(35, 24, 55, .035);
+}
+
