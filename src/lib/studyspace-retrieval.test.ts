@@ -50,6 +50,19 @@ test("query expansion retrieves relevant sections when wording differs", () => {
   }
 });
 
+test("retrieval selects an individual matching note instead of the entire notes category", () => {
+  const multiNoteContext = [
+    separator, "COURSE NOTES", separator,
+    "NOTE 1\\nTitle:\\nNewton's Second Law\\nContent:\\nNet force equals mass multiplied by acceleration.",
+    "NOTE 2\\nTitle:\\nPhotosynthesis\\nContent:\\nPlants convert light energy into chemical energy.",
+  ].join("\\n").replace(/^/, "\\n");
+  const result = retrieveRelevantStudyContext(multiNoteContext, "Explain photosynthesis from my notes");
+  assert.equal(result.sections[0]?.title, "COURSE NOTES");
+  assert.match(result.sections[0]?.source || "", /Photosynthesis/i);
+  assert.match(result.context, /Plants convert light energy/);
+  assert.doesNotMatch(result.context, /Net force equals mass/);
+});
+
 test("retrieval returns bounded context and section count", () => {
   const result = retrieveRelevantStudyContext(context, "Tell me about all my courses and assignments", {
     maxSections: 2,
@@ -57,7 +70,7 @@ test("retrieval returns bounded context and section count", () => {
   });
   assert.ok(result.sections.length <= 2);
   assert.ok(result.context.length <= 1000);
-  assert.equal(result.strategy, "lexical-expanded-v2");
+  assert.equal(result.strategy, "record-lexical-expanded-v3");
 });
 
 test("empty context returns a safe, explicit result", () => {
