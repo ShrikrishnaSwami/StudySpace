@@ -19,30 +19,10 @@ import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
 
 const initialStats = [
-  {
-    title: "Total Users",
-    value: "1,284",
-    change: "+12.5%",
-    icon: Users,
-  },
-  {
-    title: "Active Students",
-    value: "{stats[1]?.value ?? "—"}",
-    change: "+8.2%",
-    icon: GraduationCap,
-  },
-  {
-    title: "Courses",
-    value: "64",
-    change: "+4.1%",
-    icon: BookOpen,
-  },
-  {
-    title: "Assignments",
-    value: "2,841",
-    change: "+18.7%",
-    icon: CheckSquare,
-  },
+  { title: "Total Users", value: "—", change: "Auth-only metric", icon: Users },
+  { title: "Active Students", value: "—", change: "Live count", icon: GraduationCap },
+  { title: "Courses", value: "—", change: "Live count", icon: BookOpen },
+  { title: "Assignments", value: "—", change: "Live count", icon: CheckSquare },
 ];
 
 const activity = [
@@ -228,7 +208,7 @@ export default function AdminPage() {
               {liveActivity.length ? liveActivity[3].description.match(/\\d+/)?.[0] ?? "—" : "—"}
             </p>
             <p className="mt-1 text-xs text-white/25">
-              31 created this month
+              Live database count
             </p>
           </div>
 
@@ -252,7 +232,7 @@ export default function AdminPage() {
               {stats[1]?.value ?? "—"}
             </p>
             <p className="mt-1 text-xs text-emerald-400">
-              72.9% of registered users
+              Accounts with coursework
             </p>
           </div>
         </div>
