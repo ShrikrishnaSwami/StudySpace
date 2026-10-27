@@ -1746,9 +1746,7 @@ function EventModal({
           <div>
             <FieldLabel>Notes</FieldLabel>
 
-            <textarea
-              value={form.notes}
-              onChange={(event) =>
+            <textarea maxLength={5000} value={form.notes} onChange={(event) =>
                 update("notes", event.target.value)
               }
               placeholder="Optional notes"
