@@ -232,7 +232,7 @@ information is unavailable.
      * -------------------------------------------------------
      * Keep prompts focused on relevant data already loaded for this student.
      */
-    const retrieval = await retrieveRelevantStudyContextHybrid(studySpaceContext, message);
+    const retrieval = await retrieveRelevantStudyContextHybrid(studySpaceContext, message, { userId: user.id, accessToken: token });
     const selectedStudySpaceContext = retrieval.context;
 
     /*
