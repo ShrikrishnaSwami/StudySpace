@@ -12,6 +12,8 @@ The retrieval baseline now ranks individual records (for example, one note or as
 - Uses direct term matches and weighted, hand-authored synonym expansion.
 - Filters generic category words (such as “notes” or “assignments”) when a query contains a specific topic, reducing unrelated record matches.
 - Uses a small overview fallback for category-only or unmatched questions.
+- Splits long records into overlapping, paragraph-aware chunks so relevant material later in a note is not lost to a single-record truncation.
+- Keeps a stable group identity across chunks and selects at most one chunk per original record, reducing duplicate context.
 - Limits selected records and total prompt context.
 - Falls back to a small overview when there are no useful lexical matches.
 - Returns record-level source labels to the tutor API for display.
@@ -25,7 +27,7 @@ This is still deterministic lexical retrieval. It is not an embedding model, vec
 
 ## Evaluation
 
-Synthetic cases in `src/lib/studyspace-retrieval-evaluation.json` contain no real student records. Regression tests in `src/lib/studyspace-retrieval.test.ts` cover expected categories, paraphrased queries, individual note selection, context bounds, empty context, and unmatched-question fallback.
+Synthetic cases in `src/lib/studyspace-retrieval-evaluation.json` contain no real student records. Regression tests in `src/lib/studyspace-retrieval.test.ts` cover expected categories, paraphrased queries, individual note selection, retrieval from later chunks of long notes, context bounds, empty context, and unmatched-question fallback.
 
 Run with:
 
