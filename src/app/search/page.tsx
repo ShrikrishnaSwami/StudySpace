@@ -11,13 +11,13 @@ const TYPES: Record<string,{label:string;icon:typeof Search}> = {
   course:{label:"Course",icon:BookOpen}, assignment:{label:"Assignment",icon:ClipboardList},
   quiz:{label:"Quiz",icon:Brain}, note:{label:"Grade item",icon:FileText},
   homework:{label:"Homework",icon:FileText}, event:{label:"Calendar event",icon:CalendarDays},
-  deck:{label:"Flashcard deck",icon:Brain},
+  deck:{label:"Flashcard deck",icon:Brain}, note_record:{label:"Course note",icon:FileText}, resource:{label:"Course resource",icon:FileText},
 };
 
 export default function SearchPage(){
  const [query,setQuery]=useState(""); const [results,setResults]=useState<Result[]>([]);
  const [busy,setBusy]=useState(false); const [error,setError]=useState(""); const [searched,setSearched]=useState(false);
- async function search(e:FormEvent){e.preventDefault();const q=query.trim();if(q.length<2){setError("Enter at least two characters.");return;}setBusy(true);setError("");setSearched(true);
+ async function search(e:FormEvent){e.preventDefault();const q=query.trim().replace(/[,%()]/g," ").replace(/\\s+/g," ");if(q.length<2){setError("Enter at least two characters.");return;}setBusy(true);setError("");setSearched(true);
   try{
    const tasks=await Promise.all([
     supabase.from("courses").select("id,name,code,description,created_at").or("name.ilike.%"+q+"%,code.ilike.%"+q+"%,description.ilike.%"+q+"%").limit(12),
@@ -30,7 +30,7 @@ export default function SearchPage(){
    ]);
    const errors=tasks.filter(x=>x.error&&x.error.code!=="PGRST205"&&x.error.code!=="42P01");
    if(errors.length)throw new Error(errors[0].error?.message||"Search failed.");
-   const [c,a,z,g,h,ev,d]=tasks;
+   const [c,a,z,g,h,ev,d,n,r]=tasks;
    const mapped:Result[]=[
     ...((c.data||[]) as any[]).map(x=>({id:x.id,title:x.name,detail:[x.code,x.description].filter(Boolean).join(" · "),type:"course",href:"/courses/"+x.id,date:x.created_at})),
     ...((a.data||[]) as any[]).map(x=>({id:x.id,title:x.title,detail:[x.status,x.description].filter(Boolean).join(" · "),type:"assignment",href:"/assignments/"+x.id,date:x.due_date})),
