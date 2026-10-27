@@ -27,7 +27,7 @@ const initialStats = [
   },
   {
     title: "Active Students",
-    value: "936",
+    value: "{stats[1]?.value ?? "—"}",
     change: "+8.2%",
     icon: GraduationCap,
   },
@@ -74,7 +74,42 @@ const activity = [
 
 export default function AdminPage() {
   const router = useRouter();
-  const [checking, setChecking] = useState(true);\n  const [stats, setStats] = useState(initialStats);\n  const [liveActivity, setLiveActivity] = useState(activity);
+  const [checking, setChecking] = useState(true);
+  const [stats, setStats] = useState(initialStats);
+  const [liveActivity, setLiveActivity] = useState(activity);
+
+  useEffect(() => {
+    async function loadOverview() {
+      const [profiles, courses, assignments, submissions, quizzes] = await Promise.all([
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase.from("courses").select("id", { count: "exact", head: true }),
+        supabase.from("assignments").select("id", { count: "exact", head: true }),
+        supabase.from("assignment_submissions").select("id", { count: "exact", head: true }),
+        supabase.from("quizzes").select("id", { count: "exact", head: true }),
+      ]);
+      setStats([
+        { title: "Total Users", value: String(profiles.count ?? "—"), change: "Live count", icon: Users },
+        { title: "Active Students", value: String(profiles.count ?? "—"), change: "Registered profiles", icon: GraduationCap },
+        { title: "Courses", value: String(courses.count ?? "—"), change: "Live count", icon: BookOpen },
+        { title: "Assignments", value: String(assignments.count ?? "—"), change: "Live count", icon: CheckSquare },
+      ]);
+      setLiveActivity([
+        { icon: UserPlus, title: "Student profiles", description: `${profiles.count ?? 0} registered profiles`, time: "Live database count" },
+        { icon: BookOpen, title: "Courses", description: `${courses.count ?? 0} courses in the database`, time: "Live database count" },
+        { icon: ClipboardList, title: "Submissions", description: `${submissions.count ?? 0} submissions recorded`, time: "Live database count" },
+        { icon: Activity, title: "Quizzes", description: `${quizzes.count ?? 0} quizzes created`, time: "Live database count" },
+      ]);
+    }
+    void loadOverview();
+    const channel = supabase.channel("admin-overview-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => { void loadOverview(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "courses" }, () => { void loadOverview(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "assignments" }, () => { void loadOverview(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "assignment_submissions" }, () => { void loadOverview(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "quizzes" }, () => { void loadOverview(); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, []);
 
   useEffect(() => {
     async function checkAdmin() {
