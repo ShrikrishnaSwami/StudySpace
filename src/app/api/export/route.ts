@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       const { data, error } = await client.from(table).select("*").limit(10000);
       if (error) {
         if (error.code === "42P01" || error.code === "PGRST205") warnings.push(table + " was unavailable and was skipped.");
-        else throw new Error("Could not export " + table + ": " + error.message);
+        else throw new Error("Data export query failed.");
       } else { exported[table] = data || []; if ((data || []).length === 10000) warnings.push(table + " reached the 10,000-row export cap and may be truncated."); }
     }
     return NextResponse.json({
