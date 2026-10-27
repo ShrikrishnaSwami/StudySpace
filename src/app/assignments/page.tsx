@@ -186,6 +186,14 @@ export default function AssignmentsPage() {
     return () => window.clearTimeout(timeoutId);
   }, [loadData]);
 
+  useEffect(() => {
+    const channel = supabase.channel("student-assignments-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "assignments" }, () => { void loadData(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "assignment_submissions" }, () => { void loadData(); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [loadData]);
+
   const filteredAssignments = useMemo(() => {
     const query = search.trim().toLowerCase();
 
