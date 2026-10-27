@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { consumeApiRateLimit } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,9 @@ export async function DELETE(request: NextRequest) {
     const { data: { user }, error: authError } = await authClient.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Your session is invalid. Sign in again." }, { status: 401 });
     const userId = user.id;
+    const rate = await consumeApiRateLimit(userId, "account-delete", 3, 3600);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many account deletion attempts. Please try again later." }, { status: 429 });
+
 
     let body: { confirmation?: string };
     try { body = await request.json(); } catch { return NextResponse.json({ error: "Confirmation is required." }, { status: 400 }); }
