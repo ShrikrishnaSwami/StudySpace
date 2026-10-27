@@ -261,7 +261,7 @@ Rules:
 - For writing assignments, explain how the student should approach the task.
 - Match the apparent academic level.
 - Make the explanation educational.
-- Do not pretend to know instructor requirements that are not shown.
+- Do not invent course rules or grading criteria the student has not provided.
 `;
 
     console.log(
