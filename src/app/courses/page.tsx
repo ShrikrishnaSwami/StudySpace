@@ -267,7 +267,7 @@ export default function CoursesPage() {
               </h1>
 
               <p className="mt-3 max-w-xl text-sm leading-6 text-white/45 sm:text-base">
-                Keep every class, schedule, professor, and progress update
+                Keep every class, schedule, and progress update
                 together so you always know what you&apos;re working toward.
               </p>
             </div>
@@ -437,13 +437,6 @@ export default function CoursesPage() {
                   required
                 />
               </div>
-
-              <InputField
-                label="Professor"
-                placeholder="e.g. Dr. Smith"
-                value={professor}
-                onChange={setProfessor}
-              />
 
               <div className="grid gap-5 sm:grid-cols-2">
                 <InputField
@@ -683,14 +676,6 @@ function CourseCard({
 
         {/* Course information */}
         <div className="mt-7 grid gap-3 sm:grid-cols-2">
-          {course.professor && (
-            <InfoItem
-              icon={<UserRound size={15} />}
-              label="Professor"
-              value={course.professor}
-            />
-          )}
-
           {course.room && (
             <InfoItem
               icon={<MapPin size={15} />}
@@ -707,7 +692,7 @@ function CourseCard({
             />
           )}
 
-          {!course.professor && !course.room && !course.schedule && (
+          {!course.room && !course.schedule && (
             <div className="sm:col-span-2 rounded-2xl border border-dashed border-white/[0.07] px-4 py-4 text-xs text-white/25">
               No class details added yet.
             </div>
