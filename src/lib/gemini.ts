@@ -249,3 +249,42 @@ export async function generateAIResponse({
   }
   return generateWithGeminiFallback({ task, systemInstruction, prompt });
 }
+
+
+/** Extract dates directly from a PDF syllabus using Gemini's document input support. */
+export async function generateAIResponseFromPdf({
+  systemInstruction,
+  prompt,
+  pdfBase64,
+}: {
+  systemInstruction: string;
+  prompt: string;
+  pdfBase64: string;
+}) {
+  const { primary, fallback } = configuredGeminiModels("syllabus");
+  const models = [primary, ...(fallback !== primary ? [fallback] : [])];
+  let lastError: unknown;
+  for (const model of models) {
+    try {
+      const response = await getGeminiClient().models.generateContent({
+        model,
+        contents: [
+          { inlineData: { mimeType: "application/pdf", data: pdfBase64 } },
+          { text: prompt },
+        ],
+        config: {
+          systemInstruction: buildSystemInstruction(systemInstruction, "syllabus"),
+          temperature: 0.2,
+          maxOutputTokens: 4096,
+        },
+      });
+      const result = response.text?.trim();
+      if (!result) throw new Error("The AI provider returned an empty response.");
+      return result;
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableError(error)) break;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Could not read the PDF syllabus.");
+}
