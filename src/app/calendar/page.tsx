@@ -748,6 +748,8 @@ export default function CalendarPage() {
               </button>
 
               <button
+                type="button"
+                aria-label="Next calendar period"
                 onClick={goNext}
                 className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-2.5 text-white/40 transition hover:bg-white/[0.06] hover:text-white"
               >
