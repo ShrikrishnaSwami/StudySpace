@@ -14,7 +14,6 @@ import {
   UserRound,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { isAdminEmail } from "@/lib/admin";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -98,8 +97,16 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) throw error;
-      const { data: { user } } = await supabase.auth.getUser();
-      router.push(isAdminEmail(user?.email) ? "/admin" : "/dashboard");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        const adminCheck = await fetch("/api/admin/stats", {
+          headers: { Authorization: "Bearer " + session.access_token },
+          cache: "no-store",
+        });
+        router.push(adminCheck.ok ? "/admin" : "/dashboard");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not sign in.");
       setLoading(false);
