@@ -5,7 +5,6 @@ import { RefreshCw, ShieldCheck, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
-import { isAdminEmail } from "@/lib/admin";
 
 type Stats = { totalUsers: number; generatedAt: string };
 const blank: Stats = { totalUsers: 0, generatedAt: "" };
@@ -43,7 +42,6 @@ export default function AdminPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!alive) return;
       if (!user) { router.replace("/login"); return; }
-      if (!isAdminEmail(user.email)) { router.replace("/dashboard"); return; }
       setChecking(false);
       void load();
     }
