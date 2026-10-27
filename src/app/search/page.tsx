@@ -27,6 +27,8 @@ export default function SearchPage(){
     supabase.from("homework").select("id,title,description,created_at").or("title.ilike.%"+q+"%,description.ilike.%"+q+"%").limit(12),
     supabase.from("calendar_events").select("id,title,subtitle,start_at").or("title.ilike.%"+q+"%,subtitle.ilike.%"+q+"%").limit(12),
     supabase.from("flashcard_decks").select("id,title,topic,created_at").or("title.ilike.%"+q+"%,topic.ilike.%"+q+"%").limit(12),
+    supabase.from("course_notes").select("id,title,content,created_at").or("title.ilike.%"+q+"%,content.ilike.%"+q+"%").limit(12),
+    supabase.from("course_resources").select("id,title,description,url,created_at").or("title.ilike.%"+q+"%,description.ilike.%"+q+"%").limit(12),
    ]);
    const errors=tasks.filter(x=>x.error&&x.error.code!=="PGRST205"&&x.error.code!=="42P01");
    if(errors.length)throw new Error(errors[0].error?.message||"Search failed.");
