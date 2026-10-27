@@ -187,6 +187,7 @@ Never fabricate student-specific facts.
 Return valid JSON only.
         `,
         prompt,
+        task: "recommendations",
       });
 
     let parsed: {
