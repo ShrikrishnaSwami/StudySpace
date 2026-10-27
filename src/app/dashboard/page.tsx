@@ -958,9 +958,7 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={loadDashboard}
+            <button type="button" aria-label="Refresh dashboard data" onClick={loadDashboard}
               className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.035] px-4 text-xs font-medium text-white/70 transition hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-white"
             >
               <RefreshCw className="h-3.5 w-3.5" />
