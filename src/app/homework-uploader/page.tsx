@@ -1083,9 +1083,7 @@ export default function HomeworkUploaderPage() {
                     Title
                   </label>
 
-                  <input
-                    value={title}
-                    onChange={(event) =>
+                  <input maxLength={180} value={title} onChange={(event) =>
                       setTitle(event.target.value)
                     }
                     placeholder="e.g. Physics Problem Set 3"
