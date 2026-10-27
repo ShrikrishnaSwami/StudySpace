@@ -1593,3 +1593,22 @@ button, a, input, textarea, select { accent-color: #a78bfa; }
   .ss-feature-item { grid-template-columns: 26px minmax(0,1fr) 20px; gap: 10px; padding: 18px 0; }
   .ss-feature-item b { font-size: 13px; }
 }
+
+/* Keyboard accessibility */
+.ss-skip-link {
+  position: fixed;
+  z-index: 200;
+  top: 10px;
+  left: 10px;
+  transform: translateY(-160%);
+  padding: 11px 15px;
+  border: 1px solid rgba(196,181,253,.35);
+  border-radius: 10px;
+  background: #1b1430;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 650;
+  box-shadow: 0 12px 35px rgba(0,0,0,.4);
+  transition: transform .16s ease;
+}
+.ss-skip-link:focus { transform: translateY(0); }
