@@ -1080,3 +1080,58 @@ a {
 .ss-page-content [class*="rounded-2xl"],.ss-page-content [class*="rounded-xl"],.ss-page-content [class*="rounded-3xl"]{border-radius:12px!important}
 .ss-page-content [class*="border-white/"],.ss-page-content [class*="border-violet-"],.ss-page-content [class*="border-purple-"]{border-color:#ffffff17!important}
 .ss-page-content input,.ss-page-content textarea,.ss-page-content select{border-radius:9px!important}
+
+/* Light appearance overrides used by the persistent settings theme. */
+html[data-theme="light"] body,
+html[data-theme="light"] .ss-shell {
+  background: #f7f6fb !important;
+  color: #211b31 !important;
+}
+html[data-theme="light"] .ss-sidebar {
+  background: #eeebf6 !important;
+  border-color: rgba(35, 24, 55, .12) !important;
+}
+html[data-theme="light"] .ss-topbar {
+  background: rgba(247, 246, 251, .94) !important;
+  border-color: rgba(35, 24, 55, .12) !important;
+}
+html[data-theme="light"] [class*="text-white"] {
+  color: #211b31 !important;
+}
+html[data-theme="light"] [class*="bg-white/"] {
+  background-color: rgba(37, 26, 58, .035) !important;
+}
+html[data-theme="light"] [class*="border-white/"] {
+  border-color: rgba(35, 24, 55, .13) !important;
+}
+html[data-theme="light"] input,
+html[data-theme="light"] textarea,
+html[data-theme="light"] select {
+  background-color: #fff !important;
+  color: #211b31 !important;
+  border-color: rgba(35, 24, 55, .18) !important;
+}
+html[data-theme="light"] input::placeholder,
+html[data-theme="light"] textarea::placeholder {
+  color: #8b8498 !important;
+}
+html[data-theme="light"] [class*="bg-violet-600"] [class*="text-white"],
+html[data-theme="light"] [class*="bg-purple-600"] [class*="text-white"],
+html[data-theme="light"] [class*="bg-red-600"] [class*="text-white"],
+html[data-theme="light"] button[class*="bg-violet-600"],
+html[data-theme="light"] button[class*="bg-purple-600"],
+html[data-theme="light"] button[class*="bg-red-600"] {
+  color: #fff !important;
+}
+html[data-theme="light"] .landing-page {
+  background: radial-gradient(circle at 50% -10%, rgba(124, 58, 237, .12), transparent 38%), #f7f6fb !important;
+}
+html[data-theme="light"] .landing-page [class*="text-white"],
+html[data-theme="light"] .landing-page h1,
+html[data-theme="light"] .landing-page h2 {
+  color: #211b31 !important;
+}
+html[data-theme="light"] .landing-page .landing-signup,
+html[data-theme="light"] .landing-page .hero-primary {
+  color: #fff !important;
+}
