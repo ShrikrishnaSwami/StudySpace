@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { consumeAiQuota } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 
 import { generateAIResponse } from "@/lib/gemini";
@@ -200,6 +201,11 @@ Rules:
 - Do not invent course-specific information unsupported by the notes.
 - Make the quiz appropriate for a university student.
 `;
+
+    const quota = await consumeAiQuota(user.id, "quiz");
+    if (!quota.allowed) {
+      return NextResponse.json({ error: "You have reached today's AI quiz limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
+    }
 
     const response = await generateAIResponse({
       systemInstruction: `
