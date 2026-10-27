@@ -1045,6 +1045,32 @@ export default function DashboardPage() {
         </section>
 
         {/* =================================================
+            QUICK ACTIONS
+        ================================================= */}
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Quick actions">
+          <a href="/ai-tutor" className="group flex items-center gap-3 rounded-2xl border border-violet-400/[0.12] bg-violet-500/[0.045] p-4 transition hover:border-violet-400/25 hover:bg-violet-500/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300"><Brain className="h-4 w-4" /></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Ask AI Tutor</span><span className="mt-1 block text-xs text-white/35">Get help with a concept</span></span>
+            <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-violet-300" />
+          </a>
+          <a href="/assignments" className="group flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition hover:border-white/[0.14] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-orange-300"><ListChecks className="h-4 w-4" /></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Assignments</span><span className="mt-1 block text-xs text-white/35">Review upcoming work</span></span>
+            <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
+          </a>
+          <a href="/calendar" className="group flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition hover:border-white/[0.14] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><CalendarDays className="h-4 w-4" /></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Open calendar</span><span className="mt-1 block text-xs text-white/35">See your schedule</span></span>
+            <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
+          </a>
+          <a href="/flashcards" className="group flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition hover:border-white/[0.14] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-300"><Zap className="h-4 w-4" /></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Study flashcards</span><span className="mt-1 block text-xs text-white/35">Practice active recall</span></span>
+            <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
+          </a>
+        </section>
+
+        {/* =================================================
             AI STUDY PLAN
         ================================================= */}
 
