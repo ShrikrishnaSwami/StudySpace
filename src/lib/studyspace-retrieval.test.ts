@@ -53,9 +53,9 @@ test("query expansion retrieves relevant sections when wording differs", () => {
 test("retrieval selects an individual matching note instead of the entire notes category", () => {
   const multiNoteContext = [
     separator, "COURSE NOTES", separator,
-    "NOTE 1\\nTitle:\\nNewton's Second Law\\nContent:\\nNet force equals mass multiplied by acceleration.",
-    "NOTE 2\\nTitle:\\nPhotosynthesis\\nContent:\\nPlants convert light energy into chemical energy.",
-  ].join("\\n").replace(/^/, "\\n");
+    "NOTE 1\nTitle:\nNewton's Second Law\nContent:\nNet force equals mass multiplied by acceleration.",
+    "NOTE 2\nTitle:\nPhotosynthesis\nContent:\nPlants convert light energy into chemical energy.",
+  ].join("\n").replace(/^/, "\n");
   const result = retrieveRelevantStudyContext(multiNoteContext, "Explain photosynthesis from my notes");
   assert.equal(result.sections[0]?.title, "COURSE NOTES");
   assert.match(result.sections[0]?.source || "", /Photosynthesis/i);
