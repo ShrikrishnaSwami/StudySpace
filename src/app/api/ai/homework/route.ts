@@ -291,6 +291,7 @@ Rules:
     let response;
 
 const primaryModel =
+  process.env.GEMINI_REASONING_MODEL ||
   process.env.GEMINI_MODEL ||
   "gemini-3.8-flash";
 
