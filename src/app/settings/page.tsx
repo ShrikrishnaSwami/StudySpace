@@ -36,8 +36,8 @@ function Toggle({ title, description, value, onChange }: {
   return <div className="flex items-center gap-4">
     <div className="min-w-0 flex-1"><p className="text-sm font-medium text-white">{title}</p><p className="mt-1 text-xs leading-5 text-white/40">{description}</p></div>
     <button type="button" aria-label={title} aria-pressed={value} onClick={() => onChange(!value)}
-      className={\`relative h-6 w-11 shrink-0 rounded-full transition \${value ? "bg-violet-600" : "bg-white/15"}\`}>
-      <span className={\`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition \${value ? "left-6" : "left-1"}\`}/>
+      className={`relative h-6 w-11 shrink-0 rounded-full transition ${value ? "bg-violet-600" : "bg-white/15"}`}>
+      <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${value ? "left-6" : "left-1"}`}/>
     </button>
   </div>;
 }
@@ -179,7 +179,7 @@ export default function SettingsPage() {
       if (!session) throw new Error("Your session expired. Sign in again.");
       const response = await fetch("/api/account/delete", {
         method: "DELETE",
-        headers: { Authorization: \`Bearer \${session.access_token}\`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ confirmation: deletePhrase }),
       });
       const body = await response.json();
@@ -205,7 +205,7 @@ export default function SettingsPage() {
         <Section icon={User} title="Profile" description="Update the name shown across your workspace.">
           <form onSubmit={saveProfile} className="space-y-4">
             <div><label htmlFor="profile-name" className="mb-2 block text-xs font-medium text-white/55">Full name</label><input id="profile-name" autoComplete="name" maxLength={100} required value={name} onChange={e=>{setName(e.target.value);setProfileMessage("");}} placeholder="Your name" className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-violet-400/40"/></div>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4"><p aria-live="polite" className={\`text-xs \${profileMessage.includes("successfully") ? "text-emerald-300" : "text-red-300"}\`}>{profileMessage}</p><button type="submit" disabled={savingProfile} className="inline-flex h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"><Save size={15}/>{savingProfile?"Saving…":"Save profile"}</button></div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4"><p aria-live="polite" className={`text-xs ${profileMessage.includes("successfully") ? "text-emerald-300" : "text-red-300"}`}>{profileMessage}</p><button type="submit" disabled={savingProfile} className="inline-flex h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"><Save size={15}/>{savingProfile?"Saving…":"Save profile"}</button></div>
           </form>
           <form onSubmit={requestEmailChange} className="space-y-3 border-t border-white/[0.06] pt-5">
             <div><label htmlFor="account-email" className="mb-2 block text-xs font-medium text-white/55">Current email</label><div id="account-email" className="flex h-11 items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4"><Mail size={15} className="text-white/30"/><span className="truncate text-sm text-white/55">{email}</span></div></div>
@@ -234,7 +234,7 @@ export default function SettingsPage() {
 
         <Section icon={Laptop} title="Appearance" description="Choose the visual theme for your workspace.">
           <div className="grid gap-3 sm:grid-cols-3">
-            {([{value:"dark",title:"Dark",description:"The original purple-black StudySpace look.",icon:Moon},{value:"light",title:"Light",description:"A brighter workspace.",icon:Sun},{value:"system",title:"System",description:"Follow your device appearance.",icon:Laptop}] as const).map(option=>{const Icon=option.icon;const active=preferences.theme===option.value;return <button key={option.value} type="button" aria-pressed={active} onClick={()=>chooseTheme(option.value)} className={\`rounded-2xl border p-4 text-left transition \${active?"border-violet-400/40 bg-violet-500/10":"border-white/10 bg-white/[0.02] hover:bg-white/[0.05]"}\`}><Icon size={19} className={active?"text-violet-300":"text-white/45"}/><p className="mt-3 text-sm font-medium text-white">{option.title}</p><p className="mt-1 text-xs leading-5 text-white/40">{option.description}</p>{active&&<p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-violet-300">Selected</p>}</button>})}
+            {([{value:"dark",title:"Dark",description:"The original purple-black StudySpace look.",icon:Moon},{value:"light",title:"Light",description:"A brighter workspace.",icon:Sun},{value:"system",title:"System",description:"Follow your device appearance.",icon:Laptop}] as const).map(option=>{const Icon=option.icon;const active=preferences.theme===option.value;return <button key={option.value} type="button" aria-pressed={active} onClick={()=>chooseTheme(option.value)} className={`rounded-2xl border p-4 text-left transition ${active?"border-violet-400/40 bg-violet-500/10":"border-white/10 bg-white/[0.02] hover:bg-white/[0.05]"}`}><Icon size={19} className={active?"text-violet-300":"text-white/45"}/><p className="mt-3 text-sm font-medium text-white">{option.title}</p><p className="mt-1 text-xs leading-5 text-white/40">{option.description}</p>{active&&<p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-violet-300">Selected</p>}</button>})}
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4"><p aria-live="polite" className="text-xs text-emerald-300">{preferencesMessage}</p><button type="button" onClick={savePreferences} disabled={savingPreferences} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"><Save size={15}/>{savingPreferences?"Saving…":"Save preferences"}</button></div>
         </Section>
