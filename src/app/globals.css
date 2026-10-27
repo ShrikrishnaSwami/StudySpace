@@ -1135,3 +1135,28 @@ html[data-theme="light"] .landing-page .landing-signup,
 html[data-theme="light"] .landing-page .hero-primary {
   color: #fff !important;
 }
+
+html[data-theme="light"] .ss-home {
+  background: #f7f6fb !important;
+  color: #211b31 !important;
+}
+html[data-theme="light"] .ss-home .ss-nav-center,
+html[data-theme="light"] .ss-home .ss-login,
+html[data-theme="light"] .ss-home .ss-hero-text,
+html[data-theme="light"] .ss-home .ss-scroll-link,
+html[data-theme="light"] .ss-home .ss-tool-card p,
+html[data-theme="light"] .ss-home .ss-footer {
+  color: #625b72 !important;
+}
+html[data-theme="light"] .ss-home .ss-note-card {
+  background: #fffdf5 !important;
+  color: #29223a !important;
+}
+html[data-theme="light"] .ss-home .ss-note-card b,
+html[data-theme="light"] .ss-home .ss-note-card h2,
+html[data-theme="light"] .ss-home .ss-tool-card h3 {
+  color: #29223a !important;
+}
+html[data-theme="light"] .ss-home .ss-ribbon {
+  border-color: rgba(35, 24, 55, .12) !important;
+}
