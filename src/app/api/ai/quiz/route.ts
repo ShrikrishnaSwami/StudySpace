@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (Number(request.headers.get("content-length") || 0) > 32768) return NextResponse.json({ error: "Request is too large." }, { status: 413 });
     const body = await request.json();
 
     const {
