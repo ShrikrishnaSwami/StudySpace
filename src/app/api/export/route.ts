@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 export const dynamic = "force-dynamic";
 
 const TABLES = [
-  "profiles", "courses", "assignments", "quizzes", "quiz_questions",
+  "profiles", "courses", "assignments", "assignment_attachments", "assignment_submissions", "assignment_submission_files", "quizzes", "quiz_questions", "quiz_answers", "ai_tutor_conversations", "ai_tutor_messages",
   "quiz_attempts", "grade_items", "flashcard_decks", "flashcards",
   "calendar_events", "study_sessions", "study_recommendations",
   "notifications", "homework", "course_notes", "course_resources",
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       if (error) {
         if (error.code === "42P01" || error.code === "PGRST205") warnings.push(table + " was unavailable and was skipped.");
         else throw new Error("Could not export " + table + ": " + error.message);
-      } else exported[table] = data || [];
+      } else { exported[table] = data || []; if ((data || []).length === 10000) warnings.push(table + " reached the 10,000-row export cap and may be truncated."); }
     }
     return NextResponse.json({
       format: "studyspace-export-v1",
