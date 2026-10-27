@@ -1255,11 +1255,11 @@ button, a, input, textarea, select { outline-offset: 3px; }
   padding-top: 10px;
   padding-bottom: 10px;
 }
-.ss-sidebar a.group.relative.flex.items-center.bg-white\/\\[0\\.07\\] {
+.ss-sidebar a.group.relative.flex.items-center[class*="bg-white/[0.07]"] {
   background: linear-gradient(100deg, rgba(139, 92, 246, .2), rgba(139, 92, 246, .06)) !important;
   box-shadow: inset 0 0 0 1px rgba(167, 139, 250, .12);
 }
-.ss-sidebar a.group.relative.flex.items-center.bg-white\/\\[0\\.07\\] svg { color: #c4b5fd !important; }
+.ss-sidebar a.group.relative.flex.items-center[class*="bg-white/[0.07]"] svg { color: #c4b5fd !important; }
 .ss-sidebar nav button { border-radius: 11px; }
 .ss-topbar {
   background: rgba(9, 8, 15, .82) !important;
@@ -1281,14 +1281,14 @@ button, a, input, textarea, select { outline-offset: 3px; }
 .ss-shell main .rounded-2xl.border {
   box-shadow: 0 12px 40px rgba(0, 0, 0, .08);
 }
-.ss-shell main .bg-white\/\\[0\\.025\\],
-.ss-shell main .bg-white\/\\[0\\.03\\],
-.ss-shell main .bg-white\/\\[0\\.035\\],
-.ss-shell main .bg-white\/\\[0\\.04\\] {
+.ss-shell main [class*="bg-white/[0.025]"],
+.ss-shell main [class*="bg-white/[0.03]"],
+.ss-shell main [class*="bg-white/[0.035]"],
+.ss-shell main [class*="bg-white/[0.04]"] {
   background: linear-gradient(145deg, rgba(27, 22, 42, .68), rgba(16, 13, 25, .68)) !important;
 }
-.ss-shell main .bg-white\/\\[0\\.05\\],
-.ss-shell main .bg-white\/\\[0\\.06\\] {
+.ss-shell main [class*="bg-white/[0.05]"],
+.ss-shell main [class*="bg-white/[0.06]"] {
   background-color: rgba(255, 255, 255, .055) !important;
 }
 .ss-shell main button:not([aria-label="Close navigation"]) {
