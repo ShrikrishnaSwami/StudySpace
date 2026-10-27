@@ -1114,17 +1114,17 @@ export default function AssignmentWorkspacePage() {
                 <div className="mb-5 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.05] p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-wider text-emerald-300/80">Instructor result</p>
+                      <p className="text-xs font-medium uppercase tracking-wider text-emerald-300/80">Your result</p>
                       <h3 className="mt-1 text-2xl font-bold text-white">{activeSubmission.grade} / {assignment?.max_points ?? 100} points</h3>
                       <p className="mt-1 text-xs text-white/35">{activeSubmission.graded_at ? `Graded ${formatDateTime(activeSubmission.graded_at)}` : "Grade returned"}</p>
                     </div>
                     <CheckCircle2 className="h-6 w-6 text-emerald-300" />
                   </div>
-                  {activeSubmission.feedback && <div className="mt-4 border-t border-white/[0.08] pt-4"><p className="mb-1 text-xs font-medium text-white/45">Instructor feedback</p><p className="whitespace-pre-wrap text-sm leading-6 text-white/75">{activeSubmission.feedback}</p></div>}
+                  {activeSubmission.feedback && <div className="mt-4 border-t border-white/[0.08] pt-4"><p className="mb-1 text-xs font-medium text-white/45">Feedback</p><p className="whitespace-pre-wrap text-sm leading-6 text-white/75">{activeSubmission.feedback}</p></div>}
                 </div>
               )}
               {activeSubmission?.status === "submitted" && activeSubmission.grade == null && (
-                <div className="mb-5 rounded-xl border border-amber-400/15 bg-amber-400/[0.04] px-4 py-3 text-sm text-amber-100/70">Your work has been submitted and is awaiting instructor grading.</div>
+                <div className="mb-5 rounded-xl border border-amber-400/15 bg-amber-400/[0.04] px-4 py-3 text-sm text-amber-100/70">Your work has been submitted.</div>
               )}
 
               {activeSubmission && (
