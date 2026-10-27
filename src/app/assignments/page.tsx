@@ -17,6 +17,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import AppShell from "@/components/AppShell";
 import { createClient } from "@/lib/supabase/client";
 
 type Course = {
@@ -366,17 +367,20 @@ export default function AssignmentsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-[calc(100vh-80px)] px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-6xl items-center justify-center gap-3 py-32 text-sm text-white/45">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Loading assignments...
-        </div>
-      </main>
+      <AppShell title="Assignments" description="Organize your deadlines and keep your coursework moving.">
+        <main className="min-h-[calc(100vh-80px)] px-4 py-10 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-6xl items-center justify-center gap-3 py-32 text-sm text-white/45">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Loading assignments...
+          </div>
+        </main>
+      </AppShell>
     );
   }
 
   return (
-    <main className="min-h-[calc(100vh-80px)] px-4 py-7 sm:px-6 lg:px-8">
+    <AppShell title="Assignments" description="Organize your deadlines and keep your coursework moving.">
+      <main className="min-h-[calc(100vh-80px)] px-4 py-7 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div>
@@ -860,6 +864,7 @@ export default function AssignmentsPage() {
           </div>
         </div>
       )}
-    </main>
+      </main>
+    </AppShell>
   );
 }
