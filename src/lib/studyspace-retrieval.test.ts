@@ -69,7 +69,7 @@ test("semantic scores can retrieve a paraphrased note without keyword overlap", 
     "NOTE 1\nTitle:\nNewton's Second Law\nContent:\nNet force equals mass multiplied by acceleration.",
     "NOTE 2\nTitle:\nPhotosynthesis\nContent:\nPlants convert light energy into chemical energy.",
   ].join("\n").replace(/^/, "\n");
-  const result = retrieveRelevantStudyContext(multiNoteContext, "How do plants make food from sunlight?", {
+  const result = retrieveRelevantStudyContext(multiNoteContext, "How do autotrophs produce carbohydrates?", {
     semanticScores: {
       "COURSE NOTES::NOTE 1: Newton's Second Law": 0.12,
       "COURSE NOTES::NOTE 2: Photosynthesis": 0.82,
