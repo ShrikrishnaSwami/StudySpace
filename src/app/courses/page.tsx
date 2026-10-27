@@ -8,7 +8,6 @@ import {
   MapPin,
   Plus,
   Trash2,
-  UserRound,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -22,7 +21,6 @@ type Course = {
   user_id: string;
   code: string;
   name: string;
-  professor: string | null;
   room: string | null;
   schedule: string | null;
   color: string | null;
@@ -94,7 +92,6 @@ export default function CoursesPage() {
 
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
-  const [professor, setProfessor] = useState("");
   const [room, setRoom] = useState("");
   const [schedule, setSchedule] = useState("");
 
@@ -171,7 +168,6 @@ export default function CoursesPage() {
         user_id: user.id,
         code: code.trim().toUpperCase(),
         name: name.trim(),
-        professor: professor.trim() || null,
         room: room.trim() || null,
         schedule: schedule.trim() || null,
         color: courseThemes[courses.length % courseThemes.length].name,
@@ -223,7 +219,6 @@ export default function CoursesPage() {
   function resetForm() {
     setCode("");
     setName("");
-    setProfessor("");
     setRoom("");
     setSchedule("");
   }
