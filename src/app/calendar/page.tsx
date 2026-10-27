@@ -1621,9 +1621,7 @@ function EventModal({
           <div>
             <FieldLabel>Subtitle</FieldLabel>
 
-            <input
-              value={form.subtitle}
-              onChange={(event) =>
+            <input maxLength={240} value={form.subtitle} onChange={(event) =>
                 update("subtitle", event.target.value)
               }
               placeholder="Optional short description"
