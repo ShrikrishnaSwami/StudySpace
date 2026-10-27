@@ -511,3 +511,48 @@ html[data-theme="light"] .ss-shell main .rounded-xl.border {
   line-height: 1.7;
 }
 
+
+
+/* Refine existing form states without changing validation or submission logic. */
+main:has(form) label {
+  display: inline-block;
+  line-height: 1.45;
+}
+
+main:has(form) input,
+main:has(form) textarea,
+main:has(form) select {
+  border-radius: var(--ss-radius-md);
+}
+
+main:has(form) input:hover:not(:disabled),
+main:has(form) textarea:hover:not(:disabled),
+main:has(form) select:hover:not(:disabled) {
+  border-color: rgba(167, 139, 250, .28);
+}
+
+main:has(form) [role="alert"] {
+  border-radius: var(--ss-radius-md);
+  line-height: 1.55;
+}
+
+main:has(form) [role="status"] {
+  border-radius: var(--ss-radius-md);
+  line-height: 1.55;
+}
+
+html[data-theme="light"] main:has(form) input,
+html[data-theme="light"] main:has(form) textarea,
+html[data-theme="light"] main:has(form) select {
+  background: rgba(255, 255, 255, .9);
+  border-color: rgba(67, 49, 98, .18);
+  color: #211b31;
+}
+
+html[data-theme="light"] main:has(form) input:focus,
+html[data-theme="light"] main:has(form) textarea:focus,
+html[data-theme="light"] main:has(form) select:focus {
+  border-color: rgba(124, 58, 237, .6);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, .1);
+}
+
