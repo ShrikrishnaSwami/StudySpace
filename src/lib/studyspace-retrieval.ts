@@ -56,7 +56,7 @@ function splitSections(context: string): RetrievedStudySection[] {
       const body = parts[index + 1] || "";
       sections.push({
         title: part,
-        content: (part + "\\n\\n" + body).slice(0, MAX_SECTION_CHARS),
+        content: (part + "\n\n" + body).slice(0, MAX_SECTION_CHARS),
         score: 0,
       });
       index += 1;
