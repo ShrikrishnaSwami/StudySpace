@@ -228,8 +228,8 @@ export default function SettingsPage() {
 
         <Section icon={Bell} title="Notifications" description="Save your reminder preferences for your StudySpace account.">
           <Toggle title="Email notifications" description="Your preference for future email updates. Automated email reminders are not currently sent." value={preferences.emailNotifications} onChange={v=>setPreferences(p=>({...p,emailNotifications:v}))}/>
-          <div className="border-t border-white/[0.06] pt-5"><Toggle title="Assignment reminders" description="Save whether you want assignment reminder features enabled." value={preferences.assignmentReminders} onChange={v=>setPreferences(p=>({...p,assignmentReminders:v}))}/></div>
-          <div className="border-t border-white/[0.06] pt-5"><Toggle title="Quiz reminders" description="Save whether you want quiz reminder features enabled." value={preferences.quizReminders} onChange={v=>setPreferences(p=>({...p,quizReminders:v}))}/></div>
+          <div className="border-t border-white/[0.06] pt-5"><Toggle title="Assignment reminders" description="Show in-app reminders for due-soon and overdue assignments. Checks run when you open or refresh the dashboard." value={preferences.assignmentReminders} onChange={v=>setPreferences(p=>({...p,assignmentReminders:v}))}/></div>
+          <div className="border-t border-white/[0.06] pt-5"><Toggle title="Quiz reminders" description="Show in-app reminders for quiz events on your calendar starting within 24 hours." value={preferences.quizReminders} onChange={v=>setPreferences(p=>({...p,quizReminders:v}))}/></div>
         </Section>
 
         <Section icon={Laptop} title="Appearance" description="Choose the visual theme for your workspace.">
