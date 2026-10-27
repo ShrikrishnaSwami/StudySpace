@@ -143,7 +143,7 @@ export default function SignupPage() {
             <form onSubmit={handleSignup} className="space-y-5">
               {/* Name */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-zinc-300">
+                <label htmlFor="signup-name" className="mb-2 block text-sm font-medium text-zinc-300">
                   Full name
                 </label>
 
@@ -154,7 +154,9 @@ export default function SignupPage() {
                   />
 
                   <input
+                    id="signup-name"
                     type="text"
+                    autoComplete="name"
                     required
                     value={name}
                     maxLength={100}
@@ -167,7 +169,7 @@ export default function SignupPage() {
 
               {/* Email */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-zinc-300">
+                <label htmlFor="signup-email" className="mb-2 block text-sm font-medium text-zinc-300">
                   Email
                 </label>
 
@@ -178,6 +180,7 @@ export default function SignupPage() {
                   />
 
                   <input
+                    id="signup-email"
                     type="email"
                     required
                     value={email}
@@ -192,7 +195,7 @@ export default function SignupPage() {
 
               {/* Password */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-zinc-300">
+                <label htmlFor="signup-password" className="mb-2 block text-sm font-medium text-zinc-300">
                   Password
                 </label>
 
@@ -203,6 +206,7 @@ export default function SignupPage() {
                   />
 
                   <input
+                    id="signup-password"
                     type={showPassword ? "text" : "password"}
                     required
                     value={password}
