@@ -25,52 +25,74 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   async function handleGoogleLogin() {
     setLoading(true);
     setError("");
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
-    });
-    if (error) { setError(error.message); setLoading(false); }
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
+      });
+      if (error) throw error;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not start Google sign-in.");
+      setLoading(false);
+    }
   }
 
   async function handleGuestLogin() {
     setLoading(true);
     setError("");
-    const { error } = await supabase.auth.signInAnonymously({
-      options: { data: { full_name: "Guest Student", account_type: "guest" } },
-    });
-    if (error) {
-      setError(error.message.includes("Anonymous sign-ins are disabled")
-        ? "Guest access is not enabled in Supabase yet. Enable Anonymous Sign-Ins in Supabase Authentication settings and try again."
-        : error.message);
+    try {
+      const { error } = await supabase.auth.signInAnonymously({
+        options: { data: { full_name: "Guest Student", account_type: "guest" } },
+      });
+      if (error) {
+        throw new Error(error.message.includes("Anonymous sign-ins are disabled")
+          ? "Guest access is not enabled in Supabase yet. Enable Anonymous Sign-Ins in Supabase Authentication settings and try again."
+          : error.message);
+      }
+      router.push("/dashboard");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not start guest access.");
       setLoading(false);
-      return;
     }
-    router.push("/dashboard");
+  }
+
+  async function handleForgotPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    setResetSent(false);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+      });
+      if (error) throw error;
+      setResetSent(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not send the password reset email.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     setLoading(true);
     setError("");
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setError(error.message);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) throw error;
+      const { data: { user } } = await supabase.auth.getUser();
+      router.push(isAdminEmail(user?.email) ? "/admin" : "/dashboard");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not sign in.");
       setLoading(false);
-      return;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    router.push(isAdminEmail(user?.email) ? "/admin" : "/dashboard");
   }
 
   return (
@@ -152,6 +174,25 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {forgotPassword ? (
+              <form onSubmit={handleForgotPassword} className="space-y-5">
+                <div>
+                  <h3 className="text-lg font-semibold">Reset your password</h3>
+                  <p className="mt-2 text-sm leading-6 text-zinc-400">Enter your account email and we’ll send a secure reset link.</p>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-zinc-300">Email</label>
+                  <div className="relative">
+                    <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
+                    <input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" className="w-full rounded-xl border border-white/10 bg-black/20 py-3.5 pl-11 pr-4 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-purple-500/70"/>
+                  </div>
+                </div>
+                {error && <div role="alert" className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</div>}
+                {resetSent && <div role="status" className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">If an account exists for that address, a password reset email has been sent. Check your inbox.</div>}
+                <button type="submit" disabled={loading||!email.trim()} className="w-full rounded-xl bg-purple-600 py-3.5 text-sm font-semibold text-white hover:bg-purple-500 disabled:opacity-60">{loading?"Sending link…":"Send reset link"}</button>
+                <button type="button" onClick={()=>{setForgotPassword(false);setResetSent(false);setError("");}} className="w-full rounded-xl border border-white/10 py-3 text-sm text-white/70 hover:bg-white/[0.04]">Back to sign in</button>
+              </form>
+            ) : (
             <form onSubmit={handleLogin} className="space-y-5">
 
               {/* Email */}
@@ -234,7 +275,11 @@ export default function LoginPage() {
                   />
                 )}
               </button>
+              <div className="flex justify-end">
+                <button type="button" onClick={()=>{setForgotPassword(true);setError("");setResetSent(false);}} className="text-xs font-medium text-purple-300 transition hover:text-purple-200">Forgot password?</button>
+              </div>
             </form>
+            )}
 
             <p className="mt-8 text-center text-sm text-zinc-500">
               Don&apos;t have an account?{" "}
