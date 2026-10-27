@@ -7,6 +7,7 @@ import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
 
 type Result = { id:string; title:string; detail:string; type:string; href:string; date?:string|null };
+type SearchRow = { id:string; name?:string|null; code?:string|null; description?:string|null; created_at?:string|null; title?:string|null; status?:string|null; due_date?:string|null; category?:string|null; assessment_date?:string|null; topic?:string|null; subtitle?:string|null; start_at?:string|null; content?:string|null; url?:string|null };
 const TYPES: Record<string,{label:string;icon:typeof Search}> = {
   course:{label:"Course",icon:BookOpen}, assignment:{label:"Assignment",icon:ClipboardList},
   quiz:{label:"Quiz",icon:Brain}, note:{label:"Grade item",icon:FileText},
@@ -34,13 +35,13 @@ export default function SearchPage(){
    if(errors.length)throw new Error(errors[0].error?.message||"Search failed.");
    const [c,a,z,g,h,ev,d,n,r]=tasks;
    const mapped:Result[]=[
-    ...((c.data||[]) as any[]).map(x=>({id:x.id,title:x.name,detail:[x.code,x.description].filter(Boolean).join(" · "),type:"course",href:"/courses/"+x.id,date:x.created_at})),
-    ...((a.data||[]) as any[]).map(x=>({id:x.id,title:x.title,detail:[x.status,x.description].filter(Boolean).join(" · "),type:"assignment",href:"/assignments/"+x.id,date:x.due_date})),
-    ...((z.data||[]) as any[]).map(x=>({id:x.id,title:x.title,detail:x.description||"Quiz",type:"quiz",href:"/quizzes",date:x.created_at})),
-    ...((g.data||[]) as any[]).map(x=>({id:x.id,title:x.title,detail:"Grade item · "+x.category,type:"note",href:"/grades",date:x.assessment_date})),
-    ...((h.data||[]) as any[]).map(x=>({id:x.id,title:x.title,detail:x.description||"Homework upload",type:"homework",href:"/homework-uploader",date:x.created_at})),
-    ...((ev.data||[]) as any[]).map(x=>({id:x.id,title:x.title,detail:x.subtitle||"Calendar event",type:"event",href:"/calendar",date:x.start_at})),
-    ...((d.data||[]) as any[]).map(x=>({id:x.id,title:x.title,detail:x.topic||"Flashcard deck",type:"deck",href:"/flashcards",date:x.created_at})),
+    ...((c.data||[]) as SearchRow[]).map(x=>({id:x.id,title:x.name||"Untitled course",detail:[x.code,x.description].filter(Boolean).join(" · "),type:"course",href:"/courses/"+x.id,date:x.created_at})),
+    ...((a.data||[]) as any[]).map(x=>({id:x.id,title:x.title||"Untitled assignment",detail:[x.status,x.description].filter(Boolean).join(" · "),type:"assignment",href:"/assignments/"+x.id,date:x.due_date})),
+    ...((z.data||[]) as any[]).map(x=>({id:x.id,title:x.title||"Untitled quiz",detail:x.description||"Quiz",type:"quiz",href:"/quizzes",date:x.created_at})),
+    ...((g.data||[]) as any[]).map(x=>({id:x.id,title:x.title||"Untitled grade item",detail:"Grade item · "+(x.category||"other"),type:"note",href:"/grades",date:x.assessment_date})),
+    ...((h.data||[]) as any[]).map(x=>({id:x.id,title:x.title||"Homework upload",detail:x.description||"Homework upload",type:"homework",href:"/homework-uploader",date:x.created_at})),
+    ...((ev.data||[]) as any[]).map(x=>({id:x.id,title:x.title||"Calendar event",detail:x.subtitle||"Calendar event",type:"event",href:"/calendar",date:x.start_at})),
+    ...((d.data||[]) as any[]).map(x=>({id:x.id,title:x.title||"Flashcard deck",detail:x.topic||"Flashcard deck",type:"deck",href:"/flashcards",date:x.created_at})),
    ];
    setResults(mapped.slice(0,60));
   }catch(e){setError(e instanceof Error?e.message:"Search could not be completed.");setResults([]);}finally{setBusy(false);}
