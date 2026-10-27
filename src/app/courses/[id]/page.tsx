@@ -1049,84 +1049,78 @@ function OverviewSection({
 }
 
 function TopicsSection() {
-  const topics = [
-    {
-      name: "Foundations",
-      mastery: 92,
-    },
-    {
-      name: "Core concepts",
-      mastery: 78,
-    },
-    {
-      name: "Problem solving",
-      mastery: 64,
-    },
-    {
-      name: "Advanced applications",
-      mastery: 41,
-    },
-  ];
+  const [topics, setTopics] = useState<string[]>([]);
+  const [topicName, setTopicName] = useState("");
+  const [confidence, setConfidence] = useState<Record<string, number>>({});
+  const [saved, setSaved] = useState(false);
+
+  function addTopic(event: FormEvent) {
+    event.preventDefault();
+    const name = topicName.trim();
+    if (!name || topics.some((topic) => topic.toLowerCase() === name.toLowerCase())) return;
+    setTopics((current) => [...current, name]);
+    setConfidence((current) => ({ ...current, [name]: 0 }));
+    setTopicName("");
+    setSaved(false);
+  }
 
   return (
     <div className="space-y-5">
       <SectionHeader
         title="Topics"
-        description="Track how confident you are with each part of the course."
+        description="Add topics from your course and rate your own confidence. Nothing is pre-filled or assumed."
       />
 
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025]">
-        <div className="divide-y divide-white/[0.06]">
+      <form onSubmit={addTopic} className="flex flex-col gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 sm:flex-row">
+        <input
+          value={topicName}
+          onChange={(event) => setTopicName(event.target.value)}
+          maxLength={120}
+          placeholder="e.g. Newton's laws, cell division, essay structure"
+          aria-label="New course topic"
+          className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-violet-400/50"
+        />
+        <button type="submit" disabled={!topicName.trim()} className="rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">
+          Add topic
+        </button>
+      </form>
+
+      {topics.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-white/[0.12] bg-white/[0.015] p-8 text-center">
+          <Brain size={26} className="mx-auto text-violet-400" />
+          <h3 className="mt-3 font-semibold text-white">Your topic tracker starts here</h3>
+          <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-white/45">
+            No topics or mastery scores have been added. Enter a topic from your syllabus, then rate how confident you feel. StudySpace will not guess your knowledge level.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
           {topics.map((topic) => (
-            <div
-              key={topic.name}
-              className="p-5"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-semibold text-white">
-                    {topic.name}
-                  </h3>
-
-                  <p className="mt-1 text-xs text-white/30">
-                    Topic mastery
-                  </p>
-                </div>
-
-                <span className="text-sm font-semibold text-violet-300">
-                  {topic.mastery}%
-                </span>
+            <div key={topic} className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold text-white">{topic}</h3>
+                <span className="text-sm font-semibold text-violet-300">{confidence[topic] ?? 0}% confidence</span>
               </div>
-
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/[0.06]">
-                <div
-                  className="h-full rounded-full bg-violet-500"
-                  style={{
-                    width: `${topic.mastery}%`,
-                  }}
-                />
-              </div>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={confidence[topic] ?? 0}
+                aria-label={`Your confidence in ${topic}`}
+                onChange={(event) => {
+                  setConfidence((current) => ({ ...current, [topic]: Number(event.target.value) }));
+                  setSaved(false);
+                }}
+                className="mt-4 w-full accent-violet-500"
+              />
+              <div className="flex justify-between text-xs text-white/40"><span>Not confident yet</span><span>Very confident</span></div>
             </div>
           ))}
+          <button type="button" onClick={() => setSaved(true)} className="rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white">Save self-assessment</button>
+          {saved && <p role="status" className="text-sm text-emerald-300">Self-assessment updated for this session. Persistent topic storage will be added separately.</p>}
         </div>
-      </div>
-
-      <div className="rounded-2xl border border-dashed border-white/[0.08] bg-white/[0.015] p-6 text-center">
-        <Brain
-          size={25}
-          className="mx-auto text-violet-400"
-        />
-
-        <h3 className="mt-3 font-semibold text-white">
-          Topic intelligence is coming
-        </h3>
-
-        <p className="mx-auto mt-2 max-w-lg text-sm text-white/35">
-          Later, StudySpace will calculate topic mastery
-          from quizzes, assignments, notes, and AI study
-          sessions.
-        </p>
-      </div>
+      )}
     </div>
   );
 }
