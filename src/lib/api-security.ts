@@ -15,8 +15,8 @@ export const AI_DAILY_LIMITS: Record<AiFeature, number> = {
 
 function adminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error("Server-side usage controls are not configured.");
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) throw new Error("Server-side Supabase admin key is missing. Set SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY) in the server environment.");
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
