@@ -11,7 +11,7 @@ let geminiClient: GoogleGenAI | null = null;
 function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("The AI provider is not configured on the server.");
-  if (!geminiClient) geminiClient = new GoogleGenAI({ apiKey });
+  if (!geminiClient) geminiClient = new GoogleGenAI({ apiKey, httpOptions: { timeout: 45000 } });
   return geminiClient;
 }
 
