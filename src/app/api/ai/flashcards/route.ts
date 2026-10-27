@@ -13,5 +13,5 @@ export async function POST(request:NextRequest){
   const prompt="Create exactly "+count+" useful study flashcards about: "+topic+". "+(course?"Course context: "+course+". ":"")+"Return ONLY valid JSON shaped as {\"cards\":[{\"front\":\"question\",\"back\":\"answer\"}]}. Use concise student-friendly language, factual answers, no markdown fences.";
   const raw=await generateAIResponse({systemInstruction:"You are a careful academic study assistant. Return valid JSON only.",prompt,task:"flashcards"});const clean=raw.replace(/^\s*\x60\x60\x60(?:json)?/i,"").replace(/\x60\x60\x60\s*$/,"").trim();const parsed=JSON.parse(clean) as {cards?:{front?:string;back?:string}[]};
   const cards=(parsed.cards||[]).filter(c=>typeof c.front==="string"&&typeof c.back==="string"&&c.front.trim()&&c.back.trim()).slice(0,count).map(c=>({front:c.front!.trim().slice(0,1500),back:c.back!.trim().slice(0,3000)}));if(cards.length<3)throw new Error("The AI response did not contain enough valid cards.");return NextResponse.json({cards});
- }catch(e){console.error("Flashcard generation failed:",e);return NextResponse.json({error:e instanceof Error?e.message:"Flashcard generation failed."},{status:500});}
+ }catch(e){console.error("Flashcard generation request failed.");return NextResponse.json({error:e instanceof Error?e.message:"Flashcard generation failed."},{status:500});}
 }
