@@ -1474,6 +1474,8 @@ function EventDetails({
             </button>
 
             <button
+              type="button"
+              aria-label="Delete calendar event"
               onClick={onDelete}
               className="flex items-center justify-center gap-1.5 rounded-xl border border-red-500/15 bg-red-500/[0.07] py-3 text-xs font-medium text-red-300 transition hover:bg-red-500/10"
             >
