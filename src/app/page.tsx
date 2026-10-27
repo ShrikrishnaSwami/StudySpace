@@ -17,7 +17,7 @@ const tools = [
 
 export default function Home() {
   return (
-    <main className="ss-home">
+    <main id="main-content" className="ss-home">
       <nav className="ss-nav">
         <Link href="/" className="ss-wordmark"><span className="ss-logo-shape">S</span><span>studyspace<span className="ss-period">®</span></span></Link>
         <span className="ss-nav-center"><span className="ss-nav-dot" /> YOUR LIFE, A LITTLE LESS TAB-BASED</span>
