@@ -512,6 +512,7 @@ ${
     const answer = await generateAIResponse({
         systemInstruction,
         prompt: message,
+        task: "tutor",
       });
 
     /*
