@@ -504,13 +504,12 @@ ${
      * -------------------------------------------------------
      */
 
-    const answer =
     const quota = await consumeAiQuota(user.id, "tutor");
     if (!quota.allowed) {
       return NextResponse.json({ error: "You have reached today's AI tutor limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
     }
 
-      await generateAIResponse({
+    const answer = await generateAIResponse({
         systemInstruction,
         prompt: message,
       });
