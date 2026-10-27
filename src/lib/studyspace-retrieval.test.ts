@@ -34,6 +34,22 @@ test("evaluation cases retrieve at least one expected section", () => {
   assert.deepEqual(failures, [], failures.join("\n"));
 });
 
+test("query expansion retrieves relevant sections when wording differs", () => {
+  const cases = [
+    { question: "Who teaches COMP 101 and when do I attend?", expected: "STUDENT COURSES" },
+    { question: "What coursework must I finish and by what date?", expected: "ASSIGNMENTS" },
+    { question: "How did I perform on my calculus assessment?", expected: "QUIZ ATTEMPTS / PERFORMANCE" },
+    { question: "What study events are coming up?", expected: "CALENDAR" },
+  ];
+  for (const item of cases) {
+    const result = retrieveRelevantStudyContext(context, item.question);
+    assert.ok(
+      result.sections.some((section) => section.title === item.expected),
+      `Expected "${item.expected}" for question "${item.question}", got ${result.sections.map((section) => section.title).join(", ")}`,
+    );
+  }
+});
+
 test("retrieval returns bounded context and section count", () => {
   const result = retrieveRelevantStudyContext(context, "Tell me about all my courses and assignments", {
     maxSections: 2,
@@ -41,7 +57,7 @@ test("retrieval returns bounded context and section count", () => {
   });
   assert.ok(result.sections.length <= 2);
   assert.ok(result.context.length <= 1000);
-  assert.equal(result.strategy, "lexical-v1");
+  assert.equal(result.strategy, "lexical-expanded-v2");
 });
 
 test("empty context returns a safe, explicit result", () => {
