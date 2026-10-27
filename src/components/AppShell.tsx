@@ -39,6 +39,7 @@ import {
   getUnreadNotificationCount,
   markAllNotificationsRead,
   markNotificationRead,
+  subscribeToNotifications,
   type Notification,
 } from "@/lib/notifications";
 
@@ -208,8 +209,17 @@ function NotificationDropdown({
       void loadNotifications();
     }, 30000);
 
+    let stopRealtime: (() => void) | undefined;
+    void subscribeToNotifications(() => {
+      void loadNotifications();
+    }).then((cleanup) => {
+      if (!mounted) cleanup();
+      else stopRealtime = cleanup;
+    });
+
     return () => {
       mounted = false;
+      stopRealtime?.();
       window.clearInterval(interval);
     };
   }, []);
@@ -422,7 +432,18 @@ function NotificationButton() {
       void loadCount();
     }, 30000);
 
+    let cancelled = false;
+    let stopRealtime: (() => void) | undefined;
+    void subscribeToNotifications(() => {
+      void loadCount();
+    }).then((cleanup) => {
+      if (cancelled) cleanup();
+      else stopRealtime = cleanup;
+    });
+
     return () => {
+      cancelled = true;
+      stopRealtime?.();
       window.clearTimeout(initialLoad);
       window.clearInterval(interval);
     };

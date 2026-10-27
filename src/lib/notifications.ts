@@ -305,3 +305,31 @@ export async function deleteNotification(
 
   return true;
 }
+
+/**
+ * Subscribe to the signed-in user's notification changes. Call the returned
+ * cleanup function when the owning component unmounts. Polling can remain as
+ * a fallback if Realtime is not enabled for the table in Supabase.
+ */
+export async function subscribeToNotifications(onChange: () => void) {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) return () => undefined;
+
+  const channel = supabase
+    .channel("studyspace-notifications-" + user.id)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "notifications",
+        filter: "user_id=eq." + user.id,
+      },
+      () => onChange(),
+    )
+    .subscribe();
+
+  return () => {
+    void supabase.removeChannel(channel);
+  };
+}
