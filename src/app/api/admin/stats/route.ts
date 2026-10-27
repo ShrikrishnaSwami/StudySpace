@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { consumeApiRateLimit } from "@/lib/api-security";
+import { isAdminEmail } from "@/lib/admin";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
-
-const ADMIN_EMAIL = (process.env.STUDYSPACE_ADMIN_EMAIL || "apha9213@gmail.com").trim().toLowerCase();
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +18,7 @@ export async function GET(request: NextRequest) {
     });
     const { data: { user }, error: authError } = await client.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Session invalid. Sign in again." }, { status: 401 });
-    if (!user.email || user.email.trim().toLowerCase() !== ADMIN_EMAIL) {
+    if (!isAdminEmail(user.email)) {
       return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
     }
     const rate = await consumeApiRateLimit(user.id, "admin-stats", 180, 3600);
