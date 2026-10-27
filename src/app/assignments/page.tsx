@@ -488,9 +488,7 @@ export default function AssignmentsPage() {
         <div className="mt-8 flex flex-col gap-3 lg:flex-row">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
+            <input type="search" aria-label="Search assignments" value={search} onChange={(event) => setSearch(event.target.value)}
               placeholder="Search assignments or courses..."
               className="w-full rounded-xl border border-white/10 bg-white/[0.025] py-3 pl-10 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-purple-400/50"
             />
