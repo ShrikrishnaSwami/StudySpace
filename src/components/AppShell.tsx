@@ -958,7 +958,7 @@ export default function AppShell({
         </header>
 
         {/* Page content */}
-        <main className="ss-page-content min-h-[calc(100vh-68px)]">
+        <main className="min-h-[calc(100vh-68px)]">
           {children}
         </main>
       </div>
