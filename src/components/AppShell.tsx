@@ -654,7 +654,7 @@ export default function AppShell({
 
     async function verifyAdmin(accessToken: string) {
       try {
-        const response = await fetch("/api/admin/stats", {
+        const response = await fetch("/api/admin/check", {
           headers: { Authorization: "Bearer " + accessToken },
           cache: "no-store",
         });
