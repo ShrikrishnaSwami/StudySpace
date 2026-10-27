@@ -66,7 +66,7 @@ export async function GET(
 
     if (quizError) {
       return NextResponse.json(
-        { error: quizError.message },
+        { error: "Quiz not found." },
         { status: 404 }
       );
     }
