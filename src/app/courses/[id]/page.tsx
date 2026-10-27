@@ -878,9 +878,7 @@ function OverviewSection({
               </h2>
             </div>
 
-            <button
-              onClick={onStudyClick}
-              className="rounded-xl bg-violet-600 p-3 text-white hover:bg-violet-500"
+            <button type="button" onClick={onStudyClick} aria-label="Start studying this course" className="rounded-xl bg-violet-600 p-3 text-white hover:bg-violet-500"
             >
               <Play size={17} />
             </button>
