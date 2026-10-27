@@ -20,13 +20,13 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await client.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Session expired." }, { status: 401 });
 
-    if (Number(request.headers.get("content-length") || 0) > 12000000) return NextResponse.json({ error: "Upload is too large. PDFs must be 8 MB or smaller and text must be under 30,000 characters." }, { status: 413 });
+    if (Number(request.headers.get("content-length") || 0) > 4300000) return NextResponse.json({ error: "Upload is too large. PDFs must be 3 MB or smaller and text must be under 30,000 characters." }, { status: 413 });
     const body = await request.json();
     const title = typeof body.title === "string" ? body.title.trim().slice(0, 160) : "";
     const text = typeof body.text === "string" ? body.text.trim() : "";
     const pdfBase64 = typeof body.pdfBase64 === "string" ? body.pdfBase64 : "";
     const isPdf = Boolean(pdfBase64);
-    if (isPdf && (!/^[A-Za-z0-9+/]+={0,2}$/.test(pdfBase64) || !pdfBase64.startsWith("JVBERi0") || pdfBase64.length > 11200000)) return NextResponse.json({ error: "Invalid PDF upload. PDFs must be 8 MB or smaller." }, { status: 400 });
+    if (isPdf && (!/^[A-Za-z0-9+/]+={0,2}$/.test(pdfBase64) || !pdfBase64.startsWith("JVBERi0") || pdfBase64.length > 4300000)) return NextResponse.json({ error: "Invalid PDF upload. PDFs must be 3 MB or smaller." }, { status: 400 });
     const sourceName = typeof body.sourceName === "string" ? body.sourceName.trim().slice(0, 200) : null;
     const courseId = typeof body.courseId === "string" && body.courseId ? body.courseId : null;
     if (!title || (!isPdf && text.length < 80)) return NextResponse.json({ error: "Add a title and at least 80 characters of syllabus text, or upload a PDF." }, { status: 400 });
