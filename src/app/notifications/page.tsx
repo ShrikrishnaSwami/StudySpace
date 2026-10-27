@@ -366,7 +366,6 @@ export default function NotificationsPage() {
 
             <input type="search" aria-label="Search notifications" value={search} onChange={(event) => setSearch(event.target.value)}
               placeholder="Search notifications..."
-              aria-label="Search notifications"
               className="h-11 w-full rounded-xl border border-white/[0.08] bg-white/[0.025] pl-10 pr-4 text-sm text-white outline-none placeholder:text-white/25 transition focus:border-violet-400/30 focus:bg-white/[0.04] focus:ring-2 focus:ring-violet-500/10"
             />
 
