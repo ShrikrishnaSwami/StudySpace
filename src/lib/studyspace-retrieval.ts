@@ -90,7 +90,7 @@ function splitRecords(context: string): RetrievedStudySection[] {
       records.push({
         title: category,
         source,
-        content: `CATEGORY: ${category}\n${rawRecord}`.slice(0, MAX_RECORD_CHARS),
+        content: rawRecord.slice(0, MAX_RECORD_CHARS),
         score: 0,
       });
     }
@@ -113,7 +113,10 @@ function buildQueryWeights(queryTokens: string[]): Map<string, number> {
 
 function scoreRecord(queryWeights: Map<string, number>, queryTokens: string[], record: RetrievedStudySection): number {
   if (!queryWeights.size) return 0;
-  const tokens = tokenize(record.content);
+  // Ignore the generated record marker and category label when scoring.
+  // Words like "notes" in the question should not make every note equally relevant.
+  const searchableContent = record.content.replace(/^(?:COURSE|NOTE|RESOURCE|ASSIGNMENT|QUIZ|ATTEMPT|HOMEWORK|EVENT)\\s+\\d+\\s*\\r?\\n/i, "");
+  const tokens = tokenize(searchableContent);
   if (!tokens.length) return 0;
 
   const frequencies = new Map<string, number>();
@@ -124,8 +127,8 @@ function scoreRecord(queryWeights: Map<string, number>, queryTokens: string[], r
   for (const [token, weight] of queryWeights) {
     const frequency = frequencies.get(token) || 0;
     if (frequency) score += weight * (1 + Math.log(1 + frequency)) * (1 + Math.log(1 + tokens.length / uniqueTokens.size));
-    if (record.title.toLowerCase().includes(token)) score += weight * (weight === 1 ? 2 : 0.8);
-    if (record.source.toLowerCase().includes(token)) score += weight * (weight === 1 ? 3 : 1.2);
+    const sourceTitle = record.source.replace(/^(?:COURSE|NOTE|RESOURCE|ASSIGNMENT|QUIZ|ATTEMPT|HOMEWORK|EVENT)\\s+\\d+\\s*:\\s*/i, "");
+    if (sourceTitle.toLowerCase().includes(token)) score += weight * (weight === 1 ? 3 : 1.2);
   }
 
   const normalizedQuery = queryTokens.join(" ");
