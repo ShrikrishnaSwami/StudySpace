@@ -1,22 +1,94 @@
 "use client";
-import { useCallback,useEffect,useState } from "react";
-import { Activity,BookOpen,CheckSquare,ClipboardList,GraduationCap,RefreshCw,ShieldCheck,Timer,Users } from "lucide-react";
+
+import { useCallback, useEffect, useState } from "react";
+import { RefreshCw, ShieldCheck, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
-type Stats={totalUsers:number;courses:number;assignments:number;submissions:number;quizzes:number;quizAttempts:number;studySessions:number;generatedAt:string};
-const blank:Stats={totalUsers:0,courses:0,assignments:0,submissions:0,quizzes:0,quizAttempts:0,studySessions:0,generatedAt:""};
-export default function AdminPage(){
- const router=useRouter();const [checking,setChecking]=useState(true);const [stats,setStats]=useState<Stats>(blank);const [loading,setLoading]=useState(false);const [error,setError]=useState("");
- const load=useCallback(async()=>{setLoading(true);setError("");try{const {data:{session}}=await supabase.auth.getSession();if(!session)throw new Error("Your session expired. Sign in again.");const res=await fetch("/api/admin/stats",{headers:{Authorization:"Bearer "+session.access_token},cache:"no-store"});const body=await res.json();if(!res.ok)throw new Error(body.error||"Could not load statistics.");setStats(body as Stats);}catch(e){setError(e instanceof Error?e.message:"Could not load statistics.");}finally{setLoading(false);}},[]);
- useEffect(()=>{let alive=true;async function check(){const {data:{user}}=await supabase.auth.getUser();if(!alive)return;if(!user){router.replace("/login");return;}if(!isAdminEmail(user.email)){router.replace("/dashboard");return;}setChecking(false);void load();}void check();const channel=supabase.channel("admin-live-counts").on("postgres_changes",{event:"*",schema:"public",table:"courses"},()=>void load()).on("postgres_changes",{event:"*",schema:"public",table:"assignments"},()=>void load()).on("postgres_changes",{event:"*",schema:"public",table:"assignment_submissions"},()=>void load()).on("postgres_changes",{event:"*",schema:"public",table:"quizzes"},()=>void load()).on("postgres_changes",{event:"*",schema:"public",table:"quiz_attempts"},()=>void load()).on("postgres_changes",{event:"*",schema:"public",table:"study_sessions"},()=>void load()).subscribe();const timer=window.setInterval(()=>void load(),30000);return()=>{alive=false;window.clearInterval(timer);void supabase.removeChannel(channel);};},[router,load]);
- if(checking)return <div className="flex min-h-screen items-center justify-center bg-[#080611] text-white"><div className="text-center"><div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-violet-500/20 border-t-violet-400"/><p className="text-sm text-white/40">Verifying administrator access…</p></div></div>;
- const cards=[{label:"Total users",value:stats.totalUsers,icon:Users},{label:"Courses",value:stats.courses,icon:BookOpen},{label:"Assignments",value:stats.assignments,icon:ClipboardList},{label:"Submissions",value:stats.submissions,icon:CheckSquare},{label:"Quizzes",value:stats.quizzes,icon:GraduationCap},{label:"Quiz attempts",value:stats.quizAttempts,icon:Activity},{label:"Study sessions",value:stats.studySessions,icon:Timer}];
- return <AppShell title="Admin dashboard" description="Owner-only StudySpace statistics."><div className="mx-auto max-w-7xl space-y-6">
- <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end"><div><div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-200"><ShieldCheck size={14}/>Owner access</div><h1 className="text-3xl font-semibold tracking-tight">Platform overview</h1><p className="mt-2 text-sm text-white/45">Live counts from Supabase. Access is restricted to the configured administrator.</p></div><button onClick={()=>void load()} disabled={loading} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm hover:bg-white/[0.08] disabled:opacity-50"><RefreshCw size={16} className={loading?"animate-spin":""}/>Refresh</button></div>
- {error&&<div role="alert" className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{error}</div>}
- <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{cards.map(c=>{const Icon=c.icon;return <div key={c.label} className="rounded-2xl border border-white/10 bg-white/[0.035] p-5"><div className="mb-5 flex items-center justify-between"><div className="rounded-xl bg-violet-500/10 p-3 text-violet-300"><Icon size={20}/></div><span className="h-2 w-2 rounded-full bg-emerald-400"/></div><p className="text-sm text-white/45">{c.label}</p><p className="mt-1 text-3xl font-semibold tabular-nums">{loading&&!stats.generatedAt?"…":c.value.toLocaleString()}</p></div>})}</div>
- <div className="grid gap-6 lg:grid-cols-2"><section className="rounded-2xl border border-white/10 bg-white/[0.035] p-5"><div className="flex items-center gap-2"><Activity size={19} className="text-violet-300"/><h2 className="font-semibold">Usage snapshot</h2></div><div className="mt-5 space-y-5">{[{label:"Quiz attempts per quiz",value:stats.quizzes?stats.quizAttempts/stats.quizzes:0,display:stats.quizzes?(stats.quizAttempts/stats.quizzes).toFixed(1):"0"},{label:"Submissions per assignment",value:stats.assignments?stats.submissions/stats.assignments:0,display:stats.assignments?(stats.submissions/stats.assignments).toFixed(1):"0"}].map(x=><div key={x.label}><div className="mb-2 flex justify-between text-sm"><span className="text-white/60">{x.label}</span><span>{x.display}</span></div><div className="h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-400" style={{width:Math.min(100,x.value*20)+"%"}}/></div></div>)}</div></section><section className="rounded-2xl border border-white/10 bg-white/[0.035] p-5"><div className="flex items-center gap-2"><ShieldCheck size={19} className="text-emerald-300"/><h2 className="font-semibold">Security & freshness</h2></div><p className="mt-3 text-sm leading-6 text-white/55">User totals are retrieved server-side only after validating your session and administrator email. The service-role key is never sent to the browser.</p><p className="mt-4 text-xs text-white/35">{stats.generatedAt?"Last refreshed "+new Date(stats.generatedAt).toLocaleString():"Waiting for first successful refresh."} · Automatic refresh every 30 seconds</p></section></div>
- </div></AppShell>;
+
+type Stats = { totalUsers: number; generatedAt: string };
+const blank: Stats = { totalUsers: 0, generatedAt: "" };
+
+export default function AdminPage() {
+  const router = useRouter();
+  const [checking, setChecking] = useState(true);
+  const [stats, setStats] = useState<Stats>(blank);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Your session expired. Sign in again.");
+      const response = await fetch("/api/admin/stats", {
+        headers: { Authorization: "Bearer " + session.access_token },
+        cache: "no-store",
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Could not load total users.");
+      setStats({ totalUsers: Number(body.totalUsers) || 0, generatedAt: body.generatedAt || "" });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not load total users.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    async function checkAccess() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!alive) return;
+      if (!user) { router.replace("/login"); return; }
+      if (!isAdminEmail(user.email)) { router.replace("/dashboard"); return; }
+      setChecking(false);
+      void load();
+    }
+    void checkAccess();
+    const timer = window.setInterval(() => void load(), 30000);
+    return () => { alive = false; window.clearInterval(timer); };
+  }, [router, load]);
+
+  if (checking) {
+    return <div className="flex min-h-screen items-center justify-center bg-[#080611] text-white">
+      <div className="text-center">
+        <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-violet-500/20 border-t-violet-400" />
+        <p className="text-sm text-white/40">Verifying administrator access…</p>
+      </div>
+    </div>;
+  }
+
+  return <AppShell title="Admin dashboard" description="Owner-only StudySpace statistics.">
+    <div className="mx-auto max-w-4xl space-y-6">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-200">
+            <ShieldCheck size={14} /> Owner access
+          </div>
+          <h1 className="text-3xl font-semibold tracking-tight">Admin dashboard</h1>
+          <p className="mt-2 text-sm text-white/45">Total registered users on StudySpace.</p>
+        </div>
+        <button onClick={() => void load()} disabled={loading}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm hover:bg-white/[0.08] disabled:opacity-50">
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Refresh
+        </button>
+      </div>
+      {error && <div role="alert" className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{error}</div>}
+      <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-6 sm:p-8">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="rounded-xl bg-violet-500/10 p-3 text-violet-300"><Users size={22} /></div>
+          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+        </div>
+        <p className="text-sm text-white/50">Total users</p>
+        <p className="mt-2 text-5xl font-semibold tabular-nums">{loading && !stats.generatedAt ? "…" : stats.totalUsers.toLocaleString()}</p>
+        <p className="mt-4 text-xs text-white/35">
+          {stats.generatedAt ? "Last updated " + new Date(stats.generatedAt).toLocaleString() : "Waiting for the first successful refresh."}
+          {" · "}Automatically refreshes every 30 seconds
+        </p>
+      </section>
+    </div>
+  </AppShell>;
 }
