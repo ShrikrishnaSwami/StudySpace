@@ -6,7 +6,8 @@ import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
 
 type Assignment={id:string;title:string;course_id:string;due_date:string|null;priority:string;status:string;course?:{name:string}};
-type Plan={id:string;title:string;description:string|null;starts_at:string;ends_at:string;status:string;assignment_id:string|null};\ntype BusyEvent={start_at:string;end_at:string;title:string};
+type Plan={id:string;title:string;description:string|null;starts_at:string;ends_at:string;status:string;assignment_id:string|null};
+type BusyEvent={start_at:string;end_at:string;title:string};
 type Slot={assignment:Assignment;starts_at:string;ends_at:string};
 
 function overlaps(a:string,b:string,c:string,d:string){return new Date(a)<new Date(d)&&new Date(c)<new Date(b);}
