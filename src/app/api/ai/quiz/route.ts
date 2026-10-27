@@ -291,10 +291,7 @@ Return JSON only.
 
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to generate quiz.",
+        error: "Failed to generate the quiz. Please try again.",
       },
       { status: 500 }
     );
