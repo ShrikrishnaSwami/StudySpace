@@ -251,12 +251,7 @@ export default function LoginPage() {
                     className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
                   />
 
-                  <input
-                    id="login-password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="current-password"
-                    required
-                    value={password}
+                  <input id="login-password" type={showPassword ? "text" : "password"} autoComplete="current-password" maxLength={128} required value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter your password"
                     className="w-full rounded-xl border border-white/10 bg-black/20 py-3.5 pl-11 pr-12 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-purple-500/70 focus:ring-2 focus:ring-purple-500/10"
