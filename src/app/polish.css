@@ -478,3 +478,36 @@ html[data-theme="light"] .ss-shell main .rounded-xl.border {
   }
 }
 
+
+
+/* Consistent typographic rhythm across the existing interface. */
+.ss-shell main :is(h1, h2, h3, h4) {
+  line-height: 1.18;
+  text-wrap: balance;
+}
+
+.ss-shell main :is(p, li, label) {
+  text-wrap: pretty;
+}
+
+.ss-shell main :is(small, [class*="text-xs"], [class*="text-[11px]"]) {
+  letter-spacing: .005em;
+}
+
+.ss-shell main :is(.rounded-2xl, .rounded-xl, .rounded-lg) {
+  scroll-margin-top: 6rem;
+}
+
+.ss-feature-intro h3 {
+  line-height: 1.06;
+  letter-spacing: -.045em;
+}
+
+.ss-feature-item p {
+  line-height: 1.6;
+}
+
+.ss-tool-card p {
+  line-height: 1.7;
+}
+
