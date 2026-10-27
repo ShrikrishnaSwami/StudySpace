@@ -542,7 +542,7 @@ ${
       conversationId,
       retrieval: {
         strategy: retrieval.strategy,
-        sections: retrieval.sections.map((section) => section.title),
+        sections: retrieval.sections.map((section) => section.source ? `${section.title} — ${section.source}` : section.title),
       },
     });
   } catch (error) {
