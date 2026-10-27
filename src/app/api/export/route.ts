@@ -45,6 +45,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Could not export your data." }, { status: 500 });
+    return NextResponse.json({ error: "Could not export your data. Please try again." }, { status: 500 });
   }
 }
