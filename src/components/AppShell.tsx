@@ -1127,7 +1127,7 @@ export default function AppShell({
 
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setCommandOpen(true)} aria-label="Search pages and open quick navigation" className="ss-command-trigger flex h-9 items-center gap-2 rounded-lg border border-white/[0.08] px-3 text-xs text-white/40 transition hover:border-violet-300/25 hover:bg-white/[0.04] hover:text-white">
-              <Search size={14} /><span className="hidden sm:inline">Quick jump</span><kbd className="ml-1 hidden rounded border border-white/[0.1] px-1.5 py-0.5 text-[9px] text-white/25 sm:inline">⌘K</kbd>
+              <Search size={14} /><span className="hidden sm:inline">Quick jump</span><kbd className="ml-1 hidden rounded border border-white/[0.1] px-1.5 py-0.5 text-[9px] text-white/25 sm:inline">Ctrl K</kbd>
             </button>
             <NotificationButton />
 
