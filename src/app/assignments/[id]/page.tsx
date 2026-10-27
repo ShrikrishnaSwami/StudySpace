@@ -46,6 +46,7 @@ type Course = {
 type Assignment = {
   id: string;
   user_id: string;
+  assigned_to?: string | null;
   course_id: string;
   title: string;
   description: string | null;
@@ -277,13 +278,13 @@ export default function AssignmentWorkspacePage() {
     const { data, error: queryError } = await supabase
       .from("assignments")
       .select(`
-        id, user_id, course_id, title, description, due_date,
+        id, user_id, assigned_to, course_id, title, description, due_date,
         priority, status, progress, points, max_points,
         created_at, updated_at,
         courses (id, code, name)
       `)
       .eq("id", assignmentId)
-      .eq("user_id", user.id)
+      .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`)
       .single();
 
     if (queryError) {
