@@ -781,9 +781,7 @@ function QuizCard({
           )}
         </div>
 
-        <button
-          onClick={onDelete}
-          title="Delete quiz"
+        <button type="button" onClick={onDelete} aria-label="Delete quiz" title="Delete quiz"
           className="rounded-lg p-2 text-white/20 opacity-100 transition hover:bg-red-500/10 hover:text-red-300 sm:opacity-0 sm:group-hover:opacity-100"
         >
           <Trash2 size={15} />
