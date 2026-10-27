@@ -641,7 +641,7 @@ export default function CalendarPage() {
     const toIcsDate = (value: string) => new Date(value)
       .toISOString()
       .replace(/[-:]/g, "")
-      .replace(/\\.\\d{3}Z$/, "Z");
+      .replace(/\.\d{3}Z$/, "Z");
     const body = events.map((event) => [
       "BEGIN:VEVENT",
       "UID:" + event.id + "@studyspace",
