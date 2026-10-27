@@ -1,0 +1,49 @@
+name: Fix TypeScript ESLint compatibility
+
+on:
+  push:
+    branches:
+      - fix/typescript-eslint-compat
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
+      GEMINI_API_KEY: ci-placeholder-gemini-key
+      STUDYSPACE_ADMIN_EMAIL: ci@example.com
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/typescript-eslint-compat
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Pin a TypeScript version supported by typescript-eslint
+        run: npm install --save-dev typescript@^6.0.3
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+      - name: Run ESLint
+        run: npm run lint
+      - name: Type-check TypeScript
+        run: npx tsc --noEmit
+      - name: Build production app
+        run: npm run build
+      - name: Commit repaired dependency lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          if git diff --cached --quiet; then
+            echo "Dependency lockfile is already correct."
+            exit 0
+          fi
+          git commit -m "fix: use TypeScript version supported by ESLint"
+          git push origin fix/typescript-eslint-compat
