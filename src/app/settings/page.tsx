@@ -1,623 +1,248 @@
 "use client";
 
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
-  Bell,
-  Check,
-  ChevronRight,
-  Lock,
-  LogOut,
-  Mail,
-  Monitor,
-  Moon,
-  Save,
-  Shield,
-  Sun,
-  User,
+  Bell, Check, Eye, Laptop, Lock, LogOut, Mail, Moon, Save, Shield, Sun, Trash2, User, RefreshCw,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
 
-type SettingToggleProps = {
-  title: string;
-  description: string;
-  enabled: boolean;
-  onChange: (value: boolean) => void;
+type Theme = "dark" | "light" | "system";
+type Preferences = {
+  theme: Theme;
+  emailNotifications: boolean;
+  assignmentReminders: boolean;
+  quizReminders: boolean;
 };
+const DEFAULTS: Preferences = { theme: "dark", emailNotifications: true, assignmentReminders: true, quizReminders: true };
+const isTheme = (value: unknown): value is Theme => value === "dark" || value === "light" || value === "system";
 
-function SettingToggle({
-  title,
-  description,
-  enabled,
-  onChange,
-}: SettingToggleProps) {
-  return (
-    <div className="flex items-center gap-5 px-5 py-5 sm:px-6">
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-white">{title}</p>
-        <p className="mt-1 text-xs leading-5 text-white/35">
-          {description}
-        </p>
-      </div>
-
-      <button
-        type="button"
-        aria-label={`${title}: ${enabled ? "on" : "off"}`}
-        aria-pressed={enabled}
-        onClick={() => onChange(!enabled)}
-        className={`relative h-6 w-11 shrink-0 rounded-full transition ${
-          enabled ? "bg-violet-600" : "bg-white/[0.1]"
-        }`}
-      >
-        <span
-          className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition ${
-            enabled ? "left-6" : "left-1"
-          }`}
-        />
-      </button>
+function Section({ icon: Icon, title, description, children }: {
+  icon: typeof User; title: string; description: string; children: ReactNode;
+}) {
+  return <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025]">
+    <div className="flex items-center gap-3 border-b border-white/[0.06] px-5 py-5 sm:px-6">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-400/10 bg-violet-500/10 text-violet-300"><Icon size={18}/></div>
+      <div><h2 className="text-sm font-semibold text-white">{title}</h2><p className="mt-0.5 text-xs text-white/35">{description}</p></div>
     </div>
-  );
+    <div className="space-y-5 p-5 sm:p-6">{children}</div>
+  </section>;
 }
 
-function SectionHeader({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: typeof User;
-  title: string;
-  description: string;
+function Toggle({ title, description, value, onChange }: {
+  title: string; description: string; value: boolean; onChange: (value: boolean) => void;
 }) {
-  return (
-    <div className="border-b border-white/[0.06] px-5 py-5 sm:px-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-400/10 bg-violet-500/10 text-violet-300">
-          <Icon size={18} />
-        </div>
-
-        <div>
-          <h2 className="text-sm font-semibold text-white">{title}</h2>
-          <p className="mt-0.5 text-xs text-white/30">{description}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ThemeOption({
-  icon: Icon,
-  title,
-  description,
-  active = false,
-  disabled = false,
-}: {
-  icon: typeof Moon;
-  title: string;
-  description: string;
-  active?: boolean;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      className={`relative rounded-2xl border p-4 text-left transition ${
-        active
-          ? "border-violet-400/30 bg-violet-500/[0.08]"
-          : "border-white/[0.07] bg-white/[0.02]"
-      } ${
-        disabled
-          ? "cursor-not-allowed opacity-30"
-          : "hover:border-white/[0.12] hover:bg-white/[0.04]"
-      }`}
-    >
-      {active && (
-        <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-violet-500/20 text-violet-300">
-          <Check size={12} />
-        </div>
-      )}
-
-      <Icon
-        size={19}
-        className={active ? "text-violet-300" : "text-white/35"}
-      />
-
-      <p className="mt-4 text-sm font-medium text-white">{title}</p>
-
-      <p className="mt-1 text-xs text-white/30">{description}</p>
-
-      {disabled && (
-        <span className="mt-3 inline-block rounded-full bg-white/[0.05] px-2 py-1 text-[9px] font-medium uppercase tracking-wider text-white/30">
-          Coming soon
-        </span>
-      )}
+  return <div className="flex items-center gap-4">
+    <div className="min-w-0 flex-1"><p className="text-sm font-medium text-white">{title}</p><p className="mt-1 text-xs leading-5 text-white/40">{description}</p></div>
+    <button type="button" aria-label={title} aria-pressed={value} onClick={() => onChange(!value)}
+      className={\`relative h-6 w-11 shrink-0 rounded-full transition \${value ? "bg-violet-600" : "bg-white/15"}\`}>
+      <span className={\`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition \${value ? "left-6" : "left-1"}\`}/>
     </button>
-  );
+  </div>;
 }
 
 export default function SettingsPage() {
   const router = useRouter();
-
+  const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-
+  const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  const [emailNotifications, setEmailNotifications] = useState(true);
-  const [assignmentReminders, setAssignmentReminders] = useState(true);
-  const [quizReminders, setQuizReminders] = useState(true);
-
+  const [showPassword, setShowPassword] = useState(false);
+  const [preferences, setPreferences] = useState<Preferences>(DEFAULTS);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPreferences, setSavingPreferences] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-
+  const [signingOut, setSigningOut] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePhrase, setDeletePhrase] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [preferencesMessage, setPreferencesMessage] = useState("");
+  const [securityMessage, setSecurityMessage] = useState("");
+  const [pageError, setPageError] = useState("");
+
+  const applyTheme = useCallback((theme: Theme) => {
+    if (typeof document !== "undefined") document.documentElement.dataset.theme = theme;
+    if (typeof window !== "undefined") window.localStorage.setItem("studyspace-theme", theme);
+  }, []);
 
   useEffect(() => {
-    async function loadProfile() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.replace("/login");
-        return;
-      }
-
-      setName(user.user_metadata?.full_name || "");
-      setEmail(user.email || "");
+    let alive = true;
+    async function load() {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) throw error;
+        if (!user) { router.replace("/login"); return; }
+        if (!alive) return;
+        setName(typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "");
+        setEmail(user.email || "");
+        const saved = user.user_metadata?.studyspace_settings;
+        const next: Preferences = {
+          theme: isTheme(saved?.theme) ? saved.theme : DEFAULTS.theme,
+          emailNotifications: typeof saved?.emailNotifications === "boolean" ? saved.emailNotifications : DEFAULTS.emailNotifications,
+          assignmentReminders: typeof saved?.assignmentReminders === "boolean" ? saved.assignmentReminders : DEFAULTS.assignmentReminders,
+          quizReminders: typeof saved?.quizReminders === "boolean" ? saved.quizReminders : DEFAULTS.quizReminders,
+        };
+        setPreferences(next);
+        applyTheme(next.theme);
+      } catch (error) {
+        if (alive) setPageError(error instanceof Error ? error.message : "Could not load your settings.");
+      } finally { if (alive) setLoading(false); }
     }
+    void load();
+    return () => { alive = false; };
+  }, [router, applyTheme]);
 
-    loadProfile();
-  }, [router]);
-
-  async function saveProfile() {
-    setSavingProfile(true);
-    setProfileMessage("");
-
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        full_name: name,
-      },
-    });
-
-    if (error) {
-      setProfileMessage(error.message);
-      setSavingProfile(false);
-      return;
-    }
-
-    setProfileMessage("Profile updated successfully.");
-    setSavingProfile(false);
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const cleanName = name.trim();
+    if (!cleanName) { setProfileMessage("Please enter your name."); return; }
+    setSavingProfile(true); setProfileMessage("");
+    try {
+      const { error } = await supabase.auth.updateUser({ data: { full_name: cleanName } });
+      if (error) throw error;
+      setName(cleanName); setProfileMessage("Profile saved successfully.");
+    } catch (error) {
+      setProfileMessage(error instanceof Error ? error.message : "Could not save your profile.");
+    } finally { setSavingProfile(false); }
   }
 
-  async function changePassword() {
-    setPasswordError("");
-    setPasswordMessage("");
+  async function requestEmailChange(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextEmail = newEmail.trim().toLowerCase();
+    if (!nextEmail || nextEmail === email.toLowerCase()) { setEmailMessage("Enter a different email address."); return; }
+    setSavingProfile(true); setEmailMessage("");
+    try {
+      const { error } = await supabase.auth.updateUser({ email: nextEmail });
+      if (error) throw error;
+      setEmailMessage("Email change requested. Check your inbox to confirm it; your current email stays active until confirmation.");
+      setNewEmail("");
+    } catch (error) {
+      setEmailMessage(error instanceof Error ? error.message : "Could not request an email change.");
+    } finally { setSavingProfile(false); }
+  }
 
-    if (newPassword.length < 6) {
-      setPasswordError("Password must be at least 6 characters.");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setPasswordError("The passwords do not match.");
-      return;
-    }
-
+  async function changePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setPasswordError(""); setPasswordMessage("");
+    if (newPassword.length < 8) { setPasswordError("Use at least 8 characters for your new password."); return; }
+    if (newPassword !== confirmPassword) { setPasswordError("The passwords do not match."); return; }
     setChangingPassword(true);
-
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-
-    if (error) {
-      setPasswordError(error.message);
-      setChangingPassword(false);
-      return;
-    }
-
-    setNewPassword("");
-    setConfirmPassword("");
-
-    setPasswordMessage(
-      "Your password has been changed successfully."
-    );
-
-    setChangingPassword(false);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setNewPassword(""); setConfirmPassword(""); setPasswordMessage("Password changed successfully.");
+    } catch (error) {
+      setPasswordError(error instanceof Error ? error.message : "Could not change your password.");
+    } finally { setChangingPassword(false); }
   }
 
-  async function logout() {
-    await supabase.auth.signOut();
+  async function savePreferences() {
+    setSavingPreferences(true); setPreferencesMessage("");
+    try {
+      const { error } = await supabase.auth.updateUser({ data: { studyspace_settings: preferences } });
+      if (error) throw error;
+      applyTheme(preferences.theme);
+      setPreferencesMessage("Preferences saved to your account.");
+    } catch (error) {
+      setPreferencesMessage(error instanceof Error ? error.message : "Could not save preferences.");
+    } finally { setSavingPreferences(false); }
+  }
+
+  function chooseTheme(theme: Theme) {
+    setPreferences(current => ({ ...current, theme }));
+    applyTheme(theme);
+    setPreferencesMessage("Theme preview applied. Save preferences to sync it to your account.");
+  }
+
+  async function signOutEverywhere() {
+    if (!window.confirm("Sign out of StudySpace on this device and all other devices?")) return;
+    setSigningOut(true); setSecurityMessage("");
+    const { error } = await supabase.auth.signOut({ scope: "global" });
+    if (error) { setSecurityMessage(error.message); setSigningOut(false); return; }
     router.replace("/login");
   }
 
-  return (
-    <AppShell
-      title="Settings"
-      description="Manage your StudySpace account"
-    >
-      <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-9">
-        {/* Header */}
-        <div className="mb-7">
-          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-violet-300/70">
-                Preferences
-              </p>
+  async function deleteAccount() {
+    if (deletePhrase !== "DELETE") return;
+    setDeletingAccount(true); setPageError("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Your session expired. Sign in again.");
+      const response = await fetch("/api/account/delete", {
+        method: "DELETE",
+        headers: { Authorization: \`Bearer \${session.access_token}\`, "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: deletePhrase }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Could not delete your account.");
+      await supabase.auth.signOut();
+      router.replace("/login?account_deleted=1");
+    } catch (error) {
+      setPageError(error instanceof Error ? error.message : "Could not delete your account.");
+      setDeletingAccount(false);
+    }
+  }
 
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-                Settings
-              </h1>
+  return <AppShell title="Settings" description="Manage your StudySpace account and preferences.">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-5 sm:px-6 sm:py-7">
+      <header>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-violet-300/70">Preferences</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Settings</h1>
+        <p className="mt-2 text-sm leading-6 text-white/45">Your account, security, appearance and saved preferences.</p>
+        {email && <p className="mt-3 text-xs text-white/35">Signed in as <span className="text-white/60">{email}</span></p>}
+      </header>
+      {pageError && <div role="alert" className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{pageError}</div>}
+      {loading ? <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-8 text-sm text-white/50"><RefreshCw size={16} className="mr-2 inline animate-spin"/>Loading your saved settings…</div> : <>
+        <Section icon={User} title="Profile" description="Update the name shown across your workspace.">
+          <form onSubmit={saveProfile} className="space-y-4">
+            <div><label htmlFor="profile-name" className="mb-2 block text-xs font-medium text-white/55">Full name</label><input id="profile-name" autoComplete="name" maxLength={100} required value={name} onChange={e=>{setName(e.target.value);setProfileMessage("");}} placeholder="Your name" className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-violet-400/40"/></div>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4"><p aria-live="polite" className={\`text-xs \${profileMessage.includes("successfully") ? "text-emerald-300" : "text-red-300"}\`}>{profileMessage}</p><button type="submit" disabled={savingProfile} className="inline-flex h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"><Save size={15}/>{savingProfile?"Saving…":"Save profile"}</button></div>
+          </form>
+          <form onSubmit={requestEmailChange} className="space-y-3 border-t border-white/[0.06] pt-5">
+            <div><label htmlFor="account-email" className="mb-2 block text-xs font-medium text-white/55">Current email</label><div id="account-email" className="flex h-11 items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4"><Mail size={15} className="text-white/30"/><span className="truncate text-sm text-white/55">{email}</span></div></div>
+            <div><label htmlFor="new-email" className="mb-2 block text-xs font-medium text-white/55">Change email</label><input id="new-email" type="email" autoComplete="email" value={newEmail} onChange={e=>setNewEmail(e.target.value)} placeholder="new-address@example.com" className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-violet-400/40"/></div>
+            <p aria-live="polite" className="text-xs text-white/45">{emailMessage}</p><div className="flex justify-end"><button type="submit" disabled={savingProfile||!newEmail.trim()} className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-white/80 hover:bg-white/[0.05] disabled:opacity-50">Request email change</button></div>
+          </form>
+        </Section>
 
-              <p className="mt-2 max-w-xl text-sm leading-6 text-white/40">
-                Manage your profile, security, notifications, and
-                StudySpace preferences.
-              </p>
+        <Section icon={Lock} title="Password" description="Change the password for your email/password account.">
+          <form onSubmit={changePassword} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><label htmlFor="new-password" className="mb-2 block text-xs font-medium text-white/55">New password</label><div className="relative"><input id="new-password" type={showPassword?"text":"password"} autoComplete="new-password" minLength={8} required value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-4 pr-11 text-sm text-white outline-none focus:border-violet-400/40" placeholder="At least 8 characters"/><button type="button" aria-label={showPassword?"Hide passwords":"Show passwords"} onClick={()=>setShowPassword(v=>!v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"><Eye size={16}/></button></div></div>
+              <div><label htmlFor="confirm-password" className="mb-2 block text-xs font-medium text-white/55">Confirm password</label><input id="confirm-password" type={showPassword?"text":"password"} autoComplete="new-password" required value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)} className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-white outline-none focus:border-violet-400/40" placeholder="Repeat new password"/></div>
             </div>
+            {passwordError&&<p role="alert" className="text-sm text-red-300">{passwordError}</p>}{passwordMessage&&<p role="status" className="flex items-center gap-2 text-sm text-emerald-300"><Check size={15}/>{passwordMessage}</p>}
+            <div className="flex justify-end border-t border-white/[0.06] pt-4"><button type="submit" disabled={changingPassword||!newPassword||!confirmPassword} className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50">{changingPassword?"Updating…":"Update password"}</button></div>
+          </form>
+          <div className="border-t border-white/[0.06] pt-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-medium text-white">Sign out all devices</p><p className="mt-1 text-xs text-white/40">Revoke other active sessions and sign out here too.</p></div><button type="button" onClick={signOutEverywhere} disabled={signingOut} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/80 hover:bg-white/[0.05] disabled:opacity-50"><LogOut size={15}/>{signingOut?"Signing out…":"Sign out everywhere"}</button></div>{securityMessage&&<p role="alert" className="mt-3 text-xs text-red-300">{securityMessage}</p>}</div>
+        </Section>
 
-            <div className="hidden rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 py-3 sm:block">
-              <p className="text-[10px] uppercase tracking-wider text-white/25">
-                Account
-              </p>
-              <p className="mt-1 max-w-[220px] truncate text-xs text-white/55">
-                {email || "Loading..."}
-              </p>
-            </div>
+        <Section icon={Bell} title="Notifications" description="Save your reminder preferences for your StudySpace account.">
+          <Toggle title="Email notifications" description="Your preference for future email updates. Automated email reminders are not currently sent." value={preferences.emailNotifications} onChange={v=>setPreferences(p=>({...p,emailNotifications:v}))}/>
+          <div className="border-t border-white/[0.06] pt-5"><Toggle title="Assignment reminders" description="Save whether you want assignment reminder features enabled." value={preferences.assignmentReminders} onChange={v=>setPreferences(p=>({...p,assignmentReminders:v}))}/></div>
+          <div className="border-t border-white/[0.06] pt-5"><Toggle title="Quiz reminders" description="Save whether you want quiz reminder features enabled." value={preferences.quizReminders} onChange={v=>setPreferences(p=>({...p,quizReminders:v}))}/></div>
+        </Section>
+
+        <Section icon={Laptop} title="Appearance" description="Choose the visual theme for your workspace.">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {([{value:"dark",title:"Dark",description:"The original purple-black StudySpace look.",icon:Moon},{value:"light",title:"Light",description:"A brighter workspace.",icon:Sun},{value:"system",title:"System",description:"Follow your device appearance.",icon:Laptop}] as const).map(option=>{const Icon=option.icon;const active=preferences.theme===option.value;return <button key={option.value} type="button" aria-pressed={active} onClick={()=>chooseTheme(option.value)} className={\`rounded-2xl border p-4 text-left transition \${active?"border-violet-400/40 bg-violet-500/10":"border-white/10 bg-white/[0.02] hover:bg-white/[0.05]"}\`}><Icon size={19} className={active?"text-violet-300":"text-white/45"}/><p className="mt-3 text-sm font-medium text-white">{option.title}</p><p className="mt-1 text-xs leading-5 text-white/40">{option.description}</p>{active&&<p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-violet-300">Selected</p>}</button>})}
           </div>
-        </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4"><p aria-live="polite" className="text-xs text-emerald-300">{preferencesMessage}</p><button type="button" onClick={savePreferences} disabled={savingPreferences} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"><Save size={15}/>{savingPreferences?"Saving…":"Save preferences"}</button></div>
+        </Section>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-          {/* Main settings */}
-          <div className="space-y-5">
-            {/* Profile */}
-            <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025]">
-              <SectionHeader
-                icon={User}
-                title="Profile"
-                description="Your personal account information"
-              />
-
-              <div className="space-y-5 p-5 sm:p-6">
-                <div>
-                  <label className="mb-2 block text-xs font-medium text-white/50">
-                    Full name
-                  </label>
-
-                  <input
-                    value={name}
-                    onChange={(event) => {
-                      setName(event.target.value);
-                      setProfileMessage("");
-                    }}
-                    placeholder="Your name"
-                    className="h-11 w-full rounded-xl border border-white/[0.08] bg-black/20 px-4 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-violet-400/30 focus:bg-black/30 focus:ring-2 focus:ring-violet-500/10"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-xs font-medium text-white/50">
-                    Email address
-                  </label>
-
-                  <div className="flex min-h-11 items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] px-4">
-                    <Mail size={16} className="shrink-0 text-white/25" />
-
-                    <span className="min-w-0 flex-1 truncate text-sm text-white/45">
-                      {email || "Loading..."}
-                    </span>
-
-                    <span className="hidden rounded-full bg-emerald-500/10 px-2 py-1 text-[9px] font-medium uppercase tracking-wide text-emerald-300 sm:inline-block">
-                      Account email
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3 border-t border-white/[0.06] pt-5 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-h-5">
-                    {profileMessage && (
-                      <p
-                        className={`text-xs ${
-                          profileMessage.includes("successfully")
-                            ? "text-emerald-400"
-                            : "text-red-400"
-                        }`}
-                      >
-                        {profileMessage}
-                      </p>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={saveProfile}
-                    disabled={savingProfile}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <Save size={15} />
-                    {savingProfile ? "Saving..." : "Save changes"}
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            {/* Password */}
-            <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025]">
-              <SectionHeader
-                icon={Lock}
-                title="Password"
-                description="Update your account password"
-              />
-
-              <div className="space-y-5 p-5 sm:p-6">
-                <div className="grid gap-5 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-xs font-medium text-white/50">
-                      New password
-                    </label>
-
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(event) => {
-                        setNewPassword(event.target.value);
-                        setPasswordError("");
-                        setPasswordMessage("");
-                      }}
-                      placeholder="Enter a new password"
-                      className="h-11 w-full rounded-xl border border-white/[0.08] bg-black/20 px-4 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-violet-400/30 focus:bg-black/30 focus:ring-2 focus:ring-violet-500/10"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-xs font-medium text-white/50">
-                      Confirm password
-                    </label>
-
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(event) => {
-                        setConfirmPassword(event.target.value);
-                        setPasswordError("");
-                        setPasswordMessage("");
-                      }}
-                      placeholder="Confirm your new password"
-                      className="h-11 w-full rounded-xl border border-white/[0.08] bg-black/20 px-4 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-violet-400/30 focus:bg-black/30 focus:ring-2 focus:ring-violet-500/10"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  {passwordError && (
-                    <div className="rounded-xl border border-red-400/10 bg-red-500/[0.05] px-4 py-3 text-xs text-red-300">
-                      {passwordError}
-                    </div>
-                  )}
-
-                  {passwordMessage && (
-                    <div className="flex items-center gap-2 rounded-xl border border-emerald-400/10 bg-emerald-500/[0.05] px-4 py-3 text-xs text-emerald-300">
-                      <Check size={14} />
-                      {passwordMessage}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex justify-end border-t border-white/[0.06] pt-5">
-                  <button
-                    type="button"
-                    onClick={changePassword}
-                    disabled={changingPassword}
-                    className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {changingPassword
-                      ? "Updating password..."
-                      : "Change password"}
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            {/* Notifications */}
-            <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025]">
-              <SectionHeader
-                icon={Bell}
-                title="Notifications"
-                description="Choose what StudySpace can remind you about"
-              />
-
-              <div className="divide-y divide-white/[0.05]">
-                <SettingToggle
-                  title="Email notifications"
-                  description="Receive important StudySpace updates by email."
-                  enabled={emailNotifications}
-                  onChange={setEmailNotifications}
-                />
-
-                <SettingToggle
-                  title="Assignment reminders"
-                  description="Get reminders about upcoming assignments."
-                  enabled={assignmentReminders}
-                  onChange={setAssignmentReminders}
-                />
-
-                <SettingToggle
-                  title="Quiz reminders"
-                  description="Get notified when quizzes are approaching."
-                  enabled={quizReminders}
-                  onChange={setQuizReminders}
-                />
-              </div>
-            </section>
-
-            {/* Appearance */}
-            <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025]">
-              <SectionHeader
-                icon={Monitor}
-                title="Appearance"
-                description="Customize how StudySpace looks"
-              />
-
-              <div className="grid gap-3 p-5 sm:grid-cols-3 sm:p-6">
-                <ThemeOption
-                  icon={Moon}
-                  title="Dark"
-                  description="The current StudySpace experience."
-                  active
-                />
-
-                <ThemeOption
-                  icon={Sun}
-                  title="Light"
-                  description="A lighter interface."
-                  disabled
-                />
-
-                <ThemeOption
-                  icon={Monitor}
-                  title="System"
-                  description="Follow your device preference."
-                  disabled
-                />
-              </div>
-            </section>
-
-            {/* Security */}
-            <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025]">
-              <SectionHeader
-                icon={Shield}
-                title="Security"
-                description="Manage account security"
-              />
-
-              <div className="divide-y divide-white/[0.05]">
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-4 px-5 py-5 text-left transition hover:bg-white/[0.025] sm:px-6"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-white">
-                      Active sessions
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-white/30">
-                      Review where your account is currently signed in.
-                    </p>
-                  </div>
-
-                  <ChevronRight
-                    size={17}
-                    className="shrink-0 text-white/20"
-                  />
-                </button>
-
-                <div className="flex items-center gap-4 px-5 py-5 sm:px-6">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-white">
-                      Two-factor authentication
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-white/30">
-                      Add another layer of protection to your account.
-                    </p>
-                  </div>
-
-                  <span className="shrink-0 rounded-full border border-white/[0.07] bg-white/[0.035] px-2.5 py-1 text-[9px] font-medium uppercase tracking-wider text-white/30">
-                    Coming soon
-                  </span>
-                </div>
-              </div>
-            </section>
+        <Section icon={Shield} title="Account security" description="Actions that affect your entire StudySpace account.">
+          <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-medium text-white">Sign out on this device</p><p className="mt-1 text-xs text-white/40">End your current session.</p></div><button type="button" onClick={async()=>{const {error}=await supabase.auth.signOut({scope:"local"});if(error)setSecurityMessage(error.message);else router.replace("/login");}} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/80 hover:bg-white/[0.05]"><LogOut size={15}/>Sign out</button></div>
+          <div className="border-t border-red-400/10 pt-5"><div className="flex items-start gap-3"><div className="rounded-xl bg-red-500/10 p-2 text-red-300"><Trash2 size={17}/></div><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-white">Delete account</p><p className="mt-1 text-xs leading-5 text-white/40">Permanently remove your StudySpace account, associated database records, and uploaded homework files. This cannot be undone.</p></div></div>
+            {!showDeleteConfirm?<button type="button" onClick={()=>setShowDeleteConfirm(true)} className="mt-4 rounded-xl border border-red-400/20 bg-red-500/[0.07] px-4 py-2.5 text-sm font-medium text-red-300 hover:bg-red-500/[0.12]">Delete my account…</button>:<div className="mt-4 space-y-3 rounded-xl border border-red-400/20 bg-red-500/[0.04] p-4"><p className="text-sm text-red-200">Type <strong>DELETE</strong> to confirm permanent account deletion.</p><input value={deletePhrase} onChange={e=>setDeletePhrase(e.target.value)} aria-label="Type DELETE to confirm" placeholder="Type DELETE" className="h-11 w-full rounded-xl border border-red-400/20 bg-black/20 px-4 text-sm text-white outline-none"/><div className="flex flex-wrap gap-2"><button type="button" onClick={()=>{setShowDeleteConfirm(false);setDeletePhrase("");}} disabled={deletingAccount} className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/70">Cancel</button><button type="button" onClick={deleteAccount} disabled={deletePhrase!=="DELETE"||deletingAccount} className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40">{deletingAccount?"Deleting account…":"Permanently delete account"}</button></div></div>}
           </div>
-
-          {/* Sidebar */}
-          <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
-            {/* Account card */}
-            <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.025]">
-              <div className="relative overflow-hidden px-5 py-6">
-                <div className="absolute -right-12 -top-16 h-36 w-36 rounded-full bg-violet-600/[0.12] blur-3xl" />
-
-                <div className="relative">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/30 to-indigo-500/10 text-lg font-semibold text-violet-200 ring-1 ring-violet-400/20">
-                    {name?.trim()?.charAt(0)?.toUpperCase() || "S"}
-                  </div>
-
-                  <h3 className="mt-4 truncate text-sm font-semibold text-white">
-                    {name || "StudySpace student"}
-                  </h3>
-
-                  <p className="mt-1 truncate text-xs text-white/35">
-                    {email || "Loading..."}
-                  </p>
-                </div>
-              </div>
-
-              <div className="border-t border-white/[0.06] px-5 py-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-white/30">
-                    Account status
-                  </span>
-
-                  <span className="flex items-center gap-1.5 text-xs font-medium text-emerald-300">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    Active
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Sign out */}
-            <div className="rounded-2xl border border-red-400/10 bg-red-500/[0.025] p-5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-500/10 text-red-300">
-                <LogOut size={16} />
-              </div>
-
-              <h3 className="mt-4 text-sm font-semibold text-white">
-                Sign out
-              </h3>
-
-              <p className="mt-1.5 text-xs leading-5 text-white/30">
-                Sign out of your StudySpace account on this device.
-              </p>
-
-              <button
-                type="button"
-                onClick={logout}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-red-400/15 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition hover:bg-red-500/15"
-              >
-                <LogOut size={15} />
-                Sign out
-              </button>
-            </div>
-
-            {/* Danger zone */}
-            <div className="rounded-2xl border border-red-500/10 bg-red-500/[0.015] p-5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-red-300/70">
-                Danger zone
-              </p>
-
-              <h3 className="mt-3 text-sm font-semibold text-white">
-                Delete account
-              </h3>
-
-              <p className="mt-1.5 text-xs leading-5 text-white/30">
-                Account deletion is permanent and will be connected to
-                Supabase once production account management is implemented.
-              </p>
-
-              <button
-                type="button"
-                disabled
-                className="mt-4 w-full rounded-xl border border-red-400/10 px-4 py-2.5 text-xs font-medium text-red-300/30"
-              >
-                Delete account
-              </button>
-            </div>
-          </aside>
-        </div>
-      </div>
-    </AppShell>
-  );
+        </Section>
+      </>}
+    </div>
+  </AppShell>;
 }
