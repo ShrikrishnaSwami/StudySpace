@@ -10,6 +10,8 @@ import {
   EyeOff,
   Lock,
   Mail,
+  Chrome,
+  UserRound,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/admin";
@@ -23,6 +25,32 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  async function handleGoogleLogin() {
+    setLoading(true);
+    setError("");
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
+    });
+    if (error) { setError(error.message); setLoading(false); }
+  }
+
+  async function handleGuestLogin() {
+    setLoading(true);
+    setError("");
+    const { error } = await supabase.auth.signInAnonymously({
+      options: { data: { full_name: "Guest Student", account_type: "guest" } },
+    });
+    if (error) {
+      setError(error.message.includes("Anonymous sign-ins are disabled")
+        ? "Guest access is not enabled in Supabase yet. Enable Anonymous Sign-Ins in Supabase Authentication settings and try again."
+        : error.message);
+      setLoading(false);
+      return;
+    }
+    router.push("/dashboard");
+  }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -108,6 +136,20 @@ export default function LoginPage() {
               <p className="mt-3 text-sm leading-6 text-zinc-400">
                 Continue where you left off and get back to studying.
               </p>
+            </div>
+
+            <div className="mb-6 space-y-3">
+              <button type="button" onClick={handleGoogleLogin} disabled={loading}
+                className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] py-3.5 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:opacity-60">
+                <Chrome size={18} /> Continue with Google
+              </button>
+              <button type="button" onClick={handleGuestLogin} disabled={loading}
+                className="flex w-full items-center justify-center gap-3 rounded-xl border border-purple-400/20 bg-purple-500/[0.07] py-3.5 text-sm font-semibold text-purple-200 transition hover:bg-purple-500/[0.13] disabled:opacity-60">
+                <UserRound size={18} /> Continue as guest
+              </button>
+              <div className="flex items-center gap-3 py-1 text-[11px] uppercase tracking-wider text-white/25">
+                <span className="h-px flex-1 bg-white/10" /> or use email <span className="h-px flex-1 bg-white/10" />
+              </div>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-5">
