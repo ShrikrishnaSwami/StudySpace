@@ -1399,3 +1399,126 @@ button, a, input, textarea, select { outline-offset: 3px; }
   .ss-tools-grid { grid-template-columns: 1fr; }
   .ss-ribbon { justify-content: flex-start; }
 }
+
+
+/* -------------------------------------------------------------------------- */
+/* Premium interaction layer                                                  */
+/* -------------------------------------------------------------------------- */
+:root {
+  color-scheme: dark;
+  --ss-violet: #a78bfa;
+  --ss-violet-bright: #c4b5fd;
+  --ss-panel: rgba(20, 16, 31, .9);
+  --ss-line: rgba(211, 198, 255, .12);
+}
+html { scroll-padding-top: 92px; }
+body {
+  background:
+    radial-gradient(ellipse at 12% -18%, rgba(124, 58, 237, .13), transparent 38%),
+    radial-gradient(ellipse at 88% 6%, rgba(76, 29, 149, .09), transparent 30%),
+    var(--background);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible {
+  outline: 2px solid rgba(196, 181, 253, .9);
+  outline-offset: 3px;
+}
+button, a, input, textarea, select { accent-color: #a78bfa; }
+::selection { background: rgba(139, 92, 246, .42); color: #fff; }
+.ss-command-backdrop {
+  background: rgba(3, 2, 7, .7);
+  backdrop-filter: blur(14px) saturate(120%);
+  animation: ss-backdrop-in 140ms ease-out both;
+}
+.ss-command-panel {
+  background: linear-gradient(145deg, rgba(25, 20, 39, .99), rgba(12, 10, 20, .99));
+  border-color: rgba(196, 181, 253, .19);
+  box-shadow: 0 40px 120px rgba(0,0,0,.65), inset 0 1px rgba(255,255,255,.055);
+  animation: ss-panel-in 180ms cubic-bezier(.2,.8,.2,1) both;
+}
+.ss-command-trigger kbd {
+  background: rgba(255,255,255,.025);
+}
+.ss-command-panel input {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.ss-command-panel a:focus-visible { outline-offset: -2px; }
+.ss-shell .ss-sidebar {
+  border-right-color: rgba(196, 181, 253, .1) !important;
+}
+.ss-shell .ss-sidebar a.group.relative.flex.items-center {
+  border-radius: 10px;
+}
+.ss-shell .ss-sidebar a.group.relative.flex.items-center:hover {
+  background-color: rgba(167, 139, 250, .075);
+}
+.ss-shell .ss-sidebar button {
+  border-radius: 10px;
+}
+.ss-shell .ss-topbar {
+  box-shadow: 0 1px 0 rgba(196, 181, 253, .025), 0 8px 30px rgba(0,0,0,.08);
+}
+.ss-shell main .rounded-2xl {
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+.ss-shell main .rounded-2xl.border:hover {
+  border-color: rgba(196, 181, 253, .18) !important;
+}
+.ss-shell main button:not(:disabled):active {
+  transform: translateY(1px);
+}
+.ss-shell main button:focus-visible,
+.ss-shell main a:focus-visible {
+  outline-color: rgba(196, 181, 253, .85);
+}
+.ss-home .ss-join, .ss-home .ss-cta {
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+.ss-home .ss-join:hover, .ss-home .ss-cta:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+  box-shadow: 0 16px 42px rgba(109, 66, 216, .35), inset 0 1px rgba(255,255,255,.25);
+}
+.ss-home .ss-tool-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+}
+.ss-home .ss-tool-card:before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(circle at 90% 0%, rgba(167, 139, 250, .13), transparent 55%);
+  transition: opacity .22s ease;
+}
+.ss-home .ss-tool-card:hover { transform: translateY(-4px); }
+.ss-home .ss-tool-card:hover:before { opacity: 1; }
+.ss-home .ss-ribbon { border-block: 1px solid rgba(196, 181, 253, .09); }
+.ss-home .ss-toolkit-head h2 { text-wrap: balance; }
+.ss-home .ss-hero h1 { text-wrap: balance; }
+.ss-home .ss-hero-text { line-height: 1.85; }
+.ss-home .ss-footer { gap: 18px; }
+@keyframes ss-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ss-panel-in {
+  from { opacity: 0; transform: translateY(-8px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *:before, *:after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+@media (max-width: 640px) {
+  .ss-command-panel { border-radius: 16px; }
+  .ss-home .ss-footer { align-items: flex-start; flex-direction: column; }
+  .ss-shell .ss-topbar { padding-inline: 14px; }
+}
