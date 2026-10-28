@@ -315,8 +315,19 @@ export async function subscribeToNotifications(onChange: () => void) {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) return () => undefined;
 
+  // More than one UI component can subscribe for the same user (for example,
+  // the notification menu and its unread-count badge). Supabase reuses channels
+  // by name, so a shared name can return an already-subscribed channel and make
+  // a later .on(...) throw. Give each independent subscription its own channel.
+  const channelName =
+    "studyspace-notifications-" +
+    user.id +
+    "-" +
+    Date.now().toString(36) +
+    "-" +
+    Math.random().toString(36).slice(2);
   const channel = supabase
-    .channel("studyspace-notifications-" + user.id)
+    .channel(channelName)
     .on(
       "postgres_changes",
       {
