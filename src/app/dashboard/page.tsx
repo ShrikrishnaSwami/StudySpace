@@ -364,7 +364,7 @@ function AIDataChip({
         className={`h-1.5 w-1.5 rounded-full ${
           active
             ? "bg-violet-300 shadow-[0_0_8px_rgba(167,139,250,0.55)]"
-            : "bg-white/15"
+            : "bg-violet-300/15"
         }`}
       />
 
