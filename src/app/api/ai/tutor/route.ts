@@ -95,18 +95,34 @@ export async function POST(request: NextRequest) {
      * -------------------------------------------------------
      */
 
-    if (Number(request.headers.get("content-length") || 0) > 65536) return NextResponse.json({ error: "Request is too large." }, { status: 413 });
-    const body =
-      (await request.json()) as RequestBody;
+    if (Number(request.headers.get("content-length") || 0) > 65536) {
+      return NextResponse.json({ error: "Request is too large." }, { status: 413 });
+    }
 
-    const message =
-      body.message?.trim() || "";
+    let body: RequestBody;
+    try {
+      const parsed: unknown = await request.json();
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+      }
+      body = parsed as RequestBody;
+    } catch {
+      return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    }
 
-    const courseId =
-      body.courseId || null;
+    if (typeof body.message !== "string") {
+      return NextResponse.json({ error: "Please enter a message." }, { status: 400 });
+    }
+    if (body.courseId != null && typeof body.courseId !== "string") {
+      return NextResponse.json({ error: "Invalid course selection." }, { status: 400 });
+    }
+    if (body.conversationId != null && typeof body.conversationId !== "string") {
+      return NextResponse.json({ error: "Invalid conversation." }, { status: 400 });
+    }
 
-    const conversationId =
-      body.conversationId || null;
+    const message = body.message.trim();
+    let courseId = body.courseId?.trim() || null;
+    const conversationId = body.conversationId?.trim() || null;
 
     if (!message) {
       return NextResponse.json(
@@ -164,6 +180,16 @@ export async function POST(request: NextRequest) {
           { status: 404 }
         );
       }
+
+      // Keep a conversation tied to its original course so a follow-up cannot
+      // silently switch the academic context mid-thread.
+      if (courseId && conversation.course_id && courseId !== conversation.course_id) {
+        return NextResponse.json(
+          { error: "This conversation belongs to a different course. Start a new chat to switch courses." },
+          { status: 400 }
+        );
+      }
+      if (!courseId && conversation.course_id) courseId = conversation.course_id;
     }
 
     /*
@@ -238,15 +264,17 @@ information is unavailable.
     const retrievalPromise = retrieveRelevantStudyContextHybrid(studySpaceContext, message, { userId: user.id, accessToken: token, completeContext: studySpaceContextComplete && !courseId });
     // Semantic embedding adds a network round-trip. Fall back to lexical context
     // quickly rather than making every tutor question wait for ranking.
+    let retrievalTimeout: ReturnType<typeof setTimeout> | undefined;
     const retrieval = await Promise.race([
       retrievalPromise,
       new Promise<Awaited<ReturnType<typeof retrieveRelevantStudyContextHybrid>>>((resolve) => {
-        setTimeout(() => resolve({
+        retrievalTimeout = setTimeout(() => resolve({
           ...retrieveRelevantStudyContext(studySpaceContext, message),
           strategy: "record-lexical-expanded-v3",
         }), 650);
       }),
     ]);
+    if (retrievalTimeout) clearTimeout(retrievalTimeout);
     const selectedStudySpaceContext = retrieval.context;
 
     /*
@@ -272,7 +300,7 @@ information is unavailable.
         .order("created_at", {
           ascending: false,
         })
-        .limit(20);
+        .limit(12);
 
       if (messagesError) {
         console.error(
@@ -283,13 +311,20 @@ information is unavailable.
         const orderedMessages =
           [...(messages || [])].reverse();
 
-        conversationHistory =
-          orderedMessages
-            .map(
-              (item) =>
-                `${item.role === "user" ? "STUDENT" : "AI TUTOR"}: ${item.content}`
-            )
-            .join("\n\n");
+        // Bound history size to keep latency and token usage predictable even
+        // when old messages contain pasted documents or long code blocks.
+        let historyCharacters = 0;
+        const historyParts: string[] = [];
+        for (const item of orderedMessages) {
+          if (historyParts.length >= 12 || historyCharacters >= 9000) break;
+          const content = String(item.content || "").slice(0, 1800);
+          const remaining = 9000 - historyCharacters;
+          const boundedContent = content.slice(0, remaining);
+          if (!boundedContent) continue;
+          historyParts.push(`${item.role === "user" ? "STUDENT" : "AI TUTOR"}: ${boundedContent}`);
+          historyCharacters += boundedContent.length;
+        }
+        conversationHistory = historyParts.join("\n\n");
       }
     }
 
