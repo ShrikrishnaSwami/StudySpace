@@ -243,7 +243,7 @@ information is unavailable.
       new Promise<Awaited<ReturnType<typeof retrieveRelevantStudyContextHybrid>>>((resolve) => {
         setTimeout(() => resolve({
           ...retrieveRelevantStudyContext(studySpaceContext, message),
-          strategy: "fast-context-fallback",
+          strategy: "record-lexical-expanded-v3",
         }), 650);
       }),
     ]);
