@@ -20,6 +20,8 @@ type EmbeddingResponse = {
 type CachedEmbedding = {
   content_hash: string;
   embedding: string | number[];
+  source_id?: string | null;
+  source_type?: string | null;
 };
 
 type CachedSourceReference = {
@@ -180,7 +182,7 @@ export async function retrieveRelevantStudyContextHybrid(
       embedQuestion(question, apiKey),
       supabase
         .from("studyspace_ai_embeddings")
-        .select("content_hash, embedding")
+        .select("content_hash, embedding, source_id, source_type")
         .eq("user_id", auth.userId)
         .eq("model", EMBEDDING_MODEL)
         .in("content_hash", uniqueHashes),
