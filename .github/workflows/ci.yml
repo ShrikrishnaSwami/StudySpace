@@ -23,7 +23,6 @@ jobs:
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
       SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
       GEMINI_API_KEY: ci-placeholder-gemini-key
-      STUDYSPACE_ADMIN_EMAIL: ci@example.com
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
