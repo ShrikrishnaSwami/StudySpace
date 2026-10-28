@@ -22,6 +22,8 @@ import {
   Plus,
   Sparkles,
   Trash2,
+  ThumbsDown,
+  ThumbsUp,
   User,
   X,
 } from "lucide-react";
@@ -214,6 +216,9 @@ export default function AITutorPage() {
 
   const [deleteTarget, setDeleteTarget] =
     useState<string | null>(null);
+
+  const [messageFeedback, setMessageFeedback] =
+    useState<Record<string, -1 | 1>>({});
 
   const messagesEndRef =
     useRef<HTMLDivElement>(null);
@@ -775,6 +780,43 @@ export default function AITutorPage() {
       window.setTimeout(() => {
         textareaRef.current?.focus();
       }, 50);
+    }
+  }
+
+  /* =======================================================
+     AI ANSWER FEEDBACK
+  ======================================================= */
+
+  async function rateAnswer(message: Message, rating: -1 | 1) {
+    if (message.role !== "assistant" || !selectedConversationId) return;
+    const previous = messageFeedback[message.id];
+    setMessageFeedback((current) => ({ ...current, [message.id]: rating }));
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setError("Please sign in again to save feedback.");
+      return;
+    }
+
+    const { error: feedbackError } = await supabase
+      .from("ai_tutor_feedback")
+      .upsert({
+        user_id: user.id,
+        conversation_id: selectedConversationId,
+        message_key: message.id,
+        rating,
+        reason: "general",
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id,message_key" });
+
+    if (feedbackError) {
+      setMessageFeedback((current) => {
+        const next = { ...current };
+        if (previous === undefined) delete next[message.id];
+        else next[message.id] = previous;
+        return next;
+      });
+      setError("Could not save AI feedback. Please try again.");
     }
   }
 
@@ -1547,6 +1589,29 @@ export default function AITutorPage() {
                                 message.created_at
                               )}
                             </span>
+
+                            {!isUser && (
+                              <span className="ml-2 inline-flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  aria-label="This answer was helpful"
+                                  title="Helpful"
+                                  onClick={() => void rateAnswer(message, 1)}
+                                  className={`rounded-md p-1 transition hover:bg-white/[0.06] ${messageFeedback[message.id] === 1 ? "text-emerald-300" : "text-white/25 hover:text-emerald-300"}`}
+                                >
+                                  <ThumbsUp className="h-3 w-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label="This answer was not helpful"
+                                  title="Not helpful"
+                                  onClick={() => void rateAnswer(message, -1)}
+                                  className={`rounded-md p-1 transition hover:bg-white/[0.06] ${messageFeedback[message.id] === -1 ? "text-rose-300" : "text-white/25 hover:text-rose-300"}`}
+                                >
+                                  <ThumbsDown className="h-3 w-3" />
+                                </button>
+                              </span>
+                            )}
 
                             {index ===
                               conversationMessages.length -
