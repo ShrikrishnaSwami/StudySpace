@@ -43,6 +43,8 @@ public.admin_dashboard_stats() uses SECURITY DEFINER, an empty search path, and 
 - User-facing quota and rate-limit RPCs derive the caller from auth.uid(). The quota RPC chooses its daily ceiling inside the database. The rate-limit RPC uses an allowlist of route keys and server-owned limits, preventing callers from choosing arbitrary routes or inflating their own caps.
 - Usage reads now use a caller-bound aggregate RPC instead of direct access to the private event table. These changes remove the service-role key requirement for AI quota enforcement and usage display.
 
+Supabase Security Advisor still reports expected warnings for callable SECURITY DEFINER RPCs and anonymous-auth policies: the RPCs are intentionally exposed to authenticated callers but derive identity from auth.uid(), restrict operations to the caller, use an empty search_path, and have no anon EXECUTE grant. Guest sign-in uses the authenticated database role, so owner-bound policies remain visible to the advisor; real guest isolation was checked in the read matrix. The advisor also reports leaked-password protection is disabled; enable it in Supabase Auth settings if the project's plan supports it.
+
 The SQL definitions and grants were verified. A live load/abuse test that sends bursts of HTTP requests using real tokens has not been completed because the current deployment is not ready and the AI provider key is empty.
 
 ## AI reliability
