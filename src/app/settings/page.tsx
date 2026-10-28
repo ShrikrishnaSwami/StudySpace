@@ -174,7 +174,7 @@ export default function SettingsPage() {
     setSavingPreferences(true); setPreferencesMessage("");
     try {
       const { error } = await supabase.auth.updateUser({ data: { studyspace_settings: preferences } });
-      if (error) throw error;(preferences.theme);
+      if (error) throw error;
       setPreferencesMessage("Preferences saved to your account.");
     } catch (error) {
       setPreferencesMessage(error instanceof Error ? error.message : "Could not save preferences.");
@@ -215,7 +215,7 @@ export default function SettingsPage() {
       <header>
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-violet-300/70">Preferences</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Settings</h1>
-        <p className="mt-2 text-sm leading-6 text-white/45">Your account, security, appearance and saved preferences.</p>
+        <p className="mt-2 text-sm leading-6 text-white/45">Your account, security and saved preferences.</p>
         {email && <p className="mt-3 text-xs text-white/35">Signed in as <span className="text-white/60">{email}</span></p>}
       </header>
       {pageError && <div role="alert" className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{pageError}</div>}
