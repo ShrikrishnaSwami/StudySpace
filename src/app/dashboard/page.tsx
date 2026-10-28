@@ -1769,6 +1769,95 @@ export default function DashboardPage() {
           </span>
         </div>
       </div>
+
+      <style jsx global>{`
+        /* Dashboard-only polish to bring the workspace in line with StudySpace's
+           premium violet landing page, without changing any data or interactions. */
+        .ss-dashboard {
+          animation: ss-dashboard-enter 420ms cubic-bezier(.2,.75,.25,1) both;
+        }
+        .ss-dashboard > section:first-child {
+          isolation: isolate;
+          border-color: rgba(196,181,253,.2);
+          background:
+            radial-gradient(ellipse at 88% 0%, rgba(139,92,246,.17), transparent 38%),
+            radial-gradient(ellipse at 0% 100%, rgba(109,66,216,.12), transparent 42%),
+            linear-gradient(125deg, rgba(35,25,57,.96), rgba(17,14,27,.97) 58%, rgba(11,10,17,.99));
+          box-shadow: 0 24px 75px rgba(0,0,0,.2), inset 0 1px rgba(255,255,255,.045);
+        }
+        .ss-dashboard > section:first-child h1 {
+          line-height: 1.08;
+          text-wrap: balance;
+        }
+        .ss-dashboard > section:first-child p {
+          color: #b5aec9;
+        }
+        .ss-dashboard > section:first-child button {
+          border-color: rgba(196,181,253,.2);
+          background: rgba(255,255,255,.045);
+          backdrop-filter: blur(12px);
+        }
+        .ss-dashboard > section:first-child button:hover {
+          background: rgba(139,92,246,.12);
+          box-shadow: 0 8px 28px rgba(76,29,149,.16);
+        }
+        .ss-dashboard > section:nth-of-type(2) > div {
+          position: relative;
+          isolation: isolate;
+        }
+        .ss-dashboard > section:nth-of-type(2) > div:after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          border-radius: inherit;
+          background: radial-gradient(circle at 100% 0%, rgba(167,139,250,.075), transparent 58%);
+          opacity: 0;
+          transition: opacity .22s ease;
+        }
+        .ss-dashboard > section:nth-of-type(2) > div:hover:after { opacity: 1; }
+        .ss-dashboard > section:nth-of-type(2) > div > div:first-child {
+          box-shadow: inset 0 1px rgba(255,255,255,.035);
+        }
+        .ss-dashboard section.overflow-hidden.rounded-2xl,
+        .ss-dashboard section.relative.overflow-hidden.rounded-2xl {
+          border-color: rgba(196,181,253,.13);
+          box-shadow: 0 16px 46px rgba(0,0,0,.13), inset 0 1px rgba(255,255,255,.018);
+        }
+        .ss-dashboard section > div:first-child h2 {
+          letter-spacing: -.025em;
+        }
+        .ss-dashboard a.group,
+        .ss-dashboard section button,
+        .ss-dashboard section a {
+          -webkit-tap-highlight-color: transparent;
+        }
+        .ss-dashboard a.group:focus-visible,
+        .ss-dashboard section button:focus-visible {
+          outline: 2px solid rgba(196,181,253,.85);
+          outline-offset: 3px;
+        }
+        .ss-dashboard .rounded-xl.border,
+        .ss-dashboard .rounded-2xl.border {
+          transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease, background-color .2s ease;
+        }
+        .ss-dashboard .rounded-xl.border:hover {
+          border-color: rgba(196,181,253,.2);
+        }
+        @keyframes ss-dashboard-enter {
+          from { opacity: 0; transform: translateY(7px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ss-dashboard { animation: none; }
+          .ss-dashboard * { transition-duration: .01ms !important; }
+        }
+        @media (max-width: 640px) {
+          .ss-dashboard { padding-top: 16px; }
+          .ss-dashboard > section:first-child { border-radius: 22px; }
+          .ss-dashboard > section:first-child h1 { font-size: clamp(27px, 8vw, 36px); overflow-wrap: anywhere; }
+        }
+      `}</style>
     </AppShell>
   );
 }
