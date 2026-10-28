@@ -1,14 +1,75 @@
-import { NextRequest,NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { consumeApiRateLimit } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
-export async function POST(request:NextRequest){
- try{
-  const token=request.headers.get("authorization")?.replace(/^Bearer\s+/i,""),url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY||process.env.SUPABASE_SECRET_KEY;
-  if(!token)return NextResponse.json({error:"Sign in to join a group."},{status:401});if(!url||!key)return NextResponse.json({error:"Server-side Supabase admin key is missing. Set SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY) in the server environment."},{status:503});
-  const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});const {data:{user},error:authError}=await client.auth.getUser(token);if(authError||!user)return NextResponse.json({error:"Session expired. Sign in again."},{status:401});const rate=await consumeApiRateLimit(user.id,"study-group-join",10,600);if(!rate.allowed)return NextResponse.json({error:"Too many join attempts. Please wait and try again."},{status:429});
-  if(Number(request.headers.get("content-length")||0)>1024)return NextResponse.json({error:"Invite request is too large."},{status:413});let body:unknown;try{body=await request.json();}catch{return NextResponse.json({error:"Invalid invite request."},{status:400});}if(!body||typeof body!=="object"||Array.isArray(body))return NextResponse.json({error:"Invalid invite request."},{status:400});const inviteCode=(body as {inviteCode?:unknown}).inviteCode,code=typeof inviteCode==="string"?inviteCode.trim().toUpperCase():"";if(!/^(?:[A-Z0-9]{8}|[A-Z0-9]{16})$/.test(code))return NextResponse.json({error:"Enter a valid invite code."},{status:400});
-  const {data:group,error:groupError}=await client.from("study_groups").select("id,name,invite_code").eq("invite_code",code).maybeSingle();if(groupError||!group)return NextResponse.json({error:"No study group found for that code."},{status:404});
-  const {data:existing}=await client.from("study_group_members").select("group_id").eq("group_id",group.id).eq("user_id",user.id).maybeSingle();if(!existing){const {error}=await client.from("study_group_members").insert({group_id:group.id,user_id:user.id,role:"member"});if(error)throw error;}
-  return NextResponse.json({group:{id:group.id,name:group.name}});
- }catch(e){console.error("Study group join failed:",e);return NextResponse.json({error:"Could not join the study group."},{status:500});}
+
+export const dynamic = "force-dynamic";
+
+export async function POST(request: NextRequest) {
+  try {
+    const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
+    if (!token) {
+      return NextResponse.json({ error: "Sign in to join a group." }, { status: 401 });
+    }
+
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    if (!url || !key) {
+      return NextResponse.json({ error: "Supabase authentication is not configured." }, { status: 503 });
+    }
+
+    const client = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      global: { headers: { Authorization: "Bearer " + token } },
+    });
+    const { data: { user }, error: authError } = await client.auth.getUser(token);
+    if (authError || !user) {
+      return NextResponse.json({ error: "Session expired. Sign in again." }, { status: 401 });
+    }
+
+    const rate = await consumeApiRateLimit(user.id, "study-group-join", 10, 600, token);
+    if (!rate.allowed) {
+      return NextResponse.json({ error: "Too many join attempts. Please wait and try again." }, { status: 429 });
+    }
+
+    const declaredLength = Number(request.headers.get("content-length") || 0);
+    if (declaredLength > 1024) {
+      return NextResponse.json({ error: "Invite request is too large." }, { status: 413 });
+    }
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid invite request." }, { status: 400 });
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Invalid invite request." }, { status: 400 });
+    }
+
+    const rawCode = (body as { inviteCode?: unknown }).inviteCode;
+    const code = typeof rawCode === "string" ? rawCode.trim().toUpperCase() : "";
+    if (!/^(?:[A-Z0-9]{8}|[A-Z0-9]{16})$/.test(code)) {
+      return NextResponse.json({ error: "Enter a valid invite code." }, { status: 400 });
+    }
+
+    const { data, error } = await client.rpc("join_study_group_by_invite", {
+      p_invite_code: code,
+    });
+    if (error) {
+      console.error("Study group join RPC failed:", { code: error.code });
+      return NextResponse.json({ error: "Could not join the study group." }, { status: 500 });
+    }
+
+    const group = Array.isArray(data) ? data[0] : data;
+    if (!group) {
+      return NextResponse.json({ error: "No study group found for that code." }, { status: 404 });
+    }
+
+    return NextResponse.json({ group: { id: group.id, name: group.name } });
+  } catch {
+    console.error("Study group join failed.");
+    return NextResponse.json({ error: "Could not join the study group." }, { status: 500 });
+  }
 }
