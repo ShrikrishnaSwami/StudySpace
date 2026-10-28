@@ -29,7 +29,7 @@ Run this from a trusted local machine with the Supabase CLI installed and authen
 2. Restore the SQL dump using the current Supabase CLI/database instructions. Never test restore by overwriting production.
 3. Apply/verify migration history and confirm all expected public tables have RLS enabled.
 4. Restore Storage objects to private buckets and compare object counts/checksums.
-5. Test login, guest isolation, student-owned rows, instructor assignment access, admin RPC denial for non-admin users, and signed file access.
+5. Test login, guest isolation, student-owned rows, AI grading authorization and grade integrity, admin RPC denial for non-admin users, and signed file access.
 6. Run the repository checks: npm ci, npm run lint, npm run test:retrieval, npx tsc --noEmit, npm run build.
 7. Record which checks passed and any data/configuration that was not recoverable.
 
