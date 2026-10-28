@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   if (!token) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
   if (!url || !key) return NextResponse.json({ error: "Admin authentication is not configured." }, { status: 503 });
 
   const client = createClient(url, key, {
