@@ -696,8 +696,17 @@ export default function AITutorPage() {
 
       const processLine = (line: string) => {
         if (!line.trim()) return;
-        const event = JSON.parse(line) as { type: string; text?: string; error?: string };
-        if (event.type === "chunk" && event.text) {
+        const event = JSON.parse(line) as { type: string; text?: string; error?: string; sources?: unknown };
+        if (event.type === "sources" && Array.isArray(event.sources)) {
+          const sources = event.sources
+            .filter((source): source is string => typeof source === "string")
+            .map((source) => source.trim().slice(0, 160))
+            .filter(Boolean)
+            .slice(0, 5);
+          setMessages((current) => current.map((item) =>
+            item.id === assistantMessage.id ? { ...item, contextSources: sources } : item
+          ));
+        } else if (event.type === "chunk" && event.text) {
           answer += event.text;
           setMessages((current) => current.map((item) =>
             item.id === assistantMessage.id ? { ...item, content: answer } : item
@@ -1574,6 +1583,17 @@ export default function AITutorPage() {
                               }
                             </div>
                           </div>
+
+                          {!isUser && Boolean(message.contextSources?.length) && (
+                            <div className="mt-3 rounded-xl border border-violet-400/10 bg-violet-500/[0.035] p-3">
+                              <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-violet-200/55">StudySpace sources used</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {message.contextSources?.map((source, index) => (
+                                  <span key={message.id + "-source-" + index} className="rounded-lg border border-white/[0.08] bg-white/[0.035] px-2 py-1 text-[11px] text-white/55">{source}</span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
 
                           <div
                             className={[
