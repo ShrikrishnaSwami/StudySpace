@@ -6,7 +6,10 @@ const csp = [
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
-  "form-action 'self' https:",
+  "form-action 'self'",
+  "frame-src 'none'",
+  "manifest-src 'self'",
+  "worker-src 'self' blob:",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data: https:",
   "style-src 'self' 'unsafe-inline'",
@@ -19,6 +22,10 @@ const csp = [
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
+  { key: "X-DNS-Prefetch-Control", value: "off" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Origin-Agent-Cluster", value: "?1" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
