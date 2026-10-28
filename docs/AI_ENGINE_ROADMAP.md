@@ -44,7 +44,7 @@ This is retrieval infrastructure, not a model trained by StudySpace. The Gemini 
 
 ## Evaluation
 
-Synthetic cases in `src/lib/studyspace-retrieval-evaluation.json` contain no real student records. Regression tests in `src/lib/studyspace-retrieval.test.ts` cover expected categories, paraphrased queries, semantic-score reranking, individual note selection, retrieval from later chunks of long notes, context bounds, empty context, and unmatched-question fallback.
+Synthetic cases in `src/lib/studyspace-retrieval-evaluation.json` contain no real student records. The current benchmark has 20 retrieval prompts spanning paraphrased course details, assignment deadlines/status, quiz performance, notes, and calendar events. Regression tests in `src/lib/studyspace-retrieval.test.ts` cover expected categories, paraphrased queries, semantic-score reranking, individual note selection, retrieval from later chunks of long notes, context bounds, empty context, unmatched-question fallback, and prompt-injection text encoded as untrusted reference data.
 
 Run with:
 
@@ -57,6 +57,8 @@ The test suite should be run locally after pulling `main`. A green local test ru
 ## Feedback and model improvement
 
 - The tutor now exposes per-answer helpful / not-helpful controls. Feedback is stored in `ai_tutor_feedback`, scoped by RLS to the owning student and conversation. It is a human quality signal; it does not automatically change model weights or personalize future model parameters.
+- The admin dashboard reports aggregate helpful / not-helpful counts and helpfulness percentage for the previous seven days. It does not expose student messages or feedback records.
+- Student-authored notes and conversation history are JSON-encoded as untrusted prompt content instead of being interpolated into the privileged system instruction. The system prompt explicitly treats embedded instructions as data and asks for source labels only when they exist.
 - The tutor prompt supports adaptive teaching patterns: hints before solutions when requested, one-question-at-a-time quizzing, stepwise calculations, diagnosis of attempted work, and switching explanations when a student is stuck.
 - Synthetic retrieval regression tests now include stable source metadata. Keep evaluation fixtures synthetic; do not use private student notes or chat logs as a training corpus without explicit, informed consent and a privacy review.
 
