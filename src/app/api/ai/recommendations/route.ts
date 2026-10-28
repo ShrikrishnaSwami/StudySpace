@@ -167,9 +167,9 @@ STUDENT DATA:
 ${formattedContext}
 `;
 
-    const quota = await consumeAiQuota(user.id, "recommendations");
+    const quota = await consumeAiQuota(token, "recommendations");
     if (!quota.allowed) {
-      return NextResponse.json({ error: quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You have reached today's AI recommendations limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
+      return NextResponse.json({ error: quota.scope === "rate" ? "Too many AI requests. Please wait a few minutes and try again." : quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You have reached today's AI recommendations limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
     }
 
     const response =
