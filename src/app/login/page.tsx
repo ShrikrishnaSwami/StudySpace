@@ -10,7 +10,6 @@ import {
   EyeOff,
   Lock,
   Mail,
-  Globe2,
   UserRound,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -30,28 +29,10 @@ export default function LoginPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("error") === "oauth_callback") {
-      setError("Google sign-in could not be completed. Please try again or use email and password.");
-    }
     if (params.get("account_deleted") === "1") {
       setNotice("Your StudySpace account has been deleted.");
     }
   }, []);
-
-  async function handleGoogleLogin() {
-    setLoading(true);
-    setError("");
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
-      });
-      if (error) throw error;
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not start Google sign-in.");
-      setLoading(false);
-    }
-  }
 
   async function handleGuestLogin() {
     setLoading(true);
@@ -180,10 +161,6 @@ export default function LoginPage() {
             </div>
 
             <div className="mb-6 space-y-3">
-              <button type="button" onClick={handleGoogleLogin} disabled={loading}
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] py-3.5 text-sm font-semibold text-white transition hover:bg-white/[0.08] disabled:opacity-60">
-                <Globe2 size={18} /> Continue with Google
-              </button>
               <button type="button" onClick={handleGuestLogin} disabled={loading}
                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-purple-400/20 bg-purple-500/[0.07] py-3.5 text-sm font-semibold text-purple-200 transition hover:bg-purple-500/[0.13] disabled:opacity-60">
                 <UserRound size={18} /> Continue as guest
