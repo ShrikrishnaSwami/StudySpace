@@ -8,14 +8,13 @@
  */
 export const MONETIZATION_ENABLED = false;
 
-export type StudySpacePlan = "free" | "plus" | "educator";
+export type StudySpacePlan = "free" | "plus";
 export type StudySpaceEntitlement =
   | "ai_tutor"
   | "quiz_generation"
   | "flashcard_generation"
   | "homework_analysis"
-  | "advanced_analytics"
-  | "instructor_tools";
+  | "advanced_analytics";
 
 export const STUDYSPACE_PLAN_DEFAULTS = {
   free: {
@@ -37,18 +36,6 @@ export const STUDYSPACE_PLAN_DEFAULTS = {
       "flashcard_generation",
       "homework_analysis",
       "advanced_analytics",
-    ],
-  },
-  educator: {
-    monthlyPriceCad: null,
-    dailyAiRequests: 250,
-    entitlements: [
-      "ai_tutor",
-      "quiz_generation",
-      "flashcard_generation",
-      "homework_analysis",
-      "advanced_analytics",
-      "instructor_tools",
     ],
   },
 } as const satisfies Record<
