@@ -30,6 +30,7 @@ import {
   Paperclip,
   Plus,
   Send,
+  Sparkles,
   Trash2,
   Upload,
   X,
@@ -221,6 +222,7 @@ export default function AssignmentWorkspacePage() {
   const [loading, setLoading] = useState(true);
   const [loadingFiles, setLoadingFiles] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [grading, setGrading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [fileError, setFileError] = useState("");
@@ -743,6 +745,35 @@ export default function AssignmentWorkspacePage() {
     setBusy(false);
   }
 
+  async function gradeSubmission(submissionId: string) {
+    setGrading(true);
+    setFileError("");
+    setNotice("");
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+      const response = await fetch("/api/assignments/grade", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + session.access_token,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ assignmentId, submissionId }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "AI grading failed. Please try again.");
+      setNotice("AI feedback is ready. Your provisional grade has been saved.");
+      await loadFilesAndSubmissions();
+    } catch (cause) {
+      setFileError(cause instanceof Error ? cause.message : "AI grading failed. Your submission is safe; try again.");
+    } finally {
+      setGrading(false);
+    }
+  }
+
   async function submitFinalWork() {
     if (!activeSubmission || !assignment) return;
 
@@ -802,6 +833,7 @@ export default function AssignmentWorkspacePage() {
       progress: 100,
     });
     await loadFilesAndSubmissions();
+    await gradeSubmission(data.id);
   }
 
   async function deleteAssignment() {
@@ -1125,7 +1157,17 @@ export default function AssignmentWorkspacePage() {
                 </div>
               )}
               {activeSubmission?.status === "submitted" && activeSubmission.grade == null && (
-                <div className="mb-5 rounded-xl border border-amber-400/15 bg-amber-400/[0.04] px-4 py-3 text-sm text-amber-100/70">Your work has been submitted.</div>
+                <div className="mb-5 flex flex-col gap-3 rounded-xl border border-violet-400/20 bg-violet-400/[0.05] p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-white/85">Your work has been submitted</p>
+                    <p className="mt-1 text-xs leading-5 text-white/45">Get a provisional AI grade with feedback and suggestions. This is not an official instructor grade.</p>
+                  </div>
+                  <button type="button" onClick={() => void gradeSubmission(activeSubmission.id)} disabled={grading || busy}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-violet-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-50">
+                    {grading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {grading ? "AI is grading…" : "Grade with AI"}
+                  </button>
+                </div>
               )}
 
               {activeSubmission && (
