@@ -922,7 +922,7 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-[1500px] space-y-8 px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-9">
+      <div className="ss-dashboard mx-auto max-w-[1500px] space-y-8 px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-9">
 
         {/* =================================================
             HERO
