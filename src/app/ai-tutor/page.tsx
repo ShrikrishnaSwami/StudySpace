@@ -1584,16 +1584,7 @@ export default function AITutorPage() {
                             </div>
                           </div>
 
-                          {!isUser && Boolean(message.contextSources?.length) && (
-                            <div className="mt-3 rounded-xl border border-violet-400/10 bg-violet-500/[0.035] p-3">
-                              <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-violet-200/55">StudySpace sources used</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {message.contextSources?.map((source, index) => (
-                                  <span key={message.id + "-source-" + index} className="rounded-lg border border-white/[0.08] bg-white/[0.035] px-2 py-1 text-[11px] text-white/55">{source}</span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+
 
                           <div
                             className={[

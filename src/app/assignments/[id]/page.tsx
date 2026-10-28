@@ -51,6 +51,9 @@ type Assignment = {
   course_id: string;
   title: string;
   description: string | null;
+  assignment_questions?: string;
+  rubric_text?: string;
+  unit_name?: string;
   due_date: string | null;
   priority: "low" | "medium" | "high";
   status: "pending" | "in_progress" | "completed";
@@ -283,7 +286,7 @@ export default function AssignmentWorkspacePage() {
     const { data, error: queryError } = await supabase
       .from("assignments")
       .select(`
-        id, user_id, assigned_to, course_id, title, description, due_date,
+        id, user_id, assigned_to, course_id, title, description, assignment_questions, rubric_text, unit_name, due_date,
         priority, status, progress, points, max_points,
         created_at, updated_at,
         courses (id, code, name)
@@ -975,6 +978,21 @@ export default function AssignmentWorkspacePage() {
             <p className="mt-5 max-w-3xl whitespace-pre-wrap text-sm leading-7 text-white/60">
               {assignment.description}
             </p>
+          )}
+          {assignment.unit_name && assignment.unit_name !== "General" && (
+            <p className="mt-3 text-xs font-medium uppercase tracking-wider text-violet-300">Unit · {assignment.unit_name}</p>
+          )}
+          {assignment.assignment_questions?.trim() && (
+            <div className="mt-5 rounded-xl border border-violet-400/15 bg-violet-500/[0.04] p-4">
+              <h2 className="text-sm font-semibold text-violet-200">Assignment questions & requirements</h2>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/70">{assignment.assignment_questions}</p>
+            </div>
+          )}
+          {assignment.rubric_text?.trim() && (
+            <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.025] p-4">
+              <h2 className="text-sm font-semibold text-white/80">AI grading rubric</h2>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/60">{assignment.rubric_text}</p>
+            </div>
           )}
         </section>
 
