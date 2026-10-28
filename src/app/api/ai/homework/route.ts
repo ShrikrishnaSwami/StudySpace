@@ -220,7 +220,7 @@ export async function POST(
 
     const quota = await consumeAiQuota(user.id, "homework");
     if (!quota.allowed) {
-      return NextResponse.json({ error: "You have reached today's AI homework limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
+      return NextResponse.json({ error: quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You have reached today's AI homework limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
     }
 
     const ai = getGeminiClient();
