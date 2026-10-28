@@ -6,7 +6,7 @@ import { consumeAiQuota } from "@/lib/api-security";
 export const maxDuration = 60;
 
 function parseAiJson(value: string): { events?: unknown[] } {
-  const cleaned = value.replace(/^\\s*```(?:json)?\\s*/i, "").replace(/\\s*```\\s*$/, "").trim();
+  const cleaned = value.replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
   try {
     return JSON.parse(cleaned) as { events?: unknown[] };
   } catch {
