@@ -82,6 +82,9 @@ ${
           (course, index) => `
 COURSE ${index + 1}
 
+Record ID:
+${clean(course.id)}
+
 Code:
 ${clean(course.code)}
 
@@ -134,6 +137,9 @@ ${
           (note, index) => `
 NOTE ${index + 1}
 
+Record ID:
+${clean(note.id)}
+
 Course ID:
 ${clean(note.course_id)}
 
@@ -179,6 +185,9 @@ ${
         .map(
           (resource, index) => `
 RESOURCE ${index + 1}
+
+Record ID:
+${clean(resource.id)}
 
 Course ID:
 ${clean(resource.course_id)}
@@ -233,6 +242,9 @@ ${
           (assignment, index) => `
 ASSIGNMENT ${index + 1}
 
+Record ID:
+${clean(assignment.id)}
+
 Course ID:
 ${clean(assignment.course_id)}
 
@@ -282,6 +294,9 @@ ${
           (quiz, index) => `
 QUIZ ${index + 1}
 
+Record ID:
+${clean(quiz.id)}
+
 Quiz ID:
 ${clean(quiz.id)}
 
@@ -318,6 +333,9 @@ ${
         .map(
           (attempt, index) => `
 ATTEMPT ${index + 1}
+
+Record ID:
+${clean(attempt.id)}
 
 Quiz ID:
 ${clean(attempt.quiz_id)}
@@ -376,6 +394,9 @@ ${
         .map(
           (item, index) => `
 HOMEWORK ${index + 1}
+
+Record ID:
+${clean(item.id)}
 
 Homework ID:
 ${clean(item.id)}
@@ -442,6 +463,9 @@ ${
         .map(
           (event, index) => `
 EVENT ${index + 1}
+
+Record ID:
+${clean(event.id)}
 
 Title:
 ${clean(event.title)}
