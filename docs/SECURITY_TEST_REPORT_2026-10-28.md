@@ -2,7 +2,7 @@
 
 ## Scope and limitations
 
-This report records live Supabase SQL checks, simulated authenticated-role reads, Vercel deployment metadata, and Vercel runtime-error summaries. It is not a full penetration test. SQL role tests set request.jwt.claims inside a rolled-back transaction; they did not exercise the browser, HTTP JWT verification, or real Storage uploads/downloads. No dedicated instructor-role account exists in the current Supabase Auth users, so a normal non-admin account was used as an student B owner-boundary check.
+This report records live Supabase SQL checks, simulated authenticated-role reads, Vercel deployment metadata, and Vercel runtime-error summaries. It is not a full penetration test. SQL role tests set request.jwt.claims inside a rolled-back transaction; they did not exercise the browser, HTTP JWT verification, or real Storage uploads/downloads. StudySpace is student-only; the AI performs assignment grading. The additional non-admin account was used only to verify student ownership boundaries.
 
 ## Supabase RLS and Storage
 
