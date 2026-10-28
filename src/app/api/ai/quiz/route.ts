@@ -155,6 +155,18 @@ export async function POST(request: NextRequest) {
         })
         .join("\n\n").slice(0, 20000) || "No notes available.";
 
+    const { data: resources, error: resourcesError } = await supabase
+      .from("course_resources")
+      .select("title,description,unit_name,category")
+      .eq("course_id", courseId)
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (resourcesError) throw resourcesError;
+    const resourcesText = (resources || []).map((resource) =>
+      "[" + String(resource.unit_name || "General") + " · " + String(resource.category || "Resource") + "] " +
+      String(resource.title || "Resource") + "\\n" + String(resource.description || "")
+    ).join("\\n\\n").slice(0, 8000);
+
     const prompt = `
 Create a university-level practice quiz.
 
@@ -172,6 +184,9 @@ ${topic || "General course review"}
 
 STUDENT NOTES
 ${notesText}
+
+SAVED COURSE RESOURCES (titles and descriptions only; use as additional context, not as evidence of full linked-page contents)
+${resourcesText || "No saved resource descriptions."}
 
 DIFFICULTY
 ${difficulty}

@@ -33,6 +33,9 @@ type Assignment = {
   course_id: string;
   title: string;
   description: string | null;
+  assignment_questions?: string;
+  rubric_text?: string;
+  unit_name?: string;
   due_date: string | null;
   priority: "low" | "medium" | "high";
   status: "pending" | "in_progress" | "completed";
@@ -110,6 +113,9 @@ export default function AssignmentsPage() {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [assignmentQuestions, setAssignmentQuestions] = useState("");
+  const [rubricText, setRubricText] = useState("");
+  const [unitName, setUnitName] = useState("General");
   const [courseId, setCourseId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [priority, setPriority] =
@@ -139,7 +145,7 @@ export default function AssignmentsPage() {
         supabase
           .from("assignments")
           .select(
-            "id, user_id, assigned_to, course_id, title, description, due_date, priority, status, progress, points, max_points, created_at, updated_at",
+            "id, user_id, assigned_to, course_id, title, description, assignment_questions, rubric_text, unit_name, due_date, priority, status, progress, points, max_points, created_at, updated_at",
           )
           .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`)
           .order("due_date", { ascending: true, nullsFirst: false }),
@@ -277,6 +283,9 @@ export default function AssignmentsPage() {
           course_id: courseId,
           title: title.trim(),
           description: description.trim() || null,
+          assignment_questions: assignmentQuestions.trim(),
+          rubric_text: rubricText.trim(),
+          unit_name: unitName.trim() || "General",
           due_date: dueDate || null,
           priority,
           status: "pending",
@@ -287,6 +296,9 @@ export default function AssignmentsPage() {
 
       setTitle("");
       setDescription("");
+      setAssignmentQuestions("");
+      setRubricText("");
+      setUnitName("General");
       setCourseId("");
       setDueDate("");
       setPriority("medium");
@@ -799,6 +811,21 @@ export default function AssignmentsPage() {
                     placeholder="What do you need to complete?"
                     className="w-full resize-y rounded-xl border border-white/10 bg-white/[0.035] px-3.5 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-purple-400/50"
                   />
+                </div>
+
+                <div>
+                  <label htmlFor="assignment-unit" className="mb-1.5 block text-sm text-white/65">Unit / chapter</label>
+                  <input id="assignment-unit" maxLength={100} value={unitName} onChange={(event) => setUnitName(event.target.value)} placeholder="e.g. Unit 3 — Photosynthesis" className="w-full rounded-xl border border-white/10 bg-white/[0.035] px-3.5 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-purple-400/50" />
+                </div>
+
+                <div>
+                  <label htmlFor="assignment-questions" className="mb-1.5 block text-sm text-white/65">Assignment questions & required work</label>
+                  <textarea id="assignment-questions" value={assignmentQuestions} onChange={(event) => setAssignmentQuestions(event.target.value)} rows={4} maxLength={12000} placeholder="Paste the exact questions, task instructions, required sections, and submission requirements. You can also attach the assignment PDF after creating it." className="w-full resize-y rounded-xl border border-white/10 bg-white/[0.035] px-3.5 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-purple-400/50" />
+                </div>
+
+                <div>
+                  <label htmlFor="assignment-rubric" className="mb-1.5 block text-sm text-white/65">Rubric / marking criteria <span className="text-white/30">(optional)</span></label>
+                  <textarea id="assignment-rubric" value={rubricText} onChange={(event) => setRubricText(event.target.value)} rows={3} maxLength={12000} placeholder="Paste the marking rubric, point breakdown, and criteria the AI should follow." className="w-full resize-y rounded-xl border border-white/10 bg-white/[0.035] px-3.5 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-purple-400/50" />
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
