@@ -38,6 +38,8 @@ jobs:
         run: npm audit --audit-level=high
       - name: Run ESLint
         run: npm run lint
+      - name: Test AI retrieval
+        run: npm run test:retrieval
       - name: Type-check TypeScript
         run: npx tsc --noEmit
       - name: Build Next.js application
