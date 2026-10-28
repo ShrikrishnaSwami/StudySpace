@@ -24,6 +24,15 @@ function createServerSupabase(token: string) {
   });
 }
 
+function createQuizResultWriter() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+  if (!url || !key) throw new Error("Secure quiz result storage is not configured.");
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+}
+
 export async function POST(
   request: NextRequest,
   context: {
@@ -60,10 +69,38 @@ export async function POST(
 
     const { id: quizId } = await context.params;
 
-    const body = await request.json();
+    if (Number(request.headers.get("content-length") || 0) > 32768) {
+      return NextResponse.json({ error: "Quiz answers are too large." }, { status: 413 });
+    }
 
-    const submittedAnswers =
-      body.answers || {};
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid quiz submission." }, { status: 400 });
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Invalid quiz submission." }, { status: 400 });
+    }
+    const answersValue = (body as { answers?: unknown }).answers;
+    if (!answersValue || typeof answersValue !== "object" || Array.isArray(answersValue)) {
+      return NextResponse.json({ error: "Answers must be provided as an object." }, { status: 400 });
+    }
+    const submittedAnswers = answersValue as Record<string, unknown>;
+    const answerKeys = Object.keys(submittedAnswers);
+    if (answerKeys.length > 200) {
+      return NextResponse.json({ error: "Too many quiz answers were submitted." }, { status: 400 });
+    }
+    let submittedCharacters = 0;
+    for (const value of Object.values(submittedAnswers)) {
+      if (typeof value !== "string" || value.length > 2000) {
+        return NextResponse.json({ error: "Each quiz answer must be text under 2,000 characters." }, { status: 400 });
+      }
+      submittedCharacters += value.length;
+    }
+    if (submittedCharacters > 20000) {
+      return NextResponse.json({ error: "Combined quiz answers are too large." }, { status: 413 });
+    }
 
     const { data: quiz, error: quizError } =
       await supabase
@@ -100,6 +137,13 @@ export async function POST(
         { error: "This quiz has no questions." },
         { status: 400 }
       );
+    }
+    if (questions.length > 200) {
+      return NextResponse.json({ error: "This quiz exceeds the supported 200-question limit." }, { status: 400 });
+    }
+    const questionIds = new Set(questions.map((question) => String(question.id)));
+    if (Object.keys(submittedAnswers).some((id) => !questionIds.has(id))) {
+      return NextResponse.json({ error: "The submission contains answers for unknown questions." }, { status: 400 });
     }
 
     let correctCount = 0;
@@ -161,8 +205,11 @@ export async function POST(
           ) / 100
         : 0;
 
+    // Quiz results are written only by the trusted server. Client roles are
+    // deliberately denied direct INSERT/UPDATE/DELETE by database policies and triggers.
+    const resultWriter = createQuizResultWriter();
     const { data: attempt, error: attemptError } =
-      await supabase
+      await resultWriter
         .from("quiz_attempts")
         .insert({
           quiz_id: quizId,
@@ -192,12 +239,19 @@ export async function POST(
     }
 
     const { error: answersError } =
-      await supabase
+      await resultWriter
         .from("quiz_answers")
         .insert(answerRows);
 
     if (answersError) {
-      throw new Error(answersError.message);
+      // Best-effort compensation prevents a half-written attempt being treated as complete.
+      const { error: rollbackError } = await resultWriter
+        .from("quiz_attempts")
+        .delete()
+        .eq("id", attempt.id)
+        .eq("user_id", user.id);
+      if (rollbackError) console.error("Could not roll back incomplete quiz attempt:", rollbackError.code);
+      throw new Error("Quiz answers could not be saved. Please retry the submission.");
     }
 
     const topicStats: Record<
@@ -258,12 +312,7 @@ export async function POST(
     );
 
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to submit quiz.",
-      },
+      { error: "Failed to submit quiz. Your answers were not confirmed as saved; please try again." },
       { status: 500 }
     );
   }
