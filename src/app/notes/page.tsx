@@ -18,6 +18,7 @@ export default function NotesPage() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [courseFilter, setCourseFilter] = useState("all");
   const [unitFilter, setUnitFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [courseId, setCourseId] = useState("");
   const [unitName, setUnitName] = useState("General");
@@ -57,17 +58,24 @@ export default function NotesPage() {
     ...resources.map(r => r.unit_name || "General"),
   ])).sort((a, b) => a.localeCompare(b)), [notes, resources]);
 
+  const categories = useMemo(() => Array.from(new Set([
+    ...notes.map(n => n.category || "Lecture notes"),
+    ...resources.map(r => r.category || "Resource"),
+  ])).sort((a, b) => a.localeCompare(b)), [notes, resources]);
+
   const ns = useMemo(() => notes.filter(n =>
     (courseFilter === "all" || n.course_id === courseFilter) &&
     (unitFilter === "all" || (n.unit_name || "General") === unitFilter) &&
+    (categoryFilter === "all" || (n.category || "Lecture notes") === categoryFilter) &&
     (!search || (n.title + " " + n.content + " " + (n.category || "")).toLowerCase().includes(search.toLowerCase()))
-  ), [notes, courseFilter, unitFilter, search]);
+  ), [notes, courseFilter, unitFilter, categoryFilter, search]);
 
   const rs = useMemo(() => resources.filter(r =>
     (courseFilter === "all" || r.course_id === courseFilter) &&
     (unitFilter === "all" || (r.unit_name || "General") === unitFilter) &&
+    (categoryFilter === "all" || (r.category || "Resource") === categoryFilter) &&
     (!search || (r.title + " " + (r.description || "") + " " + (r.category || "")).toLowerCase().includes(search.toLowerCase()))
-  ), [resources, courseFilter, unitFilter, search]);
+  ), [resources, courseFilter, unitFilter, categoryFilter, search]);
 
   function courseName(id: string) {
     const c = courses.find(x => x.id === id);
@@ -144,10 +152,11 @@ export default function NotesPage() {
 
   return <AppShell title="Notes & resources" description="Turn lecture files into revision notes and organize everything by course, unit, and category.">
     <div className="mx-auto max-w-7xl space-y-6">
-      <div className="grid gap-3 lg:grid-cols-[1fr_220px_220px]">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_190px_190px_190px]">
         <div className="relative"><Search size={17} className="absolute left-3 top-3.5 text-white/35"/><input type="search" aria-label="Search notes and resources" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search your library…" className={inputClass+" pl-10"}/></div>
         <select value={courseFilter} onChange={e=>setCourseFilter(e.target.value)} className={selectClass}><option value="all">All courses</option>{courses.map(c=><option key={c.id} value={c.id}>{c.code ? c.code+" · " : ""}{c.name}</option>)}</select>
         <select value={unitFilter} onChange={e=>setUnitFilter(e.target.value)} className={selectClass}><option value="all">All units</option>{units.map(u=><option key={u} value={u}>{u}</option>)}</select>
+        <select value={categoryFilter} onChange={e=>setCategoryFilter(e.target.value)} className={selectClass}><option value="all">All categories</option>{categories.map(category=><option key={category} value={category}>{category}</option>)}</select>
       </div>
       {error && <p role="alert" className="rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm text-red-200">{error}</p>}
       {notice && <p role="status" className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3 text-sm text-emerald-200">{notice}</p>}

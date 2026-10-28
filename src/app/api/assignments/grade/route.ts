@@ -125,13 +125,20 @@ export async function POST(request: NextRequest) {
     }
     if (declaredTotalBytes > 30 * 1024 * 1024) return NextResponse.json({ error: "AI grading supports up to 30 MB of attachments per submission." }, { status: 413 });
 
-    const { data: referenceFiles, error: referenceFilesError } = await admin.from("assignment_attachments").select("file_name,storage_path,file_type,file_size,user_id,attachment_kind").eq("assignment_id", assignmentId).in("attachment_kind", ["instructions", "rubric"]).order("created_at", { ascending: true }).limit(10);
+    const { data: referenceFiles, error: referenceFilesError } = await admin.from("assignment_attachments").select("file_name,storage_path,file_type,file_size,user_id,attachment_kind").eq("assignment_id", assignmentId).eq("user_id", assignment.user_id).in("attachment_kind", ["instructions", "rubric"]).order("created_at", { ascending: true }).limit(10);
     if (referenceFilesError) throw referenceFilesError;
-    const readableReferences = (referenceFiles || []).filter((file) => {
+    const ownerReferences = (referenceFiles || []).filter((file) => file.user_id === assignment.user_id);
+    const readableReferences = ownerReferences.filter((file) => {
       const ext = file.file_name.split(".").pop()?.toLowerCase() || "";
-      const mime = file.file_type && supportedMimeTypes.has(file.file_type) ? file.file_type : referenceMimeTypes[ext];
-      return Boolean(mime && supportedMimeTypes.has(mime));
+      const inferred = referenceMimeTypes[ext];
+      const mime = file.file_type && supportedMimeTypes.has(file.file_type) ? file.file_type : inferred;
+      return Boolean(inferred && mime && supportedMimeTypes.has(mime) && mime === inferred);
     }).slice(0, 3);
+    const oversizedReference = readableReferences.find((file) => Number(file.file_size) > 10 * 1024 * 1024);
+    if (oversizedReference) return NextResponse.json({ error: `"${oversizedReference.file_name}" is too large for AI grading references. Keep assignment prompts and rubrics under 10 MB each.` }, { status: 413 });
+    const declaredReferenceBytes = readableReferences.reduce((sum, file) => sum + (Number(file.file_size) || 0), 0);
+    if (declaredReferenceBytes > 15 * 1024 * 1024) return NextResponse.json({ error: "Keep the combined assignment prompt and rubric files under 15 MB for AI grading." }, { status: 413 });
+    if (ownerReferences.length && readableReferences.length === 0) return NextResponse.json({ error: "AI grading can read assignment reference files in PDF, TXT, CSV, PNG, JPG, or WEBP format. Upload a supported assignment prompt or rubric." }, { status: 415 });
     const quota = await consumeAiQuota(token, "homework");
     if (!quota.allowed) return NextResponse.json({ error: quota.scope === "rate" ? "Too many AI grading requests. Please wait a few minutes and try again." : quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You've reached today's AI homework limit. Try again later.", usage: quota }, { status: 429 });
 
@@ -165,15 +172,19 @@ export async function POST(request: NextRequest) {
     for (const file of readableReferences) {
       const ext = file.file_name.split(".").pop()?.toLowerCase() || "";
       const mimeType = file.file_type && supportedMimeTypes.has(file.file_type) ? file.file_type : referenceMimeTypes[ext];
+      // Only the assignment creator's references define the rubric; a submitter must not
+      // be able to upload a self-serving "rubric" and influence their own AI grade.
+      if (file.user_id !== assignment.user_id) continue;
       if (!file.storage_path.startsWith(`${file.user_id}/${assignmentId}/`)) continue;
-      if (Number(file.file_size) > 10 * 1024 * 1024 || referenceBytes + Number(file.file_size || 0) > 15 * 1024 * 1024) continue;
+      if (Number(file.file_size) > 10 * 1024 * 1024) continue;
       const { data: signed, error: signedError } = await admin.storage.from("assignment-files").createSignedUrl(file.storage_path, 120);
-      if (signedError || !signed?.signedUrl) continue;
+      if (signedError || !signed?.signedUrl) throw new Error(`Could not access assignment reference file "${file.file_name}".`);
       const response = await fetch(signed.signedUrl, { cache: "no-store" });
-      if (!response.ok) continue;
+      if (!response.ok) throw new Error(`Could not download assignment reference file "${file.file_name}".`);
       let bytes: Buffer;
-      try { bytes = await readLimitedResponse(response, 10 * 1024 * 1024); } catch { continue; }
+      try { bytes = await readLimitedResponse(response, 10 * 1024 * 1024); } catch { return NextResponse.json({ error: `"${file.file_name}" exceeds the 10 MB AI grading reference limit.` }, { status: 413 }); }
       referenceBytes += bytes.length;
+      if (referenceBytes > 15 * 1024 * 1024) return NextResponse.json({ error: "Keep the combined assignment prompt and rubric files under 15 MB for AI grading." }, { status: 413 });
       if (mimeType === "text/plain" || mimeType === "text/csv") {
         parts.push({ text: `ASSIGNMENT ${file.attachment_kind === "rubric" ? "RUBRIC / MARKING GUIDE" : "PROMPT / QUESTIONS"} (not student work): ${file.file_name}\n${bytes.toString("utf8").slice(0, 16000)}` });
       } else {

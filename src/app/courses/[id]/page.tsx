@@ -63,6 +63,9 @@ type Note = {
   content: string | null;
   created_at: string;
   updated_at: string;
+  unit_name?: string;
+  category?: string;
+  source_file_name?: string | null;
 };
 
 type Resource = {
@@ -74,6 +77,8 @@ type Resource = {
   resource_type: string | null;
   description: string | null;
   created_at: string;
+  unit_name?: string;
+  category?: string;
 };
 
 type Goal = {
@@ -1169,6 +1174,11 @@ function NotesSection({
                     {note.title}
                   </h3>
 
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <span className="rounded-md border border-violet-400/15 bg-violet-500/[0.04] px-2 py-0.5 text-[10px] text-violet-200/75">{note.unit_name || "General"}</span>
+                    <span className="rounded-md border border-white/10 px-2 py-0.5 text-[10px] text-white/45">{note.category || "Lecture notes"}</span>
+                  </div>
+                  {note.source_file_name && <p className="mt-1 text-[10px] text-white/35">Extracted from {note.source_file_name}</p>}
                   <p className="mt-1 text-xs text-white/25">
                     Updated{" "}
                     {new Date(
@@ -1249,11 +1259,10 @@ function MaterialsSection({
                       {resource.title}
                     </h3>
 
-                    {resource.resource_type && (
-                      <p className="mt-1 text-[10px] uppercase tracking-wider text-violet-400">
-                        {resource.resource_type}
-                      </p>
-                    )}
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <span className="rounded-md border border-violet-400/15 bg-violet-500/[0.04] px-2 py-0.5 text-[10px] text-violet-200/75">{resource.unit_name || "General"}</span>
+                      <span className="rounded-md border border-white/10 px-2 py-0.5 text-[10px] text-white/45">{resource.category || resource.resource_type || "Resource"}</span>
+                    </div>
                   </div>
                 </div>
 

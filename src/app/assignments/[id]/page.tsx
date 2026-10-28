@@ -723,7 +723,7 @@ export default function AssignmentWorkspacePage() {
       return;
     }
 
-    const nextStatus = activeSubmissionFiles.length > 0 || submissionNote.trim()
+    const nextStatus = activeSubmissionFiles.length > 0
       ? "ready_to_submit"
       : "draft";
 
@@ -786,8 +786,8 @@ export default function AssignmentWorkspacePage() {
   async function submitFinalWork() {
     if (!activeSubmission || !assignment) return;
 
-    if (activeSubmissionFiles.length === 0 && !submissionNote.trim()) {
-      setFileError("Attach a final file or write your answer in the submission note before submitting.");
+    if (activeSubmissionFiles.length === 0) {
+      setFileError("Add at least one final file before submitting.");
       setConfirmSubmit(false);
       return;
     }
@@ -1330,7 +1330,7 @@ export default function AssignmentWorkspacePage() {
                         </button>
                         <button
                           onClick={() => setConfirmSubmit(true)}
-                          disabled={busy || (activeSubmissionFiles.length === 0 && !submissionNote.trim())}
+                          disabled={busy || activeSubmissionFiles.length === 0}
                           className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <Send className="h-4 w-4" />
