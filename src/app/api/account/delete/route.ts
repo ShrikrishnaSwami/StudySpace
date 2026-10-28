@@ -30,7 +30,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const userId = user.id;
-    const rate = await consumeApiRateLimit(userId, "account-delete", 3, 3600);
+    const rate = await consumeApiRateLimit(userId, "account-delete", 3, 3600, token);
     if (!rate.allowed) return NextResponse.json({ error: "Too many account deletion attempts. Please try again later." }, { status: 429 });
 
 
