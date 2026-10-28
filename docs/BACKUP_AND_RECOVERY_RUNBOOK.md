@@ -1,0 +1,49 @@
+# StudySpace backup and recovery runbook
+
+## Current status
+
+As of 2026-10-28, the available Supabase project API confirms the database is active and healthy, but it does not expose a verified backup inventory or restore drill. Do not claim backups are configured until a backup file exists outside the project and a test restore has succeeded.
+
+Supabase's current backup guide says Pro, Team, and Enterprise projects receive daily database backups; it recommends regular logical exports for Free projects. Database backups do not include Storage API file objects. See https://supabase.com/docs/guides/platform/backups.
+
+## What must be backed up
+
+1. **PostgreSQL schema and data:** tables, indexes, functions, policies, and required data.
+2. **Storage files:** separately export the contents of the private assignment-files, assignment-submissions, and homework buckets. A database dump alone only captures Storage metadata.
+3. **Migration history and application code:** already versioned under supabase/migrations/ and GitHub; keep the repository accessible independently of the live project.
+4. **Configuration inventory:** record required environment-variable names and auth/storage settings. Never put secret values in GitHub or the backup report.
+5. **Auth and admin configuration:** document the trusted admin app_metadata.role assignment process. A database dump is not a substitute for testing that users can sign in after recovery.
+
+## Create an off-site database export
+
+Run this from a trusted local machine with the Supabase CLI installed and authenticated. First inspect the installed command options with supabase db dump --help, link the correct project, and follow the CLI's current syntax. Use a database credential through an environment variable or interactive prompt; do not paste it into source code, shell history, or chat.
+
+- Save the resulting SQL dump in encrypted storage outside Supabase and outside the Git repository.
+- Record the project reference, export time in UTC, CLI version, file size, and a SHA-256 checksum.
+- Keep at least one copy separate from the developer's computer/account.
+- Export Storage objects separately and checksum the archive. Do not make private coursework publicly accessible just to simplify backup.
+
+## Restore drill (use a separate test project)
+
+1. Create or select a non-production Supabase project with compatible PostgreSQL version/extensions.
+2. Restore the SQL dump using the current Supabase CLI/database instructions. Never test restore by overwriting production.
+3. Apply/verify migration history and confirm all expected public tables have RLS enabled.
+4. Restore Storage objects to private buckets and compare object counts/checksums.
+5. Test login, guest isolation, student-owned rows, instructor assignment access, admin RPC denial for non-admin users, and signed file access.
+6. Run the repository checks: npm ci, npm run lint, npm run test:retrieval, npx tsc --noEmit, npm run build.
+7. Record which checks passed and any data/configuration that was not recoverable.
+
+## Incident recovery
+
+- **Bad application release:** inspect Vercel deployment history and roll back to the last known-good deployment. Confirm the rollback serves the intended commit and re-test login, AI routes, assignments, submissions, and admin denial paths.
+- **Bad schema migration or data loss:** pause writes if needed, preserve logs and the current state, restore to a separate project first, validate data, and plan downtime before any production restore. Database restoration can cause downtime and may lose changes after the selected backup.
+- **Missing uploaded files:** restore from the separately archived Storage export; a database restore does not recover deleted Storage objects.
+- **Compromised secret:** rotate the affected key at its source, update Vercel environment variables, redeploy only after tests pass, and invalidate sessions/credentials where appropriate.
+
+## Required before public beta
+
+- [ ] Confirm the actual Supabase plan and whether managed backups are available.
+- [ ] Produce an off-site database export and a separate Storage export.
+- [ ] Complete one successful restore drill in a non-production project.
+- [ ] Set an owner and a recurring backup/restore-check cadence.
+- [ ] Keep the latest successful restore timestamp and checksums in a secure operations record.
