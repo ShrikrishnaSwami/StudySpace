@@ -717,7 +717,7 @@ html[data-theme="light"] main:has(form) select:focus {
   background: #fffefa !important;
 }
 .ss-shell .ss-dashboard > section.rounded-2xl,
-.ss-shell .ss-dashboard section.rounded-2xl.border,
+.ss-shell .ss-dashboard section.rounded-2xl.border {
   overflow: hidden;
   border: 1px solid #e7e8de !important;
   border-radius: 22px !important;
