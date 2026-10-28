@@ -7,10 +7,11 @@ Use this checklist against the actual production environment before inviting rea
 - [ ] Vercel deployment reaches **Ready** and points to the intended commit.
 - [ ] Vercel production environment contains `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - [ ] `GEMINI_API_KEY` is set as a server-only environment variable.
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` is set only in server-side Vercel environments for features that require privileged operations (AI quota enforcement, admin operations, account deletion, and other privileged routes).
+- [ ] `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY` is set only in server-side Vercel environments for features that require privileged operations.
 - [ ] `STUDYSPACE_ADMIN_EMAIL` matches the intended administrator account.
 - [ ] `APP_ORIGIN`, if configured, matches the canonical production origin.
 - [ ] No real secrets are committed to Git, exposed through `NEXT_PUBLIC_`, or printed in logs.
+- [ ] Provider keys that were shared in chat, screenshots, or issue comments have been replaced and the old keys revoked.
 
 ## 2. Supabase schema and access controls
 
@@ -19,6 +20,8 @@ Use this checklist against the actual production environment before inviting rea
 - [ ] Confirm AI quota and API rate-limit RPC functions exist and reject unauthenticated or over-limit requests.
 - [ ] Confirm embedding-cache policies restrict records to `auth.uid() = user_id`.
 - [ ] Confirm feedback policies restrict students to their own feedback and conversations.
+- [ ] Enable Supabase leaked-password protection in the Auth password/security settings.
+- [ ] Review Supabase security and performance advisors; resolve warnings appropriate to the production workload.
 - [ ] Test account deletion with a dedicated test account and confirm associated user-owned data is removed according to the documented retention policy.
 - [ ] Confirm backups/recovery expectations before storing real coursework.
 
