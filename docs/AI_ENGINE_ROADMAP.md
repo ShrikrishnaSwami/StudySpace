@@ -23,10 +23,12 @@ The retrieval baseline now ranks individual records (for example, one note or as
 
 - Adds a Gemini embedding-based semantic scoring path for up to 40 category-balanced record/chunk candidates per tutor request.
 - Combines semantic similarity with the existing lexical ranking and preserves the same context limits and source labels.
-- Keeps semantic retrieval opt-in with `STUDYSPACE_SEMANTIC_RETRIEVAL=true`; when disabled or when the embedding service fails, the tutor falls back to lexical retrieval.
+- Semantic retrieval is enabled by default when `GEMINI_API_KEY` and authenticated user context are available. Set `STUDYSPACE_SEMANTIC_RETRIEVAL=false` to force lexical-only retrieval; when the embedding service fails, the tutor falls back to lexical retrieval.
 - Uses `GEMINI_API_KEY` server-side only. Document embeddings are persisted in `studyspace_ai_embeddings` and keyed by the SHA-256 hash of candidate text plus the embedding model. Unchanged candidates reuse cached vectors; new or changed candidates are embedded and cached. The question is embedded for each request.
 - The cache table has row-level security policies that scope every read/write to the authenticated user's own `auth.uid()`. It uses the caller's access token and publishable/anon key; no service-role key is required.
 - Cache writes are best-effort: if they fail, fresh vectors can still be used for the current request, and lexical retrieval remains the fallback if semantic retrieval fails.
+- Cache vectors record `last_used_at`. Cache hits refresh that timestamp, and each successful semantic retrieval attempts to delete only the current user's embeddings unused for 90 days. The cleanup is bounded by an index on `(user_id, last_used_at)` and cannot delete source notes or another user's vectors. Cleanup failures are logged and do not block tutoring.
+- Expiry is deliberately conservative: it removes inactive cache entries, not immediately deleted source records. Immediate source-linked invalidation still requires stable source IDs to be carried through all record types and chunks; content hashes already ensure edited content won't reuse an old vector.
 
 This is retrieval infrastructure, not a model trained by StudySpace. The Gemini embedding model supplies vectors; StudySpace performs candidate selection, cosine similarity, ranking, and fallback logic.
 
@@ -50,7 +52,7 @@ The test suite should be run locally after pulling `main`. A green local test ru
 
 1. Add reviewed, synthetic and anonymized evaluation examples and measure retrieval precision/recall.
 2. Extract and chunk actual uploaded document text with stable source metadata (document, page, course) where the existing upload pipeline supports text extraction.
-3. Benchmark the opt-in semantic retrieval path and add explicit cleanup/invalidation for stale cached embeddings as source-record IDs become available in the formatted context.
+3. Benchmark semantic retrieval and extend stable source IDs through every formatted record/chunk so deleted source records can invalidate their cache entries immediately; the 90-day inactive-cache expiry is already implemented.
 4. Benchmark generated answers for factual grounding, correctness, clarity, and citation accuracy.
 5. Consider fine-tuning only after a suitable licensed/original dataset and measurable target are available.
 
