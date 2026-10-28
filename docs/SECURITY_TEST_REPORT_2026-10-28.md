@@ -2,7 +2,7 @@
 
 ## Scope and limitations
 
-This report records live Supabase SQL checks, simulated authenticated-role reads, Vercel deployment metadata, and Vercel runtime-error summaries. It is not a full penetration test. SQL role tests set request.jwt.claims inside a rolled-back transaction; they did not exercise the browser, HTTP JWT verification, or real Storage uploads/downloads. No dedicated instructor-role account exists in the current Supabase Auth users, so a normal non-admin account was used as an instructor-like owner-boundary check.
+This report records live Supabase SQL checks, simulated authenticated-role reads, Vercel deployment metadata, and Vercel runtime-error summaries. It is not a full penetration test. SQL role tests set request.jwt.claims inside a rolled-back transaction; they did not exercise the browser, HTTP JWT verification, or real Storage uploads/downloads. No dedicated instructor-role account exists in the current Supabase Auth users, so a normal non-admin account was used as an student B owner-boundary check.
 
 ## Supabase RLS and Storage
 
@@ -26,7 +26,7 @@ The read checks covered all 29 user-data tables with authenticated table grants;
 
 - **Guest account:** zero visible rows across the 29 user-data tables in the test snapshot.
 - **Student test account:** saw only its own rows (3 calendar events, 1 homework item, and 1 object visible in Storage metadata); no course, note, assignment, conversation, message, feedback, quiz, or recommendation rows belonging to the other test account.
-- **Non-admin instructor-like account:** saw its own 1 AI conversation and 4 messages, and no other account's rows. This account did not carry an instructor app-metadata role; instructor-specific assignment workflows still need a dedicated test account.
+- **Additional student account:** saw its own 1 AI conversation and 4 messages, and no other account's rows. This checks student ownership boundaries only; AI grading must be tested through the server-side grading route.
 - **Admin account:** the normal student tables still showed rows owned by that admin account rather than exposing every student's private records. It saw 1 course, 2 notes, 1 assignment, 1 conversation, 19 messages, 1 feedback record, and 19 recommendations. Admin access to aggregate statistics is separately granted through the protected admin RPC.
 
 Storage buckets are private: assignment-files (50 MiB cap), assignment-submissions (50 MiB cap), and homework (20 MiB cap). Each has MIME restrictions. Storage tests here checked policy definitions and object visibility counts; actual file download, upload, overwrite, and delete requests remain to be exercised through the Storage API with real role tokens.
@@ -69,9 +69,9 @@ The available project API does not expose a verified backup inventory or restore
 
 ## Table-by-table simulated SELECT results
 
-Counts below are rows visible to each authenticated JWT claim set at audit time, not total table row counts. “Instructor-like” means a non-admin account used for an ownership-boundary test; it is not a verified instructor-role account. The private event tables are omitted from this matrix because authenticated users have no direct SELECT privilege on them.
+Counts below are rows visible to each authenticated JWT claim set at audit time, not total table row counts. Student B is an additional non-admin account used for ownership-boundary testing. The private event tables are omitted from this matrix because authenticated users have no direct SELECT privilege on them.
 
-| Public table | Student | Instructor-like | Guest | Admin |
+| Public table | Student A | Student B | Guest | Admin |
 |---|---:|---:|---:|---:|
 | ai_tutor_conversations | 0 | 1 | 0 | 1 |
 | ai_tutor_feedback | 0 | 0 | 0 | 1 |
@@ -103,4 +103,4 @@ Counts below are rows visible to each authenticated JWT claim set at audit time,
 | studyspace_ai_embeddings | 0 | 0 | 0 | 35 |
 | syllabus_imports | 0 | 0 | 0 | 1 |
 
-Storage object metadata visibility: student 1, instructor-like 0, guest 0, admin 7. This confirms policy-filtered metadata visibility for this snapshot; it does not prove that every download/upload/delete HTTP operation succeeds or fails correctly.
+Storage object metadata visibility: student 1, student B 0, guest 0, admin 7. This confirms policy-filtered metadata visibility for this snapshot; it does not prove that every download/upload/delete HTTP operation succeeds or fails correctly.
