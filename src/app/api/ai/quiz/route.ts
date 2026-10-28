@@ -239,7 +239,7 @@ Return JSON only.
       throw new Error("Gemini returned an invalid quiz.");
     }
 
-    const questions = parsed.questions
+    const questions = (parsed.questions as unknown[])
       .slice(0, safeQuestionCount)
       .flatMap((rawQuestion: unknown) => {
         if (!rawQuestion || typeof rawQuestion !== "object" || Array.isArray(rawQuestion)) return [];
