@@ -151,6 +151,7 @@ function splitRecords(context: string): RetrievedStudySection[] {
       if (!rawRecord) continue;
       const heading = rawRecord.split(/\r?\n/, 1)[0].trim();
       const itemTitle = extractField(rawRecord, "Title") || extractField(rawRecord, "Name");
+      const sourceId = extractField(rawRecord, "Record ID");
       const source = itemTitle ? `${heading}: ${itemTitle}` : heading;
       const chunks = chunkRecord(rawRecord);
       for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex += 1) {
@@ -159,7 +160,9 @@ function splitRecords(context: string): RetrievedStudySection[] {
           source: chunks.length > 1 ? `${source} (part ${chunkIndex + 1})` : source,
           content: chunks[chunkIndex],
           score: 0,
-          groupId: `${category}:${source}`,
+          groupId: sourceId ? `${category}:${sourceId}` : `${category}:${source}`,
+          sourceId: sourceId || undefined,
+          sourceType: category,
         });
       }
     }
@@ -174,6 +177,8 @@ export type StudyContextEmbeddingCandidate = {
   title: string;
   source: string;
   text: string;
+  sourceId?: string;
+  sourceType?: string;
 };
 
 /** Return a bounded, category-balanced candidate set for semantic reranking. */
@@ -185,13 +190,14 @@ export function getStudyContextEmbeddingCandidates(
   const selected: StudyContextEmbeddingCandidate[] = [];
   const categoryCounts = new Map<string, number>();
   const seen = new Set<string>();
-  const limit = Math.max(1, Math.min(maxCandidates, 60));
+  const limit = Math.max(1, Math.min(maxCandidates, 1000));
+  const perCategoryLimit = maxCandidates > 60 ? 1000 : 8;
 
   for (const record of records) {
     const id = record.title + "::" + record.source;
     if (seen.has(id)) continue;
     const count = categoryCounts.get(record.title) || 0;
-    if (count >= 8) continue;
+    if (count >= perCategoryLimit) continue;
     seen.add(id);
     categoryCounts.set(record.title, count + 1);
     selected.push({
@@ -199,6 +205,8 @@ export function getStudyContextEmbeddingCandidates(
       title: record.title,
       source: record.source,
       text: (record.title + "\\n" + record.source + "\\n" + record.content).slice(0, 2200),
+      sourceId: record.sourceId,
+      sourceType: record.sourceType || record.title,
     });
     if (selected.length >= limit) break;
   }
