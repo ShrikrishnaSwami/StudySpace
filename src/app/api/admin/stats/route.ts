@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
     if (!token) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
     if (!url || !serviceKey) return NextResponse.json({ error: "Server-side Supabase admin configuration is missing." }, { status: 503 });
 
@@ -23,7 +23,6 @@ export async function GET(request: NextRequest) {
     }
     const rate = await consumeApiRateLimit(user.id, "admin-stats", 180, 3600);
     if (!rate.allowed) return NextResponse.json({ error: "Too many statistics requests. Please wait and try again." }, { status: 429 });
-
 
     let totalUsers = 0;
     let page = 1;
