@@ -1056,7 +1056,7 @@ export default function DashboardPage() {
           </Link>
           <Link href="/assignments" className="group flex items-center gap-3 rounded-2xl border border-violet-300/[0.075] bg-[linear-gradient(145deg,rgba(24,22,34,0.92),rgba(13,12,19,0.96))] p-4 shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1 hover:border-violet-300/25 hover:bg-violet-500/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-300/10 bg-violet-500/10 text-violet-200"><ListChecks className="h-4 w-4" /></span>
-            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Assignments</span><span className="mt-1 block text-xs text-white/35">Review upcoming work</span></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Assignments & grades</span><span className="mt-1 block text-xs text-white/35">Submit work and review AI feedback</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
           </Link>
           <Link href="/calendar" className="group flex items-center gap-3 rounded-2xl border border-violet-300/[0.07] bg-violet-500/[0.02] p-4 transition hover:border-violet-300/[0.14] hover:bg-violet-500/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
