@@ -239,7 +239,7 @@ export async function retrieveRelevantStudyContextHybrid(
             "ASSIGNMENTS", "QUIZZES", "HOMEWORK",
           ].includes(row.source_type);
           const deletedSource = auth.completeContext === true && isCompleteType
-            && !activeIdsByType.has(row.source_type)?.has(row.source_id);
+            && !activeIdsByType.get(row.source_type)?.has(row.source_id);
           const changedSource = activeHashes !== undefined && !activeHashes.has(row.content_hash);
           if (deletedSource || changedSource) {
             const ids = staleByType.get(row.source_type) || new Set<string>();
