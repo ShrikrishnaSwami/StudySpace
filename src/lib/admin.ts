@@ -1,7 +1,15 @@
 import "server-only";
 
-export function isAdminEmail(email?: string | null) {
-  const configured = process.env.STUDYSPACE_ADMIN_EMAIL?.trim().toLowerCase();
-  const adminEmail = configured || "apha9213@gmail.com";
-  return Boolean(email && email.trim().toLowerCase() === adminEmail);
+type AdminRoleSource = {
+  app_metadata?: {
+    role?: unknown;
+  } | null;
+};
+
+/**
+ * Admin access is granted only by a server-managed Supabase app_metadata claim.
+ * Do not use user_metadata: users can edit it themselves.
+ */
+export function isAdminUser(user?: AdminRoleSource | null) {
+  return user?.app_metadata?.role === "admin";
 }
