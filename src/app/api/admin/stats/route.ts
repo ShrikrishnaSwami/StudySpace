@@ -35,21 +35,15 @@ export async function GET(request: NextRequest) {
     }
 
     const since24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const [coursesResult, assignmentsResult, submissionsResult, aiRequestsResult] = await Promise.all([
-      client.from("courses").select("id", { count: "exact", head: true }),
-      client.from("assignments").select("id", { count: "exact", head: true }),
-      client.from("assignment_submissions").select("id", { count: "exact", head: true }),
-      client.from("ai_usage_events").select("id", { count: "exact", head: true }).gte("created_at", since24Hours),
-    ]);
-    const queryError = coursesResult.error || assignmentsResult.error || submissionsResult.error || aiRequestsResult.error;
-    if (queryError) throw queryError;
+    const aiRequestsResult = await client
+      .from("ai_usage_events")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", since24Hours);
+    if (aiRequestsResult.error) throw aiRequestsResult.error;
 
     return NextResponse.json(
       {
         totalUsers,
-        courses: coursesResult.count ?? 0,
-        assignments: assignmentsResult.count ?? 0,
-        submissions: submissionsResult.count ?? 0,
         aiRequests24h: aiRequestsResult.count ?? 0,
         generatedAt: new Date().toISOString(),
       },
