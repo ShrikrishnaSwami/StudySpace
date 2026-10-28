@@ -680,35 +680,51 @@ export default function AITutorPage() {
           }
         );
 
-      const result =
-        await response.json();
-
       if (!response.ok) {
-        throw new Error(
-          result.error ||
-            "AI Tutor failed."
-        );
+        const failure = await response.json().catch(() => ({}));
+        throw new Error(failure.error || "AI Tutor failed.");
       }
+      if (!response.body) throw new Error("The AI Tutor response stream was unavailable. Please try again.");
 
-      const assistantMessage: Message =
-        {
-          id: crypto.randomUUID(),
-          conversation_id:
-            conversationId,
-          user_id: user.id,
-          role: "assistant",
-          content: result.answer,
-          created_at:
-            new Date().toISOString(),
-          contextSources: Array.isArray(result.retrieval?.sections)
-            ? result.retrieval.sections.filter((source: unknown): source is string => typeof source === "string")
-            : [],
-        };
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        conversation_id: conversationId,
+        user_id: user.id,
+        role: "assistant",
+        content: "",
+        created_at: new Date().toISOString(),
+      };
+      setMessages((current) => [...current, assistantMessage]);
 
-      setMessages((current) => [
-        ...current,
-        assistantMessage,
-      ]);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let pending = "";
+      let answer = "";
+
+      const processLine = (line: string) => {
+        if (!line.trim()) return;
+        const event = JSON.parse(line) as { type: string; text?: string; error?: string };
+        if (event.type === "chunk" && event.text) {
+          answer += event.text;
+          setMessages((current) => current.map((item) =>
+            item.id === assistantMessage.id ? { ...item, content: answer } : item
+          ));
+        } else if (event.type === "error") {
+          throw new Error(event.error || "The AI Tutor could not complete that response.");
+        }
+      };
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        pending += decoder.decode(value, { stream: true });
+        const lines = pending.split("\n");
+        pending = lines.pop() || "";
+        for (const line of lines) processLine(line);
+      }
+      pending += decoder.decode();
+      if (pending.trim()) processLine(pending);
+      if (!answer.trim()) throw new Error("The AI Tutor returned an empty response. Please try again.");
 
       const {
         error:
@@ -720,7 +736,7 @@ export default function AITutorPage() {
             conversationId,
           user_id: user.id,
           role: "assistant",
-          content: result.answer,
+          content: answer,
         });
 
       if (assistantInsertError) {
@@ -1558,12 +1574,6 @@ export default function AITutorPage() {
                                 message.content
                               }
                             </div>
-                            {!isUser && message.contextSources && message.contextSources.length > 0 && (
-                              <div className="mt-3 border-t border-white/10 pt-2 text-xs text-white/45">
-                                <span className="font-medium text-white/60">StudySpace context:</span>{" "}
-                                {message.contextSources.join(" · ")}
-                              </div>
-                            )}
                           </div>
 
                           <div
