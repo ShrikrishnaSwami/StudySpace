@@ -43,14 +43,15 @@ Use this checklist against the actual production environment before inviting rea
 - [ ] Confirm AI usage limits increment and requests are rejected when limits are reached.
 - [ ] Rate an answer as helpful and not helpful; verify feedback persists and cannot be read by another user.
 - [ ] Verify that deleting or editing a source does not expose stale content in subsequent answers. Source-cache cleanup is best-effort; do not treat the embedding cache as the source of truth.
-- [ ] Test syllabus import with a representative real syllabus and verify extracted dates before relying on them.
+- [ ] Test syllabus import with a representative text-based PDF and pasted text; verify extracted dates, course association, and helpful failure messages before relying on them.
 - [ ] Confirm generated quizzes, flashcards, homework guidance, and recommendations are reviewed for correctness before relying on them.
 
 ## 5. Core student workflows
 
 - [ ] Create/edit/delete a course and verify it remains after refresh.
 - [ ] Create an assignment, submit student work, and verify the submission is saved.
-- [ ] Test instructor grading/feedback end-to-end with a separate test/instructor account if that workflow is enabled.
+- [ ] Test AI grading end-to-end with a dedicated test student: verify the submitted work is saved, the grade stays within the assignment's maximum points, feedback is marked provisional, and retrying does not create duplicate grades.
+- [ ] Confirm a student cannot edit grade/feedback fields, reopen a submitted attempt, or attach metadata pointing outside their own storage folder.
 - [ ] Create and submit a quiz; verify the saved attempt and score.
 - [ ] Upload a homework file using an allowed file type and size; verify storage permissions.
 - [ ] Create calendar events and verify dates/time zones.
