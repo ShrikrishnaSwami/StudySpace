@@ -63,7 +63,7 @@ export async function POST(
         { status: 401 }
       );
     }
-    const rate = await consumeApiRateLimit(user.id, "quiz-submit", 30, 3600);
+    const rate = await consumeApiRateLimit(user.id, "quiz-submit", 30, 3600, token);
     if (!rate.allowed) return NextResponse.json({ error: "Too many quiz submissions. Please try again later." }, { status: 429 });
 
 
