@@ -52,7 +52,7 @@ Use this checklist against the actual production environment before inviting rea
 
 - [ ] Create/edit/delete a course and verify it remains after refresh.
 - [ ] Create an assignment, submit student work, and verify the submission is saved.
-- [ ] Test AI grading end-to-end with a dedicated test student: verify the submitted work is saved, the grade stays within the assignment's maximum points, feedback is marked provisional, and retrying does not create duplicate grades.
+- [ ] Test AI grading end-to-end with a dedicated test student: verify the submitted work is saved, the AI grade stays within the assignment's maximum points, feedback and criteria are saved, and retrying does not create duplicate grades.
 - [ ] Confirm a student cannot edit grade/feedback fields, reopen a submitted attempt, or attach metadata pointing outside their own storage folder.
 - [ ] Create and submit a quiz; verify the saved attempt and score.
 - [ ] Upload a homework file using an allowed file type and size; verify storage permissions.
