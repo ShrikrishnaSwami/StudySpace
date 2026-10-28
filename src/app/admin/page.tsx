@@ -1,13 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { RefreshCw, ShieldCheck, Users } from "lucide-react";
+import { Activity, BookOpen, ClipboardList, FileCheck2, RefreshCw, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
 
-type Stats = { totalUsers: number; generatedAt: string };
-const blank: Stats = { totalUsers: 0, generatedAt: "" };
+type Stats = {
+  totalUsers: number;
+  courses: number;
+  assignments: number;
+  submissions: number;
+  aiRequests24h: number;
+  generatedAt: string;
+};
+const blank: Stats = { totalUsers: 0, courses: 0, assignments: 0, submissions: 0, aiRequests24h: 0, generatedAt: "" };
+
+const metricCards = [
+  { key: "courses", label: "Courses", detail: "Stored in StudySpace", icon: BookOpen },
+  { key: "assignments", label: "Assignments", detail: "Created across courses", icon: ClipboardList },
+  { key: "submissions", label: "Submissions", detail: "Student work submitted", icon: FileCheck2 },
+  { key: "aiRequests24h", label: "AI requests", detail: "Last 24 hours", icon: Sparkles },
+] as const;
 
 export default function AdminPage() {
   const router = useRouter();
@@ -29,14 +43,21 @@ export default function AdminPage() {
       const body = await response.json();
       if (response.status === 403) { router.replace("/dashboard"); return; }
       if (response.status === 401) { router.replace("/login"); return; }
-      if (!response.ok) throw new Error(body.error || "Could not load total users.");
-      setStats({ totalUsers: Number(body.totalUsers) || 0, generatedAt: body.generatedAt || "" });
+      if (!response.ok) throw new Error(body.error || "Could not load admin statistics.");
+      setStats({
+        totalUsers: Number(body.totalUsers) || 0,
+        courses: Number(body.courses) || 0,
+        assignments: Number(body.assignments) || 0,
+        submissions: Number(body.submissions) || 0,
+        aiRequests24h: Number(body.aiRequests24h) || 0,
+        generatedAt: body.generatedAt || "",
+      });
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not load total users.");
+      setError(cause instanceof Error ? cause.message : "Could not load admin statistics.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     let alive = true;
@@ -62,33 +83,52 @@ export default function AdminPage() {
   }
 
   return <AppShell title="Admin dashboard" description="Owner-only StudySpace statistics.">
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-200">
             <ShieldCheck size={14} /> Owner access
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">Admin dashboard</h1>
-          <p className="mt-2 text-sm text-white/45">Total registered users on StudySpace.</p>
+          <p className="mt-2 text-sm text-white/45">A live overview of activity across StudySpace.</p>
         </div>
         <button type="button" aria-label="Refresh admin statistics" onClick={() => void load()} disabled={loading}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm hover:bg-white/[0.08] disabled:opacity-50">
           <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Refresh
         </button>
       </div>
+
       {error && <div role="alert" className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{error}</div>}
-      <section className="rounded-2xl border border-white/10 bg-white/[0.035] p-6 sm:p-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="rounded-xl bg-violet-500/10 p-3 text-violet-300"><Users size={22} /></div>
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+
+      <section className="rounded-2xl border border-violet-400/15 bg-gradient-to-br from-violet-500/10 via-white/[0.035] to-fuchsia-500/[0.06] p-6 sm:p-8">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-white/55">Total registered users</p>
+            <p className="mt-2 text-5xl font-semibold tabular-nums">{loading && !stats.generatedAt ? "…" : stats.totalUsers.toLocaleString()}</p>
+            <p className="mt-3 text-xs text-white/35">All accounts in Supabase Auth</p>
+          </div>
+          <div className="rounded-xl border border-violet-400/15 bg-violet-500/10 p-3 text-violet-200"><Users size={24} /></div>
         </div>
-        <p className="text-sm text-white/50">Total users</p>
-        <p className="mt-2 text-5xl font-semibold tabular-nums">{loading && !stats.generatedAt ? "…" : stats.totalUsers.toLocaleString()}</p>
-        <p className="mt-4 text-xs text-white/35">
-          {stats.generatedAt ? "Last updated " + new Date(stats.generatedAt).toLocaleString() : "Waiting for the first successful refresh."}
-          {" · "}Automatically refreshes every 30 seconds
-        </p>
       </section>
+
+      <section aria-label="Platform metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {metricCards.map(({ key, label, detail, icon: Icon }) => (
+          <article key={key} className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5 transition hover:border-violet-400/20 hover:bg-white/[0.04]">
+            <div className="flex items-center justify-between gap-3">
+              <div className="rounded-xl border border-white/[0.07] bg-white/[0.04] p-2.5 text-violet-200"><Icon size={19} /></div>
+              <Activity size={15} className="text-emerald-300/70" aria-hidden="true" />
+            </div>
+            <p className="mt-5 text-sm text-white/50">{label}</p>
+            <p className="mt-1 text-3xl font-semibold tabular-nums">{loading && !stats.generatedAt ? "…" : stats[key].toLocaleString()}</p>
+            <p className="mt-2 text-xs text-white/30">{detail}</p>
+          </article>
+        ))}
+      </section>
+
+      <p className="text-xs text-white/35">
+        {stats.generatedAt ? "Last refreshed " + new Date(stats.generatedAt).toLocaleString() : "Waiting for the first successful refresh."}
+        {" · "}Automatically refreshes every 30 seconds
+      </p>
     </div>
   </AppShell>;
 }
