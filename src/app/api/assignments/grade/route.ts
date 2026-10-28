@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
     if (declaredTotalBytes > 30 * 1024 * 1024) return NextResponse.json({ error: "AI grading supports up to 30 MB of attachments per submission." }, { status: 413 });
 
     const quota = await consumeAiQuota(token, "homework");
-    if (!quota.allowed) return NextResponse.json({ error: quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You've reached today's AI homework limit. Try again later.", usage: quota }, { status: 429 });
+    if (!quota.allowed) return NextResponse.json({ error: quota.scope === "rate" ? "Too many AI grading requests. Please wait a few minutes and try again." : quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You've reached today's AI homework limit. Try again later.", usage: quota }, { status: 429 });
 
     const parts: Array<Record<string, unknown>> = [];
     if (submission.submission_note?.trim()) parts.push({ text: "Student's submission note or written answer:\n" + submission.submission_note.slice(0, 16000) });
