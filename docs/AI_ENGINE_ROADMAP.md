@@ -19,6 +19,12 @@ The retrieval baseline now ranks individual records (for example, one note or as
 - Returns record-level source labels to the tutor API for display.
 - Only searches context already loaded for the authenticated student; it does not query another student's records.
 
+### Hybrid semantic retrieval and source-linked cache
+
+- Semantic retrieval is enabled by default when `GEMINI_API_KEY` and authenticated user context are available. Set `STUDYSPACE_SEMANTIC_RETRIEVAL=false` to force lexical-only retrieval.
+- Formatted course, note, resource, assignment, quiz, homework, and calendar records now carry stable record IDs into retrieval candidates. Cache rows store `source_id` and `source_type` alongside content hashes.
+- When all chunks for a currently loaded source are enumerated, obsolete cached chunks for that source are deleted. When a full, unfiltered student context is loaded, stale cache entries for deleted courses, notes, resources, assignments, quizzes, and homework are also removed. Cleanup avoids course-filtered contexts and categories whose loaded records are capped, and remains best-effort.
+
 ### Optional semantic retrieval
 
 - Adds a Gemini embedding-based semantic scoring path for up to 40 category-balanced record/chunk candidates per tutor request.
@@ -48,13 +54,19 @@ npm run test:retrieval
 
 The test suite should be run locally after pulling `main`. A green local test run verifies the tested retrieval cases, not production deployment or overall tutor accuracy.
 
+## Feedback and model improvement
+
+- The tutor now exposes per-answer helpful / not-helpful controls. Feedback is stored in `ai_tutor_feedback`, scoped by RLS to the owning student and conversation. It is a human quality signal; it does not automatically change model weights or personalize future model parameters.
+- The tutor prompt supports adaptive teaching patterns: hints before solutions when requested, one-question-at-a-time quizzing, stepwise calculations, diagnosis of attempted work, and switching explanations when a student is stuck.
+- Synthetic retrieval regression tests now include stable source metadata. Keep evaluation fixtures synthetic; do not use private student notes or chat logs as a training corpus without explicit, informed consent and a privacy review.
+
 ## Next stages
 
-1. Add reviewed, synthetic and anonymized evaluation examples and measure retrieval precision/recall.
-2. Extract and chunk actual uploaded document text with stable source metadata (document, page, course) where the existing upload pipeline supports text extraction.
-3. Benchmark semantic retrieval and extend stable source IDs through every formatted record/chunk so deleted source records can invalidate their cache entries immediately; the 90-day inactive-cache expiry is already implemented.
-4. Benchmark generated answers for factual grounding, correctness, clarity, and citation accuracy.
-5. Consider fine-tuning only after a suitable licensed/original dataset and measurable target are available.
+1. Expand reviewed synthetic evaluation cases and report retrieval precision/recall, citation support, answer correctness, and latency/cost.
+2. Extract uploaded documents into page-aware chunks with stable document/page/course IDs where the upload pipeline supports text extraction.
+3. Add an admin-only, privacy-preserving feedback review/export workflow and human review before any dataset is used for fine-tuning.
+4. Benchmark generated answers for factual grounding, correctness, clarity, and citation accuracy across providers/models.
+5. Consider fine-tuning only after a suitable licensed/original dataset, evaluation baseline, budget, and measurable target are available. The hosted provider model is not being trained by this repository change.
 
 ## Manual smoke checks
 
