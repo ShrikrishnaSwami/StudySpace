@@ -236,7 +236,7 @@ function ProgressBar({
   );
 
   return (
-    <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+    <div className="h-1.5 overflow-hidden rounded-full bg-violet-500/[0.06]">
       <div
         className="h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-500"
         style={{
@@ -259,10 +259,10 @@ function SectionHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-white/[0.06] px-5 py-4 sm:px-6">
+    <div className="flex items-center justify-between gap-4 border-b border-violet-300/[0.06] px-5 py-4 sm:px-6">
       <div className="flex min-w-0 items-center gap-3">
         {icon && (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-white/50">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-500/[0.04] text-white/50">
             {icon}
           </div>
         )}
@@ -299,7 +299,7 @@ function Stat({
   iconClass: string;
 }) {
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-white/[0.075] bg-[linear-gradient(145deg,rgba(26,23,38,0.95),rgba(13,12,19,0.98))] p-5 shadow-[0_14px_40px_rgba(0,0,0,0.14)] transition duration-300 hover:-translate-y-1 hover:border-violet-300/20 hover:shadow-[0_20px_48px_rgba(76,49,145,0.14)] sm:p-6">
+    <div className="group relative overflow-hidden rounded-2xl border border-violet-300/[0.075] bg-[linear-gradient(145deg,rgba(26,23,38,0.95),rgba(13,12,19,0.98))] p-5 shadow-[0_14px_40px_rgba(0,0,0,0.14)] transition duration-300 hover:-translate-y-1 hover:border-violet-300/20 hover:shadow-[0_20px_48px_rgba(76,49,145,0.14)] sm:p-6">
       <div className="flex items-start justify-between">
         <div
           className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconClass}`}
@@ -336,7 +336,7 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.035] text-white/20">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/[0.035] text-white/20">
         {icon}
       </div>
 
@@ -359,7 +359,7 @@ function AIDataChip({
   active: boolean;
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-black/20 px-3 py-2">
+    <div className="flex items-center gap-2 rounded-lg border border-violet-300/[0.06] bg-black/20 px-3 py-2">
       <span
         className={`h-1.5 w-1.5 rounded-full ${
           active
@@ -377,7 +377,7 @@ function AIDataChip({
 
 function BellEmptyIcon() {
   return (
-    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.035]">
+    <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/[0.035]">
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -961,7 +961,7 @@ export default function DashboardPage() {
             </div>
 
             <button type="button" aria-label="Refresh dashboard data" onClick={loadDashboard}
-              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.055] px-4 text-xs font-semibold text-white/85 shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:border-violet-300/30 hover:bg-white/[0.09] hover:text-white"
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-violet-300/[0.12] bg-violet-500/[0.055] px-4 text-xs font-semibold text-white/85 shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:border-violet-300/30 hover:bg-violet-500/[0.09] hover:text-white"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Refresh
@@ -1054,17 +1054,17 @@ export default function DashboardPage() {
             <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Ask AI Tutor</span><span className="mt-1 block text-xs text-white/35">Get help with a concept</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-violet-300" />
           </Link>
-          <Link href="/assignments" className="group flex items-center gap-3 rounded-2xl border border-white/[0.075] bg-[linear-gradient(145deg,rgba(24,22,34,0.92),rgba(13,12,19,0.96))] p-4 shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1 hover:border-violet-300/25 hover:bg-violet-500/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
+          <Link href="/assignments" className="group flex items-center gap-3 rounded-2xl border border-violet-300/[0.075] bg-[linear-gradient(145deg,rgba(24,22,34,0.92),rgba(13,12,19,0.96))] p-4 shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1 hover:border-violet-300/25 hover:bg-violet-500/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-300/10 bg-violet-500/10 text-violet-200"><ListChecks className="h-4 w-4" /></span>
             <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Assignments</span><span className="mt-1 block text-xs text-white/35">Review upcoming work</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
           </Link>
-          <Link href="/calendar" className="group flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition hover:border-white/[0.14] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
+          <Link href="/calendar" className="group flex items-center gap-3 rounded-2xl border border-violet-300/[0.07] bg-violet-500/[0.02] p-4 transition hover:border-violet-300/[0.14] hover:bg-violet-500/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-300/10 bg-violet-500/10 text-violet-200"><CalendarDays className="h-4 w-4" /></span>
             <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Open calendar</span><span className="mt-1 block text-xs text-white/35">See your schedule</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
           </Link>
-          <Link href="/flashcards" className="group flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition hover:border-white/[0.14] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
+          <Link href="/flashcards" className="group flex items-center gap-3 rounded-2xl border border-violet-300/[0.07] bg-violet-500/[0.02] p-4 transition hover:border-violet-300/[0.14] hover:bg-violet-500/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-300/10 bg-violet-500/10 text-violet-200"><Zap className="h-4 w-4" /></span>
             <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Study flashcards</span><span className="mt-1 block text-xs text-white/35">Practice active recall</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
@@ -1079,7 +1079,7 @@ export default function DashboardPage() {
 
           <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-violet-500/[0.14] blur-3xl" />
 
-          <div className="relative border-b border-white/[0.06] px-5 py-5 sm:px-6 lg:px-7">
+          <div className="relative border-b border-violet-300/[0.06] px-5 py-5 sm:px-6 lg:px-7">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
 
               <div className="flex items-start gap-4">
@@ -1190,7 +1190,7 @@ export default function DashboardPage() {
                       key={
                         recommendation.id
                       }
-                      className="group rounded-xl border border-white/[0.075] bg-white/[0.018] p-4 transition duration-200 hover:border-violet-300/20 hover:bg-violet-500/[0.035]"
+                      className="group rounded-xl border border-violet-300/[0.075] bg-violet-500/[0.018] p-4 transition duration-200 hover:border-violet-300/20 hover:bg-violet-500/[0.035]"
                     >
                       <div className="flex items-start gap-3">
                         <div
@@ -1231,7 +1231,7 @@ export default function DashboardPage() {
                           </p>
 
                           {recommendation.reason && (
-                            <div className="mt-3 rounded-lg border border-white/[0.05] bg-white/[0.02] px-3 py-2">
+                            <div className="mt-3 rounded-lg border border-violet-300/[0.05] bg-violet-500/[0.02] px-3 py-2">
                               <p className="text-[11px] leading-5 text-white/30">
                                 <span className="font-medium text-white/50">
                                   Why:
@@ -1264,7 +1264,7 @@ export default function DashboardPage() {
                             )}
                           </div>
 
-                          <div className="mt-4 flex items-center gap-2 border-t border-white/[0.05] pt-3">
+                          <div className="mt-4 flex items-center gap-2 border-t border-violet-300/[0.05] pt-3">
                             <button
                               type="button"
                               disabled={busy}
@@ -1315,7 +1315,7 @@ export default function DashboardPage() {
 
           {/* TODAY */}
 
-          <section className="overflow-hidden rounded-2xl border border-white/[0.075] bg-[linear-gradient(145deg,rgba(22,20,30,0.95),rgba(12,11,17,0.98))] shadow-[0_16px_44px_rgba(0,0,0,0.13)]">
+          <section className="overflow-hidden rounded-2xl border border-violet-300/[0.075] bg-[linear-gradient(145deg,rgba(22,20,30,0.95),rgba(12,11,17,0.98))] shadow-[0_16px_44px_rgba(0,0,0,0.13)]">
             <SectionHeader
               title="Today"
               description={
@@ -1343,12 +1343,12 @@ export default function DashboardPage() {
                 description="Nothing is scheduled for today. Enjoy the breathing room or use it to get ahead."
               />
             ) : (
-              <div className="divide-y divide-white/[0.05]">
+              <div className="divide-y divide-violet-300/[0.05]">
                 {todayEvents.map(
                   (event) => (
                     <div
                       key={event.id}
-                      className="group flex items-center gap-4 px-5 py-4 transition hover:bg-white/[0.015]"
+                      className="group flex items-center gap-4 px-5 py-4 transition hover:bg-violet-500/[0.015]"
                     >
                       <div className="w-16 shrink-0 text-right">
                         <p className="text-xs font-medium text-white/60">
@@ -1385,7 +1385,7 @@ export default function DashboardPage() {
                         )}
                       </div>
 
-                      <span className="hidden rounded-md bg-white/[0.03] px-2 py-1 text-[9px] uppercase tracking-wider text-white/20 sm:inline-flex">
+                      <span className="hidden rounded-md bg-violet-500/[0.03] px-2 py-1 text-[9px] uppercase tracking-wider text-white/20 sm:inline-flex">
                         {event.event_type}
                       </span>
                     </div>
@@ -1397,7 +1397,7 @@ export default function DashboardPage() {
 
           {/* UPCOMING */}
 
-          <section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0b0910]">
+          <section className="overflow-hidden rounded-2xl border border-violet-300/[0.07] bg-[#0b0910]">
             <SectionHeader
               title="Coming up"
               description="Next 7 days"
@@ -1416,7 +1416,7 @@ export default function DashboardPage() {
                 description="You don't have any upcoming assignments in the next seven days."
               />
             ) : (
-              <div className="divide-y divide-white/[0.05]">
+              <div className="divide-y divide-violet-300/[0.05]">
                 {upcomingAssignments.map(
                   (assignment) => {
                     const course =
@@ -1431,7 +1431,7 @@ export default function DashboardPage() {
                         key={
                           assignment.id
                         }
-                        className="group px-5 py-4 transition hover:bg-white/[0.015]"
+                        className="group px-5 py-4 transition hover:bg-violet-500/[0.015]"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -1479,7 +1479,7 @@ export default function DashboardPage() {
             COURSE PROGRESS
         ================================================= */}
 
-        <section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0b0910]">
+        <section className="overflow-hidden rounded-2xl border border-violet-300/[0.07] bg-[#0b0910]">
           <SectionHeader
             title="Course progress"
             description="Your current progress across active courses"
@@ -1509,7 +1509,7 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={course.id}
-                      className="rounded-xl border border-white/[0.075] bg-[linear-gradient(145deg,rgba(28,25,39,0.72),rgba(14,13,20,0.86))] p-4 transition duration-200 hover:border-violet-300/20 hover:bg-violet-500/[0.035]"
+                      className="rounded-xl border border-violet-300/[0.075] bg-[linear-gradient(145deg,rgba(28,25,39,0.72),rgba(14,13,20,0.86))] p-4 transition duration-200 hover:border-violet-300/20 hover:bg-violet-500/[0.035]"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-center gap-3">
@@ -1592,7 +1592,7 @@ export default function DashboardPage() {
 
           {/* NOTIFICATIONS */}
 
-          <section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0b0910]">
+          <section className="overflow-hidden rounded-2xl border border-violet-300/[0.07] bg-[#0b0910]">
             <SectionHeader
               title="Recent notifications"
               description="Updates from StudySpace"
@@ -1617,7 +1617,7 @@ export default function DashboardPage() {
                 description="New updates and reminders will appear here."
               />
             ) : (
-              <div className="divide-y divide-white/[0.05]">
+              <div className="divide-y divide-violet-300/[0.05]">
                 {notifications
                   .slice(0, 5)
                   .map(
@@ -1628,7 +1628,7 @@ export default function DashboardPage() {
                         key={
                           notification.id
                         }
-                        className={`px-5 py-4 transition hover:bg-white/[0.015] ${
+                        className={`px-5 py-4 transition hover:bg-violet-500/[0.015] ${
                           !notification.read
                             ? "bg-violet-500/[0.015]"
                             : ""
@@ -1735,7 +1735,7 @@ export default function DashboardPage() {
             FOOTER SUMMARY
         ================================================= */}
 
-        <div className="flex flex-col gap-3 border-t border-white/[0.05] pt-5 text-[11px] text-white/20 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-violet-300/[0.05] pt-5 text-[11px] text-white/20 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Flame className="h-3.5 w-3.5 text-orange-400/60" />
 
@@ -1783,7 +1783,7 @@ export default function DashboardPage() {
             radial-gradient(ellipse at 88% 0%, rgba(139,92,246,.17), transparent 38%),
             radial-gradient(ellipse at 0% 100%, rgba(109,66,216,.12), transparent 42%),
             linear-gradient(125deg, rgba(35,25,57,.96), rgba(17,14,27,.97) 58%, rgba(11,10,17,.99));
-          box-shadow: 0 24px 75px rgba(0,0,0,.2), inset 0 1px rgba(255,255,255,.045);
+          box-shadow: 0 24px 75px rgba(0,0,0,.2), inset 0 1px rgba(139,92,246,.07);
         }
         .ss-dashboard > section:first-child h1 {
           line-height: 1.08;
@@ -1794,7 +1794,7 @@ export default function DashboardPage() {
         }
         .ss-dashboard > section:first-child button {
           border-color: rgba(196,181,253,.2);
-          background: rgba(255,255,255,.045);
+          background: rgba(139,92,246,.07);
           backdrop-filter: blur(12px);
         }
         .ss-dashboard > section:first-child button:hover {
@@ -1817,12 +1817,12 @@ export default function DashboardPage() {
         }
         .ss-dashboard > section:nth-of-type(2) > div:hover:after { opacity: 1; }
         .ss-dashboard > section:nth-of-type(2) > div > div:first-child {
-          box-shadow: inset 0 1px rgba(255,255,255,.035);
+          box-shadow: inset 0 1px rgba(139,92,246,.045);
         }
         .ss-dashboard section.overflow-hidden.rounded-2xl,
         .ss-dashboard section.relative.overflow-hidden.rounded-2xl {
           border-color: rgba(196,181,253,.13);
-          box-shadow: 0 16px 46px rgba(0,0,0,.13), inset 0 1px rgba(255,255,255,.018);
+          box-shadow: 0 16px 46px rgba(0,0,0,.13), inset 0 1px rgba(139,92,246,.025);
         }
         .ss-dashboard section > div:first-child h2 {
           letter-spacing: -.025em;
