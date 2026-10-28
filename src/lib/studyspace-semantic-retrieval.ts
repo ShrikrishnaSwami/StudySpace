@@ -146,7 +146,7 @@ export async function retrieveRelevantStudyContextHybrid(
   auth: { userId: string; accessToken: string },
 ): Promise<StudyContextRetrieval> {
   const lexical = retrieveRelevantStudyContext(context, question);
-  if (process.env.STUDYSPACE_SEMANTIC_RETRIEVAL !== "true") return lexical;
+  if (process.env.STUDYSPACE_SEMANTIC_RETRIEVAL === "false") return lexical;
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || !auth.userId || !auth.accessToken) return lexical;
