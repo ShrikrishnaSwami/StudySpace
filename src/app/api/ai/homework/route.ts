@@ -72,6 +72,36 @@ async function readLimitedFile(response: Response, maxBytes: number): Promise<Bu
   return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)), total);
 }
 
+
+async function readLimitedJson(request: Request, maxBytes: number): Promise<unknown> {
+  const declaredLength = Number(request.headers.get("content-length") || 0);
+  if (declaredLength > maxBytes) throw new Error("REQUEST_TOO_LARGE");
+  if (!request.body) throw new Error("INVALID_JSON");
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        throw new Error("REQUEST_TOO_LARGE");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const bytes = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)), total);
+  try {
+    return JSON.parse(bytes.toString("utf8")) as unknown;
+  } catch {
+    throw new Error("INVALID_JSON");
+  }
+}
+
 function cleanJson(text: string) {
   return text
     .replace(/^```json\s*/i, "")
@@ -128,16 +158,24 @@ export async function POST(
      * --------------------------------------------------
      */
 
-    if (Number(request.headers.get("content-length") || 0) > 65536) return NextResponse.json({ error: "Request is too large." }, { status: 413 });
-    const body = await request.json();
-
-    const {
-      homeworkId,
-      title,
-      description,
-      courseName,
-      courseCode,
-    } = body;
+    let body: unknown;
+    try {
+      body = await readLimitedJson(request, 32768);
+    } catch (error) {
+      if (error instanceof Error && error.message === "REQUEST_TOO_LARGE") {
+        return NextResponse.json({ error: "Request is too large." }, { status: 413 });
+      }
+      return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    }
+    const input = body as Record<string, unknown>;
+    const homeworkId = typeof input.homeworkId === "string" ? input.homeworkId.trim() : "";
+    const title = typeof input.title === "string" ? input.title.slice(0, 200) : "";
+    const description = typeof input.description === "string" ? input.description.slice(0, 4000) : "";
+    const courseName = typeof input.courseName === "string" ? input.courseName.slice(0, 200) : "";
+    const courseCode = typeof input.courseCode === "string" ? input.courseCode.slice(0, 80) : "";
 
     if (!homeworkId) {
       return NextResponse.json(
