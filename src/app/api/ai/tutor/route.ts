@@ -6,6 +6,7 @@ import { streamStudySpaceAnswer } from "@/lib/studyspace-ai";
 import { getStudentAIContext } from "@/lib/ai-context";
 import { formatStudentAIContext } from "@/lib/ai-context-format";
 import { retrieveRelevantStudyContextHybrid } from "@/lib/studyspace-semantic-retrieval";
+import { retrieveRelevantStudyContext } from "@/lib/studyspace-retrieval";
 
 function createSupabaseServerClient(token: string) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -241,8 +242,7 @@ information is unavailable.
       retrievalPromise,
       new Promise<Awaited<ReturnType<typeof retrieveRelevantStudyContextHybrid>>>((resolve) => {
         setTimeout(() => resolve({
-          context: studySpaceContext,
-          sections: [],
+          ...retrieveRelevantStudyContext(studySpaceContext, message),
           strategy: "fast-context-fallback",
         }), 650);
       }),
