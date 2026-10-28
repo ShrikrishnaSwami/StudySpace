@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     }
     if (declaredTotalBytes > 30 * 1024 * 1024) return NextResponse.json({ error: "AI grading supports up to 30 MB of attachments per submission." }, { status: 413 });
 
-    const { data: referenceFiles, error: referenceFilesError } = await admin.from("assignment_attachments").select("file_name,storage_path,file_type,file_size,user_id").eq("assignment_id", assignmentId).order("created_at", { ascending: true }).limit(10);
+    const { data: referenceFiles, error: referenceFilesError } = await admin.from("assignment_attachments").select("file_name,storage_path,file_type,file_size,user_id,attachment_kind").eq("assignment_id", assignmentId).in("attachment_kind", ["instructions", "rubric"]).order("created_at", { ascending: true }).limit(10);
     if (referenceFilesError) throw referenceFilesError;
     const readableReferences = (referenceFiles || []).filter((file) => {
       const ext = file.file_name.split(".").pop()?.toLowerCase() || "";
@@ -175,10 +175,10 @@ export async function POST(request: NextRequest) {
       try { bytes = await readLimitedResponse(response, 10 * 1024 * 1024); } catch { continue; }
       referenceBytes += bytes.length;
       if (mimeType === "text/plain" || mimeType === "text/csv") {
-        parts.push({ text: `ASSIGNMENT REFERENCE (not student work): ${file.file_name}\n${bytes.toString("utf8").slice(0, 16000)}` });
+        parts.push({ text: `ASSIGNMENT ${file.attachment_kind === "rubric" ? "RUBRIC / MARKING GUIDE" : "PROMPT / QUESTIONS"} (not student work): ${file.file_name}\n${bytes.toString("utf8").slice(0, 16000)}` });
       } else {
         parts.push({ inlineData: { mimeType, data: bytes.toString("base64") } });
-        parts.push({ text: `The preceding attachment is assignment instructions or rubric reference material, not the student's submission: ${file.file_name}` });
+        parts.push({ text: `The preceding attachment is assignment ${file.attachment_kind === "rubric" ? "rubric / marking guide" : "prompt / questions"} reference material, not the student's submission: ${file.file_name}` });
       }
     }
     const maxPoints = Math.min(1000, Math.max(1, Number(assignment.max_points ?? assignment.points ?? 100) || 100));

@@ -24,3 +24,19 @@ comment on column public.assignments.assignment_questions is
   'The assignment prompt, question list, and required deliverables used by StudySpace AI grading.';
 comment on column public.assignments.rubric_text is
   'The grading rubric used as reference by StudySpace AI grading.';
+
+alter table public.assignment_attachments
+  add column if not exists attachment_kind text not null default 'working';
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'assignment_attachments_kind_check'
+      and conrelid = 'public.assignment_attachments'::regclass
+  ) then
+    alter table public.assignment_attachments
+      add constraint assignment_attachments_kind_check
+      check (attachment_kind in ('working','instructions','rubric'));
+  end if;
+end $$;

@@ -73,6 +73,7 @@ type WorkingFile = {
   storage_path: string;
   file_type: string | null;
   file_size: number;
+  attachment_kind?: "working" | "instructions" | "rubric";
   created_at: string;
 };
 
@@ -235,6 +236,7 @@ export default function AssignmentWorkspacePage() {
   const [dragTarget, setDragTarget] = useState<"working" | "submission" | null>(null);
   const [confirmSubmit, setConfirmSubmit] = useState(false);
   const [submissionNote, setSubmissionNote] = useState("");
+  const [attachmentKind, setAttachmentKind] = useState<"working" | "instructions" | "rubric">("instructions");
   const [currentTime, setCurrentTime] = useState<number | null>(null);
 
   useEffect(() => {
@@ -528,6 +530,7 @@ export default function AssignmentWorkspacePage() {
               storage_path: storagePath,
               file_type: file.type || null,
               file_size: file.size,
+              attachment_kind: attachmentKind,
             });
 
           if (metadataError) {
@@ -720,7 +723,7 @@ export default function AssignmentWorkspacePage() {
       return;
     }
 
-    const nextStatus = activeSubmissionFiles.length > 0
+    const nextStatus = activeSubmissionFiles.length > 0 || submissionNote.trim()
       ? "ready_to_submit"
       : "draft";
 
@@ -783,8 +786,8 @@ export default function AssignmentWorkspacePage() {
   async function submitFinalWork() {
     if (!activeSubmission || !assignment) return;
 
-    if (activeSubmissionFiles.length === 0) {
-      setFileError("Add at least one final file before submitting.");
+    if (activeSubmissionFiles.length === 0 && !submissionNote.trim()) {
+      setFileError("Attach a final file or write your answer in the submission note before submitting.");
       setConfirmSubmit(false);
       return;
     }
@@ -1025,15 +1028,22 @@ export default function AssignmentWorkspacePage() {
             <section>
               <SectionHeading
                 title="Working files"
-                description="Notes, research, drafts and other materials you're still working on."
+                description="Upload your assignment prompt and rubric PDFs here so StudySpace AI can grade against them. Choose a file type before uploading."
                 action={
-                  <button
-                    onClick={() => workingInput.current?.click()}
-                    disabled={busy}
-                    className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/65 transition hover:bg-white/[0.05] disabled:opacity-50"
-                  >
-                    <Plus className="h-4 w-4" /> Add files
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select aria-label="Attachment type" value={attachmentKind} onChange={(event) => setAttachmentKind(event.target.value as "working" | "instructions" | "rubric")} disabled={busy} className="rounded-lg border border-white/10 bg-[#100d1c] px-2.5 py-2 text-xs text-white">
+                      <option value="instructions">Assignment prompt / questions</option>
+                      <option value="rubric">Rubric / marking guide</option>
+                      <option value="working">Working draft / reference</option>
+                    </select>
+                    <button
+                      onClick={() => workingInput.current?.click()}
+                      disabled={busy}
+                      className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-white/65 transition hover:bg-white/[0.05] disabled:opacity-50"
+                    >
+                      <Plus className="h-4 w-4" /> Add files
+                    </button>
+                  </div>
                 }
               />
 
@@ -1063,7 +1073,7 @@ export default function AssignmentWorkspacePage() {
                     : "border-white/10 text-white/35"
                 }`}
               >
-                Drop working files here · up to 50 MB each
+                Drop assignment instructions, rubric PDFs, or working files here · up to 50 MB each
               </div>
 
               <div className="overflow-hidden rounded-xl border border-white/10">
@@ -1084,6 +1094,7 @@ export default function AssignmentWorkspacePage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm text-white/75">{file.file_name}</p>
+                          <p className="mt-1 text-[10px] uppercase tracking-wide text-violet-300/70">{file.attachment_kind === "rubric" ? "Rubric / marking guide" : file.attachment_kind === "instructions" ? "Assignment prompt / questions" : "Working file"}</p>
                           <p className="mt-1 text-xs text-white/30">
                             {formatSize(file.file_size)} · {formatDate(file.created_at)}
                           </p>
@@ -1319,7 +1330,7 @@ export default function AssignmentWorkspacePage() {
                         </button>
                         <button
                           onClick={() => setConfirmSubmit(true)}
-                          disabled={busy || activeSubmissionFiles.length === 0}
+                          disabled={busy || (activeSubmissionFiles.length === 0 && !submissionNote.trim())}
                           className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <Send className="h-4 w-4" />
