@@ -33,7 +33,7 @@ const STOP_WORDS = new Set([
 // score those terms instead of letting "notes" match every note.
 const FILLER_QUERY_TOKENS = new Set([
   "coming", "up", "show", "find", "list", "give", "tell", "display",
-  "information", "info", "overview", "study",
+  "information", "info", "overview", "study", "scheduled", "recent",
 ]);
 
 const GENERIC_QUERY_TOKENS = new Set([
@@ -42,7 +42,7 @@ const GENERIC_QUERY_TOKENS = new Set([
   "assignment", "assignments", "task", "tasks", "quiz", "quizzes",
   "test", "tests", "exam", "exams", "assessment", "assessments",
   "calendar", "event", "events", "homework", "resource", "resources",
-  "student", "data",
+  "student", "data", "performance",
 ]);
 
 const SYNONYM_GROUPS: string[][] = [
