@@ -309,6 +309,25 @@ export function retrieveRelevantStudyContext(
     maxSections,
   );
   if (!selected.length) {
+    // When a question contains only a category phrase (e.g. "my last quiz"),
+    // route it to that category rather than returning an unrelated overview.
+    const queryCategories = new Set(queryTokens.filter((token) => GENERIC_QUERY_TOKENS.has(token)));
+    const categoryTargets: Array<{ tokens: string[]; title: RegExp }> = [
+      { tokens: ["quiz", "quizzes", "test", "tests", "exam", "exams", "assessment", "assessments", "performance"], title: /QUIZ ATTEMPTS|PERFORMANCE/i },
+      { tokens: ["assignment", "assignments", "task", "tasks", "homework"], title: /ASSIGNMENTS|HOMEWORK/i },
+      { tokens: ["calendar", "event", "events"], title: /CALENDAR/i },
+      { tokens: ["note", "notes", "material", "materials", "resource", "resources"], title: /COURSE NOTES|RESOURCES/i },
+      { tokens: ["course", "courses", "class", "classes", "subject", "subjects"], title: /STUDENT COURSES/i },
+    ];
+    const target = categoryTargets.find((candidate) => candidate.tokens.some((token) => queryCategories.has(token)));
+    if (target) {
+      selected = selectDistinctRecords(
+        ranked.filter((record) => target.title.test(record.title)),
+        Math.min(3, maxSections),
+      );
+    }
+  }
+  if (!selected.length) {
     selected = selectDistinctRecords(
       ranked.filter((record) => /STUDENT COURSES|ASSIGNMENTS|CALENDAR|COURSE NOTES|QUIZ ATTEMPTS|HOMEWORK/i.test(record.title)),
       Math.min(3, maxSections),
