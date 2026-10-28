@@ -580,7 +580,7 @@ unless the student explicitly asks about them.
 
     const quota = await consumeAiQuota(user.id, "tutor");
     if (!quota.allowed) {
-      return NextResponse.json({ error: "You have reached today's AI tutor limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
+      return NextResponse.json({ error: quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You have reached today's AI tutor limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
     }
 
     const encoder = new TextEncoder();
