@@ -165,6 +165,9 @@ export async function POST(request: NextRequest) {
     for (const file of readableReferences) {
       const ext = file.file_name.split(".").pop()?.toLowerCase() || "";
       const mimeType = file.file_type && supportedMimeTypes.has(file.file_type) ? file.file_type : referenceMimeTypes[ext];
+      // Only the assignment creator's references define the rubric; a submitter must not
+      // be able to upload a self-serving "rubric" and influence their own AI grade.
+      if (file.user_id !== assignment.user_id) continue;
       if (!file.storage_path.startsWith(`${file.user_id}/${assignmentId}/`)) continue;
       if (Number(file.file_size) > 10 * 1024 * 1024 || referenceBytes + Number(file.file_size || 0) > 15 * 1024 * 1024) continue;
       const { data: signed, error: signedError } = await admin.storage.from("assignment-files").createSignedUrl(file.storage_path, 120);
