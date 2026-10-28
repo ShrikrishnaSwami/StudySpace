@@ -5,7 +5,7 @@ import { isAdminUser } from "@/lib/admin";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const token = request.headers.get("authorization")?.replace(/^Bearer\\s+/i, "").trim();
+  const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
   if (!token) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
