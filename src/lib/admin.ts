@@ -1,15 +1,12 @@
 import "server-only";
 
-type AdminRoleSource = {
-  app_metadata?: {
-    role?: unknown;
-  } | null;
-};
-
 /**
- * Admin access is granted only by a server-managed Supabase app_metadata claim.
- * Do not use user_metadata: users can edit it themselves.
+ * Supabase's generated UserAppMetadata type is intentionally open-ended.
+ * Accept it as unknown here and narrow the trusted role claim at runtime.
+ * Never use user_metadata for authorization because users can edit it.
  */
-export function isAdminUser(user?: AdminRoleSource | null) {
-  return user?.app_metadata?.role === "admin";
+export function isAdminUser(user?: { app_metadata?: unknown } | null): boolean {
+  const metadata = user?.app_metadata;
+  if (typeof metadata !== "object" || metadata === null) return false;
+  return "role" in metadata && (metadata as { role?: unknown }).role === "admin";
 }
