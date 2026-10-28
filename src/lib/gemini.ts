@@ -251,6 +251,67 @@ export async function generateAIResponse({
 }
 
 
+
+/** Stream tutor output as it is generated so the chat feels immediate. */
+export async function* streamAIResponse({
+  systemInstruction,
+  prompt,
+  task = "tutor",
+}: {
+  systemInstruction: string;
+  prompt: string;
+  task?: AITask;
+}): AsyncGenerator<string> {
+  const provider = providerForTask(task);
+  if (provider !== "gemini") {
+    yield await generateAIResponse({ systemInstruction, prompt, task });
+    return;
+  }
+
+  const { primary, fallback } = configuredGeminiModels(task);
+  const models = primary === fallback ? [primary] : [primary, fallback];
+  let lastError: unknown;
+
+  for (const model of models) {
+    let emitted = false;
+    try {
+      const stream = await getGeminiClient().models.generateContentStream({
+        model,
+        contents: prompt,
+        config: {
+          systemInstruction: buildSystemInstruction(systemInstruction, task),
+          temperature: task === "tutor" ? 0.35 : 0.2,
+          maxOutputTokens: task === "tutor" ? 3072 : 2048,
+        },
+      });
+
+      for await (const chunk of stream) {
+        const text = chunk.text || "";
+        if (text) {
+          emitted = true;
+          yield text;
+        }
+      }
+
+      if (!emitted) throw new Error("The AI provider returned an empty response.");
+      return;
+    } catch (error) {
+      lastError = error;
+      console.warn("Gemini streaming request failed", {
+        task, model, emitted, retryable: isRetryableError(error),
+      });
+      if (emitted || !isRetryableError(error)) break;
+    }
+  }
+
+  if (lastError && isRetryableError(lastError)) {
+    yield await generateAIResponse({ systemInstruction, prompt, task });
+    return;
+  }
+
+  throw new Error("StudySpace AI is temporarily unavailable. Please try again shortly.");
+}
+
 /** Extract dates directly from a PDF syllabus using Gemini's document input support. */
 export async function generateAIResponseFromPdf({
   systemInstruction,
