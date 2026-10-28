@@ -909,3 +909,32 @@ html,body{background:#09090d}body{color:#f7f7fb}html[data-theme="light"]{color-s
 .ss-shell .ss-dashboard [style*="background: white"] {
   background-color: #15151f !important;
 }
+
+
+/* Dashboard hard override: neutralize legacy white-tinted layout surfaces. */
+.ss-shell .ss-dashboard > section.grid.grid-cols-2 {
+  gap: 12px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+.ss-shell .ss-dashboard > section.grid.grid-cols-2 > div {
+  background: linear-gradient(145deg, #15151f, #101016) !important;
+}
+.ss-shell .ss-dashboard [class*="bg-emerald-"],
+.ss-shell .ss-dashboard [class*="bg-green-"],
+.ss-shell .ss-dashboard [class*="bg-lime-"],
+.ss-shell .ss-dashboard [class*="bg-teal-"] {
+  background-color: rgba(151, 126, 255, .13) !important;
+}
+.ss-shell .ss-dashboard [class*="text-emerald-"],
+.ss-shell .ss-dashboard [class*="text-green-"],
+.ss-shell .ss-dashboard [class*="text-lime-"],
+.ss-shell .ss-dashboard [class*="text-teal-"] {
+  color: #b6a5ff !important;
+}
+.ss-shell .ss-dashboard [class*="border-emerald-"],
+.ss-shell .ss-dashboard [class*="border-green-"],
+.ss-shell .ss-dashboard [class*="border-lime-"],
+.ss-shell .ss-dashboard [class*="border-teal-"] {
+  border-color: rgba(167, 139, 250, .22) !important;
+}
