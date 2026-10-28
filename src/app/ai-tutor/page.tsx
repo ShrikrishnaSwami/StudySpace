@@ -634,16 +634,6 @@ export default function AITutorPage() {
         );
       }
 
-      const history = [
-        ...conversationMessages,
-        userMessage,
-      ]
-        .slice(-20)
-        .map((message) => ({
-          role: message.role,
-          content: message.content,
-        }));
-
       const {
         data: sessionData,
       } =
@@ -678,7 +668,6 @@ export default function AITutorPage() {
               courseId:
                 selectedCourseId ||
                 null,
-              history,
             }),
           }
         );
