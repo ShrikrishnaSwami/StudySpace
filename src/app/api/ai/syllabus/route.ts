@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     if (text.length > 30000) return NextResponse.json({ error: "Syllabus text must be 30,000 characters or fewer." }, { status: 413 });
 
     const quota = await consumeAiQuota(user.id, "syllabus");
-    if (!quota.allowed) return NextResponse.json({ error: "You've reached the daily syllabus-import limit.", usage: quota }, { status: 429 });
+    if (!quota.allowed) return NextResponse.json({ error: quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You've reached the daily syllabus-import limit.", usage: quota }, { status: 429 });
 
     if (courseId) {
       const { data: course, error } = await client.from("courses").select("id").eq("id", courseId).eq("user_id", user.id).maybeSingle();
