@@ -304,7 +304,15 @@ export async function* streamAIResponse({
     }
   }
 
-  if (lastError && isRetryableError(lastError)) {
+  if (lastError) {
+    // Streaming is an optimization, not a hard dependency. If the stream API
+    // rejects the request before producing text, retry through the established
+    // non-streaming path, which has its own provider/model fallback handling.
+    console.warn("Gemini streaming unavailable; retrying with standard generation", {
+      task,
+      retryable: isRetryableError(lastError),
+      error: lastError instanceof Error ? lastError.message : String(lastError),
+    });
     yield await generateAIResponse({ systemInstruction, prompt, task });
     return;
   }
