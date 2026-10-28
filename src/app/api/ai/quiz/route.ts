@@ -66,14 +66,17 @@ export async function POST(request: NextRequest) {
     if (Number(request.headers.get("content-length") || 0) > 32768) return NextResponse.json({ error: "Request is too large." }, { status: 413 });
     const body = await request.json();
 
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    }
     const {
       courseId,
-      topic,
-      difficulty = "medium",
+      topic: rawTopic,
+      difficulty: rawDifficulty = "medium",
       questionCount = 10,
     } = body;
 
-    if (!courseId) {
+    if (typeof courseId !== "string" || !courseId.trim()) {
       return NextResponse.json(
         { error: "Course is required." },
         { status: 400 }
@@ -84,6 +87,10 @@ export async function POST(request: NextRequest) {
       Math.max(Number(questionCount) || 10, 1),
       30
     );
+    const topic = typeof rawTopic === "string" ? rawTopic.trim().slice(0, 300) : "";
+    const difficulty = ["easy", "medium", "hard"].includes(String(rawDifficulty).toLowerCase())
+      ? String(rawDifficulty).toLowerCase()
+      : "medium";
 
     const { data: course, error: courseError } =
       await supabase
@@ -139,9 +146,9 @@ export async function POST(request: NextRequest) {
                 ""
             );
 
-          return `${title}\n${content}`;
+          return `${title.slice(0, 200)}\n${content.slice(0, 1400)}`;
         })
-        .join("\n\n") || "No notes available.";
+        .join("\n\n").slice(0, 20000) || "No notes available.";
 
     const prompt = `
 Create a university-level practice quiz.
@@ -234,51 +241,52 @@ Return JSON only.
 
     const questions = parsed.questions
       .slice(0, safeQuestionCount)
-      .map(
-        (
-          question: Record<string, unknown>,
-          index: number
-        ) => ({
-          question: String(
-            question.question || ""
-          ),
+      .flatMap((rawQuestion: unknown) => {
+        if (!rawQuestion || typeof rawQuestion !== "object" || Array.isArray(rawQuestion)) return [];
+        const question = rawQuestion as Record<string, unknown>;
+        const text = typeof question.question === "string" ? question.question.trim().slice(0, 2000) : "";
+        if (!text) return [];
 
-          question_type:
-            question.question_type === "true_false"
-              ? "true_false"
-              : question.question_type ===
-                "short_answer"
-              ? "short_answer"
-              : "multiple_choice",
+        const questionType = question.question_type === "true_false"
+          ? "true_false"
+          : question.question_type === "short_answer"
+            ? "short_answer"
+            : "multiple_choice";
+        let options = Array.isArray(question.options)
+          ? question.options.filter((option): option is string => typeof option === "string").map((option) => option.trim().slice(0, 500)).filter(Boolean)
+          : [];
+        let correctAnswer = typeof question.correct_answer === "string" ? question.correct_answer.trim().slice(0, 1000) : "";
 
-          options: Array.isArray(question.options)
-            ? question.options.map(String)
-            : [],
+        if (questionType === "multiple_choice") {
+          options = [...new Set(options)].slice(0, 4);
+          if (options.length !== 4 || !options.some((option) => option.toLowerCase() === correctAnswer.toLowerCase())) return [];
+          correctAnswer = options.find((option) => option.toLowerCase() === correctAnswer.toLowerCase()) || correctAnswer;
+        } else if (questionType === "true_false") {
+          options = ["True", "False"];
+          if (/^true$/i.test(correctAnswer)) correctAnswer = "True";
+          else if (/^false$/i.test(correctAnswer)) correctAnswer = "False";
+          else return [];
+        } else if (!correctAnswer) {
+          return [];
+        }
 
-          correct_answer: String(
-            question.correct_answer || ""
-          ),
-
-          explanation: String(
-            question.explanation || ""
-          ),
-
-          topic: String(
-            question.topic || "General"
-          ),
-
-          points:
-            Number(question.points) > 0
-              ? Number(question.points)
-              : 1,
-
-          question_order: index + 1,
-        })
-      );
+        const points = Number(question.points);
+        return [{
+          question: text,
+          question_type: questionType,
+          options,
+          correct_answer: correctAnswer,
+          explanation: typeof question.explanation === "string" ? question.explanation.trim().slice(0, 3000) : "",
+          topic: typeof question.topic === "string" && question.topic.trim() ? question.topic.trim().slice(0, 120) : "General",
+          points: Number.isFinite(points) && points > 0 ? Math.min(100, points) : 1,
+        }];
+      })
+      .map((question, index) => ({ ...question, question_order: index + 1 }));
 
     if (questions.length === 0) {
-      throw new Error(
-        "No questions were generated."
+      return NextResponse.json(
+        { error: "The AI returned questions that could not be validated. Please generate the quiz again." },
+        { status: 502 }
       );
     }
 
