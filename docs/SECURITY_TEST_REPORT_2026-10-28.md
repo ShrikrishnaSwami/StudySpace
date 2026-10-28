@@ -49,7 +49,7 @@ The SQL definitions and grants were verified. A live load/abuse test that sends 
 
 ## AI reliability
 
-Vercel environment metadata shows GEMINI_API_KEY is empty in production, preview, and development. This prevents actual AI generation until a valid key is configured server-side. The service-role/secret keys are also empty in production; AI quota enforcement and study-group joining were reworked to avoid requiring that key, but privileged assignment grading and account deletion still depend on it.
+Initial configuration update (2026-10-28): GEMINI_API_KEY and the server-only SUPABASE_SECRET_KEY / legacy SUPABASE_SERVICE_ROLE_KEY aliases have now been added/updated as sensitive Vercel environment variables for the requested environments. This only changes environment configuration for future builds; the latest READY deployment is still commit ca9c3008 and does not yet prove these values are active in runtime. Both credentials were shared in chat and must be rotated immediately, then replaced in Vercel. Actual Gemini generation and privileged-route tests remain unverified until a new build/deployment is permitted and smoke-tested. Do not expose either value to client-side code or commit them.
 
 Historical Vercel logs show Gemini provider 503 errors and a tutor timeout. A historical quiz_attempts.created_at query failure is already corrected in the current repository to order by completed_at. The latest successful deployment predates some later reliability changes. A compatibility overload was added to the live quota RPC so the deployed helper's two-argument call continues to work while ignoring caller-supplied limits; the newer one-argument helper enforces the daily limit in the database.
 
