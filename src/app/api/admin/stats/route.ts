@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     // The caller's JWT is passed to both Auth and the restricted statistics RPC.
     // Never use a service-role key for browser-originated administrator requests.
     const client = createClient(url, key, {
-      global: { headers: { Authorization: \`Bearer \${token}\` } },
+      global: { headers: { Authorization: "Bearer " + token } },
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
 
