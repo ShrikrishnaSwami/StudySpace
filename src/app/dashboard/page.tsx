@@ -299,7 +299,7 @@ function Stat({
   iconClass: string;
 }) {
   return (
-    <div className="group bg-[#0b0910] p-5 transition-colors hover:bg-[#100d17] sm:p-6">
+    <div className="group relative overflow-hidden rounded-2xl border border-white/[0.075] bg-[linear-gradient(145deg,rgba(26,23,38,0.95),rgba(13,12,19,0.98))] p-5 shadow-[0_14px_40px_rgba(0,0,0,0.14)] transition duration-300 hover:-translate-y-1 hover:border-violet-300/20 hover:shadow-[0_20px_48px_rgba(76,49,145,0.14)] sm:p-6">
       <div className="flex items-start justify-between">
         <div
           className={`flex h-9 w-9 items-center justify-center rounded-xl ${iconClass}`}
@@ -313,11 +313,11 @@ function Stat({
       </div>
 
       <div className="mt-5">
-        <p className="text-3xl font-semibold tracking-[-0.04em] text-white">
+        <p className="text-4xl font-semibold tracking-[-0.055em] text-white">
           {value}
         </p>
 
-        <p className="mt-1 text-xs text-white/35">
+        <p className="mt-1.5 text-xs font-medium text-white/45">
           {label}
         </p>
       </div>
@@ -922,16 +922,18 @@ export default function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="ss-dashboard mx-auto max-w-[1500px] space-y-8 px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-9">
+      <div className="ss-dashboard mx-auto max-w-[1500px] space-y-6 px-4 py-5 sm:px-6 sm:py-7 lg:space-y-7 lg:px-8 lg:py-9">
 
         {/* =================================================
             HERO
         ================================================= */}
 
-        <section className="relative overflow-hidden">
-          <div className="pointer-events-none absolute -left-24 -top-32 h-80 w-80 rounded-full bg-violet-600/[0.08] blur-3xl" />
+        <section className="relative overflow-hidden rounded-[28px] border border-violet-300/[0.13] bg-[linear-gradient(125deg,rgba(111,72,211,0.15),rgba(20,17,31,0.92)_48%,rgba(13,12,20,0.98))] px-5 py-7 shadow-[0_24px_80px_rgba(0,0,0,0.2)] sm:px-8 sm:py-9">
+          <div className="pointer-events-none absolute -left-24 -top-32 h-80 w-80 rounded-full bg-violet-600/[0.13] blur-3xl" />
 
-          <div className="pointer-events-none absolute -right-24 -top-20 h-72 w-72 rounded-full bg-purple-500/[0.06] blur-3xl" />
+          <div className="pointer-events-none absolute -right-10 -top-20 h-72 w-72 rounded-full bg-indigo-500/[0.13] blur-3xl" />
+          <div className="pointer-events-none absolute right-[12%] top-8 hidden h-44 w-44 rounded-full border border-violet-300/[0.07] lg:block" />
+          <div className="pointer-events-none absolute right-[14.5%] top-12 hidden h-36 w-36 rounded-full border border-violet-300/[0.08] lg:block" />
 
           <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -943,14 +945,14 @@ export default function DashboardPage() {
                 Your academic workspace
               </div>
 
-              <h1 className="text-3xl font-semibold tracking-[-0.04em] text-white sm:text-4xl lg:text-[42px]">
+              <h1 className="text-3xl font-semibold tracking-[-0.055em] text-white sm:text-4xl lg:text-[46px]">
                 {getGreeting()},{" "}
-                <span className="text-white/45">
+                <span className="bg-gradient-to-r from-violet-200 via-fuchsia-200 to-indigo-200 bg-clip-text text-transparent">
                   {userName}
                 </span>
               </h1>
 
-              <p className="mt-3 max-w-xl text-sm leading-6 text-white/40">
+              <p className="mt-3 max-w-xl text-sm leading-7 text-white/55">
                 Here&apos;s what deserves your
                 attention today. Your courses,
                 deadlines, schedule, and AI study
@@ -959,7 +961,7 @@ export default function DashboardPage() {
             </div>
 
             <button type="button" aria-label="Refresh dashboard data" onClick={loadDashboard}
-              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.035] px-4 text-xs font-medium text-white/70 transition hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-white"
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-white/[0.12] bg-white/[0.055] px-4 text-xs font-semibold text-white/85 shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:border-violet-300/30 hover:bg-white/[0.09] hover:text-white"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               Refresh
@@ -1001,7 +1003,7 @@ export default function DashboardPage() {
             STATS
         ================================================= */}
 
-        <section className="grid grid-cols-2 gap-3 overflow-hidden rounded-2xl border-0 bg-transparent lg:grid-cols-4">
+        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Stat
             icon={
               <BookOpen className="h-4 w-4 text-violet-300" />
@@ -1034,12 +1036,12 @@ export default function DashboardPage() {
 
           <Stat
             icon={
-              <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+              <CheckCircle2 className="h-4 w-4 text-violet-300" />
             }
             value={completedAssignments.length}
             label="Completed assignments"
             detail="done"
-            iconClass="bg-emerald-500/10"
+            iconClass="bg-violet-500/10"
           />
         </section>
 
@@ -1047,23 +1049,23 @@ export default function DashboardPage() {
             QUICK ACTIONS
         ================================================= */}
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Quick actions">
-          <Link href="/ai-tutor" className="group flex items-center gap-3 rounded-2xl border border-violet-400/[0.12] bg-violet-500/[0.045] p-4 transition hover:border-violet-400/25 hover:bg-violet-500/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
+          <Link href="/ai-tutor" className="group flex items-center gap-3 rounded-2xl border border-violet-300/[0.17] bg-[linear-gradient(120deg,rgba(112,74,218,0.13),rgba(20,17,31,0.94))] p-4 shadow-[0_12px_32px_rgba(74,45,139,0.1)] transition duration-300 hover:-translate-y-1 hover:border-violet-300/30 hover:bg-violet-500/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300"><Brain className="h-4 w-4" /></span>
             <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Ask AI Tutor</span><span className="mt-1 block text-xs text-white/35">Get help with a concept</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-violet-300" />
           </Link>
-          <Link href="/assignments" className="group flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition hover:border-white/[0.14] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-orange-300"><ListChecks className="h-4 w-4" /></span>
+          <Link href="/assignments" className="group flex items-center gap-3 rounded-2xl border border-white/[0.075] bg-[linear-gradient(145deg,rgba(24,22,34,0.92),rgba(13,12,19,0.96))] p-4 shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1 hover:border-violet-300/25 hover:bg-violet-500/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-300/10 bg-violet-500/10 text-violet-200"><ListChecks className="h-4 w-4" /></span>
             <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Assignments</span><span className="mt-1 block text-xs text-white/35">Review upcoming work</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
           </Link>
           <Link href="/calendar" className="group flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition hover:border-white/[0.14] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-300"><CalendarDays className="h-4 w-4" /></span>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-300/10 bg-violet-500/10 text-violet-200"><CalendarDays className="h-4 w-4" /></span>
             <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Open calendar</span><span className="mt-1 block text-xs text-white/35">See your schedule</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
           </Link>
           <Link href="/flashcards" className="group flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition hover:border-white/[0.14] hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-300"><Zap className="h-4 w-4" /></span>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-300/10 bg-violet-500/10 text-violet-200"><Zap className="h-4 w-4" /></span>
             <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Study flashcards</span><span className="mt-1 block text-xs text-white/35">Practice active recall</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
           </Link>
@@ -1073,9 +1075,9 @@ export default function DashboardPage() {
             AI STUDY PLAN
         ================================================= */}
 
-        <section className="relative overflow-hidden rounded-2xl border border-violet-400/[0.12] bg-[#0d0a15]">
+        <section className="relative overflow-hidden rounded-[26px] border border-violet-300/[0.15] bg-[linear-gradient(135deg,rgba(31,23,49,0.92),rgba(13,11,19,0.98)_58%)] shadow-[0_22px_65px_rgba(0,0,0,0.18)]">
 
-          <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-violet-600/[0.08] blur-3xl" />
+          <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-violet-500/[0.14] blur-3xl" />
 
           <div className="relative border-b border-white/[0.06] px-5 py-5 sm:px-6 lg:px-7">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -1188,7 +1190,7 @@ export default function DashboardPage() {
                       key={
                         recommendation.id
                       }
-                      className="group rounded-xl border border-white/[0.06] bg-black/20 p-4 transition hover:border-white/[0.11] hover:bg-black/30"
+                      className="group rounded-xl border border-white/[0.075] bg-white/[0.018] p-4 transition duration-200 hover:border-violet-300/20 hover:bg-violet-500/[0.035]"
                     >
                       <div className="flex items-start gap-3">
                         <div
@@ -1271,7 +1273,7 @@ export default function DashboardPage() {
                                   recommendation.id
                                 )
                               }
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/10 bg-emerald-500/[0.06] px-3 py-1.5 text-[11px] font-medium text-emerald-300 transition hover:bg-emerald-500/[0.12] disabled:opacity-50"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-violet-300/15 bg-violet-500/[0.08] px-3 py-1.5 text-[11px] font-medium text-violet-200 transition hover:bg-violet-500/[0.15] disabled:opacity-50"
                             >
                               {busy ? (
                                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -1313,7 +1315,7 @@ export default function DashboardPage() {
 
           {/* TODAY */}
 
-          <section className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0b0910]">
+          <section className="overflow-hidden rounded-2xl border border-white/[0.075] bg-[linear-gradient(145deg,rgba(22,20,30,0.95),rgba(12,11,17,0.98))] shadow-[0_16px_44px_rgba(0,0,0,0.13)]">
             <SectionHeader
               title="Today"
               description={
@@ -1507,7 +1509,7 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={course.id}
-                      className="rounded-xl border border-white/[0.06] bg-black/15 p-4 transition hover:border-white/[0.1] hover:bg-black/25"
+                      className="rounded-xl border border-white/[0.075] bg-[linear-gradient(145deg,rgba(28,25,39,0.72),rgba(14,13,20,0.86))] p-4 transition duration-200 hover:border-violet-300/20 hover:bg-violet-500/[0.035]"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex min-w-0 items-center gap-3">
@@ -1658,7 +1660,7 @@ export default function DashboardPage() {
 
           {/* AI STATUS */}
 
-          <section className="relative overflow-hidden rounded-2xl border border-violet-400/[0.1] bg-[#0d0a15] p-6">
+          <section className="relative overflow-hidden rounded-2xl border border-violet-300/[0.14] bg-[linear-gradient(135deg,rgba(34,25,52,0.85),rgba(13,12,20,0.98)_70%)] p-6 shadow-[0_16px_44px_rgba(0,0,0,0.16)]">
             <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
 
             <div className="relative">
