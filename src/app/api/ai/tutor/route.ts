@@ -33,6 +33,35 @@ function createSupabaseServerClient(token: string) {
   });
 }
 
+
+async function readBoundedJson(request: Request, maxBytes: number): Promise<unknown> {
+  const declaredLength = Number(request.headers.get("content-length") || 0);
+  if (declaredLength > maxBytes) throw new Error("REQUEST_TOO_LARGE");
+  if (!request.body) throw new Error("INVALID_JSON");
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        throw new Error("REQUEST_TOO_LARGE");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  try {
+    return JSON.parse(Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)), total).toString("utf8")) as unknown;
+  } catch {
+    throw new Error("INVALID_JSON");
+  }
+}
+
 type RequestBody = {
   message?: string;
   courseId?: string | null;
@@ -96,18 +125,17 @@ export async function POST(request: NextRequest) {
      * -------------------------------------------------------
      */
 
-    if (Number(request.headers.get("content-length") || 0) > 65536) {
-      return NextResponse.json({ error: "Request is too large." }, { status: 413 });
-    }
-
     let body: RequestBody;
     try {
-      const parsed: unknown = await request.json();
+      const parsed = await readBoundedJson(request, 65536);
       if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
         return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
       }
       body = parsed as RequestBody;
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && error.message === "REQUEST_TOO_LARGE") {
+        return NextResponse.json({ error: "Request is too large." }, { status: 413 });
+      }
       return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
     }
 
