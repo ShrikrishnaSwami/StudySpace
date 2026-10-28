@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { retrieveRelevantStudyContext } from "./studyspace-retrieval.ts";
+import { getStudyContextEmbeddingCandidates, retrieveRelevantStudyContext } from "./studyspace-retrieval.ts";
 
 const evaluation = JSON.parse(
   readFileSync(new URL("./studyspace-retrieval-evaluation.json", import.meta.url), "utf8"),
@@ -32,6 +32,20 @@ test("evaluation cases retrieve at least one expected section", () => {
     if (!matched) failures.push(item.id + ": expected " + item.expectedSections.join(" or ") + ", got " + actual.join(", "));
   }
   assert.deepEqual(failures, [], failures.join("\n"));
+});
+
+test("embedding candidates retain stable source IDs for cache invalidation", () => {
+  const sourceContext = [
+    separator, "COURSE NOTES", separator,
+    "NOTE 1\nRecord ID:\n11111111-1111-4111-8111-111111111111\nTitle:\nPhotosynthesis\nContent:\nPlants convert light into chemical energy.",
+    "NOTE 2\nRecord ID:\n22222222-2222-4222-8222-222222222222\nTitle:\nGravity\nContent:\nObjects attract each other by gravity.",
+  ].join("\n").replace(/^/, "\n");
+
+  const candidates = getStudyContextEmbeddingCandidates(sourceContext, 40);
+  assert.equal(candidates.length, 2);
+  assert.equal(candidates[0]?.sourceId, "11111111-1111-4111-8111-111111111111");
+  assert.equal(candidates[0]?.sourceType, "COURSE NOTES");
+  assert.equal(candidates[1]?.sourceId, "22222222-2222-4222-8222-222222222222");
 });
 
 test("query expansion retrieves relevant sections when wording differs", () => {
