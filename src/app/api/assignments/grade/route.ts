@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { GoogleGenAI } from "@google/genai";
-import { consumeAiQuota } from "@/lib/api-security";
+import { consumeAiQuota, consumeApiRateLimit } from "@/lib/api-security";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -17,6 +17,30 @@ const supportedMimeTypes = new Set([
 
 function cleanJson(value: string) {
   return value.replace(/^\`\`\`(?:json)?\s*/i, "").replace(/\s*\`\`\`$/, "").trim();
+}
+
+async function readLimitedResponse(response: Response, maxBytes: number): Promise<Buffer> {
+  const declaredLength = Number(response.headers.get("content-length") || 0);
+  if (declaredLength > maxBytes) throw new Error("A submitted file exceeds the AI grading file-size limit.");
+  if (!response.body) throw new Error("A submitted file could not be read.");
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        throw new Error("A submitted file exceeds the AI grading file-size limit.");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)), total);
 }
 
 export async function POST(request: NextRequest) {
@@ -36,10 +60,25 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await authClient.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Your session expired. Sign in again." }, { status: 401 });
 
-    const body = await request.json();
-    const submissionId = typeof body.submissionId === "string" ? body.submissionId : "";
-    const assignmentId = typeof body.assignmentId === "string" ? body.assignmentId : "";
-    if (!submissionId || !assignmentId) return NextResponse.json({ error: "Assignment and submission are required." }, { status: 400 });
+    const rate = await consumeApiRateLimit(user.id, "assignment-ai-grade", 5, 600);
+    if (!rate.allowed) return NextResponse.json({ error: "Too many AI grading requests. Please wait before trying again." }, { status: 429 });
+
+    if (Number(request.headers.get("content-length") || 0) > 32768) {
+      return NextResponse.json({ error: "Grading request is too large." }, { status: 413 });
+    }
+    let body: unknown;
+    try { body = await request.json(); } catch {
+      return NextResponse.json({ error: "Invalid grading request." }, { status: 400 });
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Invalid grading request." }, { status: 400 });
+    }
+    const submissionId = typeof (body as { submissionId?: unknown }).submissionId === "string" ? (body as { submissionId: string }).submissionId : "";
+    const assignmentId = typeof (body as { assignmentId?: unknown }).assignmentId === "string" ? (body as { assignmentId: string }).assignmentId : "";
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidPattern.test(submissionId) || !uuidPattern.test(assignmentId)) {
+      return NextResponse.json({ error: "A valid assignment and submission are required." }, { status: 400 });
+    }
 
     const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
     const { data: assignment, error: assignmentError } = await admin.from("assignments").select("id,user_id,assigned_to,title,description,points,max_points").eq("id", assignmentId).maybeSingle();
@@ -47,10 +86,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Assignment not found or you do not have access." }, { status: 404 });
     }
 
-    const { data: submission, error: submissionError } = await admin.from("assignment_submissions").select("id,assignment_id,user_id,status,submission_note,grade,feedback").eq("id", submissionId).eq("assignment_id", assignmentId).eq("user_id", user.id).maybeSingle();
+    const { data: submission, error: submissionError } = await admin.from("assignment_submissions").select("id,assignment_id,user_id,status,submission_note,grade,feedback,ai_grade,ai_feedback,ai_graded_at").eq("id", submissionId).eq("assignment_id", assignmentId).eq("user_id", user.id).maybeSingle();
     if (submissionError || !submission) return NextResponse.json({ error: "Your submission could not be found." }, { status: 404 });
     if (submission.status !== "submitted") return NextResponse.json({ error: "Submit your work before requesting AI grading." }, { status: 400 });
-    if (submission.grade !== null && submission.grade !== undefined) return NextResponse.json({ grade: submission.grade, feedback: submission.feedback, alreadyGraded: true });
+    if (submission.grade !== null && submission.grade !== undefined) return NextResponse.json({ grade: submission.grade, feedback: submission.feedback, alreadyGraded: true, provisional: false });
+    if (submission.ai_grade !== null && submission.ai_grade !== undefined) return NextResponse.json({ grade: submission.ai_grade, feedback: submission.ai_feedback, alreadyGraded: true, provisional: true });
 
     const { data: files, error: filesError } = await admin.from("assignment_submission_files").select("file_name,storage_path,file_type,file_size").eq("submission_id", submissionId).eq("user_id", user.id);
     if (filesError) throw filesError;
@@ -94,8 +134,12 @@ export async function POST(request: NextRequest) {
       if (signedError || !signed?.signedUrl) throw new Error("Could not access a submitted file for grading.");
       const response = await fetch(signed.signedUrl, { cache: "no-store" });
       if (!response.ok) throw new Error("Could not download a submitted file for grading.");
-      const bytes = Buffer.from(await response.arrayBuffer());
-      if (bytes.length > 15 * 1024 * 1024) return NextResponse.json({ error: `"${file.file_name}" is too large for AI grading (15 MB maximum per file).` }, { status: 413 });
+      let bytes: Buffer;
+      try {
+        bytes = await readLimitedResponse(response, 15 * 1024 * 1024);
+      } catch {
+        return NextResponse.json({ error: `"${file.file_name}" exceeds the 15 MB AI grading file limit.` }, { status: 413 });
+      }
       actualTotalBytes += bytes.length;
       if (actualTotalBytes > 30 * 1024 * 1024) return NextResponse.json({ error: "AI grading supports up to 30 MB of attachments per submission." }, { status: 413 });
       if (mimeType === "text/plain" || mimeType === "text/csv") {
@@ -136,12 +180,22 @@ export async function POST(request: NextRequest) {
       }).filter(Boolean).join("\n")] : []),
     ].join("\n\n");
 
-    const { data: saved, error: saveError } = await admin.from("assignment_submissions").update({ grade: score, feedback: details, graded_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", submissionId).eq("user_id", user.id).eq("status", "submitted").is("grade", null).select("id").maybeSingle();
+    const aiGradedAt = new Date().toISOString();
+    const { data: saved, error: saveError } = await admin.from("assignment_submissions")
+      .update({ ai_grade: score, ai_feedback: details, ai_graded_at: aiGradedAt, updated_at: aiGradedAt })
+      .eq("id", submissionId)
+      .eq("user_id", user.id)
+      .eq("status", "submitted")
+      .is("grade", null)
+      .is("ai_grade", null)
+      .select("id")
+      .maybeSingle();
     if (saveError) throw saveError;
     if (!saved) {
-      const { data: latest } = await admin.from("assignment_submissions").select("grade,feedback").eq("id", submissionId).eq("user_id", user.id).maybeSingle();
-      if (latest?.grade !== null && latest?.grade !== undefined) return NextResponse.json({ grade: latest.grade, feedback: latest.feedback, alreadyGraded: true });
-      throw new Error("The grade could not be saved. Please try again.");
+      const { data: latest } = await admin.from("assignment_submissions").select("grade,feedback,ai_grade,ai_feedback").eq("id", submissionId).eq("user_id", user.id).maybeSingle();
+      if (latest?.grade !== null && latest?.grade !== undefined) return NextResponse.json({ grade: latest.grade, feedback: latest.feedback, alreadyGraded: true, provisional: false });
+      if (latest?.ai_grade !== null && latest?.ai_grade !== undefined) return NextResponse.json({ grade: latest.ai_grade, feedback: latest.ai_feedback, alreadyGraded: true, provisional: true });
+      throw new Error("The provisional feedback could not be saved. Please try again.");
     }
     return NextResponse.json({ grade: score, feedback: details, maxPoints, provisional: true });
   } catch (error) {
