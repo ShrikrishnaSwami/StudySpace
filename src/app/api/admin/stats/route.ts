@@ -35,16 +35,24 @@ export async function GET(request: NextRequest) {
     }
 
     const since24Hours = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const aiRequestsResult = await client
-      .from("ai_usage_events")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", since24Hours);
-    if (aiRequestsResult.error) throw aiRequestsResult.error;
+    const since7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const [aiRequestsResult, feedbackTotalResult, feedbackHelpfulResult, feedbackUnhelpfulResult] = await Promise.all([
+      client.from("ai_usage_events").select("id", { count: "exact", head: true }).gte("created_at", since24Hours),
+      client.from("ai_tutor_feedback").select("id", { count: "exact", head: true }).gte("created_at", since7Days),
+      client.from("ai_tutor_feedback").select("id", { count: "exact", head: true }).eq("rating", 1).gte("created_at", since7Days),
+      client.from("ai_tutor_feedback").select("id", { count: "exact", head: true }).eq("rating", -1).gte("created_at", since7Days),
+    ]);
+    for (const result of [aiRequestsResult, feedbackTotalResult, feedbackHelpfulResult, feedbackUnhelpfulResult]) {
+      if (result.error) throw result.error;
+    }
 
     return NextResponse.json(
       {
         totalUsers,
         aiRequests24h: aiRequestsResult.count ?? 0,
+        aiFeedback7d: feedbackTotalResult.count ?? 0,
+        aiHelpful7d: feedbackHelpfulResult.count ?? 0,
+        aiUnhelpful7d: feedbackUnhelpfulResult.count ?? 0,
         generatedAt: new Date().toISOString(),
       },
       { headers: { "Cache-Control": "no-store" } },
