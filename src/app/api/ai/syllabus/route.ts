@@ -5,8 +5,20 @@ import { consumeAiQuota } from "@/lib/api-security";
 
 export const maxDuration = 60;
 
-function cleanJson(value: string) {
-  return value.replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+function parseAiJson(value: string): { events?: unknown[] } {
+  const cleaned = value.replace(/^\\s*```(?:json)?\\s*/i, "").replace(/\\s*```\\s*$/, "").trim();
+  try {
+    return JSON.parse(cleaned) as { events?: unknown[] };
+  } catch {
+    // Some models wrap otherwise-valid JSON in a short explanation. Recover the
+    // JSON object rather than failing the whole import for that formatting issue.
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(cleaned.slice(start, end + 1)) as { events?: unknown[] };
+    }
+    throw new Error("The AI response did not contain a valid JSON object.");
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -45,7 +57,7 @@ export async function POST(request: NextRequest) {
     const raw = isPdf
       ? await generateAIResponseFromPdf({ systemInstruction, prompt, pdfBase64 })
       : await generateAIResponse({ systemInstruction, prompt, task: "syllabus" });
-    const parsed = JSON.parse(cleanJson(raw)) as { events?: unknown[] };
+    const parsed = parseAiJson(raw);
     const events = (Array.isArray(parsed.events) ? parsed.events : []).slice(0, 100).map((item) => {
       const e = item as Record<string, unknown>;
       const date = typeof e.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.date) && !Number.isNaN(Date.parse(e.date)) ? e.date : "";
