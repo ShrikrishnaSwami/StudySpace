@@ -22,6 +22,12 @@ type CachedEmbedding = {
   embedding: string | number[];
 };
 
+type CachedSourceReference = {
+  content_hash: string;
+  source_id: string | null;
+  source_type: string | null;
+};
+
 // Keep embeddings that have not been used for 90 days out of the cache.
 // This is a cache expiry policy, not deletion of the student's source material.
 const EMBEDDING_CACHE_TTL_DAYS = 90;
@@ -147,7 +153,7 @@ function createUserSupabaseClient(accessToken: string) {
 export async function retrieveRelevantStudyContextHybrid(
   context: string,
   question: string,
-  auth: { userId: string; accessToken: string },
+  auth: { userId: string; accessToken: string; completeContext?: boolean },
 ): Promise<StudyContextRetrieval> {
   const lexical = retrieveRelevantStudyContext(context, question);
   if (process.env.STUDYSPACE_SEMANTIC_RETRIEVAL === "false") return lexical;
@@ -157,6 +163,10 @@ export async function retrieveRelevantStudyContextHybrid(
 
   const candidates = getStudyContextEmbeddingCandidates(context, 40);
   if (!candidates.length) return lexical;
+  // Enumerate all current chunks for safe per-source invalidation, while only embedding
+  // the bounded 40-candidate set used for ranking. Avoid destructive cleanup if capped.
+  const allSourceCandidates = getStudyContextEmbeddingCandidates(context, 1000);
+  const sourceEnumerationComplete = allSourceCandidates.length < 1000;
 
   try {
     const supabase = createUserSupabaseClient(auth.accessToken);
@@ -185,6 +195,74 @@ export async function retrieveRelevantStudyContextHybrid(
       for (const row of (cacheResult.data || []) as CachedEmbedding[]) {
         const parsed = parseVector(row.embedding);
         if (parsed) cachedByHash.set(row.content_hash, parsed);
+      }
+    }
+
+    // Associate cache entries with stable source records. When a source is present,
+    // remove its obsolete chunk hashes only if the current context enumerated all chunks.
+    // Deleted-source cleanup is restricted to complete, unfiltered student contexts and
+    // record categories that the context loader fetches without a row limit.
+    if (sourceEnumerationComplete) {
+      const activeHashesBySource = new Map<string, Set<string>>();
+      const activeIdsByType = new Map<string, Set<string>>();
+      for (const item of allSourceCandidates) {
+        if (!item.sourceId || !item.sourceType) continue;
+        const key = item.sourceType + "::" + item.sourceId;
+        const hashes = activeHashesBySource.get(key) || new Set<string>();
+        hashes.add(hashText(item.text));
+        activeHashesBySource.set(key, hashes);
+        const ids = activeIdsByType.get(item.sourceType) || new Set<string>();
+        ids.add(item.sourceId);
+        activeIdsByType.set(item.sourceType, ids);
+      }
+
+      const sourceCacheResult = await supabase
+        .from("studyspace_ai_embeddings")
+        .select("content_hash, source_id, source_type")
+        .eq("user_id", auth.userId)
+        .eq("model", EMBEDDING_MODEL)
+        .not("source_id", "is", null)
+        .not("source_type", "is", null);
+
+      if (sourceCacheResult.error) {
+        console.warn("StudySpace source cache cleanup lookup failed.", {
+          reason: sourceCacheResult.error.message,
+        });
+      } else {
+        const staleByType = new Map<string, Set<string>>();
+        for (const row of (sourceCacheResult.data || []) as CachedSourceReference[]) {
+          if (!row.source_id || !row.source_type) continue;
+          const key = row.source_type + "::" + row.source_id;
+          const activeHashes = activeHashesBySource.get(key);
+          const isCompleteType = [
+            "STUDENT COURSES", "COURSE NOTES", "COURSE MATERIALS",
+            "ASSIGNMENTS", "QUIZZES", "HOMEWORK",
+          ].includes(row.source_type);
+          const deletedSource = auth.completeContext === true && isCompleteType
+            && !activeIdsByType.has(row.source_type)?.has(row.source_id);
+          const changedSource = activeHashes !== undefined && !activeHashes.has(row.content_hash);
+          if (deletedSource || changedSource) {
+            const ids = staleByType.get(row.source_type) || new Set<string>();
+            ids.add(row.source_id);
+            staleByType.set(row.source_type, ids);
+          }
+        }
+
+        for (const [sourceType, sourceIds] of staleByType) {
+          const cleanup = await supabase
+            .from("studyspace_ai_embeddings")
+            .delete()
+            .eq("user_id", auth.userId)
+            .eq("model", EMBEDDING_MODEL)
+            .eq("source_type", sourceType)
+            .in("source_id", [...sourceIds]);
+          if (cleanup.error) {
+            console.warn("StudySpace source-linked embedding cleanup failed.", {
+              sourceType,
+              reason: cleanup.error.message,
+            });
+          }
+        }
       }
     }
 
@@ -230,6 +308,8 @@ export async function retrieveRelevantStudyContextHybrid(
       content_hash: contentHash,
       model: EMBEDDING_MODEL,
       source_label: `${candidate.title} — ${candidate.source}`.slice(0, 500),
+      source_id: candidate.sourceId || null,
+      source_type: candidate.sourceType || candidate.title,
       embedding: `[${newVectors[index].join(",")}]`,
       updated_at: new Date().toISOString(),
     }));
