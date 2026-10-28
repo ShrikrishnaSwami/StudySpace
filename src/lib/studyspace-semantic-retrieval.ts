@@ -187,17 +187,42 @@ export async function retrieveRelevantStudyContextHybrid(
     ]);
 
     const cachedByHash = new Map<string, number[]>();
+    const cacheRows = (cacheResult.data || []) as CachedEmbedding[];
+    const cachedSourceHashes = new Set<string>();
     if (cacheResult.error) {
       console.warn("StudySpace embedding cache read failed; regenerating embeddings.", {
         reason: cacheResult.error.message,
       });
     } else {
-      for (const row of (cacheResult.data || []) as CachedEmbedding[]) {
+      for (const row of cacheRows) {
+        if (row.source_id && row.source_type) cachedSourceHashes.add(row.content_hash);
         const parsed = parseVector(row.embedding);
         if (parsed) cachedByHash.set(row.content_hash, parsed);
       }
     }
 
+    // Backfill source metadata for legacy cache hits without regenerating vectors.
+    const metadataBackfill = candidateHashes.filter((item) =>
+      cachedByHash.has(item.contentHash) && Boolean(item.candidate.sourceId)
+      && Boolean(item.candidate.sourceType) && !cachedSourceHashes.has(item.contentHash)
+    );
+    for (const item of metadataBackfill) {
+      const backfillResult = await supabase
+        .from("studyspace_ai_embeddings")
+        .update({
+          source_id: item.candidate.sourceId,
+          source_type: item.candidate.sourceType,
+          source_label: String(item.candidate.title + " — " + item.candidate.source).slice(0, 500),
+        })
+        .eq("user_id", auth.userId)
+        .eq("model", EMBEDDING_MODEL)
+        .eq("content_hash", item.contentHash);
+      if (backfillResult.error) {
+        console.warn("StudySpace embedding source metadata backfill failed.", {
+          reason: backfillResult.error.message,
+        });
+      }
+    }
     // Associate cache entries with stable source records. When a source is present,
     // remove its obsolete chunk hashes only if the current context enumerated all chunks.
     // Deleted-source cleanup is restricted to complete, unfiltered student contexts and
