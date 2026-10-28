@@ -5,6 +5,8 @@ export type RetrievedStudySection = {
   score: number;
   /** Stable identity shared by chunks from the same original record. */
   groupId?: string;
+  sourceId?: string;
+  sourceType?: string;
 };
 
 export type StudyContextRetrieval = {
