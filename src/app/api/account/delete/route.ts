@@ -11,7 +11,7 @@ export async function DELETE(request: NextRequest) {
 
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
     if (!url || !anonKey || !serviceKey) {
       return NextResponse.json({ error: "Account deletion is not configured on the server." }, { status: 503 });
     }
@@ -21,14 +21,25 @@ export async function DELETE(request: NextRequest) {
     });
     const { data: { user }, error: authError } = await authClient.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Your session is invalid. Sign in again." }, { status: 401 });
+    const lastSignInAt = user.last_sign_in_at ? new Date(user.last_sign_in_at).getTime() : 0;
+    if (!lastSignInAt || !Number.isFinite(lastSignInAt) || Date.now() - lastSignInAt > 15 * 60 * 1000) {
+      return NextResponse.json(
+        { error: "For security, sign in again before deleting your account." },
+        { status: 403 },
+      );
+    }
+
     const userId = user.id;
     const rate = await consumeApiRateLimit(userId, "account-delete", 3, 3600);
     if (!rate.allowed) return NextResponse.json({ error: "Too many account deletion attempts. Please try again later." }, { status: 429 });
 
 
-    let body: { confirmation?: string };
+    if (Number(request.headers.get("content-length") || 0) > 1024) {
+      return NextResponse.json({ error: "Confirmation request is too large." }, { status: 413 });
+    }
+    let body: unknown;
     try { body = await request.json(); } catch { return NextResponse.json({ error: "Confirmation is required." }, { status: 400 }); }
-    if (body.confirmation !== "DELETE") {
+    if (!body || typeof body !== "object" || Array.isArray(body) || (body as { confirmation?: unknown }).confirmation !== "DELETE") {
       return NextResponse.json({ error: 'Type "DELETE" to confirm account deletion.' }, { status: 400 });
     }
 
