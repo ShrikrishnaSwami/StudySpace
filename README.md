@@ -21,7 +21,7 @@ Required for AI features:
 - `GEMINI_API_KEY` (server-side only; never expose it with a `NEXT_PUBLIC_` prefix)
 
 Required for quota enforcement, admin-only server actions, account deletion, and other privileged workflows:
-- `SUPABASE_SERVICE_ROLE_KEY` (server-side only; never commit the real value or expose it to the browser)
+- `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY` (server-side only; never commit the real value or expose it to the browser)
 
 Set `STUDYSPACE_ADMIN_EMAIL` to the verified administrator account email. Configure production values in Vercel's project environment settings, not in source files. Optional provider/model settings are documented in `.env.example`.
 
