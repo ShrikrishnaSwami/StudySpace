@@ -9,7 +9,7 @@ const features=[
  {icon:CalendarDays,title:"Everything on the calendar",text:"See deadlines, classes and study blocks before they sneak up on you.",href:"/calendar",tone:"violet"},
  {icon:BookOpen,title:"Your courses, together",text:"Keep notes, assignments and useful resources connected to each class.",href:"/courses",tone:"blue"},
  {icon:Brain,title:"An AI study partner",text:"Get unstuck, practise a concept or break a big topic into smaller steps.",href:"/ai-tutor",tone:"pink"},
- {icon:Target,title:"Progress you can see",text:"Track what is done, what is next and where your effort is going.",href:"/grades",tone:"orange"},
+ {icon:Target,title:"AI grading that teaches",text:"Submit your work and get a score, clear feedback, and practical next steps.",href:"/assignments",tone:"orange"},
 ];
 
 export default function Home(){
@@ -26,7 +26,7 @@ export default function Home(){
   <section className="fr-hero">
    <div className="fr-hero-copy"><a href="#workspace" className="fr-announcement"><span className="fr-live-dot"/><span>A calmer way to do student life</span><span className="fr-announcement-arrow"><ArrowUpRight size={13}/></span></a>
     <h1>Your semester,<br/>finally <span>in sync.</span></h1>
-    <p className="fr-hero-description">One workspace for classes, assignments, notes and the questions that show up at 1 a.m. Less keeping track of everything. More room to actually learn.</p>
+    <p className="fr-hero-description">One workspace for classes, assignments, notes, and AI-powered grading. Get clear feedback on your work and spend less time keeping track of everything.</p>
     <div className="fr-hero-actions"><Link href="/signup" className="fr-button">Build your workspace <ArrowRight size={17}/></Link><Link href="/login" className="fr-secondary-link">I already have an account <ChevronRight size={16}/></Link></div>
     <div className="fr-trust-row"><div className="fr-avatar-stack"><span>S</span><span>✳</span><span>↗</span></div><div><strong>Made for real student days.</strong><small>Start free. Make it yours as you go.</small></div></div>
    </div>
@@ -45,7 +45,7 @@ export default function Home(){
        <div className="fr-preview-task"><span className="fr-task-check checked"><Check size={10}/></span><span><b>Read chapter 4</b><small>Psychology · 20 min</small></span><em>DONE</em></div>
        <div className="fr-preview-task"><span className="fr-task-check"/><span><b>Calculus problem set</b><small>Math 101 · Due tomorrow</small></span><em className="task-soon">SOON</em></div>
        <div className="fr-preview-task"><span className="fr-task-check"/><span><b>Review lecture notes</b><small>Biology · 30 min</small></span></div>
-      </div><div className="fr-preview-ai"><div className="fr-ai-icon"><Sparkles size={14}/></div><span className="fr-ai-label">YOUR AI STUDY PARTNER</span><b>One step at a time.</b><p>Want to break that calculus set into smaller steps?</p><div className="fr-ai-prompt">Help me get started <ArrowRight size={11}/></div></div></div>
+      </div><div className="fr-preview-ai"><div className="fr-ai-icon"><Sparkles size={14}/></div><span className="fr-ai-label">YOUR AI INSTRUCTOR</span><b>Learn from every result.</b><p>Get a score, useful feedback, and clear next steps on submitted work.</p><div className="fr-ai-prompt">Review my feedback <ArrowRight size={11}/></div></div></div>
      </div></div>
     </div>
     <div className="fr-float-card fr-float-top"><span className="fr-float-check"><Check size={13}/></span><span><b>One less thing to remember</b><small>Assignment marked complete</small></span></div>
