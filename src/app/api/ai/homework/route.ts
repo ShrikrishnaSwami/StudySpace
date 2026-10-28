@@ -43,6 +43,35 @@ function getGeminiClient() {
   });
 }
 
+
+const MAX_HOMEWORK_BYTES = 12 * 1024 * 1024;
+
+async function readLimitedFile(response: Response, maxBytes: number): Promise<Buffer> {
+  const declaredLength = Number(response.headers.get("content-length") || 0);
+  if (declaredLength > maxBytes) {
+    throw new Error("This homework file is too large for AI analysis. Please upload a file smaller than 12 MB.");
+  }
+  if (!response.body) throw new Error("The homework file could not be read.");
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        throw new Error("This homework file is too large for AI analysis. Please upload a file smaller than 12 MB.");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  return Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)), total);
+}
+
 function cleanJson(text: string) {
   return text
     .replace(/^```json\s*/i, "")
@@ -184,32 +213,34 @@ export async function POST(
       );
     }
 
-    const fileResponse = await fetch(
-      signedUrlData.signedUrl
-    );
+    /*
+     * Enforce the AI quota before downloading bytes from storage. The response
+     * is streamed through a hard byte cap so a missing or misleading
+     * Content-Length header cannot cause unbounded memory use.
+     */
+    const quota = await consumeAiQuota(user.id, "homework");
+    if (!quota.allowed) {
+      return NextResponse.json({ error: quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You have reached today's AI homework limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
+    }
+
+    const fileResponse = await fetch(signedUrlData.signedUrl, {
+      signal: AbortSignal.timeout(15000),
+      cache: "no-store",
+    });
 
     if (!fileResponse.ok) {
       return NextResponse.json(
-        {
-          error:
-            `Could not download homework file (${fileResponse.status}).`,
-        },
-        { status: 500 }
+        { error: `Could not download homework file (${fileResponse.status}).` },
+        { status: 502 }
       );
     }
 
-    const arrayBuffer =
-      await fileResponse.arrayBuffer();
-
-    const base64 = Buffer.from(
-      arrayBuffer
-    ).toString("base64");
+    const fileBuffer = await readLimitedFile(fileResponse, MAX_HOMEWORK_BYTES);
+    const base64 = fileBuffer.toString("base64");
 
     const mimeType =
       homework.file_type ||
-      fileResponse.headers.get(
-        "content-type"
-      ) ||
+      fileResponse.headers.get("content-type") ||
       "application/octet-stream";
 
     /*
@@ -217,11 +248,6 @@ export async function POST(
      * BUILD GEMINI REQUEST
      * --------------------------------------------------
      */
-
-    const quota = await consumeAiQuota(user.id, "homework");
-    if (!quota.allowed) {
-      return NextResponse.json({ error: quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You have reached today's AI homework limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
-    }
 
     const ai = getGeminiClient();
 
