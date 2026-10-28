@@ -22,12 +22,16 @@ type CachedEmbedding = {
   embedding: string | number[];
 };
 
+// Keep embeddings that have not been used for 90 days out of the cache.
+// This is a cache expiry policy, not deletion of the student's source material.
+const EMBEDDING_CACHE_TTL_DAYS = 90;
+
 function hashText(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
 function parseVector(value: unknown): number[] | null {
-  if (Array.isArray(value) && value.every((item) => typeof item === "number")) {
+  if (Array.isArray(value) && value.length === EMBEDDING_DIMENSIONS && value.every((item) => typeof item === "number" && Number.isFinite(item))) {
     return value;
   }
   if (typeof value !== "string") return null;
@@ -182,6 +186,37 @@ export async function retrieveRelevantStudyContextHybrid(
         const parsed = parseVector(row.embedding);
         if (parsed) cachedByHash.set(row.content_hash, parsed);
       }
+    }
+
+    // Refresh last_used_at for cache hits so frequently used material stays warm.
+    // All operations are scoped to the authenticated user's own rows (RLS + user_id).
+    const cachedHashes = [...cachedByHash.keys()];
+    if (cachedHashes.length) {
+      const touchResult = await supabase
+        .from("studyspace_ai_embeddings")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("user_id", auth.userId)
+        .eq("model", EMBEDDING_MODEL)
+        .in("content_hash", cachedHashes);
+      if (touchResult.error) {
+        console.warn("StudySpace embedding cache usage timestamp update failed.", {
+          reason: touchResult.error.message,
+        });
+      }
+    }
+
+    // Expire cache entries not used for 90 days. The index on (user_id, last_used_at)
+    // keeps this bounded, and this never touches source records or another user's cache.
+    const expiry = new Date(Date.now() - EMBEDDING_CACHE_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+    const cleanupResult = await supabase
+      .from("studyspace_ai_embeddings")
+      .delete()
+      .eq("user_id", auth.userId)
+      .lt("last_used_at", expiry);
+    if (cleanupResult.error) {
+      console.warn("StudySpace expired embedding cleanup failed.", {
+        reason: cleanupResult.error.message,
+      });
     }
 
     const missing = candidateHashes.filter((item) => !cachedByHash.has(item.contentHash));
