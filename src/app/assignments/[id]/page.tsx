@@ -86,6 +86,9 @@ type Submission = {
   grade?: number | null;
   feedback?: string | null;
   graded_at?: string | null;
+  ai_grade?: number | null;
+  ai_feedback?: string | null;
+  ai_graded_at?: string | null;
 };
 
 type SubmissionFile = {
@@ -312,7 +315,7 @@ export default function AssignmentWorkspacePage() {
           .order("created_at", { ascending: false }),
         supabase
           .from("assignment_submissions")
-          .select("id, assignment_id, user_id, attempt_number, status, submission_note, submitted_at, created_at, updated_at, grade, feedback, graded_at")
+          .select("id, assignment_id, user_id, attempt_number, status, submission_note, submitted_at, created_at, updated_at, grade, feedback, graded_at, ai_grade, ai_feedback, ai_graded_at")
           .eq("assignment_id", assignmentId)
           .order("attempt_number", { ascending: false }),
       ]);
@@ -765,7 +768,7 @@ export default function AssignmentWorkspacePage() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "AI grading failed. Please try again.");
-      setNotice("AI feedback is ready. Your provisional grade has been saved.");
+      setNotice("Provisional AI feedback saved separately. It does not change your official grade.");
       await loadFilesAndSubmissions();
     } catch (cause) {
       setFileError(cause instanceof Error ? cause.message : "AI grading failed. Your submission is safe; try again.");
@@ -1156,7 +1159,20 @@ export default function AssignmentWorkspacePage() {
                   {activeSubmission.feedback && <div className="mt-4 border-t border-white/[0.08] pt-4"><p className="mb-1 text-xs font-medium text-white/45">Feedback</p><p className="whitespace-pre-wrap text-sm leading-6 text-white/75">{activeSubmission.feedback}</p></div>}
                 </div>
               )}
-              {activeSubmission?.status === "submitted" && activeSubmission.grade == null && (
+              {activeSubmission?.status === "submitted" && activeSubmission.grade == null && activeSubmission.ai_grade != null && (
+                <div className="mb-5 rounded-2xl border border-violet-400/20 bg-violet-400/[0.05] p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wider text-violet-200/80">Provisional AI feedback · not an official grade</p>
+                      <h3 className="mt-1 text-2xl font-bold text-white">{activeSubmission.ai_grade} / {assignment?.max_points ?? 100} points</h3>
+                      <p className="mt-1 text-xs text-white/35">{activeSubmission.ai_graded_at ? `Generated ${formatDateTime(activeSubmission.ai_graded_at)}` : "AI feedback generated"}</p>
+                    </div>
+                    <Sparkles className="h-6 w-6 text-violet-300" />
+                  </div>
+                  {activeSubmission.ai_feedback && <div className="mt-4 border-t border-white/[0.08] pt-4"><p className="mb-1 text-xs font-medium text-white/45">AI feedback and suggestions</p><p className="whitespace-pre-wrap text-sm leading-6 text-white/75">{activeSubmission.ai_feedback}</p></div>}
+                </div>
+              )}
+              {activeSubmission?.status === "submitted" && activeSubmission.grade == null && activeSubmission.ai_grade == null && (
                 <div className="mb-5 flex flex-col gap-3 rounded-xl border border-violet-400/20 bg-violet-400/[0.05] p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-medium text-white/85">Your work has been submitted</p>
