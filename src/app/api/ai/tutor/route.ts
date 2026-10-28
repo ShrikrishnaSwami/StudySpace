@@ -221,6 +221,11 @@ export async function POST(request: NextRequest) {
       if (!courseId && conversation.course_id) courseId = conversation.course_id;
     }
 
+    const quota = await consumeAiQuota(token, "tutor");
+    if (!quota.allowed) {
+      return NextResponse.json({ error: quota.scope === "rate" ? "Too many AI requests. Please wait a few minutes and try again." : quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You have reached today's AI tutor limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
+    }
+
     /*
      * -------------------------------------------------------
      * LOAD FULL STUDYSPACE CONTEXT
@@ -605,11 +610,6 @@ unless the student explicitly asks about them.
      * GENERATE RESPONSE
      * -------------------------------------------------------
      */
-
-    const quota = await consumeAiQuota(token, "tutor");
-    if (!quota.allowed) {
-      return NextResponse.json({ error: quota.scope === "rate" ? "Too many AI requests. Please wait a few minutes and try again." : quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You have reached today's AI tutor limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
-    }
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream<Uint8Array>({
