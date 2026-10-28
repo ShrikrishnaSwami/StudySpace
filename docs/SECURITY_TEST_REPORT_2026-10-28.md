@@ -49,12 +49,12 @@ The SQL definitions and grants were verified. A live load/abuse test that sends 
 
 Vercel environment metadata shows GEMINI_API_KEY is empty in production, preview, and development. This prevents actual AI generation until a valid key is configured server-side. The service-role/secret keys are also empty in production; AI quota enforcement and study-group joining were reworked to avoid requiring that key, but privileged assignment grading and account deletion still depend on it.
 
-Historical Vercel logs show Gemini provider 503 errors and a tutor timeout. A historical quiz_attempts.created_at query failure is already corrected in the current repository to order by completed_at. The current deployed version has not been rebuilt with these changes.
+Historical Vercel logs show Gemini provider 503 errors and a tutor timeout. A historical quiz_attempts.created_at query failure is already corrected in the current repository to order by completed_at. The latest successful deployment predates some later reliability changes. A compatibility overload was added to the live quota RPC so the deployed helper's two-argument call continues to work while ignoring caller-supplied limits; the newer one-argument helper enforces the daily limit in the database.
 
 ## Deployment and monitoring
 
-- Latest known Vercel production deployment is **ERROR**.
-- The build log identified TypeScript errors in the admin routes caused by the weak app_metadata type in src/lib/admin.ts; that type guard was fixed and committed. The Vercel check is currently failing at the platform build-rate-limit gate, so the fix has **not** been verified by a new production build.
+- Latest successful Vercel production deployment is **READY** at commit ca9c3008 (fix: use caller-bound rate limit RPCs). Later changes on main are not in that deployment yet.
+- An earlier build log identified TypeScript errors in the admin routes caused by the weak app_metadata type in src/lib/admin.ts; that type guard was fixed and committed. The current main-branch Vercel check reports the platform build-rate-limit gate, so the later changes have **not** been verified by a new production build.
 - The last 24-hour Vercel runtime-error summary shows one AI Tutor temporary-unavailable event. The preceding 7-day summary also included Gemini 503 failures and an older timeout.
 - Vercel Observability Plus is not enabled. Basic runtime logs and error grouping are available, but advanced observability configuration is unavailable on the current setup.
 
