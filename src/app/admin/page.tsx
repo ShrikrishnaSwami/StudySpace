@@ -1,27 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Activity, BookOpen, ClipboardList, FileCheck2, RefreshCw, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Activity, RefreshCw, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
 
 type Stats = {
   totalUsers: number;
-  courses: number;
-  assignments: number;
-  submissions: number;
   aiRequests24h: number;
   generatedAt: string;
 };
-const blank: Stats = { totalUsers: 0, courses: 0, assignments: 0, submissions: 0, aiRequests24h: 0, generatedAt: "" };
+const blank: Stats = { totalUsers: 0, aiRequests24h: 0, generatedAt: "" };
 
-const metricCards = [
-  { key: "courses", label: "Courses", detail: "Stored in StudySpace", icon: BookOpen },
-  { key: "assignments", label: "Assignments", detail: "Created across courses", icon: ClipboardList },
-  { key: "submissions", label: "Submissions", detail: "Student work submitted", icon: FileCheck2 },
-  { key: "aiRequests24h", label: "AI requests", detail: "Last 24 hours", icon: Sparkles },
-] as const;
 
 export default function AdminPage() {
   const router = useRouter();
@@ -46,9 +37,6 @@ export default function AdminPage() {
       if (!response.ok) throw new Error(body.error || "Could not load admin statistics.");
       setStats({
         totalUsers: Number(body.totalUsers) || 0,
-        courses: Number(body.courses) || 0,
-        assignments: Number(body.assignments) || 0,
-        submissions: Number(body.submissions) || 0,
         aiRequests24h: Number(body.aiRequests24h) || 0,
         generatedAt: body.generatedAt || "",
       });
@@ -111,18 +99,16 @@ export default function AdminPage() {
         </div>
       </section>
 
-      <section aria-label="Platform metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {metricCards.map(({ key, label, detail, icon: Icon }) => (
-          <article key={key} className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5 transition hover:border-violet-400/20 hover:bg-white/[0.04]">
-            <div className="flex items-center justify-between gap-3">
-              <div className="rounded-xl border border-white/[0.07] bg-white/[0.04] p-2.5 text-violet-200"><Icon size={19} /></div>
-              <Activity size={15} className="text-emerald-300/70" aria-hidden="true" />
-            </div>
-            <p className="mt-5 text-sm text-white/50">{label}</p>
-            <p className="mt-1 text-3xl font-semibold tabular-nums">{loading && !stats.generatedAt ? "…" : stats[key].toLocaleString()}</p>
-            <p className="mt-2 text-xs text-white/30">{detail}</p>
-          </article>
-        ))}
+      <section aria-label="AI usage metrics" className="grid gap-4 sm:grid-cols-2">
+        <article className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5 transition hover:border-violet-400/20 hover:bg-white/[0.04]">
+          <div className="flex items-center justify-between gap-3">
+            <div className="rounded-xl border border-white/[0.07] bg-white/[0.04] p-2.5 text-violet-200"><Sparkles size={19} /></div>
+            <Activity size={15} className="text-emerald-300/70" aria-hidden="true" />
+          </div>
+          <p className="mt-5 text-sm text-white/50">AI requests</p>
+          <p className="mt-1 text-3xl font-semibold tabular-nums">{loading && !stats.generatedAt ? "…" : stats.aiRequests24h.toLocaleString()}</p>
+          <p className="mt-2 text-xs text-white/30">Last 24 hours</p>
+        </article>
       </section>
 
       <p className="text-xs text-white/35">
