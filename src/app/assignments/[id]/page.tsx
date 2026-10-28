@@ -768,7 +768,7 @@ export default function AssignmentWorkspacePage() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "AI grading failed. Please try again.");
-      setNotice("Provisional AI feedback saved separately. It does not change your official grade.");
+      setNotice("Your AI grade and feedback have been saved. You can review the result below.");
       await loadFilesAndSubmissions();
     } catch (cause) {
       setFileError(cause instanceof Error ? cause.message : "AI grading failed. Your submission is safe; try again.");
@@ -1163,7 +1163,7 @@ export default function AssignmentWorkspacePage() {
                 <div className="mb-5 rounded-2xl border border-violet-400/20 bg-violet-400/[0.05] p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="text-xs font-medium uppercase tracking-wider text-violet-200/80">Provisional AI feedback · not an official grade</p>
+                      <p className="text-xs font-medium uppercase tracking-wider text-violet-200/80">AI grade & feedback</p>
                       <h3 className="mt-1 text-2xl font-bold text-white">{activeSubmission.ai_grade} / {assignment?.max_points ?? 100} points</h3>
                       <p className="mt-1 text-xs text-white/35">{activeSubmission.ai_graded_at ? `Generated ${formatDateTime(activeSubmission.ai_graded_at)}` : "AI feedback generated"}</p>
                     </div>
@@ -1176,7 +1176,7 @@ export default function AssignmentWorkspacePage() {
                 <div className="mb-5 flex flex-col gap-3 rounded-xl border border-violet-400/20 bg-violet-400/[0.05] p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-medium text-white/85">Your work has been submitted</p>
-                    <p className="mt-1 text-xs leading-5 text-white/45">Get a provisional AI grade with feedback and suggestions. This is not an official instructor grade.</p>
+                    <p className="mt-1 text-xs leading-5 text-white/45">Get your StudySpace AI grade, a clear explanation, and practical suggestions for improving your work.</p>
                   </div>
                   <button type="button" onClick={() => void gradeSubmission(activeSubmission.id)} disabled={grading || busy}
                     className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-violet-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-50">
