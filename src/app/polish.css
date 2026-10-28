@@ -556,3 +556,98 @@ html[data-theme="light"] main:has(form) select:focus {
   box-shadow: 0 0 0 3px rgba(124, 58, 237, .1);
 }
 
+
+/* Warm Focus dashboard: warm paper, ink-slate, sage accents, and natural motion. */
+.ss-shell main .ss-dashboard {
+  --focus-ink:#1a1e29; --focus-muted:#6e746f; --focus-paper:#fbfbf8;
+  --focus-surface:#fffefa; --focus-line:#e8e8df; --focus-sage:#66866d;
+  --focus-sage-soft:#eaf0e7;
+  color:var(--focus-ink)!important; isolation:isolate;
+}
+.ss-shell main .ss-dashboard>section {
+  animation:focus-arrive .62s cubic-bezier(.25,1,.5,1) both;
+}
+.ss-shell main .ss-dashboard>section:nth-of-type(2){animation-delay:45ms}
+.ss-shell main .ss-dashboard>section:nth-of-type(3){animation-delay:85ms}
+.ss-shell main .ss-dashboard>section:nth-of-type(4){animation-delay:125ms}
+.ss-shell main .ss-dashboard>section:nth-of-type(5){animation-delay:165ms}
+.ss-shell main .ss-dashboard>section:nth-of-type(6){animation-delay:205ms}
+.ss-shell main .ss-dashboard h1,
+.ss-shell main .ss-dashboard h2,
+.ss-shell main .ss-dashboard h3,
+.ss-shell main .ss-dashboard h4,
+.ss-shell main .ss-dashboard .text-white,
+.ss-shell main .ss-dashboard [class~="text-white/85"],
+.ss-shell main .ss-dashboard [class~="text-white/80"],
+.ss-shell main .ss-dashboard [class~="text-white/75"],
+.ss-shell main .ss-dashboard [class~="text-white/70"],
+.ss-shell main .ss-dashboard [class~="text-white/65"],
+.ss-shell main .ss-dashboard [class~="text-white/60"]{color:var(--focus-ink)!important}
+.ss-shell main .ss-dashboard p,
+.ss-shell main .ss-dashboard [class~="text-white/45"],
+.ss-shell main .ss-dashboard [class~="text-white/40"],
+.ss-shell main .ss-dashboard [class~="text-white/35"],
+.ss-shell main .ss-dashboard [class~="text-white/30"],
+.ss-shell main .ss-dashboard [class~="text-white/25"],
+.ss-shell main .ss-dashboard [class~="text-white/20"]{color:var(--focus-muted)!important}
+.ss-shell main .ss-dashboard>section:first-of-type h1{font-size:clamp(2rem,3.6vw,2.8rem);letter-spacing:-.055em;line-height:1.08}
+.ss-shell main .ss-dashboard>section:first-of-type h1 span{color:#778277!important}
+.ss-shell main .ss-dashboard [class*="text-violet-300"]{color:var(--focus-sage)!important}
+.ss-shell main .ss-dashboard [class*="bg-violet-500"]{background:var(--focus-sage-soft)!important}
+.ss-shell main .ss-dashboard>section.grid.grid-cols-2{
+  gap:0;overflow:hidden;border:1px solid var(--focus-line)!important;border-radius:22px;
+  background:var(--focus-line)!important;box-shadow:0 18px 50px rgba(45,53,41,.055),0 2px 8px rgba(45,53,41,.025)
+}
+.ss-shell main .ss-dashboard>section.grid.grid-cols-2>div{
+  min-height:142px;background:var(--focus-surface)!important;padding:24px;
+  transition:background .24s cubic-bezier(.25,1,.5,1),transform .24s cubic-bezier(.25,1,.5,1)
+}
+.ss-shell main .ss-dashboard>section.grid.grid-cols-2>div:hover{background:#f5f7f0!important}
+.ss-shell main .ss-dashboard>section.grid.grid-cols-2>div [class*="bg-violet-500"],
+.ss-shell main .ss-dashboard>section.grid.grid-cols-2>div [class*="bg-cyan-500"],
+.ss-shell main .ss-dashboard>section.grid.grid-cols-2>div [class*="bg-orange-500"],
+.ss-shell main .ss-dashboard>section.grid.grid-cols-2>div [class*="bg-emerald-500"]{background:var(--focus-sage-soft)!important}
+.ss-shell main .ss-dashboard>section.grid.grid-cols-2>div [class*="text-violet-300"],
+.ss-shell main .ss-dashboard>section.grid.grid-cols-2>div [class*="text-cyan-300"],
+.ss-shell main .ss-dashboard>section.grid.grid-cols-2>div [class*="text-orange-300"],
+.ss-shell main .ss-dashboard>section.grid.grid-cols-2>div [class*="text-emerald-300"]{color:var(--focus-sage)!important}
+.ss-shell main .ss-dashboard>section[aria-label="Quick actions"]>a{
+  min-height:94px;border-color:var(--focus-line)!important;border-radius:18px;
+  background:var(--focus-surface)!important;box-shadow:0 6px 22px rgba(45,53,41,.035);
+  transition:transform .28s cubic-bezier(.25,1,.5,1),box-shadow .28s cubic-bezier(.25,1,.5,1),border-color .28s ease
+}
+.ss-shell main .ss-dashboard>section[aria-label="Quick actions"]>a:hover{
+  transform:perspective(900px) rotateX(.7deg) rotateY(-.7deg) translateY(-3px) scale(1.012);
+  border-color:#d0dacb!important;background:#fffefa!important;
+  box-shadow:0 18px 34px rgba(53,65,48,.09),0 3px 8px rgba(53,65,48,.04)
+}
+.ss-shell main .ss-dashboard>section[aria-label="Quick actions"]>a span[class*="bg-violet-500"],
+.ss-shell main .ss-dashboard>section[aria-label="Quick actions"]>a span[class*="bg-orange-500"],
+.ss-shell main .ss-dashboard>section[aria-label="Quick actions"]>a span[class*="bg-cyan-500"],
+.ss-shell main .ss-dashboard>section[aria-label="Quick actions"]>a span[class*="bg-emerald-500"]{background:var(--focus-sage-soft)!important;color:var(--focus-sage)!important}
+.ss-shell main .ss-dashboard>section[aria-label="Quick actions"]>a span[class*="text-white"]{color:var(--focus-ink)!important}
+.ss-shell main .ss-dashboard>section.rounded-2xl.border{
+  border-color:var(--focus-line)!important;border-radius:22px;background:var(--focus-surface)!important;
+  box-shadow:0 18px 48px rgba(45,53,41,.045)
+}
+.ss-shell main .ss-dashboard>section.rounded-2xl.border .border-b{border-color:var(--focus-line)!important}
+.ss-shell main .ss-dashboard>section.rounded-2xl.border [class*="bg-[#0d0a15]"]{background:var(--focus-surface)!important}
+.ss-shell main .ss-dashboard>section.rounded-2xl.border [class*="bg-violet-600"]{background:var(--focus-sage)!important}
+.ss-shell main .ss-dashboard>section.rounded-2xl.border button[class*="bg-violet-600"]{color:#fffefa!important;box-shadow:0 8px 20px rgba(75,105,78,.18)}
+.ss-shell main .ss-dashboard .rounded-xl,
+.ss-shell main .ss-dashboard .rounded-2xl,
+.ss-shell main .ss-dashboard .rounded-lg{border-radius:16px}
+.ss-shell main .ss-dashboard button:focus-visible,
+.ss-shell main .ss-dashboard a:focus-visible{outline-color:#66866d}
+.ss-shell main .ss-dashboard .animate-spin{color:var(--focus-sage)!important}
+@keyframes focus-arrive{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:640px){
+ .ss-shell main .ss-dashboard{padding-top:22px}
+ .ss-shell main .ss-dashboard>section.grid.grid-cols-2>div{min-height:124px;padding:17px}
+ .ss-shell main .ss-dashboard>section[aria-label="Quick actions"]{gap:10px}
+ .ss-shell main .ss-dashboard>section[aria-label="Quick actions"]>a{min-height:84px;padding:14px}
+}
+@media(prefers-reduced-motion:reduce){
+ .ss-shell main .ss-dashboard>section{animation:none!important}
+ .ss-shell main .ss-dashboard>section[aria-label="Quick actions"]>a:hover{transform:none}
+}
