@@ -1,6 +1,6 @@
 import "server-only";
 
-import { generateAIResponse } from "@/lib/gemini";
+import { generateAIResponse, streamAIResponse } from "@/lib/gemini";
 
 export type StudySpaceTask =
   | "tutor"
@@ -34,4 +34,13 @@ export async function generateStudySpaceAnswer({
     prompt,
     task,
   });
+}
+
+/** Streaming counterpart used by the AI Tutor chat route. */
+export async function* streamStudySpaceAnswer({
+  systemInstruction,
+  prompt,
+  task = "tutor",
+}: GenerateStudySpaceAnswerInput): AsyncGenerator<string> {
+  yield* streamAIResponse({ systemInstruction, prompt, task });
 }
