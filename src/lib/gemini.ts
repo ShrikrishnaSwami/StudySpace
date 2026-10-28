@@ -89,8 +89,8 @@ function errorSummary(error: unknown) {
   // Keep provider diagnostics useful without exposing credentials or request payloads.
   return value
     .replace(/AIza[0-9A-Za-z_-]{20,}/g, "[redacted-api-key]")
-    .replace(/Bearer\\s+[^\\s]+/gi, "Bearer [redacted]")
-    .replace(/(api[_-]?key\\s*[:=]\\s*)[^\\s,;]+/gi, "$1[redacted]")
+    .replace(/Bearer\s+[^\s]+/gi, "Bearer [redacted]")
+    .replace(/(api[_-]?key\s*[:=]\s*)[^\s,;]+/gi, "$1[redacted]")
     .slice(0, 360);
 }
 
@@ -100,7 +100,7 @@ function isCredentialError(error: unknown) {
 
 function isRetryableError(error: unknown) {
   const value = errorSummary(error);
-  return /\\b(408|429|500|502|503|504)\\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand|timeout|temporarily unavailable|not found|unsupported model|model .*not available/i.test(value);
+  return /\b(408|429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand|timeout|temporarily unavailable|not found|unsupported model|model .*not available/i.test(value);
 }
 
 function wait(ms: number) {
