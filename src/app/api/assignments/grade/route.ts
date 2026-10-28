@@ -52,29 +52,54 @@ export async function POST(request: NextRequest) {
     if (submission.status !== "submitted") return NextResponse.json({ error: "Submit your work before requesting AI grading." }, { status: 400 });
     if (submission.grade !== null && submission.grade !== undefined) return NextResponse.json({ grade: submission.grade, feedback: submission.feedback, alreadyGraded: true });
 
-    const quota = await consumeAiQuota(user.id, "homework");
-    if (!quota.allowed) return NextResponse.json({ error: "You've reached today's AI homework limit. Try again later.", usage: quota }, { status: 429 });
-
     const { data: files, error: filesError } = await admin.from("assignment_submission_files").select("file_name,storage_path,file_type,file_size").eq("submission_id", submissionId).eq("user_id", user.id);
     if (filesError) throw filesError;
     if (!files?.length && !submission.submission_note?.trim()) return NextResponse.json({ error: "Add a written response or attach a supported file before grading." }, { status: 400 });
     if ((files?.length ?? 0) > 5) return NextResponse.json({ error: "AI grading currently supports up to 5 files per submission." }, { status: 400 });
 
-    const parts: Array<Record<string, unknown>> = [];
-    if (submission.submission_note?.trim()) parts.push({ text: "Student's submission note or written answer:\n" + submission.submission_note.slice(0, 16000) });
+    const extensionMimeTypes: Record<string, string> = {
+      pdf: "application/pdf", txt: "text/plain", csv: "text/csv",
+      png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp",
+    };
+    let declaredTotalBytes = 0;
     for (const file of files ?? []) {
-      const mimeType = file.file_type || (file.file_name.toLowerCase().endsWith(".pdf") ? "application/pdf" : file.file_name.toLowerCase().endsWith(".txt") ? "text/plain" : "");
-      if (!supportedMimeTypes.has(mimeType)) {
+      const extension = file.file_name.split(".").pop()?.toLowerCase() || "";
+      const expectedPrefix = `${user.id}/${assignmentId}/${submissionId}/`;
+      if (!file.storage_path.startsWith(expectedPrefix)) {
+        return NextResponse.json({ error: "A submitted file has an invalid storage path." }, { status: 403 });
+      }
+      const inferredMime = extensionMimeTypes[extension];
+      const mimeType = file.file_type && supportedMimeTypes.has(file.file_type) ? file.file_type : inferredMime;
+      if (!mimeType || !supportedMimeTypes.has(mimeType)) {
         return NextResponse.json({ error: `AI grading cannot read "${file.file_name}" yet. Upload a PDF, TXT, CSV, PNG, JPG, or WEBP file instead.` }, { status: 415 });
       }
-      if (file.file_size > 15 * 1024 * 1024) return NextResponse.json({ error: `"${file.file_name}" is too large for AI grading (15 MB maximum per file).` }, { status: 413 });
+      if (inferredMime && mimeType !== inferredMime) {
+        return NextResponse.json({ error: `The file type for "${file.file_name}" does not match its extension.` }, { status: 415 });
+      }
+      if (Number(file.file_size) > 15 * 1024 * 1024) return NextResponse.json({ error: `"${file.file_name}" is too large for AI grading (15 MB maximum per file).` }, { status: 413 });
+      declaredTotalBytes += Number(file.file_size) || 0;
+    }
+    if (declaredTotalBytes > 30 * 1024 * 1024) return NextResponse.json({ error: "AI grading supports up to 30 MB of attachments per submission." }, { status: 413 });
+
+    const quota = await consumeAiQuota(user.id, "homework");
+    if (!quota.allowed) return NextResponse.json({ error: "You've reached today's AI homework limit. Try again later.", usage: quota }, { status: 429 });
+
+    const parts: Array<Record<string, unknown>> = [];
+    if (submission.submission_note?.trim()) parts.push({ text: "Student's submission note or written answer:\\n" + submission.submission_note.slice(0, 16000) });
+    let actualTotalBytes = 0;
+    for (const file of files ?? []) {
+      const extension = file.file_name.split(".").pop()?.toLowerCase() || "";
+      const mimeType = file.file_type && supportedMimeTypes.has(file.file_type) ? file.file_type : extensionMimeTypes[extension];
       const { data: signed, error: signedError } = await admin.storage.from("assignment-submissions").createSignedUrl(file.storage_path, 120);
       if (signedError || !signed?.signedUrl) throw new Error("Could not access a submitted file for grading.");
       const response = await fetch(signed.signedUrl, { cache: "no-store" });
       if (!response.ok) throw new Error("Could not download a submitted file for grading.");
       const bytes = Buffer.from(await response.arrayBuffer());
+      if (bytes.length > 15 * 1024 * 1024) return NextResponse.json({ error: `"${file.file_name}" is too large for AI grading (15 MB maximum per file).` }, { status: 413 });
+      actualTotalBytes += bytes.length;
+      if (actualTotalBytes > 30 * 1024 * 1024) return NextResponse.json({ error: "AI grading supports up to 30 MB of attachments per submission." }, { status: 413 });
       if (mimeType === "text/plain" || mimeType === "text/csv") {
-        parts.push({ text: `Student file: ${file.file_name}\n${bytes.toString("utf8").slice(0, 20000)}` });
+        parts.push({ text: `Student file: ${file.file_name}\\n${bytes.toString("utf8").slice(0, 20000)}` });
       } else {
         parts.push({ inlineData: { mimeType, data: bytes.toString("base64") } });
         parts.push({ text: `The preceding attachment is the student's work: ${file.file_name}` });
