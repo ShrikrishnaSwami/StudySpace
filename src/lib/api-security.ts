@@ -41,6 +41,7 @@ export async function consumeAiQuota(userId: string, feature: AiFeature) {
     used: Number(row.used ?? 0),
     remaining: Number(row.remaining ?? 0),
     resetAt: row.reset_at ? new Date(row.reset_at).toISOString() : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    scope: row.scope === "global" ? "global" : "user",
   };
 }
 
