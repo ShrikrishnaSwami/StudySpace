@@ -258,10 +258,17 @@ Return valid JSON only.
       "high",
       "urgent",
     ];
+    const ownedCourseIds = new Set(context.courses.map((course) => course.id));
+    const isRealDate = (value: unknown): value is string => {
+      if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+      const parsedDate = new Date(value + "T00:00:00.000Z");
+      return !Number.isNaN(parsedDate.getTime()) && parsedDate.toISOString().slice(0, 10) === value;
+    };
 
     const normalized =
       recommendations
         .slice(0, 6)
+        .filter((item) => item && typeof item === "object")
         .map((item) => {
           const priority =
             validPriorities.includes(
@@ -286,33 +293,22 @@ Return valid JSON only.
                 )
               : 30;
 
+          const requestedCourseId = typeof item.course_id === "string" ? item.course_id : null;
           return {
             user_id: user.id,
-
-            course_id:
-              item.course_id || null,
-
-            title:
-              item.title?.trim() ||
-              "Study recommendation",
-
-            recommendation:
-              item.recommendation?.trim() ||
-              "Review your upcoming academic work.",
-
-            reason:
-              item.reason?.trim() || "",
-
+            // Never let model output create a cross-student course association.
+            course_id: requestedCourseId && ownedCourseIds.has(requestedCourseId) ? requestedCourseId : null,
+            title: typeof item.title === "string" && item.title.trim()
+              ? item.title.trim().slice(0, 160)
+              : "Study recommendation",
+            recommendation: typeof item.recommendation === "string" && item.recommendation.trim()
+              ? item.recommendation.trim().slice(0, 2000)
+              : "Review your upcoming academic work.",
+            reason: typeof item.reason === "string" ? item.reason.trim().slice(0, 1000) : "",
             priority,
-
-            estimated_minutes:
-              estimatedMinutes,
-
-            suggested_date:
-              item.suggested_date || null,
-
+            estimated_minutes: estimatedMinutes,
+            suggested_date: isRealDate(item.suggested_date) ? item.suggested_date : null,
             source: "ai" as const,
-
             completed: false,
           };
         });
