@@ -65,3 +65,42 @@ Do not treat a Git commit as a release. Do not manually deploy until the deploym
 ## Backup and recovery
 
 The available project API does not expose a verified backup inventory or restore-test result, so backup coverage is **not verified**. Check docs/BACKUP_AND_RECOVERY_RUNBOOK.md before launch. Supabase documents automatic daily database backups for Pro/Team/Enterprise plans and recommends regular off-site logical exports for Free projects; database backups do not include Storage file objects: https://supabase.com/docs/guides/platform/backups
+
+
+## Table-by-table simulated SELECT results
+
+Counts below are rows visible to each authenticated JWT claim set at audit time, not total table row counts. “Instructor-like” means a non-admin account used for an ownership-boundary test; it is not a verified instructor-role account. The private event tables are omitted from this matrix because authenticated users have no direct SELECT privilege on them.
+
+| Public table | Student | Instructor-like | Guest | Admin |
+|---|---:|---:|---:|---:|
+| ai_tutor_conversations | 0 | 1 | 0 | 1 |
+| ai_tutor_feedback | 0 | 0 | 0 | 1 |
+| ai_tutor_messages | 0 | 4 | 0 | 19 |
+| assignment_attachments | 0 | 0 | 0 | 0 |
+| assignment_submission_files | 0 | 0 | 0 | 0 |
+| assignment_submissions | 0 | 0 | 0 | 0 |
+| assignments | 0 | 0 | 0 | 1 |
+| calendar_events | 3 | 0 | 0 | 9 |
+| course_goals | 0 | 0 | 0 | 0 |
+| course_notes | 0 | 0 | 0 | 2 |
+| course_resources | 0 | 0 | 0 | 0 |
+| courses | 0 | 0 | 0 | 1 |
+| flashcard_decks | 0 | 0 | 0 | 0 |
+| flashcards | 0 | 0 | 0 | 0 |
+| grade_items | 0 | 0 | 0 | 0 |
+| homework | 1 | 0 | 0 | 3 |
+| notifications | 0 | 0 | 0 | 11 |
+| quiz_answers | 0 | 0 | 0 | 0 |
+| quiz_attempts | 0 | 0 | 0 | 0 |
+| quiz_questions | 0 | 0 | 0 | 0 |
+| quizzes | 0 | 0 | 0 | 0 |
+| study_group_members | 0 | 0 | 0 | 1 |
+| study_group_posts | 0 | 0 | 0 | 0 |
+| study_groups | 0 | 0 | 0 | 1 |
+| study_plan_items | 0 | 0 | 0 | 0 |
+| study_recommendations | 0 | 0 | 0 | 19 |
+| study_sessions | 0 | 0 | 0 | 0 |
+| studyspace_ai_embeddings | 0 | 0 | 0 | 35 |
+| syllabus_imports | 0 | 0 | 0 | 1 |
+
+Storage object metadata visibility: student 1, instructor-like 0, guest 0, admin 7. This confirms policy-filtered metadata visibility for this snapshot; it does not prove that every download/upload/delete HTTP operation succeeds or fails correctly.
