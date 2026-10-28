@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   });
   const { data: { user }, error } = await client.auth.getUser(token);
   if (error || !user) return NextResponse.json({ error: "Session invalid." }, { status: 401 });
-  if (!isAdminEmail(user.email)) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
+  if (!user.email_confirmed_at || !isAdminEmail(user.email)) return NextResponse.json({ error: "Verified administrator access required." }, { status: 403 });
   const rate = await consumeApiRateLimit(user.id, "admin-check", 240, 3600);
   if (!rate.allowed) return NextResponse.json({ error: "Too many admin checks. Please wait and try again." }, { status: 429 });
 
