@@ -9,9 +9,12 @@ import { supabase } from "@/lib/supabase";
 type Stats = {
   totalUsers: number;
   aiRequests24h: number;
+  aiFeedback7d: number;
+  aiHelpful7d: number;
+  aiUnhelpful7d: number;
   generatedAt: string;
 };
-const blank: Stats = { totalUsers: 0, aiRequests24h: 0, generatedAt: "" };
+const blank: Stats = { totalUsers: 0, aiRequests24h: 0, aiFeedback7d: 0, aiHelpful7d: 0, aiUnhelpful7d: 0, generatedAt: "" };
 
 
 export default function AdminPage() {
@@ -38,6 +41,9 @@ export default function AdminPage() {
       setStats({
         totalUsers: Number(body.totalUsers) || 0,
         aiRequests24h: Number(body.aiRequests24h) || 0,
+        aiFeedback7d: Number(body.aiFeedback7d) || 0,
+        aiHelpful7d: Number(body.aiHelpful7d) || 0,
+        aiUnhelpful7d: Number(body.aiUnhelpful7d) || 0,
         generatedAt: body.generatedAt || "",
       });
     } catch (cause) {
@@ -99,7 +105,7 @@ export default function AdminPage() {
         </div>
       </section>
 
-      <section aria-label="AI usage metrics" className="grid gap-4 sm:grid-cols-2">
+      <section aria-label="AI usage and quality metrics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <article className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5 transition hover:border-violet-400/20 hover:bg-white/[0.04]">
           <div className="flex items-center justify-between gap-3">
             <div className="rounded-xl border border-white/[0.07] bg-white/[0.04] p-2.5 text-violet-200"><Sparkles size={19} /></div>
@@ -108,6 +114,20 @@ export default function AdminPage() {
           <p className="mt-5 text-sm text-white/50">AI requests</p>
           <p className="mt-1 text-3xl font-semibold tabular-nums">{loading && !stats.generatedAt ? "…" : stats.aiRequests24h.toLocaleString()}</p>
           <p className="mt-2 text-xs text-white/30">Last 24 hours</p>
+        </article>
+        <article className="rounded-2xl border border-white/[0.08] bg-white/[0.025] p-5 transition hover:border-violet-400/20 hover:bg-white/[0.04]">
+          <div className="flex items-center justify-between gap-3">
+            <div className="rounded-xl border border-white/[0.07] bg-white/[0.04] p-2.5 text-violet-200"><Activity size={19} /></div>
+            <span className="text-xs text-white/35">7 days</span>
+          </div>
+          <p className="mt-5 text-sm text-white/50">AI Tutor helpfulness</p>
+          <p className="mt-1 text-3xl font-semibold tabular-nums">
+            {loading && !stats.generatedAt ? "…" : stats.aiFeedback7d ? Math.round((stats.aiHelpful7d / stats.aiFeedback7d) * 100) + "%" : "—"}
+          </p>
+          <p className="mt-2 text-xs text-white/35">
+            {stats.aiFeedback7d.toLocaleString()} ratings · {stats.aiHelpful7d.toLocaleString()} helpful · {stats.aiUnhelpful7d.toLocaleString()} not helpful
+          </p>
+          <p className="mt-1 text-xs text-white/25">Aggregate ratings only; no student messages are exposed here.</p>
         </article>
       </section>
 
