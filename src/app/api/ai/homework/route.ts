@@ -469,6 +469,19 @@ const result = JSON.parse(
       hints,
     });
   } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("too large for AI analysis")) {
+      return NextResponse.json(
+        { error: "This homework file is too large for AI analysis. Please upload a file smaller than 12 MB." },
+        { status: 413 }
+      );
+    }
+    if (message === "The operation was aborted due to timeout" || message.includes("timed out")) {
+      return NextResponse.json(
+        { error: "The homework file took too long to download. Please try again." },
+        { status: 504 }
+      );
+    }
     console.error("Homework AI request failed.");
     return NextResponse.json(
       { error: "Failed to analyze homework. Please try again." },
