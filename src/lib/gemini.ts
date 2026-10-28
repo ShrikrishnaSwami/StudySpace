@@ -281,7 +281,9 @@ export async function* streamAIResponse({
         config: {
           systemInstruction: buildSystemInstruction(systemInstruction, task),
           temperature: task === "tutor" ? 0.35 : 0.2,
-          maxOutputTokens: task === "tutor" ? 3072 : 2048,
+          // Match the non-streaming path so long, multi-step explanations are not
+          // truncated simply because streaming succeeded.
+          maxOutputTokens: task === "tutor" ? 6144 : 2048,
         },
       });
 
