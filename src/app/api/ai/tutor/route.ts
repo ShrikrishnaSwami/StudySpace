@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { consumeAiQuota } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 
-import { generateStudySpaceAnswer } from "@/lib/studyspace-ai";
+import { streamStudySpaceAnswer } from "@/lib/studyspace-ai";
 import { getStudentAIContext } from "@/lib/ai-context";
 import { formatStudentAIContext } from "@/lib/ai-context-format";
 import { retrieveRelevantStudyContextHybrid } from "@/lib/studyspace-semantic-retrieval";
@@ -234,7 +234,19 @@ information is unavailable.
      * -------------------------------------------------------
      * Keep prompts focused on relevant data already loaded for this student.
      */
-    const retrieval = await retrieveRelevantStudyContextHybrid(studySpaceContext, message, { userId: user.id, accessToken: token, completeContext: studySpaceContextComplete && !courseId });
+    const retrievalPromise = retrieveRelevantStudyContextHybrid(studySpaceContext, message, { userId: user.id, accessToken: token, completeContext: studySpaceContextComplete && !courseId });
+    // Semantic embedding adds a network round-trip. Fall back to lexical context
+    // quickly rather than making every tutor question wait for ranking.
+    const retrieval = await Promise.race([
+      retrievalPromise,
+      new Promise<Awaited<ReturnType<typeof retrieveRelevantStudyContextHybrid>>>((resolve) => {
+        setTimeout(() => resolve({
+          context: studySpaceContext,
+          sections: [],
+          strategy: "fast-context-fallback",
+        }), 650);
+      }),
+    ]);
     const selectedStudySpaceContext = retrieval.context;
 
     /*
@@ -535,30 +547,35 @@ ${
       return NextResponse.json({ error: "You have reached today's AI tutor limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
     }
 
-    const answer = await generateStudySpaceAnswer({
-        systemInstruction,
-        prompt: message,
-        task: "tutor",
-      });
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        try {
+          for await (const chunk of streamStudySpaceAnswer({
+            systemInstruction,
+            prompt: message,
+            task: "tutor",
+          })) {
+            controller.enqueue(encoder.encode(JSON.stringify({ type: "chunk", text: chunk }) + "\n"));
+          }
+          controller.enqueue(encoder.encode(JSON.stringify({ type: "done" }) + "\n"));
+        } catch (streamError) {
+          console.error("AI Tutor streaming error:", streamError);
+          controller.enqueue(encoder.encode(JSON.stringify({
+            type: "error",
+            error: "The AI Tutor could not complete that response. Please try again.",
+          }) + "\n"));
+        } finally {
+          controller.close();
+        }
+      },
+    });
 
-    /*
-     * -------------------------------------------------------
-     * SAVE MESSAGES
-     * -------------------------------------------------------
-     *
-     * The frontend currently saves messages too,
-     * so we intentionally DO NOT save them here.
-     *
-     * This prevents duplicate messages.
-     */
-
-    return NextResponse.json({
-      answer,
-      courseId,
-      conversationId,
-      retrieval: {
-        strategy: retrieval.strategy,
-        sections: retrieval.sections.map((section) => section.source ? `${section.title} — ${section.source}` : section.title),
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "application/x-ndjson; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (error) {
