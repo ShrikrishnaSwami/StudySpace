@@ -6,9 +6,22 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const requestedNext = url.searchParams.get("next") || "/dashboard";
-  const next = requestedNext.startsWith("/") && !requestedNext.startsWith("//")
-    ? requestedNext
-    : "/dashboard";
+  let next = "/dashboard";
+  try {
+    const candidate = new URL(requestedNext, url.origin);
+    // Only allow same-origin relative destinations. Backslash-prefixed paths can
+    // be normalized by URL parsers, so checking the resolved origin is essential.
+    if (
+      requestedNext.startsWith("/") &&
+      !requestedNext.startsWith("//") &&
+      !requestedNext.startsWith("/\\") &&
+      candidate.origin === url.origin
+    ) {
+      next = candidate.pathname + candidate.search + candidate.hash;
+    }
+  } catch {
+    next = "/dashboard";
+  }
 
   if (code) {
     const cookieStore = await cookies();
