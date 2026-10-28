@@ -573,6 +573,9 @@ export default function AITutorPage() {
       return;
     }
 
+    let assistantMessageId: string | null = null;
+    let streamCompleted = false;
+
     try {
       setSending(true);
       setError("");
@@ -694,6 +697,7 @@ export default function AITutorPage() {
         content: "",
         created_at: new Date().toISOString(),
       };
+      assistantMessageId = assistantMessage.id;
       setMessages((current) => [...current, assistantMessage]);
 
       const reader = response.body.getReader();
@@ -725,6 +729,7 @@ export default function AITutorPage() {
       pending += decoder.decode();
       if (pending.trim()) processLine(pending);
       if (!answer.trim()) throw new Error("The AI Tutor returned an empty response. Please try again.");
+      streamCompleted = true;
 
       const {
         error:
@@ -785,6 +790,11 @@ export default function AITutorPage() {
             )
       );
     } catch (err) {
+      // Do not leave a misleading half-answer in the transcript if the stream
+      // failed. Keep a completed answer visible if only saving it failed.
+      if (assistantMessageId && !streamCompleted) {
+        setMessages((current) => current.filter((item) => item.id !== assistantMessageId));
+      }
       setError(
         err instanceof Error
           ? err.message
