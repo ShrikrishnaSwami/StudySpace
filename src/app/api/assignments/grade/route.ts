@@ -127,11 +127,16 @@ export async function POST(request: NextRequest) {
 
     const { data: referenceFiles, error: referenceFilesError } = await admin.from("assignment_attachments").select("file_name,storage_path,file_type,file_size,user_id,attachment_kind").eq("assignment_id", assignmentId).in("attachment_kind", ["instructions", "rubric"]).order("created_at", { ascending: true }).limit(10);
     if (referenceFilesError) throw referenceFilesError;
-    const readableReferences = (referenceFiles || []).filter((file) => {
+    const ownerReferences = (referenceFiles || []).filter((file) => file.user_id === assignment.user_id);
+    const readableReferences = ownerReferences.filter((file) => {
       const ext = file.file_name.split(".").pop()?.toLowerCase() || "";
-      const mime = file.file_type && supportedMimeTypes.has(file.file_type) ? file.file_type : referenceMimeTypes[ext];
-      return Boolean(mime && supportedMimeTypes.has(mime));
+      const inferred = referenceMimeTypes[ext];
+      const mime = file.file_type && supportedMimeTypes.has(file.file_type) ? file.file_type : inferred;
+      return Boolean(inferred && mime && supportedMimeTypes.has(mime) && mime === inferred);
     }).slice(0, 3);
+    const oversizedReference = readableReferences.find((file) => Number(file.file_size) > 10 * 1024 * 1024);
+    if (oversizedReference) return NextResponse.json({ error: `"${oversizedReference.file_name}" is too large for AI grading references. Keep assignment prompts and rubrics under 10 MB each.` }, { status: 413 });
+    if (ownerReferences.length && readableReferences.length === 0) return NextResponse.json({ error: "AI grading can read assignment reference files in PDF, TXT, CSV, PNG, JPG, or WEBP format. Upload a supported assignment prompt or rubric." }, { status: 415 });
     const quota = await consumeAiQuota(token, "homework");
     if (!quota.allowed) return NextResponse.json({ error: quota.scope === "rate" ? "Too many AI grading requests. Please wait a few minutes and try again." : quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You've reached today's AI homework limit. Try again later.", usage: quota }, { status: 429 });
 
