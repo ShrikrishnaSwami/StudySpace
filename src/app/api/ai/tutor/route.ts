@@ -227,44 +227,53 @@ export async function POST(request: NextRequest) {
     }
 
     /*
-     * -------------------------------------------------------
+     * Start the conversation-history read at the same time as the StudySpace
+     * context load. They are independent, user-scoped reads; waiting for them
+     * sequentially added a full database round-trip to every tutor response.
+     */
+    const conversationHistoryPromise = (async () => {
+      if (!conversationId) return "";
+      const { data: messages, error: messagesError } = await supabase
+        .from("ai_tutor_messages")
+        .select("role, content, created_at")
+        .eq("conversation_id", conversationId)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(12);
+
+      if (messagesError) {
+        console.error("Could not load conversation history:", messagesError.message);
+        return "";
+      }
+
+      const orderedMessages = [...(messages || [])].reverse();
+      let historyCharacters = 0;
+      const historyParts: string[] = [];
+      for (const item of orderedMessages) {
+        if (historyParts.length >= 12 || historyCharacters >= 9000) break;
+        const content = String(item.content || "").slice(0, 1800);
+        const boundedContent = content.slice(0, 9000 - historyCharacters);
+        if (!boundedContent) continue;
+        historyParts.push(`${item.role === "user" ? "STUDENT" : "AI TUTOR"}: ${boundedContent}`);
+        historyCharacters += boundedContent.length;
+      }
+      return historyParts.join("\n\n");
+    })();
+
+    /*
      * LOAD FULL STUDYSPACE CONTEXT
      * -------------------------------------------------------
-     *
-     * The AI can now see:
-     *
-     * Courses
-     * Notes
-     * Materials
-     * Assignments
-     * Quizzes
-     * Quiz attempts
-     * Homework
-     * Calendar
-     *
-     * If a course is selected, the context is narrowed
-     * to that course where appropriate.
+     * Load the student's data in parallel with the conversation history above.
      */
-
     let studySpaceContext = "";
     let studySpaceContextComplete = false;
 
     try {
-      const context =
-        await getStudentAIContext(
-          token,
-          courseId
-        );
-
-      studySpaceContext =
-        formatStudentAIContext(context);
+      const context = await getStudentAIContext(token, courseId);
+      studySpaceContext = formatStudentAIContext(context);
       studySpaceContextComplete = true;
     } catch (contextError) {
-      console.error(
-        "Failed to load StudySpace AI context:",
-        contextError
-      );
-
+      console.error("Failed to load StudySpace AI context:", contextError);
       studySpaceContext = `
 ========================
 STUDYSPACE CONTEXT
@@ -290,14 +299,17 @@ information is unavailable.
     }
 
     /*
-     * -------------------------------------------------------
      * RETRIEVE RELEVANT STUDY CONTEXT
      * -------------------------------------------------------
      * Keep prompts focused on relevant data already loaded for this student.
      */
-    const retrievalPromise = retrieveRelevantStudyContextHybrid(studySpaceContext, message, { userId: user.id, accessToken: token, completeContext: studySpaceContextComplete && !courseId });
-    // Semantic embedding adds a network round-trip. Fall back to lexical context
-    // quickly rather than making every tutor question wait for ranking.
+    const retrievalPromise = retrieveRelevantStudyContextHybrid(studySpaceContext, message, {
+      userId: user.id,
+      accessToken: token,
+      completeContext: studySpaceContextComplete && !courseId,
+    });
+    // Semantic embedding is optional enrichment. If it is not quick, use the
+    // local lexical ranker so students see the first token sooner.
     let retrievalTimeout: ReturnType<typeof setTimeout> | undefined;
     const retrieval = await Promise.race([
       retrievalPromise,
@@ -305,62 +317,12 @@ information is unavailable.
         retrievalTimeout = setTimeout(() => resolve({
           ...retrieveRelevantStudyContext(studySpaceContext, message),
           strategy: "record-lexical-expanded-v3",
-        }), 650);
+        }), 300);
       }),
     ]);
     if (retrievalTimeout) clearTimeout(retrievalTimeout);
     const selectedStudySpaceContext = retrieval.context;
-
-    /*
-     * -------------------------------------------------------
-     * LOAD RECENT CONVERSATION HISTORY
-     * -------------------------------------------------------
-     */
-
-    let conversationHistory = "";
-
-    if (conversationId) {
-      const {
-        data: messages,
-        error: messagesError,
-      } = await supabase
-        .from("ai_tutor_messages")
-        .select("role, content, created_at")
-        .eq(
-          "conversation_id",
-          conversationId
-        )
-        .eq("user_id", user.id)
-        .order("created_at", {
-          ascending: false,
-        })
-        .limit(12);
-
-      if (messagesError) {
-        console.error(
-          "Could not load conversation history:",
-          messagesError.message
-        );
-      } else {
-        const orderedMessages =
-          [...(messages || [])].reverse();
-
-        // Bound history size to keep latency and token usage predictable even
-        // when old messages contain pasted documents or long code blocks.
-        let historyCharacters = 0;
-        const historyParts: string[] = [];
-        for (const item of orderedMessages) {
-          if (historyParts.length >= 12 || historyCharacters >= 9000) break;
-          const content = String(item.content || "").slice(0, 1800);
-          const remaining = 9000 - historyCharacters;
-          const boundedContent = content.slice(0, remaining);
-          if (!boundedContent) continue;
-          historyParts.push(`${item.role === "user" ? "STUDENT" : "AI TUTOR"}: ${boundedContent}`);
-          historyCharacters += boundedContent.length;
-        }
-        conversationHistory = historyParts.join("\n\n");
-      }
-    }
+    const conversationHistory = await conversationHistoryPromise;
 
     /*
      * -------------------------------------------------------

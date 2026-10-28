@@ -319,7 +319,9 @@ export async function* streamAIResponse({
           temperature: task === "tutor" ? 0.35 : 0.2,
           // Match the non-streaming path so long, multi-step explanations are not
           // truncated simply because streaming succeeded.
-          maxOutputTokens: task === "tutor" ? 6144 : 2048,
+          // A lower ceiling reduces overlong tutor replies and keeps generation
+          // time predictable; the model can still return a detailed explanation.
+          maxOutputTokens: task === "tutor" ? 4096 : 2048,
         },
       });
 
