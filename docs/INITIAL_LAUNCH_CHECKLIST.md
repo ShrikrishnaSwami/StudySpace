@@ -8,7 +8,7 @@ Use this checklist against the actual production environment before inviting rea
 - [ ] Vercel production environment contains `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - [ ] `GEMINI_API_KEY` is set as a server-only environment variable.
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY` is set only in server-side Vercel environments for features that require privileged operations.
-- [ ] `STUDYSPACE_ADMIN_EMAIL` matches the intended administrator account.
+- [ ] The intended administrator has a trusted `role: "admin"` claim in Supabase Auth `app_metadata` (never `user_metadata`), and the admin routes reject ordinary users. Sign out and back in after role changes to refresh the JWT.
 - [ ] `APP_ORIGIN`, if configured, matches the canonical production origin.
 - [ ] No real secrets are committed to Git, exposed through `NEXT_PUBLIC_`, or printed in logs.
 - [ ] Provider keys that were shared in chat, screenshots, or issue comments have been replaced and the old keys revoked.
