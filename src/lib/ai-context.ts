@@ -95,231 +95,53 @@ export async function getStudentAIContext(
     (course) => course.id
   );
 
-  let notes: Record<string, unknown>[] = [];
 
-  if (courseIds.length > 0) {
-    const {
-      data,
-      error,
-    } = await supabase
-      .from("course_notes")
-      .select("*")
-      .in("course_id", courseIds)
-      .order("created_at", {
-        ascending: false,
-      });
+  // Fetch independent student data concurrently; serial queries added latency
+  // to every AI Tutor request even when the model was ready.
+  const notesQuery = courseIds.length
+    ? supabase.from("course_notes").select("*").in("course_id", courseIds).order("created_at", { ascending: false })
+    : Promise.resolve({ data: [], error: null });
+  const resourcesQuery = courseIds.length
+    ? supabase.from("course_resources").select("*").in("course_id", courseIds).order("created_at", { ascending: false })
+    : Promise.resolve({ data: [], error: null });
 
-    if (error) {
-      console.error(
-        "Could not load course notes:",
-        error.message
-      );
-    }
+  let assignmentsQuery = supabase.from("assignments").select("*").eq("user_id", user.id).order("due_date", { ascending: true });
+  if (courseId) assignmentsQuery = assignmentsQuery.eq("course_id", courseId);
 
-    notes = (data || []) as Record<string, unknown>[];
-  }
+  let quizzesQuery = supabase.from("quizzes").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+  if (courseId) quizzesQuery = quizzesQuery.eq("course_id", courseId);
 
-  /*
-   * -------------------------------------------------------
-   * COURSE MATERIALS
-   * -------------------------------------------------------
-   */
+  let homeworkQuery = supabase.from("homework").select(`
+      id, course_id, assignment_id, title, description, file_name, file_type,
+      status, ai_summary, ai_solution, ai_explanation, ai_hints, created_at, updated_at
+    `).eq("user_id", user.id).order("created_at", { ascending: false });
+  if (courseId) homeworkQuery = homeworkQuery.eq("course_id", courseId);
 
-  let resources: Record<string, unknown>[] = [];
+  const [notesResult, resourcesResult, assignmentsResult, quizzesResult, attemptsResult, homeworkResult, calendarResult] = await Promise.all([
+    notesQuery,
+    resourcesQuery,
+    assignmentsQuery,
+    quizzesQuery,
+    supabase.from("quiz_attempts").select("*").eq("user_id", user.id).order("completed_at", { ascending: false, nullsFirst: false }).limit(100),
+    homeworkQuery,
+    supabase.from("calendar_events").select("*").eq("user_id", user.id).eq("enabled", true).order("start_at", { ascending: true }).limit(200),
+  ]);
 
-  if (courseIds.length > 0) {
-    const {
-      data,
-      error,
-    } = await supabase
-      .from("course_resources")
-      .select("*")
-      .in("course_id", courseIds)
-      .order("created_at", {
-        ascending: false,
-      });
+  if (notesResult.error) console.error("Could not load course notes:", notesResult.error.message);
+  if (resourcesResult.error) console.error("Could not load course resources:", resourcesResult.error.message);
+  if (assignmentsResult.error) console.error("Could not load assignments:", assignmentsResult.error.message);
+  if (quizzesResult.error) console.error("Could not load quizzes:", quizzesResult.error.message);
+  if (attemptsResult.error) console.error("Could not load quiz attempts:", attemptsResult.error.message);
+  if (homeworkResult.error) console.error("Could not load homework:", homeworkResult.error.message);
+  if (calendarResult.error) console.error("Could not load calendar:", calendarResult.error.message);
 
-    if (error) {
-      console.error(
-        "Could not load course resources:",
-        error.message
-      );
-    }
-
-    resources =
-      (data || []) as Record<string, unknown>[];
-  }
-
-  /*
-   * -------------------------------------------------------
-   * ASSIGNMENTS
-   * -------------------------------------------------------
-   */
-
-  let assignmentsQuery = supabase
-    .from("assignments")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("due_date", {
-      ascending: true,
-    });
-
-  if (courseId) {
-    assignmentsQuery =
-      assignmentsQuery.eq(
-        "course_id",
-        courseId
-      );
-  }
-
-  const {
-    data: assignments,
-    error: assignmentsError,
-  } = await assignmentsQuery;
-
-  if (assignmentsError) {
-    console.error(
-      "Could not load assignments:",
-      assignmentsError.message
-    );
-  }
-
-  /*
-   * -------------------------------------------------------
-   * QUIZZES
-   * -------------------------------------------------------
-   */
-
-  let quizzesQuery = supabase
-    .from("quizzes")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", {
-      ascending: false,
-    });
-
-  if (courseId) {
-    quizzesQuery =
-      quizzesQuery.eq(
-        "course_id",
-        courseId
-      );
-  }
-
-  const {
-    data: quizzes,
-    error: quizzesError,
-  } = await quizzesQuery;
-
-  if (quizzesError) {
-    console.error(
-      "Could not load quizzes:",
-      quizzesError.message
-    );
-  }
-
-  /*
-   * -------------------------------------------------------
-   * QUIZ ATTEMPTS
-   * -------------------------------------------------------
-   */
-
-  const {
-    data: quizAttempts,
-    error: quizAttemptsError,
-  } = await supabase
-    .from("quiz_attempts")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("completed_at", {
-      ascending: false,
-      nullsFirst: false,
-    })
-    .limit(100);
-
-  if (quizAttemptsError) {
-    console.error(
-      "Could not load quiz attempts:",
-      quizAttemptsError.message
-    );
-  }
-
-  /*
-   * -------------------------------------------------------
-   * HOMEWORK
-   * -------------------------------------------------------
-   */
-
-  let homeworkQuery = supabase
-    .from("homework")
-    .select(
-      `
-      id,
-      course_id,
-      assignment_id,
-      title,
-      description,
-      file_name,
-      file_type,
-      status,
-      ai_summary,
-      ai_solution,
-      ai_explanation,
-      ai_hints,
-      created_at,
-      updated_at
-      `
-    )
-    .eq("user_id", user.id)
-    .order("created_at", {
-      ascending: false,
-    });
-
-  if (courseId) {
-    homeworkQuery =
-      homeworkQuery.eq(
-        "course_id",
-        courseId
-      );
-  }
-
-  const {
-    data: homework,
-    error: homeworkError,
-  } = await homeworkQuery;
-
-  if (homeworkError) {
-    console.error(
-      "Could not load homework:",
-      homeworkError.message
-    );
-  }
-
-  /*
-   * -------------------------------------------------------
-   * CALENDAR
-   * -------------------------------------------------------
-   */
-
-  const {
-    data: calendarEvents,
-    error: calendarError,
-  } = await supabase
-    .from("calendar_events")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("enabled", true)
-    .order("start_at", {
-      ascending: true,
-    })
-    .limit(200);
-
-  if (calendarError) {
-    console.error(
-      "Could not load calendar:",
-      calendarError.message
-    );
-  }
+  const notes = (notesResult.data || []) as Record<string, unknown>[];
+  const resources = (resourcesResult.data || []) as Record<string, unknown>[];
+  const assignments = assignmentsResult.data || [];
+  const quizzes = quizzesResult.data || [];
+  const quizAttempts = attemptsResult.data || [];
+  const homework = homeworkResult.data || [];
+  const calendarEvents = calendarResult.data || [];
 
   return {
     user: {
