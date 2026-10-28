@@ -84,9 +84,23 @@ function buildSystemInstruction(systemInstruction: string, task: AITask) {
   return [systemInstruction, "STUDYSPACE SAFETY RULES\n" + safety, "STUDYSPACE TASK GUIDANCE\n" + taskGuidance[task]].join("\n\n");
 }
 
-function isRetryableError(error: unknown) {
+function errorSummary(error: unknown) {
   const value = error instanceof Error ? error.message : String(error);
-  return /\b(408|429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand|timeout|temporarily unavailable/i.test(value);
+  // Keep provider diagnostics useful without exposing credentials or request payloads.
+  return value
+    .replace(/AIza[0-9A-Za-z_-]{20,}/g, "[redacted-api-key]")
+    .replace(/Bearer\\s+[^\\s]+/gi, "Bearer [redacted]")
+    .replace(/(api[_-]?key\\s*[:=]\\s*)[^\\s,;]+/gi, "$1[redacted]")
+    .slice(0, 360);
+}
+
+function isCredentialError(error: unknown) {
+  return /invalid api key|api key not valid|unauthenticated|authentication failed|invalid credentials/i.test(errorSummary(error));
+}
+
+function isRetryableError(error: unknown) {
+  const value = errorSummary(error);
+  return /\\b(408|429|500|502|503|504)\\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand|timeout|temporarily unavailable|not found|unsupported model|model .*not available/i.test(value);
 }
 
 function wait(ms: number) {
@@ -204,24 +218,46 @@ async function generateWithGeminiFallback({
   prompt: string;
 }) {
   const { primary, fallback } = configuredGeminiModels(task);
+  // One configured fallback is not enough when that model is unavailable for
+  // this project or has a model-specific outage. Try stable text models next.
+  const fallbackModels = [
+    fallback,
+    "gemini-3.6-flash",
+    "gemini-3.1-flash-lite",
+  ].filter((model, index, all) => model !== primary && all.indexOf(model) === index);
+
+  let lastError: unknown;
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
       return await generateWithGemini({ model: primary, systemInstruction, prompt, task });
     } catch (error) {
+      lastError = error;
       const retryable = isRetryableError(error);
-      console.warn("Gemini request failed", { task, model: primary, attempt: attempt + 1, retryable });
-      if (!retryable) break;
-      if (attempt === 0) await wait(700);
+      console.warn("Gemini request failed", {
+        task, model: primary, attempt: attempt + 1, retryable,
+        credentialError: isCredentialError(error), reason: errorSummary(error),
+      });
+      if (isCredentialError(error) || !retryable) break;
+      if (attempt === 0) await wait(500);
     }
   }
 
-  if (fallback !== primary) {
-    try {
-      return await generateWithGemini({ model: fallback, systemInstruction, prompt, task });
-    } catch (error) {
-      console.warn("Gemini fallback failed", { task, model: fallback, retryable: isRetryableError(error) });
+  // Other model attempts cannot fix a rejected API key, and would waste calls.
+  if (!isCredentialError(lastError)) {
+    for (const model of fallbackModels) {
+      try {
+        return await generateWithGemini({ model, systemInstruction, prompt, task });
+      } catch (error) {
+        lastError = error;
+        console.warn("Gemini fallback failed", {
+          task, model, retryable: isRetryableError(error),
+          credentialError: isCredentialError(error), reason: errorSummary(error),
+        });
+        if (isCredentialError(error)) break;
+      }
     }
   }
+
   throw new Error("StudySpace AI is temporarily unavailable. Please try again shortly.");
 }
 
