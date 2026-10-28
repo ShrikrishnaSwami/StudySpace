@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
     if (!quota.allowed) return NextResponse.json({ error: "You've reached today's AI homework limit. Try again later.", usage: quota }, { status: 429 });
 
     const parts: Array<Record<string, unknown>> = [];
-    if (submission.submission_note?.trim()) parts.push({ text: "Student's submission note or written answer:\\n" + submission.submission_note.slice(0, 16000) });
+    if (submission.submission_note?.trim()) parts.push({ text: "Student's submission note or written answer:\n" + submission.submission_note.slice(0, 16000) });
     let actualTotalBytes = 0;
     for (const file of files ?? []) {
       const extension = file.file_name.split(".").pop()?.toLowerCase() || "";
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
       actualTotalBytes += bytes.length;
       if (actualTotalBytes > 30 * 1024 * 1024) return NextResponse.json({ error: "AI grading supports up to 30 MB of attachments per submission." }, { status: 413 });
       if (mimeType === "text/plain" || mimeType === "text/csv") {
-        parts.push({ text: `Student file: ${file.file_name}\\n${bytes.toString("utf8").slice(0, 20000)}` });
+        parts.push({ text: `Student file: ${file.file_name}\n${bytes.toString("utf8").slice(0, 20000)}` });
       } else {
         parts.push({ inlineData: { mimeType, data: bytes.toString("base64") } });
         parts.push({ text: `The preceding attachment is the student's work: ${file.file_name}` });
