@@ -44,8 +44,8 @@ export async function POST(request: NextRequest) {
     if (!title || (!isPdf && text.length < 80)) return NextResponse.json({ error: "Add a title and at least 80 characters of syllabus text, or upload a PDF." }, { status: 400 });
     if (text.length > 30000) return NextResponse.json({ error: "Syllabus text must be 30,000 characters or fewer." }, { status: 413 });
 
-    const quota = await consumeAiQuota(user.id, "syllabus");
-    if (!quota.allowed) return NextResponse.json({ error: quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You've reached the daily syllabus-import limit.", usage: quota }, { status: 429 });
+    const quota = await consumeAiQuota(token, "syllabus");
+    if (!quota.allowed) return NextResponse.json({ error: quota.scope === "rate" ? "Too many AI requests. Please wait a few minutes and try again." : quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You've reached the daily syllabus-import limit.", usage: quota }, { status: 429 });
 
     if (courseId) {
       const { data: course, error } = await client.from("courses").select("id").eq("id", courseId).eq("user_id", user.id).maybeSingle();
