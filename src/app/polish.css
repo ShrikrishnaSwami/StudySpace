@@ -938,3 +938,132 @@ html,body{background:#09090d}body{color:#f7f7fb}html[data-theme="light"]{color-s
 .ss-shell .ss-dashboard [class*="border-teal-"] {
   border-color: rgba(167, 139, 250, .22) !important;
 }
+
+
+/* StudySpace app-wide design system — shared by every signed-in tab. */
+.ss-shell {
+  background: radial-gradient(ellipse at 72% -15%, rgba(117, 84, 220, .075), transparent 38%), #0b0a10 !important;
+  color: #f5f3fb !important;
+}
+.ss-shell aside {
+  background: rgba(12, 11, 17, .97) !important;
+  border-color: rgba(255,255,255,.075) !important;
+  backdrop-filter: blur(24px);
+}
+.ss-shell .ss-topbar {
+  background: rgba(11, 10, 16, .84) !important;
+  border-color: rgba(255,255,255,.075) !important;
+  backdrop-filter: blur(22px) saturate(140%);
+}
+.ss-shell main:not(:has(.ss-dashboard)) { background: transparent; }
+.ss-shell main:not(:has(.ss-dashboard)) h1 { letter-spacing: -.045em; color: #f7f5ff; }
+.ss-shell main:not(:has(.ss-dashboard)) h2,
+.ss-shell main:not(:has(.ss-dashboard)) h3 { letter-spacing: -.025em; }
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-white"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-gray-50"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-gray-100"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-slate-50"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-slate-100"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-zinc-50"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-neutral-50"] {
+  background: linear-gradient(145deg, #171620, #111017) !important;
+  color: #f1effa !important;
+}
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-gray-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-slate-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-zinc-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-neutral-"] { background-color: #14131c !important; }
+.ss-shell main:not(:has(.ss-dashboard)) [class*="border-gray-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="border-slate-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="border-zinc-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="border-neutral-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="border-white"] { border-color: rgba(255,255,255,.09) !important; }
+.ss-shell main:not(:has(.ss-dashboard)) [class*="text-gray-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="text-slate-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="text-zinc-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="text-neutral-"] { color: #a5a2b7 !important; }
+.ss-shell main:not(:has(.ss-dashboard)) [class*="text-green-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="text-emerald-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="text-teal-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="text-lime-"] { color: #b8a6ff !important; }
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-green-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-emerald-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-teal-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="bg-lime-"] { background-color: rgba(153,126,255,.13) !important; }
+.ss-shell main:not(:has(.ss-dashboard)) [class*="border-green-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="border-emerald-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="border-teal-"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="border-lime-"] { border-color: rgba(167,139,250,.24) !important; }
+.ss-shell main:not(:has(.ss-dashboard)) input:not([type="checkbox"]):not([type="radio"]),
+.ss-shell main:not(:has(.ss-dashboard)) textarea,
+.ss-shell main:not(:has(.ss-dashboard)) select {
+  color-scheme: dark; background-color: #111018 !important; color: #f5f3fb !important;
+  border-color: rgba(255,255,255,.12) !important; border-radius: 12px;
+  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.ss-shell main:not(:has(.ss-dashboard)) input::placeholder,
+.ss-shell main:not(:has(.ss-dashboard)) textarea::placeholder { color: #777387 !important; }
+.ss-shell main:not(:has(.ss-dashboard)) input:focus,
+.ss-shell main:not(:has(.ss-dashboard)) textarea:focus,
+.ss-shell main:not(:has(.ss-dashboard)) select:focus {
+  border-color: rgba(167,139,250,.65) !important; box-shadow: 0 0 0 3px rgba(139,92,246,.13) !important; outline: none;
+}
+.ss-shell main:not(:has(.ss-dashboard)) button[class*="bg-violet-"],
+.ss-shell main:not(:has(.ss-dashboard)) button[class*="bg-purple-"],
+.ss-shell main:not(:has(.ss-dashboard)) a[class*="bg-violet-"],
+.ss-shell main:not(:has(.ss-dashboard)) a[class*="bg-purple-"] {
+  background: linear-gradient(110deg, #8b70f8, #6f72f2) !important; color: #fff !important;
+  border-color: transparent !important; box-shadow: 0 8px 24px rgba(106,91,240,.18);
+}
+.ss-shell main:not(:has(.ss-dashboard)) button,
+.ss-shell main:not(:has(.ss-dashboard)) a {
+  transition: border-color .18s ease, background-color .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+.ss-shell main:not(:has(.ss-dashboard)) button:focus-visible,
+.ss-shell main:not(:has(.ss-dashboard)) a:focus-visible { outline: 2px solid #aa96ff; outline-offset: 3px; }
+.ss-shell main:not(:has(.ss-dashboard)) [class*="rounded-xl"][class*="border"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="rounded-2xl"][class*="border"],
+.ss-shell main:not(:has(.ss-dashboard)) [class*="rounded-3xl"][class*="border"] { border-color: rgba(255,255,255,.085) !important; }
+.ss-shell main:not(:has(.ss-dashboard)) table { border-collapse: separate; border-spacing: 0; overflow: hidden; border-radius: 14px; }
+.ss-shell main:not(:has(.ss-dashboard)) th { color: #c9c4db; background: #171620; font-size: 11px; font-weight: 650; letter-spacing: .045em; text-transform: uppercase; }
+.ss-shell main:not(:has(.ss-dashboard)) td { border-color: rgba(255,255,255,.07) !important; }
+.ss-shell main:not(:has(.ss-dashboard)) tr:hover td { background-color: rgba(157,133,255,.035); }
+@media (max-width: 640px) {
+  .ss-shell .ss-topbar { padding-inline: 14px !important; }
+  .ss-shell main:not(:has(.ss-dashboard)) { min-width: 0; }
+  .ss-shell main:not(:has(.ss-dashboard)) h1 { font-size: clamp(1.65rem, 7vw, 2.2rem); }
+}
+
+/* Branded error and not-found pages. */
+.ss-error-page { position:relative; isolation:isolate; display:flex; min-height:100vh; align-items:center; justify-content:center; overflow:hidden; padding:34px 20px; color:#f8f6ff; background:radial-gradient(ellipse at 50% 0%,rgba(113,82,218,.19),transparent 48%),#08070d; }
+.ss-error-grid { position:absolute; z-index:-2; inset:0; pointer-events:none; opacity:.25; background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px); background-size:58px 58px; mask-image:linear-gradient(to bottom,black,transparent 85%); }
+.ss-error-glow { position:absolute; z-index:-1; width:330px; height:330px; border-radius:50%; filter:blur(100px); pointer-events:none; }
+.ss-error-glow-one { top:9%; left:4%; background:rgba(124,58,237,.14); }
+.ss-error-glow-two { right:2%; bottom:0; background:rgba(77,91,228,.12); }
+.ss-error-layout { width:min(100%,620px); }
+.ss-error-brand { display:inline-flex; align-items:center; gap:10px; margin:0 0 26px 3px; color:#f8f6ff; font-size:15px; font-weight:700; letter-spacing:-.035em; }
+.ss-error-brand > span:last-child > span { color:#a995ff; }
+.ss-error-brand-mark { display:grid; width:35px; height:35px; place-items:center; border:1px solid rgba(177,155,255,.24); border-radius:12px; color:#d5caff; background:linear-gradient(145deg,rgba(139,92,246,.3),rgba(97,92,230,.12)); box-shadow:0 8px 28px rgba(124,58,237,.16); }
+.ss-error-card { position:relative; overflow:hidden; padding:clamp(28px,6vw,54px); border:1px solid rgba(255,255,255,.1); border-radius:28px; text-align:center; background:radial-gradient(ellipse at 50% -12%,rgba(142,117,255,.13),transparent 52%),linear-gradient(145deg,rgba(23,22,33,.96),rgba(12,11,18,.98)); box-shadow:0 34px 100px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.045); }
+.ss-error-visual { position:relative; display:grid; width:108px; height:108px; place-items:center; margin:0 auto 27px; }
+.ss-error-orbit { position:absolute; inset:5px; border:1px solid rgba(167,139,250,.2); border-radius:30px; transform:rotate(18deg); }
+.ss-error-orbit-b { inset:15px; border-color:rgba(125,151,255,.19); border-radius:26px; transform:rotate(-19deg); }
+.ss-error-icon { display:grid; width:58px; height:58px; place-items:center; border:1px solid rgba(174,151,255,.24); border-radius:19px; color:#c6b6ff; background:linear-gradient(145deg,rgba(139,92,246,.2),rgba(82,93,226,.12)); box-shadow:0 0 40px rgba(125,94,235,.13); }
+.ss-error-spark { position:absolute; color:#b9a7ff; }
+.ss-error-spark-a { top:0; right:1px; font-size:17px; }
+.ss-error-spark-b { bottom:3px; left:3px; color:#8192ff; font-size:15px; }
+.ss-not-found-visual .ss-error-icon { color:#c4c0ff; }
+.ss-error-eyebrow { margin:0 0 12px; color:#b5a3ff; font-size:10px; font-weight:750; letter-spacing:.19em; text-transform:uppercase; }
+.ss-error-card h1 { max-width:480px; margin:0 auto; font-size:clamp(30px,5.5vw,43px); line-height:1.07; letter-spacing:-.065em; font-weight:650; }
+.ss-error-copy { max-width:445px; margin:17px auto 0; color:#a6a2b8; font-size:14px; line-height:1.8; }
+.ss-error-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:28px; }
+.ss-error-primary,.ss-error-secondary { display:inline-flex; min-height:44px; align-items:center; justify-content:center; gap:9px; padding:0 16px; border:1px solid transparent; border-radius:12px; font-size:12px; font-weight:650; text-decoration:none; transition:transform .18s ease,background .18s ease,border-color .18s ease; }
+.ss-error-primary { color:white; background:linear-gradient(110deg,#8b70f8,#6f72f2); box-shadow:0 9px 28px rgba(106,91,240,.22); }
+.ss-error-primary:hover { transform:translateY(-2px); box-shadow:0 13px 34px rgba(106,91,240,.3); }
+.ss-error-secondary { border-color:rgba(255,255,255,.1); color:#e4e0f2; background:rgba(255,255,255,.025); }
+.ss-error-secondary:hover { transform:translateY(-2px); border-color:rgba(167,139,250,.3); background:rgba(255,255,255,.06); }
+.ss-error-reference { margin:22px 0 0; color:#777287; font-size:10px; }
+.ss-error-reference span { margin-left:4px; color:#a9a3c1; font-family:var(--font-geist-mono),monospace; }
+.ss-error-footnote { margin:20px 0 0; text-align:center; color:#696579; font-size:9px; font-weight:650; letter-spacing:.16em; }
+.ss-error-footnote span { padding:0 6px; color:#a18cf8; }
+@media (max-width:520px) { .ss-error-layout{width:100%}.ss-error-brand{margin-left:0}.ss-error-card{border-radius:22px}.ss-error-actions{flex-direction:column}.ss-error-primary,.ss-error-secondary{width:100%} }
