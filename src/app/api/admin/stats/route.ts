@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { consumeApiRateLimit } from "@/lib/api-security";
-import { isAdminEmail } from "@/lib/admin";
+import { isAdminUser } from "@/lib/admin";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     });
     const { data: { user }, error: authError } = await client.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Session invalid. Sign in again." }, { status: 401 });
-    if (!user.email_confirmed_at || !isAdminEmail(user.email)) return NextResponse.json({ error: "Verified administrator access required." }, { status: 403 });
+    if (!user.email_confirmed_at || !isAdminUser(user)) return NextResponse.json({ error: "Verified administrator access required." }, { status: 403 });
 
     const rate = await consumeApiRateLimit(user.id, "admin-stats", 180, 3600);
     if (!rate.allowed) return NextResponse.json({ error: "Too many statistics requests. Please wait and try again." }, { status: 429 });
