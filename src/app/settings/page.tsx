@@ -1,22 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
-  Bell, Check, Download, Eye, Gauge, Laptop, Lock, LogOut, Mail, Moon, Save, Shield, Sparkles, Sun, Trash2, User, RefreshCw,
+  Bell, Check, Download, Eye, Gauge, Lock, LogOut, Mail, Save, Shield, Trash2, User, RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
 
-type Theme = "dark" | "light" | "system";
 type Preferences = {
-  theme: Theme;
   emailNotifications: boolean;
   assignmentReminders: boolean;
   quizReminders: boolean;
 };
-const DEFAULTS: Preferences = { theme: "dark", emailNotifications: true, assignmentReminders: true, quizReminders: true };
-const isTheme = (value: unknown): value is Theme => value === "dark" || value === "light" || value === "system";
+const DEFAULTS: Preferences = { emailNotifications: true, assignmentReminders: true, quizReminders: true };
 
 function Section({ icon: Icon, title, description, children }: {
   icon: typeof User; title: string; description: string; children: ReactNode;
@@ -72,14 +69,6 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState("");
 
-  const applyTheme = useCallback((theme: Theme) => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("studyspace-theme", theme);
-      const resolved = theme === "system" ? (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark") : theme;
-      document.documentElement.dataset.theme = resolved;
-    }
-  }, []);
-
   useEffect(() => {
     let alive = true;
     async function load() {
@@ -92,20 +81,18 @@ export default function SettingsPage() {
         setEmail(user.email || "");
         const saved = user.user_metadata?.studyspace_settings;
         const next: Preferences = {
-          theme: isTheme(saved?.theme) ? saved.theme : DEFAULTS.theme,
           emailNotifications: typeof saved?.emailNotifications === "boolean" ? saved.emailNotifications : DEFAULTS.emailNotifications,
           assignmentReminders: typeof saved?.assignmentReminders === "boolean" ? saved.assignmentReminders : DEFAULTS.assignmentReminders,
           quizReminders: typeof saved?.quizReminders === "boolean" ? saved.quizReminders : DEFAULTS.quizReminders,
         };
         setPreferences(next);
-        applyTheme(next.theme);
       } catch (error) {
         if (alive) setPageError(error instanceof Error ? error.message : "Could not load your settings.");
       } finally { if (alive) setLoading(false); }
     }
     void load();
     return () => { alive = false; };
-  }, [router, applyTheme]);
+  }, [router]);
 
   async function loadAiUsage() {
     setLoadingUsage(true); setUsageError("");
@@ -187,18 +174,11 @@ export default function SettingsPage() {
     setSavingPreferences(true); setPreferencesMessage("");
     try {
       const { error } = await supabase.auth.updateUser({ data: { studyspace_settings: preferences } });
-      if (error) throw error;
-      applyTheme(preferences.theme);
+      if (error) throw error;(preferences.theme);
       setPreferencesMessage("Preferences saved to your account.");
     } catch (error) {
       setPreferencesMessage(error instanceof Error ? error.message : "Could not save preferences.");
     } finally { setSavingPreferences(false); }
-  }
-
-  function chooseTheme(theme: Theme) {
-    setPreferences(current => ({ ...current, theme }));
-    applyTheme(theme);
-    setPreferencesMessage("Theme preview applied. Save preferences to sync it to your account.");
   }
 
   async function signOutEverywhere() {
@@ -268,13 +248,6 @@ export default function SettingsPage() {
           <Toggle title="Email notifications" description="Your preference for future email updates. Automated email reminders are not currently sent." value={preferences.emailNotifications} onChange={v=>setPreferences(p=>({...p,emailNotifications:v}))}/>
           <div className="border-t border-white/[0.06] pt-5"><Toggle title="Assignment reminders" description="Show in-app reminders for due-soon and overdue assignments. Checks run when you open or refresh the dashboard." value={preferences.assignmentReminders} onChange={v=>setPreferences(p=>({...p,assignmentReminders:v}))}/></div>
           <div className="border-t border-white/[0.06] pt-5"><Toggle title="Quiz reminders" description="Show in-app reminders for quiz events on your calendar starting within 24 hours." value={preferences.quizReminders} onChange={v=>setPreferences(p=>({...p,quizReminders:v}))}/></div>
-        </Section>
-
-        <Section icon={Laptop} title="Appearance" description="Choose the visual theme for your workspace.">
-          <div className="grid gap-3 sm:grid-cols-3">
-            {([{value:"dark",title:"Dark",description:"The original purple-black StudySpace look.",icon:Moon},{value:"light",title:"Light",description:"A brighter workspace.",icon:Sun},{value:"system",title:"System",description:"Follow your device appearance.",icon:Laptop}] as const).map(option=>{const Icon=option.icon;const active=preferences.theme===option.value;return <button key={option.value} type="button" aria-pressed={active} onClick={()=>chooseTheme(option.value)} className={`rounded-2xl border p-4 text-left transition ${active?"border-violet-400/40 bg-violet-500/10":"border-white/10 bg-white/[0.02] hover:bg-white/[0.05]"}`}><Icon size={19} className={active?"text-violet-300":"text-white/45"}/><p className="mt-3 text-sm font-medium text-white">{option.title}</p><p className="mt-1 text-xs leading-5 text-white/40">{option.description}</p>{active&&<p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-violet-300">Selected</p>}</button>})}
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4"><p aria-live="polite" className="text-xs text-emerald-300">{preferencesMessage}</p><button type="button" onClick={savePreferences} disabled={savingPreferences} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"><Save size={15}/>{savingPreferences?"Saving…":"Save preferences"}</button></div>
         </Section>
 
         <Section icon={Gauge} title="AI usage" description="View your rolling 24-hour generation limits.">
