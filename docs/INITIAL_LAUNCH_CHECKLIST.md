@@ -18,12 +18,14 @@ Use this checklist against the actual production environment before inviting rea
 - [ ] Apply and verify every migration in `supabase/migrations` against the correct project.
 - [ ] Confirm Row Level Security is enabled on student-owned tables and policies prevent cross-user reads/writes.
 - [ ] Confirm AI quota and API rate-limit RPC functions exist and reject unauthenticated or over-limit requests.
+- [ ] Verify user-facing quota RPCs derive identity from auth.uid(), enforce server-owned feature limits, and reject arbitrary rate-limit route keys.
 - [ ] Confirm embedding-cache policies restrict records to `auth.uid() = user_id`.
 - [ ] Confirm feedback policies restrict students to their own feedback and conversations.
 - [ ] Enable Supabase leaked-password protection in the Auth password/security settings.
 - [ ] Review Supabase security and performance advisors; resolve warnings appropriate to the production workload.
 - [ ] Test account deletion with a dedicated test account and confirm associated user-owned data is removed according to the documented retention policy.
 - [ ] Confirm backups/recovery expectations before storing real coursework.
+- [ ] Follow docs/BACKUP_AND_RECOVERY_RUNBOOK.md: create off-site database and Storage exports, then complete a restore drill in a non-production project.
 
 ## 3. Authentication and account flows
 
@@ -85,5 +87,6 @@ npm audit --audit-level=high
 
 - [ ] All blocking checks above pass, or remaining limitations are explicitly accepted and documented.
 - [ ] Production deployment is **Ready** and the live site has been smoke-tested against the deployed commit.
+- [ ] Confirm the production commit matches main after deployment; check Vercel runtime errors and establish a way to be alerted to failures.
 - [ ] A rollback path and a way to report problems are known.
 - [ ] Only then invite real students.
