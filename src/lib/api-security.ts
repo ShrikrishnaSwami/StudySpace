@@ -78,7 +78,6 @@ export async function consumeAiQuota(accessToken: string, feature: AiFeature) {
 
   const { data, error } = await client.rpc("consume_ai_quota_for_user", {
     p_feature: feature,
-    p_limit: AI_DAILY_LIMITS[feature],
   });
   if (error) {
     console.error("Atomic AI quota check failed", { feature, code: error.code });
