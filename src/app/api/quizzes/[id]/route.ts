@@ -54,7 +54,7 @@ export async function GET(
         { status: 401 }
       );
     }
-    const rate = await consumeApiRateLimit(user.id, "quiz-read", 180, 600);
+    const rate = await consumeApiRateLimit(user.id, "quiz-read", 180, 600, token);
     if (!rate.allowed) return NextResponse.json({ error: "Too many quiz requests. Please wait and try again." }, { status: 429 });
 
 
