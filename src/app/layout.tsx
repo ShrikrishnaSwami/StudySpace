@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./polish.css";
-import ThemeBootstrap from "@/components/ThemeBootstrap";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -59,7 +58,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col"><a className="ss-skip-link" href="#main-content">Skip to content</a><ThemeBootstrap />{children}</body>
+      <body className="min-h-full flex flex-col"><a className="ss-skip-link" href="#main-content">Skip to content</a>{children}</body>
     </html>
   );
 }
