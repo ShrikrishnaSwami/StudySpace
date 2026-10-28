@@ -82,7 +82,27 @@ export async function POST(request: NextRequest) {
       console.error("Syllabus extraction configuration is incomplete.");
       return NextResponse.json({ error: "Syllabus extraction is not configured on the server. Check SUPABASE_SERVICE_ROLE_KEY and GEMINI_API_KEY in the server environment." }, { status: 503 });
     }
-    console.error("Syllabus extraction failed", { category: /JSON|parse/i.test(message) ? "invalid_ai_response" : /quota|usage controls/i.test(message) ? "usage_controls" : /save extracted syllabus|saveError/i.test(message) ? "save_failed" : "provider_or_database_error" });
-    return NextResponse.json({ error: /temporarily unavailable|provider returned HTTP|empty response/i.test(message) ? "The AI service is temporarily unavailable. Please try again shortly." : /quota|usage controls/i.test(message) ? "AI usage controls are temporarily unavailable. Please try again later." : "Could not extract syllabus dates. Check the document and try again." }, { status: /quota|usage controls/i.test(message) ? 503 : 500 });
+    const category = /JSON|parse|valid JSON/i.test(message)
+      ? "invalid_ai_response"
+      : /quota|usage controls/i.test(message)
+        ? "usage_controls"
+        : /save extracted syllabus|saveError/i.test(message)
+          ? "save_failed"
+          : /PDF|document|read/i.test(message)
+            ? "document_read_failed"
+            : "provider_or_database_error";
+    console.error("Syllabus extraction failed", { category });
+    const userMessage = /quota|usage controls/i.test(message)
+      ? "AI usage controls are temporarily unavailable. Please try again later."
+      : /JSON|parse|valid JSON/i.test(message)
+        ? "The AI couldn't reliably identify dates in this document. Try a text-based PDF or paste the syllabus text instead."
+        : /save extracted syllabus|saveError/i.test(message)
+          ? "The dates couldn't be saved. Refresh the page and try again."
+          : /temporarily unavailable|provider returned HTTP|empty response|StudySpace AI/i.test(message)
+            ? "The AI service is temporarily unavailable. Please try again shortly."
+            : /PDF|document|read/i.test(message)
+              ? "The document couldn't be read reliably. Try a text-based PDF or paste the syllabus text instead."
+              : "Syllabus extraction failed. Try a smaller text-based PDF or paste the syllabus text.";
+    return NextResponse.json({ error: userMessage }, { status: /quota|usage controls/i.test(message) ? 503 : /JSON|parse|valid JSON|PDF|document|read/i.test(message) ? 422 : 500 });
   }
 }
