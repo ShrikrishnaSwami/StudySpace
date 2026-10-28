@@ -363,7 +363,7 @@ function AIDataChip({
       <span
         className={`h-1.5 w-1.5 rounded-full ${
           active
-            ? "bg-emerald-400"
+            ? "bg-violet-300 shadow-[0_0_8px_rgba(167,139,250,0.55)]"
             : "bg-white/15"
         }`}
       />
@@ -1001,7 +1001,7 @@ export default function DashboardPage() {
             STATS
         ================================================= */}
 
-        <section className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-white/[0.07] bg-white/[0.07] lg:grid-cols-4">
+        <section className="grid grid-cols-2 gap-3 overflow-hidden rounded-2xl border-0 bg-transparent lg:grid-cols-4">
           <Stat
             icon={
               <BookOpen className="h-4 w-4 text-violet-300" />
@@ -1678,8 +1678,8 @@ export default function DashboardPage() {
                   </p>
                 </div>
 
-                <div className="ml-auto flex items-center gap-1.5 rounded-full border border-emerald-400/10 bg-emerald-500/[0.05] px-2.5 py-1 text-[9px] font-medium uppercase tracking-wider text-emerald-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                <div className="ml-auto flex items-center gap-1.5 rounded-full border border-violet-400/20 bg-violet-500/[0.09] px-2.5 py-1 text-[9px] font-medium uppercase tracking-wider text-violet-200">
+                  <span className="h-1.5 w-1.5 rounded-full bg-violet-300 shadow-[0_0_8px_rgba(167,139,250,0.55)]" />
                   Active
                 </div>
               </div>
