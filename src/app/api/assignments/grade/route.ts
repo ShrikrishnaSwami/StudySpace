@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await authClient.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Your session expired. Sign in again." }, { status: 401 });
 
-    const rate = await consumeApiRateLimit(user.id, "assignment-ai-grade", 5, 600);
+    const rate = await consumeApiRateLimit(user.id, "assignment-ai-grade", 5, 600, token);
     if (!rate.allowed) return NextResponse.json({ error: "Too many AI grading requests. Please wait before trying again." }, { status: 429 });
 
     if (Number(request.headers.get("content-length") || 0) > 32768) {
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     }
     if (declaredTotalBytes > 30 * 1024 * 1024) return NextResponse.json({ error: "AI grading supports up to 30 MB of attachments per submission." }, { status: 413 });
 
-    const quota = await consumeAiQuota(user.id, "homework");
+    const quota = await consumeAiQuota(token, "homework");
     if (!quota.allowed) return NextResponse.json({ error: quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You've reached today's AI homework limit. Try again later.", usage: quota }, { status: 429 });
 
     const parts: Array<Record<string, unknown>> = [];
