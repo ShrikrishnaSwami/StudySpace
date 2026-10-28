@@ -256,9 +256,9 @@ export async function POST(
      * is streamed through a hard byte cap so a missing or misleading
      * Content-Length header cannot cause unbounded memory use.
      */
-    const quota = await consumeAiQuota(user.id, "homework");
+    const quota = await consumeAiQuota(token, "homework");
     if (!quota.allowed) {
-      return NextResponse.json({ error: quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You have reached today's AI homework limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
+      return NextResponse.json({ error: quota.scope === "rate" ? "Too many AI requests. Please wait a few minutes and try again." : quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You have reached today's AI homework limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
     }
 
     const fileResponse = await fetch(signedUrlData.signedUrl, {
