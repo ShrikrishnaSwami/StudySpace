@@ -587,6 +587,12 @@ unless the student explicitly asks about them.
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         try {
+          const sources = retrieval.sections
+            .map((section) => section.source)
+            .filter((source) => typeof source === "string" && source.trim())
+            .slice(0, 5);
+          controller.enqueue(encoder.encode(JSON.stringify({ type: "sources", sources }) + "\n"));
+
           for await (const chunk of streamStudySpaceAnswer({
             systemInstruction,
             prompt: tutorPrompt,
