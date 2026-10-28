@@ -186,6 +186,7 @@ export async function POST(request: NextRequest) {
      */
 
     let studySpaceContext = "";
+    let studySpaceContextComplete = false;
 
     try {
       const context =
@@ -196,6 +197,7 @@ export async function POST(request: NextRequest) {
 
       studySpaceContext =
         formatStudentAIContext(context);
+      studySpaceContextComplete = true;
     } catch (contextError) {
       console.error(
         "Failed to load StudySpace AI context:",
@@ -232,7 +234,7 @@ information is unavailable.
      * -------------------------------------------------------
      * Keep prompts focused on relevant data already loaded for this student.
      */
-    const retrieval = await retrieveRelevantStudyContextHybrid(studySpaceContext, message, { userId: user.id, accessToken: token });
+    const retrieval = await retrieveRelevantStudyContextHybrid(studySpaceContext, message, { userId: user.id, accessToken: token, completeContext: studySpaceContextComplete && !courseId });
     const selectedStudySpaceContext = retrieval.context;
 
     /*
