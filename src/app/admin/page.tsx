@@ -41,6 +41,7 @@ export default function AdminPage() {
   const [backupLoading, setBackupLoading] = useState(false);
   const [error, setError] = useState("");
   const [backupError, setBackupError] = useState("");
+  const [adminMfaVerified, setAdminMfaVerified] = useState<boolean | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -107,6 +108,15 @@ export default function AdminPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!alive) return;
       if (!user) { router.replace("/login"); return; }
+      if (user.app_metadata?.role === "admin") {
+        void supabase.auth.mfa.listFactors().then(({ data, error: factorError }) => {
+          if (!alive) return;
+          const hasVerifiedTotp = !factorError && (data?.totp || []).some((factor) => factor.status === "verified");
+          setAdminMfaVerified(hasVerifiedTotp);
+        }).catch(() => {
+          if (alive) setAdminMfaVerified(false);
+        });
+      }
       setChecking(false);
       void load();
       void loadBackup();
@@ -150,6 +160,17 @@ export default function AdminPage() {
       </div>
 
       {error && <div role="alert" className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{error}</div>}
+
+      {adminMfaVerified === false && <section role="alert" className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.06] p-5">
+        <div className="flex items-start gap-3">
+          <ShieldAlert size={20} className="mt-0.5 shrink-0 text-amber-200" />
+          <div>
+            <h2 className="font-semibold text-amber-100">Add multi-factor authentication to the admin account</h2>
+            <p className="mt-1 text-sm leading-6 text-white/65">No verified authenticator factor was found for this account. Server-side administrator checks are enabled, but a password alone is not a second factor. Enrol a TOTP authenticator and verify it before inviting external beta users.</p>
+            <a className="mt-2 inline-flex items-center gap-1 text-sm text-violet-200 underline underline-offset-4" href="https://supabase.com/docs/guides/auth/auth-mfa" target="_blank" rel="noreferrer">Supabase MFA setup guide <ExternalLink size={13}/></a>
+          </div>
+        </div>
+      </section>}
 
       <section className="rounded-2xl border border-violet-400/15 bg-gradient-to-br from-violet-500/10 via-white/[0.035] to-fuchsia-500/[0.06] p-6 sm:p-8">
         <div className="flex items-start justify-between gap-4">
