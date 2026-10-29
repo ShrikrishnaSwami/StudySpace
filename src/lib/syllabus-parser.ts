@@ -2,8 +2,8 @@ export type ParsedSyllabusResponse = { events?: unknown[] };
 
 export function parseSyllabusAiJson(value: string): ParsedSyllabusResponse {
   const cleaned = value
-    .replace(/^\s*```(?:json)?\s*/i, "")
-    .replace(/\s*```\s*$/, "")
+    .replace(/^\s*\x60\x60\x60(?:json)?\s*/i, "")
+    .replace(/\s*\x60\x60\x60\s*$/, "")
     .trim();
 
   try {
@@ -22,7 +22,7 @@ export function parseSyllabusAiJson(value: string): ParsedSyllabusResponse {
         const char = cleaned[i];
         if (inString) {
           if (escaped) escaped = false;
-          else if (char === "\\\\") escaped = true;
+          else if (char === "\\") escaped = true;
           else if (char === '"') inString = false;
           continue;
         }
@@ -46,7 +46,7 @@ export function parseSyllabusAiJson(value: string): ParsedSyllabusResponse {
 }
 
 export function isValidIsoDate(value: unknown): value is string {
-  if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [year, month, day] = value.split("-").map(Number);
   const date = new Date(0);
   date.setUTCHours(0, 0, 0, 0);
