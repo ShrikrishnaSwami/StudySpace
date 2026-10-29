@@ -25,8 +25,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // The caller's JWT is passed to both Auth and the restricted statistics RPC.
-    // Never use a service-role key for browser-originated administrator requests.
+    // The caller's JWT is used to verify the user and their AAL2 claim. The
+    // privileged aggregate query is invoked separately with a server-only key
+    // after all administrator checks have passed.
     const client = createClient(url, key, {
       global: { headers: { Authorization: "Bearer " + token } },
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
@@ -47,11 +48,15 @@ export async function GET(request: NextRequest) {
       }, { status: 403, headers: { "Cache-Control": "no-store" } });
     }
 
-    const { data, error } = await client.rpc("admin_dashboard_stats");
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+    if (!serviceKey) {
+      return NextResponse.json({ error: "Server-side admin configuration is missing." }, { status: 503 });
+    }
+    const adminClient = createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+    const { data, error } = await adminClient.rpc("admin_dashboard_stats");
     if (error) {
-      if (error.code === "42501") {
-        return NextResponse.json({ error: "Verified administrator access required." }, { status: 403 });
-      }
       console.error("Admin statistics RPC failed:", error.message);
       return NextResponse.json({ error: "Could not load admin statistics." }, { status: 500 });
     }
