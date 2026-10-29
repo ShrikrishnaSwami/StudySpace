@@ -132,3 +132,12 @@ This addendum updates deployment/configuration observations without changing the
 3. Run live smoke tests using real test accounts for sign-up/sign-in/logout, AI generation and quota exhaustion, syllabus import, homework/Storage access, quiz submission, assignment grading, export/deletion, admin denial for a normal student, and cross-student isolation.
 4. Create an off-site database export and separate Storage export, then complete a restore drill in a non-production project.
 5. Publish current privacy/terms/support information and document monitoring/rollback before inviting external students.
+
+## Follow-up verification — 2026-10-29 (UTC)
+
+- The current Supabase Security Advisor still reports leaked-password protection disabled. The Advisor also reports six authenticated-callable `SECURITY DEFINER` RPCs and anonymous-auth policy warnings on user-owned tables and Storage. These warnings need to be interpreted against the intended guest-account feature: the login page explicitly supports anonymous guest sign-in, and those accounts use the `authenticated` Postgres role. Do not remove the guest feature or broadly revoke RPC permissions without replacing the intended behavior and re-running owner-isolation tests.
+- The performance Advisor reports 28 unused indexes in the current snapshot. Because this is a beta/low-traffic workload, these are informational candidates, not instructions to drop indexes immediately; collect representative query/load data before removing indexes that may be needed at scale.
+- Commit `73c0557f300d916cc8ed6bdb0307772d2bfe1d97` updates Settings so AI usage loads automatically for signed-in users, retains manual refresh, and labels the remaining allowance as requests available in the next 24 hours. The latest observed production deployment remains commit `4d31f61acdfa11f53df63c4015aa71eafbc10283`; the Vercel status for the new commit currently reports a build-rate-limit failure, so this UI fix is **not yet confirmed live**.
+- The source change was committed directly to `main`. A local full build could not be run in this environment because outbound DNS/network access to GitHub is unavailable. Run the repository CI/build suite once the Vercel/GitHub build allowance permits it.
+
+The external beta blockers remain unchanged: rotate exposed provider credentials and replace them in Vercel; enable leaked-password protection if supported; run real authenticated end-to-end and cross-user tests; and produce off-site database plus Storage backups followed by a successful non-production restore drill.
