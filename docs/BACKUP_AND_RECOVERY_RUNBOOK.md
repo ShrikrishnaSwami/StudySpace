@@ -44,7 +44,7 @@ Use the automated pipeline in [`OFFSITE_BACKUP_SETUP.md`](./OFFSITE_BACKUP_SETUP
 ## Required before public beta
 
 - [ ] Confirm the actual Supabase plan and whether managed backups are available.
-- [ ] Produce an off-site database export and a separate Storage export.
-- [ ] Complete one successful restore drill in a non-production project.
+- [ ] Configure the daily encrypted GitHub Actions backup to private R2 storage and verify a successful run.
+- [ ] Complete one successful restore drill in a non-production project using both encrypted archives.
 - [ ] Set an owner and a recurring backup/restore-check cadence.
 - [ ] Keep the latest successful restore timestamp and checksums in a secure operations record.
