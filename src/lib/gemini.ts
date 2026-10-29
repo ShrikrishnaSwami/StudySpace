@@ -43,8 +43,8 @@ function configuredGeminiModels(task: AITask) {
 
   const configuredFallback = process.env.GEMINI_FALLBACK_MODEL?.trim();
   const fallbackCandidates = [
-    configuredFallback,
     group === "fast" ? "gemini-3.6-flash" : "gemini-3.5-flash-lite",
+    configuredFallback,
     "gemini-3.7-flash",
   ].filter((value): value is string => Boolean(value) && value !== primary);
   const candidates = [primary, ...fallbackCandidates].filter((value, index, all) => all.indexOf(value) === index);
@@ -194,7 +194,7 @@ async function generateWithExternalProvider({
     method: "POST",
     headers,
     body: JSON.stringify(body),
-    signal: AbortSignal.timeout(45000),
+    signal: AbortSignal.timeout(20000),
     cache: "no-store",
   });
   if (!response.ok) throw new Error(provider + " provider returned HTTP " + response.status);
