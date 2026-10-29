@@ -9,7 +9,7 @@ The GitHub Actions workflow `.github/workflows/offsite-backup.yml` runs daily at
 - A limited Auth user metadata export. Password hashes, sessions, refresh tokens, and provider credentials are not exportable; users may need password resets after a disaster restore.
 - A SHA-256 integrity manifest.
 
-Database and Storage/Auth archives are encrypted with age **before upload** to Cloudflare R2. Only encrypted archives are uploaded. The workflow verifies each uploaded object's byte size, fails on export/upload errors, and does not delete older remote backups.
+Database and Storage/Auth archives are encrypted with age **before upload** to Cloudflare R2. Only encrypted archives are uploaded. The workflow verifies each uploaded object's byte size, fails on export/upload errors, and retains the latest seven calendar days of backups after a successful upload.
 
 This is a backup pipeline, not a completed recovery drill. Do not mark recovery verified until you have successfully decrypted the files and restored them into a separate non-production Supabase project.
 
@@ -85,6 +85,6 @@ Use a **separate non-production Supabase project**, never production, for the fi
 - This is a logical export of the application's `public` schema plus separate Storage object and Auth metadata exports. It is not a byte-for-byte clone of the Supabase project and does not restore every Auth setting, session, provider secret, extension, or managed schema.
 - The backup contains sensitive student coursework before encryption. Keep the R2 bucket private, restrict token scope, keep the age private key offline, and restrict access to GitHub Actions secrets and run logs.
 - The free R2 allowance is not a guarantee that all usage remains free. Monitor storage growth and set billing alerts/limits where available. Backups larger than the included storage may cost money.
-- The workflow intentionally does not automatically delete older backups. Configure lifecycle/retention only after confirming multiple valid backups and understanding the consequences.
+- The workflow deletes objects older than the latest seven calendar days only after a new backup uploads and verifies successfully. This limits storage growth, but it also limits the recovery window to roughly one week. The R2 token therefore needs delete permission on this dedicated backup bucket. If you need longer retention, configure it deliberately and check whether your storage use remains within the free allowance.
 - A scheduled workflow can fail or be disabled. Check the Actions run history regularly and configure GitHub notifications.
 - These exports do not prove that recovery works until the restore drill succeeds.
