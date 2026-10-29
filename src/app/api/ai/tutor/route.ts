@@ -73,6 +73,7 @@ type RequestBody = {
 };
 
 export async function POST(request: NextRequest) {
+  const requestStartedAt = Date.now();
   try {
     /*
      * -------------------------------------------------------
@@ -271,12 +272,16 @@ export async function POST(request: NextRequest) {
      */
     let studySpaceContext = "";
     let studySpaceContextComplete = false;
+    const contextLoadStartedAt = Date.now();
+    let contextLoadMs = 0;
 
     try {
       const context = await getStudentAIContext(token, courseId);
       studySpaceContext = formatStudentAIContext(context);
       studySpaceContextComplete = true;
+      contextLoadMs = Date.now() - contextLoadStartedAt;
     } catch (contextError) {
+      contextLoadMs = Date.now() - contextLoadStartedAt;
       console.error("Failed to load StudySpace AI context:", contextError);
       studySpaceContext = `
 ========================
@@ -307,6 +312,7 @@ information is unavailable.
      * -------------------------------------------------------
      * Keep prompts focused on relevant data already loaded for this student.
      */
+    const retrievalStartedAt = Date.now();
     const retrievalPromise = retrieveRelevantStudyContextHybrid(studySpaceContext, message, {
       userId: user.id,
       accessToken: token,
@@ -326,7 +332,15 @@ information is unavailable.
     ]);
     if (retrievalTimeout) clearTimeout(retrievalTimeout);
     const selectedStudySpaceContext = retrieval.context;
+    const retrievalWaitMs = Date.now() - retrievalStartedAt;
     const conversationHistory = await conversationHistoryPromise;
+    console.info("StudySpace Tutor context ready", {
+      contextLoadMs,
+      retrievalWaitMs,
+      retrievalStrategy: retrieval.strategy,
+      contextCharacters: selectedStudySpaceContext.length,
+      historyCharacters: conversationHistory.length,
+    });
 
     /*
      * -------------------------------------------------------
@@ -588,9 +602,20 @@ unless the student explicitly asks about them.
           })) {
             controller.enqueue(encoder.encode(JSON.stringify({ type: "chunk", text: chunk }) + "\n"));
           }
+          console.info("StudySpace Tutor request completed", {
+            durationMs: Date.now() - requestStartedAt,
+            contextLoadMs,
+            retrievalWaitMs,
+            retrievalStrategy: retrieval.strategy,
+          });
           controller.enqueue(encoder.encode(JSON.stringify({ type: "done" }) + "\n"));
         } catch (streamError) {
-          console.error("AI Tutor streaming error:", streamError);
+          console.error("AI Tutor streaming error:", streamError, {
+            durationMs: Date.now() - requestStartedAt,
+            contextLoadMs,
+            retrievalWaitMs,
+            retrievalStrategy: retrieval.strategy,
+          });
           controller.enqueue(encoder.encode(JSON.stringify({
             type: "error",
             error: "The AI Tutor could not complete that response. Please try again.",
