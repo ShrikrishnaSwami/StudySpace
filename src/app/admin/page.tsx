@@ -221,13 +221,13 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {backup.status === "success" && <p className="mt-4 text-xs text-white/40">Upload and byte-size checks passed. This does not mean a restore drill has passed.</p>}
+        {backup.status === "success" && <p className="mt-4 text-xs text-white/40">Encrypted archive upload completed. This does not mean a restore drill has passed.</p>}
         {backup.status !== "success" && <p className="mt-4 text-xs text-white/40">Treat recovery as unverified until a backup is uploaded and a separate test restore succeeds.</p>}
 
         <div className="mt-4 flex flex-wrap gap-3">
           {backup.runUrl && <a href={backup.runUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-sm text-white/75 hover:bg-white/[0.05]">View latest workflow <ExternalLink size={14} /></a>}
-          <a href="https://github.com/ShrikrishnaSwami/StudySpace/actions/workflows/offsite-backup.yml" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-violet-400/20 bg-violet-500/10 px-3 py-2 text-sm text-violet-100 hover:bg-violet-500/15">Open backup workflow <ExternalLink size={14} /></a>
-          <a href="https://github.com/ShrikrishnaSwami/StudySpace/blob/main/docs/OFFSITE_BACKUP_SETUP.md" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-sm text-white/75 hover:bg-white/[0.05]">Setup and recovery guide <ExternalLink size={14} /></a>
+          <a href="https://github.com/ShrikrishnaSwami/StudySpace/actions/workflows/free-encrypted-backup.yml" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-violet-400/20 bg-violet-500/10 px-3 py-2 text-sm text-violet-100 hover:bg-violet-500/15">Open backup workflow <ExternalLink size={14} /></a>
+          <a href="https://github.com/ShrikrishnaSwami/StudySpace/blob/main/docs/FREE_BACKUP_INTERIM.md" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-sm text-white/75 hover:bg-white/[0.05]">Setup and recovery guide <ExternalLink size={14} /></a>
         </div>
       </section>
 
