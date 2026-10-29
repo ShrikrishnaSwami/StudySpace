@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
     if (!rate.allowed) return NextResponse.json({ error: "Too many usage requests. Please wait and try again." }, { status: 429 });
 
     return NextResponse.json({ usage: await getAiUsage(token), windowHours: 24 }, { headers: { "Cache-Control": "no-store" } });
-  } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Could not load usage." }, { status: 503 });
+  } catch {
+    console.error("AI usage request failed.");
+    return NextResponse.json({ error: "Could not load AI usage right now. Please try again shortly." }, { status: 503 });
   }
 }
