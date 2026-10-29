@@ -27,7 +27,7 @@ This is a backup pipeline, not a completed recovery drill. Do not mark recovery 
 Use a trusted computer and install age from its [official releases](https://github.com/FiloSottile/age/releases). On Windows, extract the release ZIP, open PowerShell in that folder, and run:
 
 ```powershell
-.\\age-keygen.exe -o studyspace-backup-key.txt
+.\age-keygen.exe -o studyspace-backup-key.txt
 ```
 
 The command prints a public recipient beginning with `age1...`. Store only that public recipient as the GitHub Actions secret `BACKUP_AGE_RECIPIENT`. The file contains the private key; keep it offline and protected.
