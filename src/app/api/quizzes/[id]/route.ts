@@ -4,7 +4,11 @@ import { createClient } from "@supabase/supabase-js";
 
 function createServerSupabase(token: string) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY;
 
   if (!url || !key) {
     throw new Error("Supabase environment variables are missing.");
@@ -102,16 +106,10 @@ export async function GET(
       quiz,
       questions: questions || [],
     });
-  } catch (error) {
-    console.error("Quiz API error:", error);
-
+  } catch {
+    console.error("Quiz API request failed.");
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to load quiz.",
-      },
+      { error: "Could not load this quiz. Please try again." },
       { status: 500 }
     );
   }
