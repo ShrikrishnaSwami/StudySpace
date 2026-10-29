@@ -42,10 +42,16 @@ function configuredGeminiModels(task: AITask) {
   )?.trim() || (group === "fast" ? "gemini-3.5-flash-lite" : "gemini-3.6-flash");
 
   const configuredFallback = process.env.GEMINI_FALLBACK_MODEL?.trim();
+  // Gemini 3.7 Flash now routes to 3.8 Flash, which has recently returned
+  // high-demand 503s for this project. Do not put that alias in the fallback path.
+  const safeConfiguredFallback = configuredFallback &&
+    !["gemini-3.7-flash", "gemini-3.8-flash"].includes(configuredFallback)
+    ? configuredFallback
+    : undefined;
   const fallbackCandidates = [
     group === "fast" ? "gemini-3.6-flash" : "gemini-3.5-flash-lite",
-    configuredFallback,
-    "gemini-3.7-flash",
+    safeConfiguredFallback,
+    "gemini-3.1-flash-lite",
   ].filter((value): value is string => Boolean(value) && value !== primary);
   const candidates = [primary, ...fallbackCandidates].filter((value, index, all) => all.indexOf(value) === index);
   return { primary, fallback: candidates[1] || primary, candidates };
