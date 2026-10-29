@@ -111,7 +111,7 @@ Account/preferences settings and a rolling 24-hour AI usage display for the curr
 
 ### Off-site backups
 
-Daily encrypted PostgreSQL application-data and private Storage exports are provided by [the GitHub Actions backup workflow](.github/workflows/offsite-backup.yml). Configure its required repository secrets and complete the first restore drill using [the off-site backup setup guide](docs/OFFSITE_BACKUP_SETUP.md) before storing real student coursework. The admin dashboard displays the latest workflow status; a successful upload is not the same as a verified restore.
+Daily encrypted PostgreSQL application-data and private Storage exports (with seven-day retention) are provided by [the GitHub Actions backup workflow](.github/workflows/offsite-backup.yml). Configure its required repository secrets and complete the first restore drill using [the off-site backup setup guide](docs/OFFSITE_BACKUP_SETUP.md) before storing real student coursework. The admin dashboard displays the latest workflow status; a successful upload is not the same as a verified restore.
 
 ### Admin dashboard — `/admin`
 
