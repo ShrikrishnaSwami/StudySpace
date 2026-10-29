@@ -62,12 +62,10 @@ function configuredGeminiModels(task: AITask) {
     grading: "gemini-3.6-flash",
   };
   const taskOverride = process.env["GEMINI_" + task.toUpperCase() + "_MODEL"]?.trim();
-  const groupOverride = (
-    group === "tutor" ? process.env.GEMINI_TUTOR_MODEL :
-    group === "reasoning" ? process.env.GEMINI_REASONING_MODEL :
-    process.env.GEMINI_FAST_MODEL
-  )?.trim();
-  const primary = taskOverride || groupOverride || defaults[task];
+  // Keep the legacy Tutor override only for Tutor. Reasoning/fast group overrides
+  // would collapse different features back onto one model and defeat task routing.
+  const legacyTutorOverride = task === "tutor" ? process.env.GEMINI_TUTOR_MODEL?.trim() : undefined;
+  const primary = taskOverride || legacyTutorOverride || defaults[task];
   const paidAllowed = process.env.GEMINI_ALLOW_PAID_MODELS === "true";
   const byId = new Map(GEMINI_MODEL_CATALOG.map((model) => [model.id, model]));
   const isAllowed = (model: string) => {
