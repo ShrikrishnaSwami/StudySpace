@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { generateAIResponseFromParts } from "@/lib/gemini";
 import { consumeAiQuota, consumeApiRateLimit } from "@/lib/api-security";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -78,15 +79,15 @@ export async function POST(request: NextRequest) {
     try { body = await request.json(); } catch {
       return NextResponse.json({ error: "Invalid grading request." }, { status: 400 });
     }
-    if (!body || typeof body !== "object" || Array.isArray(body)) {
-      return NextResponse.json({ error: "Invalid grading request." }, { status: 400 });
-    }
-    const submissionId = typeof (body as { submissionId?: unknown }).submissionId === "string" ? (body as { submissionId: string }).submissionId : "";
-    const assignmentId = typeof (body as { assignmentId?: unknown }).assignmentId === "string" ? (body as { assignmentId: string }).assignmentId : "";
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidPattern.test(submissionId) || !uuidPattern.test(assignmentId)) {
+    const gradingRequestSchema = z.object({
+      submissionId: z.string().uuid(),
+      assignmentId: z.string().uuid(),
+    }).strict();
+    const parsedBody = gradingRequestSchema.safeParse(body);
+    if (!parsedBody.success) {
       return NextResponse.json({ error: "A valid assignment and submission are required." }, { status: 400 });
     }
+    const { submissionId, assignmentId } = parsedBody.data;
 
     const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
     const { data: assignment, error: assignmentError } = await admin.from("assignments").select("id,user_id,assigned_to,title,description,assignment_questions,rubric_text,unit_name,points,max_points").eq("id", assignmentId).maybeSingle();
