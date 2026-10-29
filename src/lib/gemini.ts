@@ -30,31 +30,53 @@ function providerForTask(task: AITask): AIProvider {
   return configured === "openai" || configured === "anthropic" ? configured : "gemini";
 }
 
+const GEMINI_MODEL_CATALOG = [
+  { id: "gemini-3.6-flash", tier: "free", note: "Stable balanced default" },
+  { id: "gemini-3.5-flash-lite", tier: "free", note: "Fastest low-cost default" },
+  { id: "gemini-3.1-flash-lite", tier: "free", note: "Lightweight fallback" },
+  { id: "gemini-3-flash-preview", tier: "free", note: "Preview fallback; availability may vary" },
+  { id: "gemini-2.5-flash", tier: "free-limited", note: "Free tier, but Google restricts access for some projects" },
+  { id: "gemini-2.5-flash-lite", tier: "free-limited", note: "Free tier, but Google restricts access for some projects" },
+  { id: "gemini-2.5-pro", tier: "free-limited", note: "Free tier, but Google restricts access for some projects" },
+  { id: "gemini-3.8-flash", tier: "free", note: "Free tier; kept late in fallback order due to observed capacity errors" },
+  { id: "gemini-3.1-pro-preview", tier: "paid", note: "Paid-only; never used unless explicitly enabled" },
+  { id: "gemini-4-argon", tier: "paid", note: "Paid-only; never used unless explicitly enabled" },
+] as const;
+
+/**
+ * Ten distinct Gemini text-model options are catalogued. Only models marked
+ * free/free-limited are considered by default. Google currently restricts
+ * some 2.5 projects, so these are opportunistic fallbacks, not guarantees.
+ * Paid-only models require an explicit server environment opt-in.
+ */
 function configuredGeminiModels(task: AITask) {
-  // Route tasks to stable, supported models based on their latency/quality needs.
-  // GEMINI_MODEL is intentionally not used as a universal override: it previously
-  // forced every task onto the same model, including the overloaded Tutor model.
   const group = groupForTask(task);
+  const defaultPrimary = group === "fast" ? "gemini-3.5-flash-lite" : "gemini-3.6-flash";
   const primary = (
     group === "tutor" ? process.env.GEMINI_TUTOR_MODEL :
     group === "reasoning" ? process.env.GEMINI_REASONING_MODEL :
     process.env.GEMINI_FAST_MODEL
-  )?.trim() || (group === "fast" ? "gemini-3.5-flash-lite" : "gemini-3.6-flash");
+  )?.trim() || defaultPrimary;
 
+  const paidAllowed = process.env.GEMINI_ALLOW_PAID_MODELS === "true";
+  const byId = new Map(GEMINI_MODEL_CATALOG.map((model) => [model.id, model]));
+  const isAllowed = (model: string) => {
+    const entry = byId.get(model as (typeof GEMINI_MODEL_CATALOG)[number]["id"]);
+    return !entry || entry.tier !== "paid" || paidAllowed;
+  };
+  const preferredOrder = group === "fast"
+    ? ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.6-flash", "gemini-3-flash-preview", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-3.8-flash"]
+    : ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.5-flash-lite", "gemini-3.8-flash"];
   const configuredFallback = process.env.GEMINI_FALLBACK_MODEL?.trim();
-  // Gemini 3.7 Flash now routes to 3.8 Flash, which has recently returned
-  // high-demand 503s for this project. Do not put that alias in the fallback path.
-  const safeConfiguredFallback = configuredFallback &&
-    !["gemini-3.7-flash", "gemini-3.8-flash"].includes(configuredFallback)
-    ? configuredFallback
-    : undefined;
-  const fallbackCandidates = [
-    group === "fast" ? "gemini-3.6-flash" : "gemini-3.5-flash-lite",
-    safeConfiguredFallback,
-    "gemini-3.1-flash-lite",
-  ].filter((value): value is string => Boolean(value) && value !== primary);
-  const candidates = [primary, ...fallbackCandidates].filter((value, index, all) => all.indexOf(value) === index);
-  return { primary, fallback: candidates[1] || primary, candidates };
+  const candidates = [
+    ...(isAllowed(primary) ? [primary] : []),
+    ...(configuredFallback && configuredFallback !== primary && isAllowed(configuredFallback) ? [configuredFallback] : []),
+    ...preferredOrder.filter((model) => model !== primary && isAllowed(model)),
+    ...(paidAllowed ? GEMINI_MODEL_CATALOG.filter((model) => model.tier === "paid").map((model) => model.id) : []),
+  ].filter((model, index, all) => all.indexOf(model) === index);
+  // A misconfigured paid-only primary must never silently create charges.
+  if (!candidates.length) candidates.push(defaultPrimary);
+  return { primary: candidates[0], fallback: candidates[1] || candidates[0], candidates };
 }
 
 const taskGuidance: Record<AITask, string> = {
@@ -240,7 +262,7 @@ async function generateWithGeminiFallback({
 
   // Try each distinct model at most once. Repeating a saturated primary model
   // added latency without improving recovery during the recorded 503 incidents.
-  for (const model of candidates.slice(0, 3)) {
+  for (const model of candidates.slice(0, 4)) {
     try {
       return await generateWithGemini({ model, systemInstruction, prompt, task });
     } catch (error) {
@@ -301,7 +323,7 @@ export async function* streamAIResponse({
   }
 
   const { candidates } = configuredGeminiModels(task);
-  const models = candidates.slice(0, 3);
+  const models = candidates.slice(0, 4);
   let lastError: unknown;
 
   for (const model of models) {
