@@ -2,7 +2,7 @@
 
 ## Current status
 
-As of 2026-10-28, the available Supabase project API confirms the database is active and healthy, but it does not expose a verified backup inventory or restore drill. Do not claim backups are configured until a backup file exists outside the project and a test restore has succeeded.
+The repository now includes an encrypted daily backup workflow and an admin-dashboard status panel. The pipeline is **not active until the required GitHub Actions secrets are configured and the first run succeeds**. Even after an upload succeeds, recovery remains unverified until a separate non-production restore drill passes. Follow [`OFFSITE_BACKUP_SETUP.md`](./OFFSITE_BACKUP_SETUP.md) for the setup and test procedure.
 
 Supabase's current backup guide says Pro, Team, and Enterprise projects receive daily database backups; it recommends regular logical exports for Free projects. Database backups do not include Storage API file objects. See https://supabase.com/docs/guides/platform/backups.
 
@@ -14,14 +14,15 @@ Supabase's current backup guide says Pro, Team, and Enterprise projects receive 
 4. **Configuration inventory:** record required environment-variable names and auth/storage settings. Never put secret values in GitHub or the backup report.
 5. **Auth and admin configuration:** document the trusted admin app_metadata.role assignment process. A database dump is not a substitute for testing that users can sign in after recovery.
 
-## Create an off-site database export
+## Create an off-site backup
 
-Run this from a trusted local machine with the Supabase CLI installed and authenticated. First inspect the installed command options with supabase db dump --help, link the correct project, and follow the CLI's current syntax. Use a database credential through an environment variable or interactive prompt; do not paste it into source code, shell history, or chat.
+Use the automated pipeline in [`OFFSITE_BACKUP_SETUP.md`](./OFFSITE_BACKUP_SETUP.md). It exports the `public` application schema/data, the private `assignment-files`, `assignment-submissions`, and `homework` buckets, plus limited Auth user metadata; encrypts archives with age; uploads them to a private Cloudflare R2 bucket; and verifies remote object sizes and SHA-256 manifest hashes.
 
-- Save the resulting SQL dump in encrypted storage outside Supabase and outside the Git repository.
-- Record the project reference, export time in UTC, CLI version, file size, and a SHA-256 checksum.
-- Keep at least one copy separate from the developer's computer/account.
-- Export Storage objects separately and checksum the archive. Do not make private coursework publicly accessible just to simplify backup.
+- Keep every credential in GitHub Actions Secrets; never commit secrets or paste them into chat.
+- Keep the age private key offline in at least two secure places. The public recipient is safe to store as a GitHub Actions secret; the private key must never be uploaded.
+- Confirm the workflow run is green and the encrypted objects exist in R2.
+- Do not treat an upload as proof of recoverability. Complete the restore drill below first.
+- The pipeline does not export password hashes, sessions, provider secrets, all Auth settings, or all Supabase-managed schemas. Plan account password resets and configuration recovery.
 
 ## Restore drill (use a separate test project)
 
