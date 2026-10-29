@@ -1,33 +1,44 @@
-name: StudySpace local database policy tests
+name: StudySpace security policy regression tests
 
 on:
   push:
     branches: [main]
     paths:
-      - "supabase/**"
+      - "src/**"
+      - "supabase/migrations/**"
+      - "tests/security-migrations.test.mjs"
       - ".github/workflows/studyspace-db-tests.yml"
+      - "package.json"
   pull_request:
     paths:
-      - "supabase/**"
+      - "src/**"
+      - "supabase/migrations/**"
+      - "tests/security-migrations.test.mjs"
       - ".github/workflows/studyspace-db-tests.yml"
+      - "package.json"
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: studyspace-security-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  policy-tests:
+  security-regressions:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
+      - uses: actions/setup-node@v4
         with:
-          version: latest
-      - name: Start isolated local Supabase stack
-        run: supabase start -x studio,inbucket,edge-runtime,logflare,vector
-      - name: Apply all migrations and run pgTAP policy tests
-        run: supabase test db
-      - name: Stop local Supabase stack
-        if: always()
-        run: supabase stop --no-backup
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify RLS, admin MFA, submission integrity, and model-routing invariants
+        run: npm run test:security
+
+# Full pgTAP integration tests remain in supabase/tests/database. They require a
+# complete baseline migration for the pre-existing production schema; currently
+# the earliest repository migration references public.courses before it exists.
