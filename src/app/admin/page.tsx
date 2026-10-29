@@ -120,15 +120,18 @@ export default function AdminPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!alive) return;
       if (!user) { router.replace("/login"); return; }
-      if (user.app_metadata?.role === "admin") {
-        void supabase.auth.mfa.listFactors().then(({ data, error: factorError }) => {
-          if (!alive) return;
-          const hasVerifiedTotp = !factorError && (data?.totp || []).some((factor) => factor.status === "verified");
-          setAdminMfaVerified(hasVerifiedTotp);
-        }).catch(() => {
-          if (alive) setAdminMfaVerified(false);
-        });
+      // Client navigation is only a convenience gate; every privileged API independently validates identity and AAL2.
+      if (user.app_metadata?.role !== "admin" || !user.email_confirmed_at) {
+        router.replace("/dashboard");
+        return;
       }
+      void supabase.auth.mfa.listFactors().then(({ data, error: factorError }) => {
+        if (!alive) return;
+        const hasVerifiedTotp = !factorError && (data?.totp || []).some((factor) => factor.status === "verified");
+        setAdminMfaVerified(hasVerifiedTotp);
+      }).catch(() => {
+        if (alive) setAdminMfaVerified(false);
+      });
       setChecking(false);
       void load();
       void loadBackup();
