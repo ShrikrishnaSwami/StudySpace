@@ -2,60 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { generateAIResponse, generateAIResponseFromPdf } from "@/lib/gemini";
 import { consumeAiQuota } from "@/lib/api-security";
+import { isValidIsoDate, parseSyllabusAiJson } from "@/lib/syllabus-parser";
 
 export const maxDuration = 60;
 
-function parseAiJson(value: string): { events?: unknown[] } {
-  const cleaned = value
-    .replace(/^\s*```(?:json)?\s*/i, "")
-    .replace(/\s*```\s*$/, "")
-    .trim();
-  try {
-    const parsed = JSON.parse(cleaned) as unknown;
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed as { events?: unknown[] };
-    }
-  } catch {
-    // Recover the first complete JSON object when a provider adds surrounding prose.
-    const start = cleaned.indexOf("{");
-    if (start >= 0) {
-      let depth = 0;
-      let inString = false;
-      let escaped = false;
-      for (let i = start; i < cleaned.length; i += 1) {
-        const char = cleaned[i];
-        if (inString) {
-          if (escaped) escaped = false;
-          else if (char === "\\") escaped = true;
-          else if (char === '"') inString = false;
-          continue;
-        }
-        if (char === '"') inString = true;
-        else if (char === "{") depth += 1;
-        else if (char === "}") {
-          depth -= 1;
-          if (depth === 0) {
-            const parsed = JSON.parse(cleaned.slice(start, i + 1)) as unknown;
-            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-              return parsed as { events?: unknown[] };
-            }
-            break;
-          }
-        }
-      }
-    }
-  }
-  throw new Error("The AI response did not contain a valid JSON object.");
-}
-
-function isValidIsoDate(value: unknown): value is string {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -97,7 +47,7 @@ export async function POST(request: NextRequest) {
     const raw = isPdf
       ? await generateAIResponseFromPdf({ systemInstruction, prompt, pdfBase64 })
       : await generateAIResponse({ systemInstruction, prompt, task: "syllabus" });
-    const parsed = parseAiJson(raw);
+    const parsed = parseSyllabusAiJson(raw);
     const events = (Array.isArray(parsed.events) ? parsed.events : []).slice(0, 100).map((item) => {
       const e = item as Record<string, unknown>;
       const date = isValidIsoDate(e.date) ? e.date : "";
