@@ -11,7 +11,7 @@ let geminiClient: GoogleGenAI | null = null;
 function getGeminiClient() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("The AI provider is not configured on the server.");
-  if (!geminiClient) geminiClient = new GoogleGenAI({ apiKey, httpOptions: { timeout: 45000 } });
+  if (!geminiClient) geminiClient = new GoogleGenAI({ apiKey, httpOptions: { timeout: 20000 } });
   return geminiClient;
 }
 
@@ -31,29 +31,24 @@ function providerForTask(task: AITask): AIProvider {
 }
 
 function configuredGeminiModels(task: AITask) {
-  const defaultModel = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-  const fastModel = process.env.GEMINI_FAST_MODEL || process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash-lite";
-  const reasoningModel = process.env.GEMINI_REASONING_MODEL || defaultModel;
-  const taskModel: Record<AITask, string> = {
-    tutor: process.env.GEMINI_TUTOR_MODEL || defaultModel,
-    quiz: reasoningModel,
-    homework: reasoningModel,
-    syllabus: reasoningModel,
-    flashcards: fastModel,
-    recommendations: fastModel,
-  };
-  const primary = taskModel[task];
-  // A fallback must be a different model. A misconfigured environment variable
-  // must not silently make retries call the same overloaded model again.
-  const fallbackCandidates = [
-    process.env.GEMINI_FAST_MODEL,
-    process.env.GEMINI_FALLBACK_MODEL,
-    "gemini-3.5-flash-lite",
-    "gemini-3.6-flash",
-  ].map((value) => value?.trim()).filter((value): value is string => Boolean(value));
-  const fallback = fallbackCandidates.find((value) => value !== primary) || primary;
+  // Route tasks to stable, supported models based on their latency/quality needs.
+  // GEMINI_MODEL is intentionally not used as a universal override: it previously
+  // forced every task onto the same model, including the overloaded Tutor model.
+  const group = groupForTask(task);
+  const primary = (
+    group === "tutor" ? process.env.GEMINI_TUTOR_MODEL :
+    group === "reasoning" ? process.env.GEMINI_REASONING_MODEL :
+    process.env.GEMINI_FAST_MODEL
+  )?.trim() || (group === "fast" ? "gemini-3.5-flash-lite" : "gemini-3.6-flash");
 
-  return { primary, fallback };
+  const configuredFallback = process.env.GEMINI_FALLBACK_MODEL?.trim();
+  const fallbackCandidates = [
+    configuredFallback,
+    group === "fast" ? "gemini-3.6-flash" : "gemini-3.5-flash-lite",
+    "gemini-3.7-flash",
+  ].filter((value): value is string => Boolean(value) && value !== primary);
+  const candidates = [primary, ...fallbackCandidates].filter((value, index, all) => all.indexOf(value) === index);
+  return { primary, fallback: candidates[1] || primary, candidates };
 }
 
 const taskGuidance: Record<AITask, string> = {
@@ -107,6 +102,17 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function outputTokenLimit(task: AITask) {
+  switch (task) {
+    case "tutor": return 3072;
+    case "homework": return 3072;
+    case "quiz": return 2048;
+    case "syllabus": return 2048;
+    case "flashcards": return 2048;
+    case "recommendations": return 1536;
+  }
+}
+
 async function generateWithGemini({
   model,
   systemInstruction,
@@ -118,17 +124,22 @@ async function generateWithGemini({
   prompt: string;
   task: AITask;
 }) {
+  const startedAt = Date.now();
   const response = await getGeminiClient().models.generateContent({
     model,
     contents: prompt,
     config: {
       systemInstruction: buildSystemInstruction(systemInstruction, task),
       temperature: task === "tutor" ? 0.35 : 0.2,
-      maxOutputTokens: task === "tutor" ? 6144 : 4096,
+      maxOutputTokens: outputTokenLimit(task),
     },
   });
   const result = response.text?.trim();
   if (!result) throw new Error("The AI provider returned an empty response.");
+  console.info("StudySpace AI generation completed", {
+    task, provider: "gemini", model, durationMs: Date.now() - startedAt,
+    promptCharacters: prompt.length, outputCharacters: result.length,
+  });
   return result;
 }
 
@@ -217,44 +228,22 @@ async function generateWithGeminiFallback({
   systemInstruction: string;
   prompt: string;
 }) {
-  const { primary, fallback } = configuredGeminiModels(task);
-  // One configured fallback is not enough when that model is unavailable for
-  // this project or has a model-specific outage. Try stable text models next.
-  const fallbackModels = [
-    fallback,
-    "gemini-3.6-flash",
-    "gemini-3.1-flash-lite",
-  ].filter((model, index, all) => model !== primary && all.indexOf(model) === index);
-
+  const { candidates } = configuredGeminiModels(task);
   let lastError: unknown;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+
+  // Try each distinct model at most once. Repeating a saturated primary model
+  // added latency without improving recovery during the recorded 503 incidents.
+  for (const model of candidates.slice(0, 3)) {
     try {
-      return await generateWithGemini({ model: primary, systemInstruction, prompt, task });
+      return await generateWithGemini({ model, systemInstruction, prompt, task });
     } catch (error) {
       lastError = error;
+      const credentialError = isCredentialError(error);
       const retryable = isRetryableError(error);
-      console.warn("Gemini request failed", {
-        task, model: primary, attempt: attempt + 1, retryable,
-        credentialError: isCredentialError(error), reason: errorSummary(error),
+      console.warn("Gemini model attempt failed", {
+        task, model, retryable, credentialError, reason: errorSummary(error),
       });
-      if (isCredentialError(error) || !retryable) break;
-      if (attempt === 0) await wait(500);
-    }
-  }
-
-  // Other model attempts cannot fix a rejected API key, and would waste calls.
-  if (!isCredentialError(lastError)) {
-    for (const model of fallbackModels) {
-      try {
-        return await generateWithGemini({ model, systemInstruction, prompt, task });
-      } catch (error) {
-        lastError = error;
-        console.warn("Gemini fallback failed", {
-          task, model, retryable: isRetryableError(error),
-          credentialError: isCredentialError(error), reason: errorSummary(error),
-        });
-        if (isCredentialError(error)) break;
-      }
+      if (credentialError || (!retryable && model === candidates[0])) break;
     }
   }
 
@@ -304,8 +293,8 @@ export async function* streamAIResponse({
     return;
   }
 
-  const { primary, fallback } = configuredGeminiModels(task);
-  const models = primary === fallback ? [primary] : [primary, fallback];
+  const { candidates } = configuredGeminiModels(task);
+  const models = candidates.slice(0, 3);
   let lastError: unknown;
 
   for (const model of models) {
@@ -321,7 +310,7 @@ export async function* streamAIResponse({
           // truncated simply because streaming succeeded.
           // A lower ceiling reduces overlong tutor replies and keeps generation
           // time predictable; the model can still return a detailed explanation.
-          maxOutputTokens: task === "tutor" ? 4096 : 2048,
+          maxOutputTokens: outputTokenLimit(task),
         },
       });
 
@@ -370,8 +359,8 @@ export async function generateAIResponseFromPdf({
   prompt: string;
   pdfBase64: string;
 }) {
-  const { primary, fallback } = configuredGeminiModels("syllabus");
-  const models = [primary, ...(fallback !== primary ? [fallback] : [])];
+  const { candidates } = configuredGeminiModels("syllabus");
+  const models = candidates.slice(0, 3);
   let lastError: unknown;
   for (const model of models) {
     try {
@@ -384,7 +373,7 @@ export async function generateAIResponseFromPdf({
         config: {
           systemInstruction: buildSystemInstruction(systemInstruction, "syllabus"),
           temperature: 0.2,
-          maxOutputTokens: 4096,
+          maxOutputTokens: outputTokenLimit("syllabus"),
         },
       });
       const result = response.text?.trim();
