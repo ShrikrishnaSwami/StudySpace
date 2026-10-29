@@ -2,7 +2,7 @@
 
 ## Current status
 
-The repository now includes an encrypted daily backup workflow and an admin-dashboard status panel. The pipeline is **not active until the required GitHub Actions secrets are configured and the first run succeeds**. Even after an upload succeeds, recovery remains unverified until a separate non-production restore drill passes. Follow [`OFFSITE_BACKUP_SETUP.md`](./OFFSITE_BACKUP_SETUP.md) for the setup and test procedure.
+The repository includes two backup paths: a no-cost encrypted GitHub Actions artifact workflow and an optional manual Cloudflare R2 workflow. The free workflow is **not active until the required GitHub Actions secrets are configured and the first run succeeds**. It retains artifacts for seven days and is only an interim recovery buffer. Recovery remains unverified until a separate non-production restore drill passes. Follow [`FREE_BACKUP_INTERIM.md`](./FREE_BACKUP_INTERIM.md) for the free setup and restore procedure; use [`OFFSITE_BACKUP_SETUP.md`](./OFFSITE_BACKUP_SETUP.md) if a separate R2 destination is configured later.
 
 Supabase's current backup guide says Pro, Team, and Enterprise projects receive daily database backups; it recommends regular logical exports for Free projects. Database backups do not include Storage API file objects. See https://supabase.com/docs/guides/platform/backups.
 
@@ -16,7 +16,7 @@ Supabase's current backup guide says Pro, Team, and Enterprise projects receive 
 
 ## Create an off-site backup
 
-Use the automated pipeline in [`OFFSITE_BACKUP_SETUP.md`](./OFFSITE_BACKUP_SETUP.md). It exports the `public` application schema/data, the private `assignment-files`, `assignment-submissions`, and `homework` buckets, plus limited Auth user metadata; encrypts archives with age; uploads them to a private Cloudflare R2 bucket; verifies remote object sizes and SHA-256 manifest hashes; and retains the latest seven calendar days after successful upload.
+Use the free automated pipeline in [`FREE_BACKUP_INTERIM.md`](./FREE_BACKUP_INTERIM.md). It exports the `public` application schema/data, the private `assignment-files`, `assignment-submissions`, and `homework` buckets, plus limited Auth user metadata; encrypts archives with age; uploads encrypted files to a private GitHub Actions artifact; and retains that artifact for seven days. The optional R2 workflow is manual-only unless deliberately configured.
 
 - Keep every credential in GitHub Actions Secrets; never commit secrets or paste them into chat.
 - Keep the age private key offline in at least two secure places. The public recipient is safe to store as a GitHub Actions secret; the private key must never be uploaded.
@@ -44,7 +44,8 @@ Use the automated pipeline in [`OFFSITE_BACKUP_SETUP.md`](./OFFSITE_BACKUP_SETUP
 ## Required before public beta
 
 - [ ] Confirm the actual Supabase plan and whether managed backups are available.
-- [ ] Configure the daily encrypted GitHub Actions backup to private R2 storage and verify a successful run.
+- [ ] Configure the daily free encrypted GitHub Actions artifact backup and verify a successful run.
+- [ ] Keep an additional encrypted copy outside the GitHub account when feasible; seven-day artifact retention is only an interim buffer.
 - [ ] Complete one successful restore drill in a non-production project using both encrypted archives.
 - [ ] Set an owner and a recurring backup/restore-check cadence.
 - [ ] Keep the latest successful restore timestamp and checksums in a secure operations record.
