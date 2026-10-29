@@ -6,19 +6,55 @@ import { consumeAiQuota } from "@/lib/api-security";
 export const maxDuration = 60;
 
 function parseAiJson(value: string): { events?: unknown[] } {
-  const cleaned = value.replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
+  const cleaned = value
+    .replace(/^\s*```(?:json)?\s*/i, "")
+    .replace(/\s*```\s*$/, "")
+    .trim();
   try {
-    return JSON.parse(cleaned) as { events?: unknown[] };
-  } catch {
-    // Some models wrap otherwise-valid JSON in a short explanation. Recover the
-    // JSON object rather than failing the whole import for that formatting issue.
-    const start = cleaned.indexOf("{");
-    const end = cleaned.lastIndexOf("}");
-    if (start >= 0 && end > start) {
-      return JSON.parse(cleaned.slice(start, end + 1)) as { events?: unknown[] };
+    const parsed = JSON.parse(cleaned) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as { events?: unknown[] };
     }
-    throw new Error("The AI response did not contain a valid JSON object.");
+  } catch {
+    // Recover the first complete JSON object when a provider adds surrounding prose.
+    const start = cleaned.indexOf("{");
+    if (start >= 0) {
+      let depth = 0;
+      let inString = false;
+      let escaped = false;
+      for (let i = start; i < cleaned.length; i += 1) {
+        const char = cleaned[i];
+        if (inString) {
+          if (escaped) escaped = false;
+          else if (char === "\\") escaped = true;
+          else if (char === '"') inString = false;
+          continue;
+        }
+        if (char === '"') inString = true;
+        else if (char === "{") depth += 1;
+        else if (char === "}") {
+          depth -= 1;
+          if (depth === 0) {
+            const parsed = JSON.parse(cleaned.slice(start, i + 1)) as unknown;
+            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+              return parsed as { events?: unknown[] };
+            }
+            break;
+          }
+        }
+      }
+    }
   }
+  throw new Error("The AI response did not contain a valid JSON object.");
+}
+
+function isValidIsoDate(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day;
 }
 
 export async function POST(request: NextRequest) {
@@ -64,7 +100,7 @@ export async function POST(request: NextRequest) {
     const parsed = parseAiJson(raw);
     const events = (Array.isArray(parsed.events) ? parsed.events : []).slice(0, 100).map((item) => {
       const e = item as Record<string, unknown>;
-      const date = typeof e.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.date) && !Number.isNaN(Date.parse(e.date)) ? e.date : "";
+      const date = isValidIsoDate(e.date) ? e.date : "";
       const type = ["assignment", "quiz", "exam", "class", "other"].includes(String(e.type)) ? String(e.type) : "other";
       return {
         title: typeof e.title === "string" ? e.title.trim().slice(0, 200) : "Untitled syllabus event",
@@ -75,6 +111,14 @@ export async function POST(request: NextRequest) {
         note: typeof e.note === "string" ? e.note.slice(0, 500) : "",
       };
     }).filter((e) => e.title);
+
+    if (events.length === 0) {
+      return NextResponse.json(
+        { error: "No clear academic dates were found. Try a text-based PDF or paste the syllabus text, including its schedule and due dates." },
+        { status: 422 },
+      );
+    }
+
     const { data: saved, error: saveError } = await client.from("syllabus_imports").insert({
       user_id: user.id, course_id: courseId, title, source_name: sourceName, extracted_text: text || "[PDF document processed by AI; original file is not stored]", extracted_events: events, status: "draft",
     }).select("id,title,course_id,created_at,extracted_events").single();
@@ -84,7 +128,7 @@ export async function POST(request: NextRequest) {
     const message = error instanceof Error ? error.message : "";
     if (/admin key is missing|AI provider is not configured|provider is not fully configured|Supabase configuration is missing/i.test(message)) {
       console.error("Syllabus extraction configuration is incomplete.");
-      return NextResponse.json({ error: "Syllabus extraction is not configured on the server. Check SUPABASE_SERVICE_ROLE_KEY and GEMINI_API_KEY in the server environment." }, { status: 503 });
+      return NextResponse.json({ error: "Syllabus extraction is not configured correctly on the server. Please try again later." }, { status: 503 });
     }
     const category = /JSON|parse|valid JSON/i.test(message)
       ? "invalid_ai_response"
