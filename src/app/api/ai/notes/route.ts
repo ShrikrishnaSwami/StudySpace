@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
     if (!token) return NextResponse.json({ error: "Sign in to convert files into notes." }, { status: 401 });
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
     const apiKey = process.env.GEMINI_API_KEY;
     if (!url || !anonKey || !apiKey) return NextResponse.json({ error: "AI note extraction is not configured on the server." }, { status: 503 });
     const length = Number(request.headers.get("content-length") || 0);
