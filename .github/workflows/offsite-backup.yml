@@ -45,10 +45,20 @@ jobs:
           [[ "$SUPABASE_URL" == https://* ]] || { echo "::error::SUPABASE_URL must use HTTPS"; exit 1; }
           [[ "$AGE_RECIPIENT" == age1* ]] || { echo "::error::AGE_RECIPIENT must be an age public recipient (age1...)"; exit 1; }
 
+      - name: Record backup start in admin dashboard
+        shell: bash
+        run: |
+          set -euo pipefail
+          now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          payload="$(python3 -c 'import json,os; print(json.dumps({"id": True, "status": "running", "started_at": os.environ["BACKUP_NOW"], "completed_at": None, "run_id": os.environ["GITHUB_RUN_ID"], "run_url": os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"], "manifest": {}, "updated_at": os.environ["BACKUP_NOW"]}))' )"
+          curl --fail-with-body --silent --show-error --retry 3             "$SUPABASE_URL/rest/v1/system_backup_status?on_conflict=id"             -X POST             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY"             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"             -H "Content-Type: application/json"             -H "Prefer: resolution=merge-duplicates,return=minimal"             --data "$payload"
+        env:
+          BACKUP_NOW: ${{ github.run_started_at }}
+
       - name: Install backup tools
         run: |
           sudo apt-get update
-          sudo apt-get install --yes age postgresql-client python3
+          sudo apt-get install --yes age postgresql-client python3 awscli
           python3 --version
           pg_dump --version
           age --version
@@ -107,21 +117,65 @@ jobs:
           PY
 
       - name: Upload encrypted backups to Cloudflare R2
+        id: upload
         shell: bash
         run: |
           set -euo pipefail
           endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
           prefix="studyspace/daily/$(date -u +%Y/%m/%d)/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           aws --endpoint-url "$endpoint" s3 cp encrypted/ "s3://${R2_BUCKET}/${prefix}/" --recursive --only-show-errors
-          # Verify that every uploaded object is readable and has the same byte size.
           for file in encrypted/*; do
             name="$(basename "$file")"
             local_size="$(stat -c %s "$file")"
             remote_size="$(aws --endpoint-url "$endpoint" s3api head-object --bucket "$R2_BUCKET" --key "${prefix}/${name}" --query ContentLength --output text)"
             [[ "$local_size" == "$remote_size" ]] || { echo "::error::R2 size verification failed for ${name}"; exit 1; }
           done
+          echo "prefix=${prefix}" >> "$GITHUB_OUTPUT"
           echo "Encrypted backup uploaded and size-verified at ${prefix}"
+
+      - name: Mark backup successful in admin dashboard
+        if: success()
+        shell: bash
+        env:
+          BACKUP_PREFIX: ${{ steps.upload.outputs.prefix }}
+        run: |
+          set -euo pipefail
+          now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          python3 - <<'PY' > backup-status.json
+          import json, os
+          from pathlib import Path
+          manifest = json.loads(Path("encrypted/manifest.json").read_text())
+          print(json.dumps({
+              "id": True,
+              "status": "success",
+              "completed_at": os.environ["BACKUP_NOW"],
+              "updated_at": os.environ["BACKUP_NOW"],
+              "run_id": os.environ["GITHUB_RUN_ID"],
+              "run_url": os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"],
+              "manifest": {
+                  "format_version": manifest["format_version"],
+                  "encryption": manifest["encryption"],
+                  "created_at_utc": manifest["created_at_utc"],
+                  "source_commit": manifest["source_commit"],
+                  "files": manifest["files"],
+                  "r2_prefix": os.environ["BACKUP_PREFIX"],
+                  "upload_size_verified": True
+              }
+          }))
+          PY
+          curl --fail-with-body --silent --show-error --retry 3             "$SUPABASE_URL/rest/v1/system_backup_status?on_conflict=id"             -X POST             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY"             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"             -H "Content-Type: application/json"             -H "Prefer: resolution=merge-duplicates,return=minimal"             --data-binary @backup-status.json
+
+      - name: Mark backup failed in admin dashboard
+        if: failure() && env.SUPABASE_URL != '' && env.SUPABASE_SERVICE_ROLE_KEY != ''
+        shell: bash
+        continue-on-error: true
+        run: |
+          now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          payload="$(python3 -c 'import json,os; print(json.dumps({"id": True, "status": "failed", "completed_at": os.environ["BACKUP_NOW"], "updated_at": os.environ["BACKUP_NOW"], "run_id": os.environ["GITHUB_RUN_ID"], "run_url": os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"], "manifest": {"error": "Backup workflow failed; inspect restricted Actions logs."}}))' )"
+          curl --fail-with-body --silent --show-error --retry 2             "$SUPABASE_URL/rest/v1/system_backup_status?on_conflict=id"             -X POST             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY"             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"             -H "Content-Type: application/json"             -H "Prefer: resolution=merge-duplicates,return=minimal"             --data "$payload"
+        env:
+          BACKUP_NOW: ${{ github.run_started_at }}
 
       - name: Remove local backup material
         if: always()
-        run: rm -rf backup-work encrypted
+        run: rm -rf backup-work encrypted backup-status.json
