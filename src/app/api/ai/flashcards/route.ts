@@ -5,7 +5,7 @@ import { consumeAiQuota } from "@/lib/api-security";
 export async function POST(request:NextRequest){
  try{
   const token=request.headers.get("authorization")?.replace(/^Bearer\s+/i,"");if(!token)return NextResponse.json({error:"Sign in to generate flashcards."},{status:401});
-  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;if(!url||!key)return NextResponse.json({error:"Supabase server configuration is missing."},{status:500});
+  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY||process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;if(!url||!key)return NextResponse.json({error:"Supabase authentication is not configured on the server."},{status:503});
   const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:"Bearer "+token}}});const {data:{user},error}=await client.auth.getUser(token);if(error||!user)return NextResponse.json({error:"Your session expired. Sign in again."},{status:401});
   if(Number(request.headers.get("content-length")||0)>16384)return NextResponse.json({error:"Request is too large."},{status:413});
   const body=await request.json(),topic=typeof body.topic==="string"?body.topic.trim().slice(0,240):"",count=Math.min(20,Math.max(5,Number(body.count)||10)),courseId=typeof body.courseId==="string"?body.courseId.trim():"";if(!topic)return NextResponse.json({error:"Enter a topic."},{status:400});
@@ -36,5 +36,5 @@ ${courseResources ? "Use these saved resource titles and descriptions as additio
 Return ONLY valid JSON shaped as {"cards":[{"front":"question","back":"answer"}]}. Use concise student-friendly language, factual answers, no markdown fences.`;
   const raw=await generateAIResponse({systemInstruction:"You are a careful academic study assistant. Return valid JSON only.",prompt,task:"flashcards"});const clean=raw.replace(/^\s*\x60\x60\x60(?:json)?/i,"").replace(/\x60\x60\x60\s*$/,"").trim();const parsed=JSON.parse(clean) as {cards?:{front?:string;back?:string}[]};
   const cards=(parsed.cards||[]).filter(c=>typeof c.front==="string"&&typeof c.back==="string"&&c.front.trim()&&c.back.trim()).slice(0,count).map(c=>({front:c.front!.trim().slice(0,1500),back:c.back!.trim().slice(0,3000)}));if(cards.length<3)throw new Error("The AI response did not contain enough valid cards.");return NextResponse.json({cards});
- }catch(e){console.error("Flashcard generation request failed.");return NextResponse.json({error:e instanceof Error?e.message:"Flashcard generation failed."},{status:500});}
+ }catch(e){console.error("Flashcard generation request failed.",{category:e instanceof Error&&/quota|rate|usage controls/i.test(e.message)?"usage_controls":"generation_failed"});return NextResponse.json({error:e instanceof Error&&/usage controls|quota/i.test(e.message)?"AI usage controls are temporarily unavailable. Please try again shortly.":"Flashcard generation failed. Please try again, or use a shorter topic."},{status:e instanceof Error&&/usage controls|quota/i.test(e.message)?503:500});}
 }
