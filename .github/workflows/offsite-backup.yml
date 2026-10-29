@@ -163,6 +163,26 @@ jobs:
           PY
           curl --fail-with-body --silent --show-error --retry 3             "$SUPABASE_URL/rest/v1/system_backup_status?on_conflict=id"             -X POST             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY"             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"             -H "Content-Type: application/json"             -H "Prefer: resolution=merge-duplicates,return=minimal"             --data-binary @backup-status.json
 
+      - name: Retain the most recent seven calendar days
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          cutoff="$(date -u -d '6 days ago' +%s)"
+          aws --endpoint-url "$endpoint" s3api list-objects-v2 --bucket "$R2_BUCKET" --prefix "studyspace/daily/" --query 'Contents[].Key' --output text |
+            tr '\t' '\n' |
+            while IFS= read -r key; do
+              [[ -n "$key" && "$key" != "None" ]] || continue
+              IFS=/ read -r root daily year month day run filename remainder <<< "$key"
+              [[ "$root" == "studyspace" && "$daily" == "daily" && "$year" =~ ^[0-9]{4}$ && "$month" =~ ^[0-9]{2}$ && "$day" =~ ^[0-9]{2}$ ]] || continue
+              object_date="$(date -u -d "${year}-${month}-${day}" +%s)"
+              if (( object_date < cutoff )); then
+                aws --endpoint-url "$endpoint" s3api delete-object --bucket "$R2_BUCKET" --key "$key" >/dev/null
+              fi
+            done
+          echo "Retention cleanup complete; backups from the latest seven calendar days are retained."
+
       - name: Mark backup failed in admin dashboard
         if: failure() && env.SUPABASE_URL != '' && env.SUPABASE_SERVICE_ROLE_KEY != ''
         shell: bash
