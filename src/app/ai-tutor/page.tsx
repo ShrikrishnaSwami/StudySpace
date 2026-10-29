@@ -575,6 +575,8 @@ export default function AITutorPage() {
 
     let assistantMessageId: string | null = null;
     let streamCompleted = false;
+    const requestController = new AbortController();
+    let requestTimeout: number | undefined;
 
     try {
       setSending(true);
@@ -649,6 +651,7 @@ export default function AITutorPage() {
         );
       }
 
+      requestTimeout = window.setTimeout(() => requestController.abort(), 75000);
       const response =
         await fetch(
           "/api/ai/tutor",
@@ -662,6 +665,7 @@ export default function AITutorPage() {
                 `Bearer ${accessToken}`,
             },
 
+            signal: requestController.signal,
             body: JSON.stringify({
               message: text,
               conversationId,
@@ -794,11 +798,14 @@ export default function AITutorPage() {
         setMessages((current) => current.filter((item) => item.id !== assistantMessageId));
       }
       setError(
-        err instanceof Error
-          ? err.message
-          : "Something went wrong."
+        requestController.signal.aborted
+          ? "This response took too long. Please try again; the AI service may be busy."
+          : err instanceof Error
+            ? err.message
+            : "Something went wrong."
       );
     } finally {
+      if (requestTimeout !== undefined) window.clearTimeout(requestTimeout);
       setSending(false);
 
       window.setTimeout(() => {
