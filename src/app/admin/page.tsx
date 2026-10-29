@@ -177,6 +177,7 @@ export default function AdminPage() {
           <div>
             <h2 className="font-semibold text-amber-100">Add multi-factor authentication to the admin account</h2>
             <p className="mt-1 text-sm leading-6 text-white/65">No verified authenticator factor was found for this account. Server-side administrator checks are enabled, but a password alone is not a second factor. Enrol a TOTP authenticator and verify it before inviting external beta users.</p>
+            <a className="mt-2 mr-4 inline-flex items-center gap-1 text-sm text-violet-200 underline underline-offset-4" href="/settings">Open Settings to enable MFA</a>
             <a className="mt-2 inline-flex items-center gap-1 text-sm text-violet-200 underline underline-offset-4" href="https://supabase.com/docs/guides/auth/auth-mfa" target="_blank" rel="noreferrer">Supabase MFA setup guide <ExternalLink size={13}/></a>
           </div>
         </div>
