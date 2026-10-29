@@ -106,16 +106,10 @@ export async function GET(
       quiz,
       questions: questions || [],
     });
-  } catch (error) {
-    console.error("Quiz API error:", error);
-
+  } catch {
+    console.error("Quiz API request failed.");
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to load quiz.",
-      },
+      { error: "Could not load this quiz. Please try again." },
       { status: 500 }
     );
   }
