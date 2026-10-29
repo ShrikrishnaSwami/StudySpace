@@ -138,6 +138,7 @@ async function generateWithGemini({
       systemInstruction: buildSystemInstruction(systemInstruction, task),
       temperature: task === "tutor" ? 0.35 : 0.2,
       maxOutputTokens: outputTokenLimit(task),
+      ...(task === "tutor" ? {} : { responseMimeType: "application/json" }),
     },
   });
   const result = response.text?.trim();
