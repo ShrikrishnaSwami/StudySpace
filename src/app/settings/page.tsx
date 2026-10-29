@@ -68,6 +68,7 @@ export default function SettingsPage() {
   const [loadingUsage, setLoadingUsage] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [mfaEnabled, setMfaEnabled] = useState(false);
   const [mfaSetup, setMfaSetup] = useState<{ id: string; qrCode: string; secret: string } | null>(null);
   const [mfaCode, setMfaCode] = useState("");
@@ -85,9 +86,15 @@ export default function SettingsPage() {
         if (!alive) return;
         setName(typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "");
         setEmail(user.email || "");
-        const { data: factors, error: factorError } = await supabase.auth.mfa.listFactors();
-        if (!factorError && alive) {
-          setMfaEnabled((factors?.totp || []).some((factor) => factor.status === "verified"));
+        // app_metadata is server-managed; user_metadata is editable by the user
+        // and must never be used to grant administrator-only UI.
+        const adminAccount = user.app_metadata?.role === "admin";
+        setIsAdmin(adminAccount);
+        if (adminAccount) {
+          const { data: factors, error: factorError } = await supabase.auth.mfa.listFactors();
+          if (!factorError && alive) {
+            setMfaEnabled((factors?.totp || []).some((factor) => factor.status === "verified"));
+          }
         }
         const saved = user.user_metadata?.studyspace_settings;
         const next: Preferences = {
@@ -330,6 +337,7 @@ export default function SettingsPage() {
         </Section>
 
         <Section icon={Shield} title="Account security" description="Actions that affect your entire StudySpace account.">
+          {isAdmin && <>
                     <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2"><ShieldCheck size={16} className={mfaEnabled ? "text-emerald-300" : "text-amber-200"}/><p className="text-sm font-medium text-white">Authenticator app (MFA)</p></div>
@@ -349,6 +357,7 @@ export default function SettingsPage() {
           </form>}
           {mfaMessage && <p role="status" className="text-xs text-emerald-200">{mfaMessage}</p>}
           {mfaError && <p role="alert" className="text-xs text-red-300">{mfaError}</p>}
+          </>}
           <div className="border-t border-white/[0.06] pt-5"/>
 
           <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-medium text-white">Sign out on this device</p><p className="mt-1 text-xs text-white/40">End your current session.</p></div><button type="button" onClick={async()=>{const {error}=await supabase.auth.signOut({scope:"local"});if(error)setSecurityMessage(error.message);else router.replace("/login");}} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/80 hover:bg-white/[0.05]"><LogOut size={15}/>Sign out</button></div>
