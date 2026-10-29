@@ -18,7 +18,11 @@ export async function GET(request: NextRequest) {
     const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
     if (!token) return NextResponse.json({ error: "Sign in required." }, { status: 401 });
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const key =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY;
     if (!url || !key) return NextResponse.json({ error: "Supabase configuration is missing." }, { status: 503 });
     const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { headers: { Authorization: "Bearer " + token } } });
     const { data: { user }, error: authError } = await client.auth.getUser(token);
