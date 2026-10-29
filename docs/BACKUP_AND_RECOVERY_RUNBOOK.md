@@ -16,7 +16,7 @@ Supabase's current backup guide says Pro, Team, and Enterprise projects receive 
 
 ## Create an off-site backup
 
-Use the automated pipeline in [`OFFSITE_BACKUP_SETUP.md`](./OFFSITE_BACKUP_SETUP.md). It exports the `public` application schema/data, the private `assignment-files`, `assignment-submissions`, and `homework` buckets, plus limited Auth user metadata; encrypts archives with age; uploads them to a private Cloudflare R2 bucket; and verifies remote object sizes and SHA-256 manifest hashes.
+Use the automated pipeline in [`OFFSITE_BACKUP_SETUP.md`](./OFFSITE_BACKUP_SETUP.md). It exports the `public` application schema/data, the private `assignment-files`, `assignment-submissions`, and `homework` buckets, plus limited Auth user metadata; encrypts archives with age; uploads them to a private Cloudflare R2 bucket; verifies remote object sizes and SHA-256 manifest hashes; and retains the latest seven calendar days after successful upload.
 
 - Keep every credential in GitHub Actions Secrets; never commit secrets or paste them into chat.
 - Keep the age private key offline in at least two secure places. The public recipient is safe to store as a GitHub Actions secret; the private key must never be uploaded.
