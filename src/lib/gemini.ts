@@ -51,13 +51,23 @@ const GEMINI_MODEL_CATALOG = [
  */
 function configuredGeminiModels(task: AITask) {
   const group = groupForTask(task);
-  const defaultPrimary = group === "fast" ? "gemini-3.5-flash-lite" : "gemini-3.6-flash";
-  const primary = (
+  const defaults: Record<AITask, string> = {
+    tutor: "gemini-3.6-flash",
+    quiz: "gemini-3.6-flash",
+    flashcards: "gemini-3.5-flash-lite",
+    homework: "gemini-3.6-flash",
+    syllabus: "gemini-3.1-flash-lite",
+    recommendations: "gemini-3.5-flash-lite",
+    notes: "gemini-3.1-flash-lite",
+    grading: "gemini-3.6-flash",
+  };
+  const taskOverride = process.env["GEMINI_" + task.toUpperCase() + "_MODEL"]?.trim();
+  const groupOverride = (
     group === "tutor" ? process.env.GEMINI_TUTOR_MODEL :
     group === "reasoning" ? process.env.GEMINI_REASONING_MODEL :
     process.env.GEMINI_FAST_MODEL
-  )?.trim() || defaultPrimary;
-
+  )?.trim();
+  const primary = taskOverride || groupOverride || defaults[task];
   const paidAllowed = process.env.GEMINI_ALLOW_PAID_MODELS === "true";
   const byId = new Map(GEMINI_MODEL_CATALOG.map((model) => [model.id, model]));
   const isAllowed = (model: string) => {
@@ -66,18 +76,24 @@ function configuredGeminiModels(task: AITask) {
     // Keep them out unless the operator explicitly opts in.
     return Boolean(entry) && (entry!.tier !== "paid" || paidAllowed);
   };
-  const preferredOrder = group === "fast"
-    ? ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.6-flash", "gemini-3-flash-preview", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-3.8-flash"]
-    : ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.5-flash-lite", "gemini-3.8-flash"];
+  const preferredOrder: Record<AITask, string[]> = {
+    tutor: ["gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3-flash-preview", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.5-flash-lite", "gemini-3.8-flash"],
+    quiz: ["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-3.5-flash-lite", "gemini-2.5-pro", "gemini-3.1-flash-lite", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.8-flash"],
+    flashcards: ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.6-flash", "gemini-3-flash-preview", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-3.8-flash"],
+    homework: ["gemini-3.6-flash", "gemini-3-flash-preview", "gemini-3.5-flash-lite", "gemini-2.5-pro", "gemini-3.1-flash-lite", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.8-flash"],
+    syllabus: ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.6-flash", "gemini-3-flash-preview", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-3.8-flash"],
+    recommendations: ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.6-flash", "gemini-3-flash-preview", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-3.8-flash"],
+    notes: ["gemini-3.1-flash-lite", "gemini-3.5-flash-lite", "gemini-3.6-flash", "gemini-3-flash-preview", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-3.8-flash"],
+    grading: ["gemini-3.6-flash", "gemini-2.5-pro", "gemini-3-flash-preview", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.8-flash"],
+  };
   const configuredFallback = process.env.GEMINI_FALLBACK_MODEL?.trim();
   const candidates = [
     ...(isAllowed(primary) ? [primary] : []),
     ...(configuredFallback && configuredFallback !== primary && isAllowed(configuredFallback) ? [configuredFallback] : []),
-    ...preferredOrder.filter((model) => model !== primary && isAllowed(model)),
+    ...preferredOrder[task].filter((model) => model !== primary && isAllowed(model)),
     ...(paidAllowed ? GEMINI_MODEL_CATALOG.filter((model) => model.tier === "paid").map((model) => model.id) : []),
   ].filter((model, index, all) => all.indexOf(model) === index);
-  // A misconfigured paid-only primary must never silently create charges.
-  if (!candidates.length) candidates.push(defaultPrimary);
+  if (!candidates.length) candidates.push(defaults[task]);
   return { primary: candidates[0], fallback: candidates[1] || candidates[0], candidates };
 }
 
