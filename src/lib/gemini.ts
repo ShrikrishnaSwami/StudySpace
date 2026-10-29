@@ -141,7 +141,7 @@ function isCredentialError(error: unknown) {
 
 function isRetryableError(error: unknown) {
   const value = errorSummary(error);
-  return /\b(408|429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand|timeout|temporarily unavailable|not found|unsupported model|model .*not available|empty response/i.test(value);
+  return /\b(400|403|404|408|429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand|timeout|temporarily unavailable|not found|unsupported model|model .*not available|model.*not.*enabled|not authorized.*model|permission denied|access denied|empty response/i.test(value);
 }
 
 function outputTokenLimit(task: AITask) {
