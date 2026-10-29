@@ -594,16 +594,19 @@ unless the student explicitly asks about them.
     const encoder = new TextEncoder();
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
+        let firstTokenAt: number | null = null;
         try {
           for await (const chunk of streamStudySpaceAnswer({
             systemInstruction,
             prompt: tutorPrompt,
             task: "tutor",
           })) {
+            if (firstTokenAt === null) firstTokenAt = Date.now();
             controller.enqueue(encoder.encode(JSON.stringify({ type: "chunk", text: chunk }) + "\n"));
           }
           console.info("StudySpace Tutor request completed", {
             durationMs: Date.now() - requestStartedAt,
+            timeToFirstTokenMs: firstTokenAt === null ? null : firstTokenAt - requestStartedAt,
             contextLoadMs,
             retrievalWaitMs,
             retrievalStrategy: retrieval.strategy,
@@ -612,6 +615,7 @@ unless the student explicitly asks about them.
         } catch (streamError) {
           console.error("AI Tutor streaming error:", streamError, {
             durationMs: Date.now() - requestStartedAt,
+            timeToFirstTokenMs: firstTokenAt === null ? null : firstTokenAt - requestStartedAt,
             contextLoadMs,
             retrievalWaitMs,
             retrievalStrategy: retrieval.strategy,
