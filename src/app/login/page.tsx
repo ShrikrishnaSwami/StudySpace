@@ -84,7 +84,15 @@ export default function LoginPage() {
           headers: { Authorization: "Bearer " + session.access_token },
           cache: "no-store",
         });
-        router.push(adminCheck.ok ? "/admin" : "/dashboard");
+        if (adminCheck.ok) {
+          router.push("/admin");
+        } else if (adminCheck.status === 403) {
+          const result = await adminCheck.clone().json().catch(() => ({}));
+          // Admins without MFA must reach setup; sensitive admin APIs still require AAL2.
+          router.push(result?.code === "MFA_REQUIRED" ? "/admin" : "/dashboard");
+        } else {
+          router.push("/dashboard");
+        }
       } else {
         router.push("/dashboard");
       }
