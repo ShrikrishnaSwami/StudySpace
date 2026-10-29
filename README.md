@@ -15,7 +15,7 @@ StudySpace is a student workspace built with Next.js, React, TypeScript, and Sup
 
 Required for the core app:
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Supabase publishable/anon key)
+- Either `NEXT_PUBLIC_SUPABASE_ANON_KEY` or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (configure one public browser key)
 
 Required for AI features:
 - `GEMINI_API_KEY` (server-side only; never expose it with a `NEXT_PUBLIC_` prefix)
