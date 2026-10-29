@@ -184,13 +184,13 @@ async function generateWithExternalProvider({
     ? {
         model,
         messages: [{ role: "system", content: system }, { role: "user", content: prompt }],
-        max_completion_tokens: task === "tutor" ? 6144 : 4096,
+        max_completion_tokens: outputTokenLimit(task),
       }
     : {
         model,
         system,
         messages: [{ role: "user", content: prompt }],
-        max_tokens: task === "tutor" ? 6144 : 4096,
+        max_tokens: outputTokenLimit(task),
         temperature: task === "tutor" ? 0.35 : 0.2,
       };
 
