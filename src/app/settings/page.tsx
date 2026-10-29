@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
   Bell, Check, Download, Eye, Gauge, Lock, LogOut, Mail, Save, Shield, Trash2, User, RefreshCw,
 } from "lucide-react";
@@ -94,7 +94,7 @@ export default function SettingsPage() {
     return () => { alive = false; };
   }, [router]);
 
-  async function loadAiUsage() {
+  const loadAiUsage = useCallback(async () => {
     setLoadingUsage(true); setUsageError("");
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -106,7 +106,11 @@ export default function SettingsPage() {
     } catch (error) {
       setUsageError(error instanceof Error ? error.message : "Could not load AI usage.");
     } finally { setLoadingUsage(false); }
-  }
+  }, []);
+
+  useEffect(() => {
+    if (!loading && email) void loadAiUsage();
+  }, [loading, email, loadAiUsage]);
 
   async function exportData() {
     setExporting(true); setExportMessage("");
@@ -253,8 +257,8 @@ export default function SettingsPage() {
         <Section icon={Gauge} title="AI usage" description="View your rolling 24-hour generation limits.">
           <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-white/50">Limits help protect availability and keep AI usage predictable.</p><button type="button" onClick={()=>void loadAiUsage()} disabled={loadingUsage} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs text-white/70 disabled:opacity-50"><RefreshCw size={14}/>{loadingUsage?"Refreshing…":"Refresh usage"}</button></div>
           {usageError&&<p role="alert" className="text-xs text-red-300">{usageError}</p>}
-          {aiUsage.length===0&&!loadingUsage&&!usageError&&<button type="button" onClick={()=>void loadAiUsage()} className="rounded-xl border border-violet-400/20 px-4 py-2.5 text-sm text-violet-200">Load AI usage</button>}
-          <div className="grid gap-3 sm:grid-cols-2">{aiUsage.map(item=><div key={item.feature} className="rounded-xl border border-white/[0.08] p-4"><div className="flex items-center justify-between gap-3"><p className="text-sm font-medium capitalize text-white">{item.feature==="tutor"?"AI Tutor":item.feature==="quiz"?"Quiz generation":item.feature==="flashcards"?"Flashcard generation":item.feature==="homework"?"Homework analysis":item.feature==="syllabus"?"Syllabus importer":"Study recommendations"}</p><p className="text-xs tabular-nums text-white/45">{item.used}/{item.limit}</p></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-violet-500" style={{width:Math.min(100,item.used/Math.max(1,item.limit)*100)+"%"}}/></div><p className="mt-2 text-[11px] text-white/40">{item.remaining} requests remaining in the last 24 hours</p></div>)}</div>
+          {loadingUsage&&aiUsage.length===0&&<p role="status" className="text-xs text-white/40">Loading AI usage…</p>}
+          <div className="grid gap-3 sm:grid-cols-2">{aiUsage.map(item=><div key={item.feature} className="rounded-xl border border-white/[0.08] p-4"><div className="flex items-center justify-between gap-3"><p className="text-sm font-medium capitalize text-white">{item.feature==="tutor"?"AI Tutor":item.feature==="quiz"?"Quiz generation":item.feature==="flashcards"?"Flashcard generation":item.feature==="homework"?"Homework analysis":item.feature==="syllabus"?"Syllabus importer":"Study recommendations"}</p><p className="text-xs tabular-nums text-white/45">{item.used}/{item.limit}</p></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-violet-500" style={{width:Math.min(100,item.used/Math.max(1,item.limit)*100)+"%"}}/></div><p className="mt-2 text-[11px] text-white/40">{item.remaining} requests remaining in the next 24 hours</p></div>)}</div>
         </Section>
 
         <Section icon={Download} title="Your data" description="Download a copy of the academic records associated with your account.">
