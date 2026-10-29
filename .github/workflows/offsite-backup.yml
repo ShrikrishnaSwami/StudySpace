@@ -50,11 +50,9 @@ jobs:
         run: |
           set -euo pipefail
           now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          payload="$(python3 -c 'import json,os; print(json.dumps({"id": True, "status": "running", "started_at": os.environ["BACKUP_NOW"], "completed_at": None, "run_id": os.environ["GITHUB_RUN_ID"], "run_url": os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"], "manifest": {}, "updated_at": os.environ["BACKUP_NOW"]}))' )"
+          payload="$(BACKUP_NOW="$now" python3 -c 'import json,os; print(json.dumps({"id": True, "status": "running", "started_at": os.environ["BACKUP_NOW"], "completed_at": None, "run_id": os.environ["GITHUB_RUN_ID"], "run_url": os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"], "manifest": {}, "updated_at": os.environ["BACKUP_NOW"]}))' )"
           curl --fail-with-body --silent --show-error --retry 3             "$SUPABASE_URL/rest/v1/system_backup_status?on_conflict=id"             -X POST             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY"             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"             -H "Content-Type: application/json"             -H "Prefer: resolution=merge-duplicates,return=minimal"             --data "$payload"
-        env:
-          BACKUP_NOW: ${{ github.run_started_at }}
-
+ 
       - name: Install backup tools
         run: |
           sudo apt-get update
@@ -171,11 +169,9 @@ jobs:
         continue-on-error: true
         run: |
           now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          payload="$(python3 -c 'import json,os; print(json.dumps({"id": True, "status": "failed", "completed_at": os.environ["BACKUP_NOW"], "updated_at": os.environ["BACKUP_NOW"], "run_id": os.environ["GITHUB_RUN_ID"], "run_url": os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"], "manifest": {"error": "Backup workflow failed; inspect restricted Actions logs."}}))' )"
+          payload="$(BACKUP_NOW="$now" python3 -c 'import json,os; print(json.dumps({"id": True, "status": "failed", "completed_at": os.environ["BACKUP_NOW"], "updated_at": os.environ["BACKUP_NOW"], "run_id": os.environ["GITHUB_RUN_ID"], "run_url": os.environ["GITHUB_SERVER_URL"] + "/" + os.environ["GITHUB_REPOSITORY"] + "/actions/runs/" + os.environ["GITHUB_RUN_ID"], "manifest": {"error": "Backup workflow failed; inspect restricted Actions logs."}}))' )"
           curl --fail-with-body --silent --show-error --retry 2             "$SUPABASE_URL/rest/v1/system_backup_status?on_conflict=id"             -X POST             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY"             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY"             -H "Content-Type: application/json"             -H "Prefer: resolution=merge-duplicates,return=minimal"             --data "$payload"
-        env:
-          BACKUP_NOW: ${{ github.run_started_at }}
-
+ 
       - name: Remove local backup material
         if: always()
         run: rm -rf backup-work encrypted backup-status.json
