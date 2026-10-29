@@ -4,8 +4,8 @@ Use this checklist against the actual production environment before inviting rea
 
 ## 1. Production configuration
 
-- [ ] Vercel deployment reaches **Ready** and points to the intended commit.
-- [ ] Vercel production environment contains `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- [ ] Vercel deployment reaches **Ready** and points to the intended commit; confirm the live deployment includes the current `main` commit rather than an older successful build.
+- [ ] Vercel production environment contains `NEXT_PUBLIC_SUPABASE_URL` and either `NEXT_PUBLIC_SUPABASE_ANON_KEY` or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (the configured key name must be consistent across browser and server routes).
 - [ ] `GEMINI_API_KEY` is set as a server-only environment variable.
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY` is set only in server-side Vercel environments for features that require privileged operations.
 - [ ] The intended administrator has a trusted `role: "admin"` claim in Supabase Auth `app_metadata` (never `user_metadata`), and the admin routes reject ordinary users. Sign out and back in after role changes to refresh the JWT.
