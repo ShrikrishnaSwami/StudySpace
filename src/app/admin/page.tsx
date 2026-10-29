@@ -22,6 +22,7 @@ type BackupStatus = {
   runId?: string | null;
   runUrl?: string | null;
   message?: string;
+  manifest?: { storage?: string; retention_days?: number; artifact_name?: string };
 };
 const blank: Stats = { totalUsers: 0, aiRequests24h: 0, aiFeedback7d: 0, aiHelpful7d: 0, aiUnhelpful7d: 0, generatedAt: "" };
 const blankBackup: BackupStatus = { configured: false, status: "not_configured" };
@@ -104,6 +105,7 @@ export default function AdminPage() {
         runId: body.runId || null,
         runUrl: body.runUrl || null,
         message: body.message || "",
+        manifest: body.manifest || {},
       });
     } catch (cause) {
       setBackupError(cause instanceof Error ? cause.message : "Could not load backup status.");
@@ -223,6 +225,7 @@ export default function AdminPage() {
         </div>
 
         {backup.status === "success" && <p className="mt-4 text-xs text-white/40">Encrypted archive upload completed. This does not mean a restore drill has passed.</p>}
+        {backup.manifest?.storage === "private-github-actions-artifact" && <p className="mt-2 text-xs text-amber-200/80">Free backup artifact retention: {backup.manifest.retention_days || 7} days. Download a copy and complete the restore drill before relying on it.</p>}
         {backup.status !== "success" && <p className="mt-4 text-xs text-white/40">Treat recovery as unverified until a backup is uploaded and a separate test restore succeeds.</p>}
 
         <div className="mt-4 flex flex-wrap gap-3">
