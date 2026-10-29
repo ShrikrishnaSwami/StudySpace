@@ -62,7 +62,9 @@ function configuredGeminiModels(task: AITask) {
   const byId = new Map(GEMINI_MODEL_CATALOG.map((model) => [model.id, model]));
   const isAllowed = (model: string) => {
     const entry = byId.get(model as (typeof GEMINI_MODEL_CATALOG)[number]["id"]);
-    return !entry || entry.tier !== "paid" || paidAllowed;
+    // Unknown IDs may be paid, deprecated, or aliases that redirect to a saturated model.
+    // Keep them out unless the operator explicitly opts in.
+    return Boolean(entry) && (entry!.tier !== "paid" || paidAllowed);
   };
   const preferredOrder = group === "fast"
     ? ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.6-flash", "gemini-3-flash-preview", "gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "gemini-3.8-flash"]
