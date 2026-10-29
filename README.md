@@ -2,31 +2,37 @@
 
 **A calmer place to manage student life.**
 
-StudySpace brings academic planning and study tools into one workspace. Organize courses, assignments, notes, quizzes, flashcards, deadlines, and study sessions, with AI assistance available where it helps.
+StudySpace is a student workspace for organizing academic work and using AI-assisted study tools in one place.
 
-## What you can do
+## Features
 
-- **Dashboard** — see your academic workspace and upcoming work.
-- **Courses and assignments** — organize course information, coursework, deadlines, submissions, and feedback.
-- **AI Tutor** — ask questions and get explanations grounded in supported workspace material when that context is available.
-- **Quizzes and flashcards** — create practice material and review what you have learned.
-- **Notes and resources** — keep study material in one place and reuse it as learning context.
-- **Homework and syllabus tools** — upload supported files, get assistance with coursework, and extract potential dates from syllabus text or documents.
-- **Calendar and study planner** — coordinate deadlines, events, and study sessions.
-- **Grades and progress** — keep track of entered grades and study goals.
-- **Study groups** — organize learning with other students.
-- **Admin tools** — provide authorized administrators with operational views.
+- **Dashboard** — an overview of academic activity and upcoming work.
+- **Courses, notes, and resources** — organize learning materials.
+- **Assignments** — manage coursework, submissions, and feedback.
+- **AI Tutor** — ask academic questions and get explanations.
+- **Quizzes and flashcards** — practise and review topics.
+- **Homework and syllabus tools** — work with supported files and extract possible dates from syllabus content.
+- **Calendar and study planner** — organize events, deadlines, and study sessions.
+- **Grades and progress** — track entered grades and study goals.
+- **Study groups** — support collaborative learning.
+- **Administration** — authorized administrative views.
 
-AI-generated explanations, dates, questions, and feedback can be incorrect. Check important results against your course instructions and official materials.
+AI-generated explanations, dates, questions, and feedback can be wrong or incomplete. Verify important results against course instructions and official materials. StudySpace is a study aid, not a replacement for instructors or institutional guidance.
 
-## Built with
+## Beta status
 
-- Next.js and React
-- TypeScript
-- Supabase Auth, PostgreSQL, and Storage
-- Google Gemini through server-side API routes
+StudySpace is currently being evaluated in a **controlled beta**. Features, reliability, and workflows are still being tested and improved. Availability during beta may change, and users should keep their own copies of important coursework.
+
+The project is being developed with privacy and responsible handling of student data in mind. Security and reliability checks are ongoing; this README is not a security certification or a guarantee that every workflow has been independently tested.
+
+## Technology
+
+- Next.js, React, and TypeScript
+- Supabase for authentication, database, and file storage
+- Google Gemini for AI-assisted features
 - Tailwind CSS and Lucide icons
 - Vercel for deployment
+- GitHub Actions for automated checks
 
 ## Run locally
 
@@ -39,39 +45,41 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-Create a local `.env.local` file with the configuration needed for the features you want to run. Keep secret values in local environment files or the hosting provider's server-side environment settings; do not commit them to Git.
+Configure the environment required for the features you want to run using your own development accounts. Keep credentials in local environment files or the hosting provider's protected settings. Never commit real credentials, private keys, or production data to the repository.
 
-| Variable | Purpose |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser-safe Supabase key |
-| `GEMINI_API_KEY` | Server-side AI provider access |
-| `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY` | Server-side privileged Supabase operations, where required |
-| `APP_ORIGIN` | Optional canonical application origin for supported flows |
-
-Only configure the variables required by the features you are running. Values prefixed with `NEXT_PUBLIC_` are exposed to the browser and must never contain secrets.
-
-## Useful commands
+## Development checks
 
 ```bash
 npm run lint
 npm run test:retrieval
 npm run test:syllabus
+npm run test:security
 npx tsc --noEmit
 npm run build
 npm audit --audit-level=high
 ```
 
-## Project structure
+Passing automated checks does not replace testing the deployed application with test accounts.
+
+## Project layout
 
 - `src/app` — application pages and API routes
-- `src/lib` — shared application logic, AI retrieval, and integrations
-- `supabase/migrations` — database schema and access-control changes
-- `docs` — developer notes, operational guides, and release checklists
-- `.github/workflows` — automated checks and scheduled workflows
+- `src/lib` — shared application logic and integrations
+- `supabase/migrations` — database schema changes
+- `docs` — public project, beta, AI, and reliability notes
+- `.github/workflows` — automated checks and workflow definitions
+
+## Public project notes
+
+- [Beta and reliability overview](docs/INITIAL_LAUNCH_CHECKLIST.md)
+- [Security review summary](docs/SECURITY_TEST_REPORT_2026-10-28.md)
+- [AI feature overview](docs/AI_ENGINE_ROADMAP.md)
+- [AI quality and performance overview](docs/AI_LATENCY_AND_MODEL_ROUTING.md)
+- [AI evaluation overview](docs/AI_MODEL_CATALOG_AND_TESTING.md)
+- [Backup and recovery status](docs/BACKUP_AND_RECOVERY_RUNBOOK.md)
+
+Detailed operational procedures and private configuration should be maintained outside this public repository.
 
 ## Development and contributions
 
-Make changes in a feature branch when practical, run the relevant checks, and review database migrations before applying them to a live project. Test authentication, permissions, file access, and core student workflows in a non-production environment before releasing changes to users.
-
-For operational procedures, consult the guides in the `docs` directory.
+Use feature branches when practical, review changes before merging, and test authentication, permissions, file handling, and core student workflows in a non-production environment. Report problems through the project's maintainer or the support channel provided to beta participants.
