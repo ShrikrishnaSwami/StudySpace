@@ -15,11 +15,13 @@ This is a backup pipeline, not a completed recovery drill. Do not mark recovery 
 
 ## Free accounts and setup
 
+**Cost note:** R2 is optional. Do not activate it or enter payment details until you are comfortable with the account setup and pricing. Until the bucket and credentials are configured and a run succeeds, off-site backups are not operational.
+
 ### 1. Create a Cloudflare R2 bucket
 
 1. Sign up at https://dash.cloudflare.com/ (the R2 free tier currently includes 10 GB-month of Standard storage, 1 million Class A operations, 10 million Class B operations, and no egress fee; check the current pricing before relying on a free limit: https://developers.cloudflare.com/r2/pricing/).
 2. In **R2 Object Storage**, create a private bucket named `studyspace-backups`. Do not enable public access.
-3. Create an R2 API token scoped only to this bucket with object **read and write** permissions. Copy the Access Key ID and Secret Access Key once; never commit them or send them in chat.
+3. Create an R2 API token scoped only to this bucket with object **read, write, and delete** permissions (delete is needed for the configured seven-day retention cleanup). Keep the bucket private. Copy the Access Key ID and Secret Access Key once; never commit them or send them in chat.
 4. Find the Cloudflare account ID in the dashboard.
 
 ### 2. Create an encryption key
