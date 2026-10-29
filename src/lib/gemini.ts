@@ -368,7 +368,7 @@ export async function generateAIResponseFromParts({
   const { candidates } = configuredGeminiModels(task);
   let lastError: unknown;
 
-  for (const model of candidates.slice(0, 3)) {
+  for (const model of candidates.slice(0, task === "grading" || task === "notes" || task === "homework" ? 2 : 3)) {
     const startedAt = Date.now();
     try {
       const response = await getGeminiClient().models.generateContent({
@@ -435,7 +435,7 @@ export async function generateAIResponseFromPdf({
   pdfBase64: string;
 }) {
   const { candidates } = configuredGeminiModels("syllabus");
-  const models = candidates.slice(0, 3);
+  const models = candidates.slice(0, 2);
   let lastError: unknown;
   for (const model of models) {
     try {
