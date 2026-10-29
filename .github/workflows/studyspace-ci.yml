@@ -29,10 +29,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Unit tests
+      - name: Unit and security regression tests
         run: |
           npm run test:retrieval
           npm run test:syllabus
+          npm run test:security
       - name: Production build and type checks
         run: npm run build
       - name: Install Playwright for browser smoke tests
