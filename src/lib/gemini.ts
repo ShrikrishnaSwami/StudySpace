@@ -98,10 +98,6 @@ function isRetryableError(error: unknown) {
   return /\b(408|429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand|timeout|temporarily unavailable|not found|unsupported model|model .*not available/i.test(value);
 }
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function outputTokenLimit(task: AITask) {
   switch (task) {
     case "tutor": return 3072;
@@ -314,15 +310,23 @@ export async function* streamAIResponse({
         },
       });
 
+      const startedAt = Date.now();
+      let firstTokenAt: number | null = null;
       for await (const chunk of stream) {
         const text = chunk.text || "";
         if (text) {
+          if (firstTokenAt === null) firstTokenAt = Date.now();
           emitted = true;
           yield text;
         }
       }
 
       if (!emitted) throw new Error("The AI provider returned an empty response.");
+      console.info("StudySpace AI stream completed", {
+        task, provider: "gemini", model,
+        timeToFirstTokenMs: firstTokenAt === null ? null : firstTokenAt - startedAt,
+        durationMs: Date.now() - startedAt,
+      });
       return;
     } catch (error) {
       lastError = error;
@@ -333,19 +337,65 @@ export async function* streamAIResponse({
     }
   }
 
-  if (lastError) {
-    // Streaming is an optimization, not a hard dependency. If the stream API
-    // rejects the request before producing text, retry through the established
-    // non-streaming path, which has its own provider/model fallback handling.
-    console.warn("Gemini streaming unavailable; retrying with standard generation", {
-      task,
-      retryable: isRetryableError(lastError),
-      error: lastError instanceof Error ? lastError.message : String(lastError),
-    });
-    yield await generateAIResponse({ systemInstruction, prompt, task });
-    return;
-  }
+  // Avoid restarting a failed request against the same models after streaming
+  // has already exhausted the bounded model ladder.
+  console.warn("Gemini streaming exhausted model fallback", {
+    task,
+    retryable: isRetryableError(lastError),
+    error: errorSummary(lastError),
+  });
+  throw new Error("StudySpace AI is temporarily unavailable. Please try again shortly.");
+}
 
+/** Analyze an uploaded file using the same task-specific model routing and bounded fallback policy. */
+export async function generateAIResponseFromInlineData({
+  systemInstruction,
+  prompt,
+  mimeType,
+  data,
+  task = "homework",
+}: {
+  systemInstruction: string;
+  prompt: string;
+  mimeType: string;
+  data: string;
+  task?: AITask;
+}) {
+  const { candidates } = configuredGeminiModels(task);
+  let lastError: unknown;
+
+  for (const model of candidates.slice(0, 3)) {
+    const startedAt = Date.now();
+    try {
+      const response = await getGeminiClient().models.generateContent({
+        model,
+        contents: [{
+          role: "user",
+          parts: [{ inlineData: { mimeType, data } }, { text: prompt }],
+        }],
+        config: {
+          systemInstruction: buildSystemInstruction(systemInstruction, task),
+          temperature: 0.25,
+          maxOutputTokens: outputTokenLimit(task),
+        },
+      });
+      const result = response.text?.trim();
+      if (!result) throw new Error("The AI provider returned an empty response.");
+      console.info("StudySpace AI document analysis completed", {
+        task, provider: "gemini", model, durationMs: Date.now() - startedAt,
+        inputBytes: Math.floor(data.length * 0.75), outputCharacters: result.length,
+      });
+      return result;
+    } catch (error) {
+      lastError = error;
+      const credentialError = isCredentialError(error);
+      const retryable = isRetryableError(error);
+      console.warn("Gemini document model attempt failed", {
+        task, model, retryable, credentialError, reason: errorSummary(error),
+      });
+      if (credentialError || (!retryable && model === candidates[0])) break;
+    }
+  }
   throw new Error("StudySpace AI is temporarily unavailable. Please try again shortly.");
 }
 
