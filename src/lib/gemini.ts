@@ -112,7 +112,7 @@ function outputTokenLimit(task: AITask) {
     case "homework": return 3072;
     case "grading": return 4096;
     case "notes": return 4608;
-    case "quiz": return 2048;
+    case "quiz": return 4096;
     case "syllabus": return 2048;
     case "flashcards": return 2048;
     case "recommendations": return 1536;
