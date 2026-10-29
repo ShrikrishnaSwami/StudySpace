@@ -307,6 +307,7 @@ export async function* streamAIResponse({
   for (const model of models) {
     let emitted = false;
     try {
+      const startedAt = Date.now();
       const stream = await getGeminiClient().models.generateContentStream({
         model,
         contents: prompt,
@@ -321,7 +322,6 @@ export async function* streamAIResponse({
         },
       });
 
-      const startedAt = Date.now();
       let firstTokenAt: number | null = null;
       for await (const chunk of stream) {
         const text = chunk.text || "";
@@ -335,7 +335,7 @@ export async function* streamAIResponse({
       if (!emitted) throw new Error("The AI provider returned an empty response.");
       console.info("StudySpace AI stream completed", {
         task, provider: "gemini", model,
-        timeToFirstTokenMs: firstTokenAt === null ? null : firstTokenAt - startedAt,
+        providerTimeToFirstTokenMs: firstTokenAt === null ? null : firstTokenAt - startedAt,
         durationMs: Date.now() - startedAt,
       });
       return;
