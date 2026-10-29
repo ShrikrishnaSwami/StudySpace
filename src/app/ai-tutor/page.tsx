@@ -219,6 +219,8 @@ export default function AITutorPage() {
 
   const [messageFeedback, setMessageFeedback] =
     useState<Record<string, -1 | 1>>({});
+  const [feedbackSaving, setFeedbackSaving] = useState<Record<string, boolean>>({});
+  const [feedbackStatus, setFeedbackStatus] = useState<Record<string, string>>({});
 
   const messagesEndRef =
     useRef<HTMLDivElement>(null);
@@ -819,35 +821,48 @@ export default function AITutorPage() {
   ======================================================= */
 
   async function rateAnswer(message: Message, rating: -1 | 1) {
-    if (message.role !== "assistant" || !selectedConversationId) return;
+    // Use the conversation attached to this answer, not whichever conversation
+    // happens to be selected in UI state while React updates.
+    if (message.role !== "assistant" || !message.conversation_id || feedbackSaving[message.id]) return;
+
     const previous = messageFeedback[message.id];
+    setFeedbackSaving((current) => ({ ...current, [message.id]: true }));
+    setFeedbackStatus((current) => ({ ...current, [message.id]: "" }));
     setMessageFeedback((current) => ({ ...current, [message.id]: rating }));
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setError("Please sign in again to save feedback.");
-      return;
-    }
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error("Please sign in again to save feedback.");
 
-    const { error: feedbackError } = await supabase
-      .from("ai_tutor_feedback")
-      .upsert({
-        user_id: user.id,
-        conversation_id: selectedConversationId,
-        message_key: message.id,
-        rating,
-        reason: "general",
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id,message_key" });
+      const { error: feedbackError } = await supabase
+        .from("ai_tutor_feedback")
+        .upsert({
+          user_id: user.id,
+          conversation_id: message.conversation_id,
+          message_key: message.id,
+          rating,
+          reason: "general",
+          updated_at: new Date().toISOString(),
+        }, { onConflict: "user_id,message_key" });
 
-    if (feedbackError) {
+      if (feedbackError) throw feedbackError;
+      setFeedbackStatus((current) => ({ ...current, [message.id]: "Feedback saved" }));
+    } catch (feedbackError) {
       setMessageFeedback((current) => {
         const next = { ...current };
         if (previous === undefined) delete next[message.id];
         else next[message.id] = previous;
         return next;
       });
-      setError("Could not save AI feedback. Please try again.");
+      setFeedbackStatus((current) => ({
+        ...current,
+        [message.id]: feedbackError instanceof Error
+          ? feedbackError.message.slice(0, 180)
+          : "Could not save feedback. Please try again.",
+      }));
+    } finally {
+      setFeedbackSaving((current) => ({ ...current, [message.id]: false }));
     }
   }
 
@@ -1622,21 +1637,27 @@ export default function AITutorPage() {
                                 <button
                                   type="button"
                                   aria-label="This answer was helpful"
+                                  aria-pressed={messageFeedback[message.id] === 1}
                                   title="Helpful"
+                                  disabled={Boolean(feedbackSaving[message.id])}
                                   onClick={() => void rateAnswer(message, 1)}
-                                  className={`rounded-md p-1 transition hover:bg-white/[0.06] ${messageFeedback[message.id] === 1 ? "text-emerald-300" : "text-white/25 hover:text-emerald-300"}`}
+                                  className={`rounded-md p-1 transition hover:bg-white/[0.06] disabled:cursor-wait disabled:opacity-50 ${messageFeedback[message.id] === 1 ? "text-emerald-300" : "text-white/25 hover:text-emerald-300"}`}
                                 >
                                   <ThumbsUp className="h-3 w-3" />
                                 </button>
                                 <button
                                   type="button"
                                   aria-label="This answer was not helpful"
+                                  aria-pressed={messageFeedback[message.id] === -1}
                                   title="Not helpful"
+                                  disabled={Boolean(feedbackSaving[message.id])}
                                   onClick={() => void rateAnswer(message, -1)}
-                                  className={`rounded-md p-1 transition hover:bg-white/[0.06] ${messageFeedback[message.id] === -1 ? "text-rose-300" : "text-white/25 hover:text-rose-300"}`}
+                                  className={`rounded-md p-1 transition hover:bg-white/[0.06] disabled:cursor-wait disabled:opacity-50 ${messageFeedback[message.id] === -1 ? "text-rose-300" : "text-white/25 hover:text-rose-300"}`}
                                 >
                                   <ThumbsDown className="h-3 w-3" />
                                 </button>
+                                {feedbackSaving[message.id] && <span role="status" className="text-[10px] text-white/45">Saving…</span>}
+                                {feedbackStatus[message.id] && <span role="status" className={`max-w-48 truncate text-[10px] ${feedbackStatus[message.id] === "Feedback saved" ? "text-emerald-300/80" : "text-rose-300/80"}`}>{feedbackStatus[message.id]}</span>}
                               </span>
                             )}
 
