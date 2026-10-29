@@ -2,7 +2,7 @@ import "server-only";
 
 import { GoogleGenAI } from "@google/genai";
 
-type AITask = "tutor" | "quiz" | "flashcards" | "homework" | "syllabus" | "recommendations";
+type AITask = "tutor" | "quiz" | "flashcards" | "homework" | "syllabus" | "recommendations" | "notes" | "grading";
 type AIProvider = "gemini" | "openai" | "anthropic";
 type ModelGroup = "tutor" | "reasoning" | "fast";
 
@@ -67,6 +67,8 @@ const taskGuidance: Record<AITask, string> = {
   homework: "Give constructive, specific feedback grounded in the provided assignment and student work. Separate observed evidence from suggestions, never invent a rubric criterion, and explain the next actionable revision.",
   syllabus: "Extract only details supported by the supplied syllabus. Never invent dates, assessment weights, deadlines, or instructor details. Mark ambiguous dates as uncertain and return only the requested structured format.",
   recommendations: "Use only the supplied student data for personalized claims. Prioritize concrete, achievable actions, explain the reason and estimated effort, and never fabricate grades, deadlines, or courses. Return only the requested structured format.",
+  notes: "Extract accurate revision notes from the supplied course document. Preserve supported definitions, formulas, examples, and distinctions. Do not invent unreadable content and return only the requested JSON structure.",
+  grading: "Grade only the submitted evidence against the supplied assignment and rubric. Keep the score within the maximum, do not mistake reference instructions for student work, and return only the requested structured JSON.",
 };
 
 function buildSystemInstruction(systemInstruction: string, task: AITask) {
@@ -95,13 +97,15 @@ function isCredentialError(error: unknown) {
 
 function isRetryableError(error: unknown) {
   const value = errorSummary(error);
-  return /\b(408|429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand|timeout|temporarily unavailable|not found|unsupported model|model .*not available/i.test(value);
+  return /\b(408|429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|overloaded|high demand|timeout|temporarily unavailable|not found|unsupported model|model .*not available|empty response/i.test(value);
 }
 
 function outputTokenLimit(task: AITask) {
   switch (task) {
     case "tutor": return 3072;
     case "homework": return 3072;
+    case "grading": return 4096;
+    case "notes": return 4608;
     case "quiz": return 2048;
     case "syllabus": return 2048;
     case "flashcards": return 2048;
@@ -347,7 +351,59 @@ export async function* streamAIResponse({
   throw new Error("StudySpace AI is temporarily unavailable. Please try again shortly.");
 }
 
-/** Analyze an uploaded file using the same task-specific model routing and bounded fallback policy. */
+type GeminiInputPart =
+  | { text: string }
+  | { inlineData: { mimeType: string; data: string } };
+
+/** Generate from text and/or file parts using the shared task routing and bounded fallback policy. */
+export async function generateAIResponseFromParts({
+  systemInstruction,
+  parts,
+  task,
+}: {
+  systemInstruction: string;
+  parts: GeminiInputPart[];
+  task: AITask;
+}) {
+  const { candidates } = configuredGeminiModels(task);
+  let lastError: unknown;
+
+  for (const model of candidates.slice(0, 3)) {
+    const startedAt = Date.now();
+    try {
+      const response = await getGeminiClient().models.generateContent({
+        model,
+        contents: [{ role: "user", parts }],
+        config: {
+          systemInstruction: buildSystemInstruction(systemInstruction, task),
+          temperature: task === "tutor" ? 0.35 : 0.2,
+          maxOutputTokens: outputTokenLimit(task),
+          ...(task === "tutor" ? {} : { responseMimeType: "application/json" }),
+        },
+      });
+      const result = response.text?.trim();
+      if (!result) throw new Error("The AI provider returned an empty response.");
+      const inlineBytes = parts.reduce((sum, part) => sum + ("inlineData" in part ? Math.floor(part.inlineData.data.length * 0.75) : 0), 0);
+      console.info("StudySpace AI multimodal generation completed", {
+        task, provider: "gemini", model, durationMs: Date.now() - startedAt,
+        inputBytes: inlineBytes || undefined,
+        inputParts: parts.length, outputCharacters: result.length,
+      });
+      return result;
+    } catch (error) {
+      lastError = error;
+      const credentialError = isCredentialError(error);
+      const retryable = isRetryableError(error);
+      console.warn("Gemini multimodal model attempt failed", {
+        task, model, retryable, credentialError, reason: errorSummary(error),
+      });
+      if (credentialError || (!retryable && model === candidates[0])) break;
+    }
+  }
+  throw new Error("StudySpace AI is temporarily unavailable. Please try again shortly.");
+}
+
+/** Convenience wrapper for one uploaded file plus a text prompt. */
 export async function generateAIResponseFromInlineData({
   systemInstruction,
   prompt,
@@ -361,42 +417,11 @@ export async function generateAIResponseFromInlineData({
   data: string;
   task?: AITask;
 }) {
-  const { candidates } = configuredGeminiModels(task);
-  let lastError: unknown;
-
-  for (const model of candidates.slice(0, 3)) {
-    const startedAt = Date.now();
-    try {
-      const response = await getGeminiClient().models.generateContent({
-        model,
-        contents: [{
-          role: "user",
-          parts: [{ inlineData: { mimeType, data } }, { text: prompt }],
-        }],
-        config: {
-          systemInstruction: buildSystemInstruction(systemInstruction, task),
-          temperature: 0.25,
-          maxOutputTokens: outputTokenLimit(task),
-        },
-      });
-      const result = response.text?.trim();
-      if (!result) throw new Error("The AI provider returned an empty response.");
-      console.info("StudySpace AI document analysis completed", {
-        task, provider: "gemini", model, durationMs: Date.now() - startedAt,
-        inputBytes: Math.floor(data.length * 0.75), outputCharacters: result.length,
-      });
-      return result;
-    } catch (error) {
-      lastError = error;
-      const credentialError = isCredentialError(error);
-      const retryable = isRetryableError(error);
-      console.warn("Gemini document model attempt failed", {
-        task, model, retryable, credentialError, reason: errorSummary(error),
-      });
-      if (credentialError || (!retryable && model === candidates[0])) break;
-    }
-  }
-  throw new Error("StudySpace AI is temporarily unavailable. Please try again shortly.");
+  return generateAIResponseFromParts({
+    task,
+    systemInstruction,
+    parts: [{ inlineData: { mimeType, data } }, { text: prompt }],
+  });
 }
 
 /** Extract dates directly from a PDF syllabus using Gemini's document input support. */
