@@ -278,3 +278,11 @@ main:has(form) form button[type="submit"] { border-radius:24px !important; backg
 @media (max-width:620px) { .bento-preview-tile { min-height:unset; } .bento-app-demo { min-height:280px; } }
 .bento-auth-page input:not([type="checkbox"]):not([type="radio"]),.bento-auth-page textarea,.bento-auth-page select,.ss-shell main input:not([type="checkbox"]):not([type="radio"]),.ss-shell main textarea,.ss-shell main select { border-radius:24px !important; }
 .ss-shell main [class*="rounded-xl"],.ss-shell main [class*="rounded-2xl"],.ss-shell main [class*="rounded-3xl"],.ss-shell .ss-sidebar [class*="rounded-xl"],.ss-shell .ss-topbar [class*="rounded-xl"] { border-radius:24px !important; }
+
+/* Keep one 24px surface radius throughout the interface, including nested UI tiles and form controls. */
+.bento-home *,.bento-auth-page * { border-radius:24px !important; }
+.ss-shell main [class*="rounded-"] { border-radius:24px !important; }
+.ss-shell .ss-sidebar a[class*="bg-white"],.ss-shell .ss-sidebar a[class*="bg-violet"],.ss-shell .ss-sidebar a[class*="bg-purple"] { background:#f5f3ff !important; color:#5b21b6 !important; }
+.ss-shell .ss-sidebar a:hover,.ss-shell .ss-sidebar button:hover { background:#f5f3ff !important; color:#5b21b6 !important; }
+.ss-shell main button[class*="bg-purple"],.ss-shell main button[class*="bg-violet"],.ss-shell main a[class*="bg-purple"],.ss-shell main a[class*="bg-violet"] { background:#111 !important; border-color:#111 !important; color:#fff !important; }
+.ss-shell main button[class*="bg-purple"] [class*="text-white"],.ss-shell main button[class*="bg-violet"] [class*="text-white"],.ss-shell main a[class*="bg-purple"] [class*="text-white"],.ss-shell main a[class*="bg-violet"] [class*="text-white"] { color:#fff !important; }
