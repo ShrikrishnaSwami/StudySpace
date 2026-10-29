@@ -54,6 +54,11 @@ export default function AdminPage() {
         cache: "no-store",
       });
       const body = await response.json();
+      if (response.status === 403 && body.code === "MFA_REQUIRED") {
+        setAdminMfaVerified(false);
+        setError("Administrator MFA is required. Open Settings, enable an authenticator app, verify it, then return here.");
+        return;
+      }
       if (response.status === 403) { router.replace("/dashboard"); return; }
       if (response.status === 401) { router.replace("/login"); return; }
       if (!response.ok) throw new Error(body.error || "Could not load admin statistics.");
@@ -83,6 +88,11 @@ export default function AdminPage() {
         cache: "no-store",
       });
       const body = await response.json();
+      if (response.status === 403 && body.code === "MFA_REQUIRED") {
+        setAdminMfaVerified(false);
+        setBackupError("Administrator MFA is required. Enable an authenticator in Settings before viewing backup status.");
+        return;
+      }
       if (response.status === 403) { router.replace("/dashboard"); return; }
       if (response.status === 401) { router.replace("/login"); return; }
       if (!response.ok) throw new Error(body.error || "Could not load backup status.");
