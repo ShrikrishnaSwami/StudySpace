@@ -192,3 +192,51 @@ main:has(form) input:not([type="checkbox"]):not([type="radio"]):not([type="range
 main:has(form) input::placeholder,main:has(form) textarea::placeholder { color:#71717a !important; opacity:1; }
 main:has(form) label { color:#404047; }
 main:has(form) form button[type="submit"] { border-radius:24px !important; background:#111 !important; color:#fff !important; }
+
+/* Auth forms: white card, neutral page, accessible contrast. */
+.bento-auth-page { background:var(--bento-page) !important; color:#171717 !important; }
+.bento-auth-page > div.grid { background:#fff !important; border:1px solid #e4e4e7 !important; border-radius:24px !important; box-shadow:0 12px 36px #18181b0a !important; }
+.bento-auth-page > div.grid > div:first-child { background:#111 !important; border-color:#303033 !important; color:#fff !important; }
+.bento-auth-page > div.grid > div:first-child p { color:#d4d4d8 !important; }
+.bento-auth-page > div.grid > div:first-child p.text-purple-300 { color:#ddd6fe !important; }
+.bento-auth-page > div.grid > div:first-child h1 { color:#fff !important; }
+.bento-auth-page > div.grid > div:first-child h1 span { color:#c4b5fd !important; }
+.bento-auth-page > div.grid > div:last-child { background:#fff !important; color:#171717 !important; }
+.bento-auth-page h2,.bento-auth-page h3 { color:#171717 !important; }
+.bento-auth-page p.text-zinc-400,.bento-auth-page p.text-zinc-500 { color:#52525b !important; }
+.bento-auth-page label { color:#404047 !important; }
+.bento-auth-page input:not([type="checkbox"]):not([type="radio"]),.bento-auth-page textarea,.bento-auth-page select { min-height:48px; border:1px solid #d4d4d8 !important; border-radius:12px !important; background:#fafafa !important; color:#171717 !important; }
+.bento-auth-page input::placeholder { color:#71717a !important; opacity:1 !important; }
+.bento-auth-page form button[type="submit"] { min-height:48px; border:1px solid #111 !important; border-radius:24px !important; background:#111 !important; color:#fff !important; box-shadow:none !important; }
+.bento-auth-page form button[type="button"] { border-radius:24px !important; }
+.bento-auth-page > div.grid > div:last-child button:not([type="submit"]) { color:#404047; }
+.bento-auth-page a { color:#6d28d9; }
+.bento-auth-page > div.grid > div:first-child a { color:#fff; }
+
+/* Authenticated product: neutral canvas, white workspace surfaces, consistent cards. */
+.ss-shell { background:#f5f5f4 !important; color:#171717 !important; }
+.ss-sidebar { background:#fff !important; border-color:#e4e4e7 !important; }
+.ss-topbar { background:rgba(255,255,255,.96) !important; border-color:#e4e4e7 !important; color:#171717 !important; }
+.ss-shell .ss-sidebar [class*="text-white"],.ss-shell .ss-topbar [class*="text-white"] { color:#52525b !important; }
+.ss-shell .ss-sidebar [class*="border-white"],.ss-shell .ss-topbar [class*="border-white"] { border-color:#e4e4e7 !important; }
+.ss-shell .ss-sidebar [class*="bg-[#15141a]"],.ss-shell .ss-sidebar [class*="bg-[#19181f]"] { background:#fff !important; }
+.ss-shell .ss-topbar [class*="bg-[#111016]"] { background:#fff !important; }
+.ss-shell main { color:#171717; }
+.ss-shell main h1,.ss-shell main h2,.ss-shell main h3,.ss-shell main h4 { color:#171717; letter-spacing:-.035em; }
+.ss-shell main p { line-height:1.55; }
+.ss-shell main [class*="text-white"] { color:#27272a !important; }
+.ss-shell main [class*="text-zinc-"] { color:#52525b !important; }
+.ss-shell main [class*="border-white/"] { border-color:#e4e4e7 !important; }
+.ss-shell main [class*="bg-white/"] { background:#fff !important; }
+.ss-shell main [class*="bg-[#0"],.ss-shell main [class*="bg-[#1"],.ss-shell main [class*="bg-black/"] { background:#fff !important; }
+.ss-shell main [class*="rounded-xl"],.ss-shell main [class*="rounded-2xl"],.ss-shell main [class*="rounded-3xl"] { border-radius:24px !important; }
+.ss-shell main input:not([type="checkbox"]):not([type="radio"]),.ss-shell main textarea,.ss-shell main select { border-radius:12px !important; border-color:#d4d4d8 !important; background:#fff !important; color:#171717 !important; }
+.ss-shell main input::placeholder,.ss-shell main textarea::placeholder { color:#71717a !important; }
+.ss-shell main button:not(:disabled) { transition:transform .18s var(--bento-ease),background-color .18s var(--bento-ease),border-color .18s var(--bento-ease); }
+.ss-shell main button:not(:disabled):hover { border-color:#c4b5fd; }
+.ss-shell main button:focus-visible,.ss-shell .ss-sidebar button:focus-visible,.ss-shell .ss-topbar button:focus-visible { outline:3px solid #7c3aed !important; outline-offset:3px; }
+@media (max-width:620px) {
+  .bento-auth-page { padding:20px 12px !important; }
+  .bento-auth-page > div.grid { border-radius:24px !important; }
+  .bento-auth-page > div.grid > div:last-child { padding:24px !important; }
+}
