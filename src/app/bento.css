@@ -240,3 +240,13 @@ main:has(form) form button[type="submit"] { border-radius:24px !important; backg
   .bento-auth-page > div.grid { border-radius:24px !important; }
   .bento-auth-page > div.grid > div:last-child { padding:24px !important; }
 }
+
+/* Override the earlier dark dashboard treatment so every authenticated route shares the same paper system. */
+.ss-shell:has(.ss-dashboard) main { background:#f5f5f4 !important; color:#171717 !important; }
+.ss-shell .ss-dashboard { --focus-ink:#171717 !important; --focus-muted:#52525b !important; --focus-paper:#f5f5f4 !important; --focus-surface:#fff !important; --focus-line:#e4e4e7 !important; --focus-sage:#6d28d9 !important; --focus-sage-soft:#f5f3ff !important; background:#f5f5f4 !important; color:#171717 !important; }
+.ss-shell .ss-dashboard h1,.ss-shell .ss-dashboard h2,.ss-shell .ss-dashboard h3,.ss-shell .ss-dashboard h4,.ss-shell .ss-dashboard [class*="text-white"] { color:#171717 !important; }
+.ss-shell .ss-dashboard p,.ss-shell .ss-dashboard [class*="text-white/"] { color:#52525b !important; }
+.ss-shell .ss-dashboard [class*="bg-[#0"],.ss-shell .ss-dashboard [class*="bg-[#1"],.ss-shell .ss-dashboard [class*="bg-black/"],.ss-shell .ss-dashboard [class*="bg-white/"] { background:#fff !important; }
+.ss-shell .ss-dashboard [class*="border-white/"] { border-color:#e4e4e7 !important; }
+.ss-shell .ss-dashboard [class*="rounded-xl"],.ss-shell .ss-dashboard [class*="rounded-2xl"],.ss-shell .ss-dashboard [class*="rounded-3xl"] { border-radius:24px !important; }
+.ss-shell main [class*="shadow-2xl"],.ss-shell main [class*="shadow-xl"],.ss-shell main [class*="shadow-lg"] { box-shadow:0 1px 2px #00000008 !important; }
