@@ -314,7 +314,7 @@ Return JSON only.
       questions,
     });
   } catch (error) {
-    console.error("Quiz generation request failed.");
+    console.error("Quiz generation request failed:", error instanceof Error ? error.message.slice(0, 240) : "Unknown error");
 
     return NextResponse.json(
       {
