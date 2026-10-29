@@ -9,6 +9,7 @@ Use this checklist against the actual production environment before inviting rea
 - [ ] `GEMINI_API_KEY` is set as a server-only environment variable.
 - [ ] `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY` is set only in server-side Vercel environments for features that require privileged operations.
 - [ ] The intended administrator has a trusted `role: "admin"` claim in Supabase Auth `app_metadata` (never `user_metadata`), and the admin routes reject ordinary users. Sign out and back in after role changes to refresh the JWT.
+- [ ] Enrol and verify a TOTP MFA factor for the administrator, then consider requiring AAL2 for sensitive admin operations.
 - [ ] `APP_ORIGIN`, if configured, matches the canonical production origin.
 - [ ] No real secrets are committed to Git, exposed through `NEXT_PUBLIC_`, or printed in logs.
 - [ ] Provider keys that were shared in chat, screenshots, or issue comments have been replaced and the old keys revoked.
@@ -24,9 +25,10 @@ Use this checklist against the actual production environment before inviting rea
 - [ ] Enable Supabase leaked-password protection in the Auth password/security settings.
 - [ ] Review Supabase security and performance advisors; resolve warnings appropriate to the production workload.
 - [ ] Test account deletion with a dedicated test account and confirm associated user-owned data is removed according to the documented retention policy.
-- [ ] Configure the encrypted daily off-site backup workflow using [docs/OFFSITE_BACKUP_SETUP.md](./OFFSITE_BACKUP_SETUP.md); verify the first GitHub Actions run succeeds and encrypted database/Storage archives exist in the private R2 bucket.
-- [ ] Confirm the admin dashboard shows the latest successful backup timestamp.
+- [ ] Configure the no-cost encrypted daily artifact workflow using [docs/FREE_BACKUP_INTERIM.md](./FREE_BACKUP_INTERIM.md); verify the first GitHub Actions run succeeds and encrypted database/Storage archives exist in the private artifact.
+- [ ] Confirm the admin dashboard shows the latest successful backup timestamp and the run points to the expected workflow.
 - [ ] Follow [docs/BACKUP_AND_RECOVERY_RUNBOOK.md](./BACKUP_AND_RECOVERY_RUNBOOK.md): complete a successful restore drill in a non-production project. Until then, recovery is **not verified**.
+- [ ] Understand the free artifact expires after seven days and is not independent of the GitHub account; maintain an additional encrypted offline copy when feasible.
 
 ## 3. Authentication and account flows
 
