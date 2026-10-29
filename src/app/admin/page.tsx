@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Activity, Archive, CheckCircle2, Clock3, ExternalLink, RefreshCw, ShieldAlert, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
@@ -43,6 +43,10 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [backupError, setBackupError] = useState("");
   const [adminMfaVerified, setAdminMfaVerified] = useState<boolean | null>(null);
+  const [mfaChallengeRequired, setMfaChallengeRequired] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaBusy, setMfaBusy] = useState(false);
+  const [mfaError, setMfaError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,8 +60,8 @@ export default function AdminPage() {
       });
       const body = await response.json();
       if (response.status === 403 && body.code === "MFA_REQUIRED") {
-        setAdminMfaVerified(false);
-        setError("Administrator MFA is required. Open Settings, enable an authenticator app, verify it, then return here.");
+        setMfaChallengeRequired(true);
+        setError("Administrator MFA verification is required before sensitive admin data can be viewed.");
         return;
       }
       if (response.status === 403) { router.replace("/dashboard"); return; }
@@ -90,8 +94,8 @@ export default function AdminPage() {
       });
       const body = await response.json();
       if (response.status === 403 && body.code === "MFA_REQUIRED") {
-        setAdminMfaVerified(false);
-        setBackupError("Administrator MFA is required. Enable an authenticator in Settings before viewing backup status.");
+        setMfaChallengeRequired(true);
+        setBackupError("Administrator MFA verification is required before backup status can be viewed.");
         return;
       }
       if (response.status === 403) { router.replace("/dashboard"); return; }
@@ -114,6 +118,26 @@ export default function AdminPage() {
     }
   }, [router]);
 
+  async function verifyAdminMfa(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const code = mfaCode.replace(/\s/g, "");
+    if (!/^\d{6}$/.test(code)) { setMfaError("Enter the current six-digit code from your authenticator app."); return; }
+    setMfaBusy(true);
+    setMfaError("");
+    try {
+      const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+      if (factorsError) throw factorsError;
+      const factor = (factors?.totp || []).find((item) => item.status === "verified");
+      if (!factor) { setAdminMfaVerified(false); throw new Error("No verified authenticator was found. Open Settings and enrol one first."); }
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: factor.id });
+      if (challengeError) throw challengeError;
+      const { error: verifyError } = await supabase.auth.mfa.verify({ factorId: factor.id, challengeId: challenge.id, code });
+      if (verifyError) throw verifyError;
+      setAdminMfaVerified(true); setMfaChallengeRequired(false); setMfaCode(""); setError(""); setBackupError("");
+      await Promise.all([load(), loadBackup()]);
+    } catch (cause) { setMfaError(cause instanceof Error ? cause.message : "Could not verify your authenticator code."); }
+    finally { setMfaBusy(false); }
+  }
   useEffect(() => {
     let alive = true;
     async function checkAccess() {
@@ -175,6 +199,21 @@ export default function AdminPage() {
       </div>
 
       {error && <div role="alert" className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{error}</div>}
+
+      {mfaChallengeRequired && adminMfaVerified === true && <section className="rounded-2xl border border-violet-400/25 bg-violet-500/[0.07] p-5" aria-labelledby="admin-mfa-challenge-title">
+        <div className="flex items-start gap-3">
+          <ShieldCheck size={21} className="mt-0.5 shrink-0 text-violet-200" />
+          <div className="min-w-0 flex-1">
+            <h2 id="admin-mfa-challenge-title" className="font-semibold text-white">Verify your administrator sign-in</h2>
+            <p className="mt-1 text-sm leading-6 text-white/60">Enter the current six-digit code from your authenticator app. Admin data remains blocked until this step succeeds.</p>
+            <form onSubmit={verifyAdminMfa} className="mt-4 flex flex-wrap items-end gap-3">
+              <label className="block space-y-2"><span className="text-xs text-white/60">Authenticator code</span><input aria-label="Authenticator code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={mfaCode} onChange={(event) => setMfaCode(event.target.value.replace(/\D/g, "").slice(0, 6))} className="h-11 w-40 rounded-xl border border-white/10 bg-black/25 px-4 text-center text-lg tracking-[0.3em] text-white outline-none focus:border-violet-400/50" placeholder="000000" required /></label>
+              <button type="submit" disabled={mfaBusy || mfaCode.length !== 6} className="h-11 rounded-xl bg-violet-600 px-4 text-sm font-medium text-white disabled:opacity-50">{mfaBusy ? "Verifying…" : "Verify and continue"}</button>
+            </form>
+            {mfaError && <p role="alert" className="mt-3 text-sm text-red-200">{mfaError}</p>}
+          </div>
+        </div>
+      </section>}
 
       {adminMfaVerified === false && <section role="alert" className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.06] p-5">
         <div className="flex items-start gap-3">
