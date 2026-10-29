@@ -24,7 +24,7 @@ Optional server-side variables:
 - `GEMINI_TUTOR_MODEL`: override the Tutor primary.
 - `GEMINI_REASONING_MODEL`: override quiz, homework, and syllabus primary.
 - `GEMINI_FAST_MODEL`: override flashcard and recommendation primary.
-- `GEMINI_FALLBACK_MODEL`: add a preferred fallback after the task's primary.
+- `GEMINI_FALLBACK_MODEL`: add a preferred tertiary fallback after the task-specific fast fallback; `gemini-3.7-flash` and `gemini-3.8-flash` are ignored here to avoid the recent overload path.
 
 The legacy `GEMINI_MODEL` variable is not used as a universal primary override anymore because it forced all tasks onto one model, including during the recorded high-demand errors. Do not configure OpenAI or Anthropic routing unless those provider keys and model IDs are actually provisioned; those services may incur separate charges.
 
