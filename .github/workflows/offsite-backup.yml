@@ -1,8 +1,6 @@
-name: StudySpace encrypted off-site backup
+name: StudySpace encrypted off-site backup (Cloudflare R2, manual)
 
 on:
-  schedule:
-    - cron: "17 6 * * *"
   workflow_dispatch:
 
 permissions:
@@ -20,6 +18,7 @@ jobs:
       SUPABASE_URL: ${{ secrets.BACKUP_SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.BACKUP_SUPABASE_SERVICE_ROLE_KEY }}
       SUPABASE_DB_URL: ${{ secrets.BACKUP_SUPABASE_DB_URL }}
+      BACKUP_DB_PASSWORD: ${{ secrets.BACKUP_DB_PASSWORD }}
       STORAGE_BUCKETS: assignment-files,assignment-submissions,homework
       AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
       R2_ACCOUNT_ID: ${{ secrets.BACKUP_R2_ACCOUNT_ID }}
