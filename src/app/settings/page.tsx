@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from "react";
 import {
-  Bell, Check, Download, Eye, Gauge, Lock, LogOut, Mail, Save, Shield, Trash2, User, RefreshCw,
+  Bell, Check, Download, Eye, Gauge, Lock, LogOut, Mail, Save, Shield, ShieldCheck, Trash2, User, RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
@@ -68,6 +68,12 @@ export default function SettingsPage() {
   const [loadingUsage, setLoadingUsage] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState("");
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [mfaSetup, setMfaSetup] = useState<{ id: string; qrCode: string; secret: string } | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaBusy, setMfaBusy] = useState(false);
+  const [mfaMessage, setMfaMessage] = useState("");
+  const [mfaError, setMfaError] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -79,6 +85,10 @@ export default function SettingsPage() {
         if (!alive) return;
         setName(typeof user.user_metadata?.full_name === "string" ? user.user_metadata.full_name : "");
         setEmail(user.email || "");
+        const { data: factors, error: factorError } = await supabase.auth.mfa.listFactors();
+        if (!factorError && alive) {
+          setMfaEnabled((factors?.totp || []).some((factor) => factor.status === "verified"));
+        }
         const saved = user.user_metadata?.studyspace_settings;
         const next: Preferences = {
           emailNotifications: typeof saved?.emailNotifications === "boolean" ? saved.emailNotifications : DEFAULTS.emailNotifications,
@@ -111,6 +121,50 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!loading && email) void loadAiUsage();
   }, [loading, email, loadAiUsage]);
+
+  async function beginMfaEnrollment() {
+    setMfaBusy(true); setMfaError(""); setMfaMessage("");
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: "totp",
+        friendlyName: "StudySpace authenticator",
+      });
+      if (error) throw error;
+      if (!data?.id || !data.totp?.qr_code || !data.totp?.secret) {
+        throw new Error("The authenticator setup response was incomplete. Please try again.");
+      }
+      setMfaSetup({ id: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret });
+      setMfaCode("");
+      setMfaMessage("Scan the QR code with your authenticator app, then enter its current six-digit code.");
+    } catch (error) {
+      setMfaError(error instanceof Error ? error.message : "Could not start authenticator setup.");
+    } finally { setMfaBusy(false); }
+  }
+
+  async function verifyMfaEnrollment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!mfaSetup) return;
+    const code = mfaCode.replace(/\s/g, "");
+    if (!/^\d{6}$/.test(code)) { setMfaError("Enter the six-digit code from your authenticator app."); return; }
+    setMfaBusy(true); setMfaError(""); setMfaMessage("");
+    try {
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: mfaSetup.id });
+      if (challengeError) throw challengeError;
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: mfaSetup.id,
+        challengeId: challenge.id,
+        code,
+      });
+      if (verifyError) throw verifyError;
+      const { data: factors, error: factorError } = await supabase.auth.mfa.listFactors();
+      if (factorError) throw factorError;
+      setMfaEnabled((factors?.totp || []).some((factor) => factor.status === "verified"));
+      setMfaSetup(null); setMfaCode("");
+      setMfaMessage("Authenticator enabled and verified. Keep access to your authenticator app to sign in securely.");
+    } catch (error) {
+      setMfaError(error instanceof Error ? error.message : "Could not verify the authenticator code.");
+    } finally { setMfaBusy(false); }
+  }
 
   async function exportData() {
     setExporting(true); setExportMessage("");
@@ -267,6 +321,27 @@ export default function SettingsPage() {
         </Section>
 
         <Section icon={Shield} title="Account security" description="Actions that affect your entire StudySpace account.">
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2"><ShieldCheck size={16} className={mfaEnabled ? "text-emerald-300" : "text-amber-200"}/><p className="text-sm font-medium text-white">Authenticator app (MFA)</p></div>
+              <p className="mt-1 text-xs leading-5 text-white/45">{mfaEnabled ? "A verified authenticator factor is enabled for this account." : "Add a time-based one-time password from an authenticator app. This is especially important for administrator accounts."}</p>
+            </div>
+            {mfaEnabled
+              ? <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-200">Enabled</span>
+              : <button type="button" onClick={() => void beginMfaEnrollment()} disabled={mfaBusy || Boolean(mfaSetup)} className="rounded-xl border border-violet-400/20 bg-violet-500/10 px-4 py-2.5 text-sm text-violet-100 disabled:opacity-50">{mfaBusy ? "Starting…" : mfaSetup ? "Setup in progress" : "Enable authenticator"}</button>}
+          </div>
+          {mfaSetup && <form onSubmit={verifyMfaEnrollment} className="space-y-4 rounded-xl border border-white/[0.08] bg-black/20 p-4">
+            <p className="text-sm text-white/70">1. Scan this QR code using your authenticator app.</p>
+            <img src={mfaSetup.qrCode} alt="Authenticator setup QR code" className="h-44 w-44 rounded-lg bg-white p-2"/>
+            <p className="text-xs text-white/45">If scanning does not work, enter this setup key manually:</p>
+            <code className="block break-all rounded-lg bg-black/30 p-3 text-sm text-violet-100">{mfaSetup.secret}</code>
+            <label className="block space-y-2"><span className="text-sm text-white/70">2. Enter the six-digit code</span><input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={mfaCode} onChange={event=>setMfaCode(event.target.value.replace(/\D/g,"").slice(0,6))} className="h-11 w-full max-w-xs rounded-xl border border-white/10 bg-black/20 px-4 text-sm tracking-[0.3em] text-white outline-none focus:border-violet-400/40" placeholder="000000" required/></label>
+            <div className="flex flex-wrap gap-2"><button type="submit" disabled={mfaBusy || mfaCode.length!==6} className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50">{mfaBusy ? "Verifying…" : "Verify and enable"}</button><button type="button" disabled={mfaBusy} onClick={()=>{setMfaSetup(null);setMfaCode("");setMfaError("");setMfaMessage("");}} className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/70">Cancel setup</button></div>
+          </form>}
+          {mfaMessage && <p role="status" className="text-xs text-emerald-200">{mfaMessage}</p>}
+          {mfaError && <p role="alert" className="text-xs text-red-300">{mfaError}</p>}
+          <div className="border-t border-white/[0.06] pt-5"/>
+
           <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-medium text-white">Sign out on this device</p><p className="mt-1 text-xs text-white/40">End your current session.</p></div><button type="button" onClick={async()=>{const {error}=await supabase.auth.signOut({scope:"local"});if(error)setSecurityMessage(error.message);else router.replace("/login");}} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/80 hover:bg-white/[0.05]"><LogOut size={15}/>Sign out</button></div>
           <div className="border-t border-red-400/10 pt-5"><div className="flex items-start gap-3"><div className="rounded-xl bg-red-500/10 p-2 text-red-300"><Trash2 size={17}/></div><div className="min-w-0 flex-1"><p className="text-sm font-semibold text-white">Delete account</p><p className="mt-1 text-xs leading-5 text-white/40">Permanently remove your StudySpace account, associated database records, and uploaded homework files. This cannot be undone.</p></div></div>
             {!showDeleteConfirm?<button type="button" onClick={()=>setShowDeleteConfirm(true)} className="mt-4 rounded-xl border border-red-400/20 bg-red-500/[0.07] px-4 py-2.5 text-sm font-medium text-red-300 hover:bg-red-500/[0.12]">Delete my account…</button>:<div className="mt-4 space-y-3 rounded-xl border border-red-400/20 bg-red-500/[0.04] p-4"><p className="text-sm text-red-200">Type <strong>DELETE</strong> to confirm permanent account deletion.</p><input maxLength={40} autoComplete="off" spellCheck={false} value={deletePhrase} onChange={e=>setDeletePhrase(e.target.value)} aria-label="Type DELETE to confirm" placeholder="Type DELETE" className="h-11 w-full rounded-xl border border-red-400/20 bg-black/20 px-4 text-sm text-white outline-none"/><div className="flex flex-wrap gap-2"><button type="button" onClick={()=>{setShowDeleteConfirm(false);setDeletePhrase("");}} disabled={deletingAccount} className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/70">Cancel</button><button type="button" onClick={deleteAccount} disabled={deletePhrase!=="DELETE"||deletingAccount} className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40">{deletingAccount?"Deleting account…":"Permanently delete account"}</button></div></div>}
