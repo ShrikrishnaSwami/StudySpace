@@ -24,13 +24,13 @@ This is a backup pipeline, not a completed recovery drill. Do not mark recovery 
 
 ### 2. Create an encryption key
 
-Use a trusted computer with age installed. Generate a keypair locally:
+Use a trusted computer and install age from its [official releases](https://github.com/FiloSottile/age/releases). On Windows, extract the release ZIP, open PowerShell in that folder, and run:
 
-```bash
-age-keygen -o studyspace-backup-key.txt
+```powershell
+.\\age-keygen.exe -o studyspace-backup-key.txt
 ```
 
-The command prints a public recipient beginning with `age1...`. Store that public recipient as the GitHub Actions secret `BACKUP_AGE_RECIPIENT`.
+The command prints a public recipient beginning with `age1...`. Store only that public recipient as the GitHub Actions secret `BACKUP_AGE_RECIPIENT`. The file contains the private key; keep it offline and protected.
 
 **Keep the private key beginning with `AGE-SECRET-KEY-1...` offline in at least two secure places** (for example, an encrypted password manager and a separate encrypted offline copy). Never put the private key in GitHub Actions, this repository, Vercel, or chat. If the private key is lost, the encrypted backups cannot be decrypted. Test decryption as part of the restore drill.
 
