@@ -250,3 +250,31 @@ main:has(form) form button[type="submit"] { border-radius:24px !important; backg
 .ss-shell .ss-dashboard [class*="border-white/"] { border-color:#e4e4e7 !important; }
 .ss-shell .ss-dashboard [class*="rounded-xl"],.ss-shell .ss-dashboard [class*="rounded-2xl"],.ss-shell .ss-dashboard [class*="rounded-3xl"] { border-radius:24px !important; }
 .ss-shell main [class*="shadow-2xl"],.ss-shell main [class*="shadow-xl"],.ss-shell main [class*="shadow-lg"] { box-shadow:0 1px 2px #00000008 !important; }
+
+/* Final layout refinements: one large hero, one interactive tile, consistent tile corners. */
+.bento-preview-tile { min-height:360px; }
+.bento-app-demo { min-height:220px; }
+.bento-demo-nav,.bento-task-check,.bento-demo-brand > span,.bento-window-icon,.bento-tile-icon,.bento-notes-stack > div,.bento-app-demo,.bento-demo-sidebar,.bento-demo-nav,.bento-demo-task,.bento-demo-tile textarea { border-radius:24px !important; }
+.bento-feature-grid > .bento-feature-tile:nth-child(4) { background:var(--bento-accent); border-color:var(--bento-accent); color:#fff; }
+.bento-feature-grid > .bento-feature-tile:nth-child(4) p,.bento-feature-grid > .bento-feature-tile:nth-child(4) .bento-overline { color:#ede9fe; }
+.bento-feature-grid > .bento-feature-tile:nth-child(4) .bento-tile-icon { background:#7c3aed; border-color:#8b5cf6; color:#fff; }
+.bento-feature-grid > .bento-feature-tile:nth-child(4) .bento-tile-link { color:#fff; }
+.bento-feature-grid > .bento-notes-tile { background:#111; border-color:#111; color:#fff; }
+.bento-feature-grid > .bento-notes-tile .bento-overline,.bento-feature-grid > .bento-notes-tile p { color:#d4d4d8; }
+.bento-feature-grid > .bento-notes-tile .bento-notes-stack > div { background:#202020; border-color:#404040; color:#fff; }
+.bento-feature-grid > .bento-notes-tile .bento-notes-stack > div svg:last-child { color:#d4d4d8; }
+.bento-steps-grid > .bento-step-tile:first-child { background:#111; border-color:#111; color:#fff; }
+.bento-steps-grid > .bento-step-tile:first-child p { color:#d4d4d8; }
+.bento-steps-grid > .bento-step-tile:nth-child(2) { background:var(--bento-accent); border-color:var(--bento-accent); color:#fff; }
+.bento-steps-grid > .bento-step-tile:nth-child(2) p,.bento-steps-grid > .bento-step-tile:nth-child(2) .bento-step-number { color:#ede9fe; }
+.bento-contact-tile { background:var(--bento-accent); border-color:var(--bento-accent); color:#fff; }
+.bento-contact-tile p,.bento-contact-tile .bento-overline { color:#ede9fe; }
+.bento-contact-tile .bento-tile-icon { background:#7c3aed; border-color:#8b5cf6; color:#fff; }
+.bento-contact-tile .bento-tile-link { color:#fff; }
+.bento-prompt-example { display:flex; align-items:center; gap:12px; width:100%; margin-top:18px; padding:16px; border:1px solid #e4e4e7; border-radius:24px; background:#fafafa; color:#404047; font-size:15px; line-height:1.5; }
+.bento-prompt-example svg { flex:0 0 auto; color:var(--bento-accent); }
+.bento-demo-submit { margin-top:16px; }
+@media (max-width:900px) { .bento-preview-tile { min-height:360px; } .bento-app-demo { min-height:220px; } }
+@media (max-width:620px) { .bento-preview-tile { min-height:unset; } .bento-app-demo { min-height:280px; } }
+.bento-auth-page input:not([type="checkbox"]):not([type="radio"]),.bento-auth-page textarea,.bento-auth-page select,.ss-shell main input:not([type="checkbox"]):not([type="radio"]),.ss-shell main textarea,.ss-shell main select { border-radius:24px !important; }
+.ss-shell main [class*="rounded-xl"],.ss-shell main [class*="rounded-2xl"],.ss-shell main [class*="rounded-3xl"],.ss-shell .ss-sidebar [class*="rounded-xl"],.ss-shell .ss-topbar [class*="rounded-xl"] { border-radius:24px !important; }
