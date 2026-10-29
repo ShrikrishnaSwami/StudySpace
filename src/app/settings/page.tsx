@@ -128,16 +128,25 @@ export default function SettingsPage() {
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
         friendlyName: "StudySpace authenticator",
+        // Stable plain-text issuer avoids inheriting a malformed Site URL.
+        issuer: "StudySpace",
       });
       if (error) throw error;
       if (!data?.id || !data.totp?.qr_code || !data.totp?.secret) {
         throw new Error("The authenticator setup response was incomplete. Please try again.");
       }
-      setMfaSetup({ id: data.id, qrCode: data.totp.qr_code, secret: data.totp.secret });
+      const rawQr = data.totp.qr_code.trim();
+      const qrCode = rawQr.startsWith("data:image/")
+        ? rawQr
+        : "data:image/svg+xml;charset=utf-8," + encodeURIComponent(rawQr);
+      setMfaSetup({ id: data.id, qrCode, secret: data.totp.secret });
       setMfaCode("");
       setMfaMessage("Scan the QR code with your authenticator app, then enter its current six-digit code.");
     } catch (error) {
-      setMfaError(error instanceof Error ? error.message : "Could not start authenticator setup.");
+      const message = error instanceof Error ? error.message : "Could not start authenticator setup.";
+      setMfaError(/site url|issuer|url.*format|format.*url/i.test(message)
+        ? "Supabase rejected the authenticator issuer/Site URL. StudySpace now sends the issuer “StudySpace”; if this persists, set Supabase Dashboard → Authentication → URL Configuration → Site URL to https://studyspace.wiki and save, then retry."
+        : message);
     } finally { setMfaBusy(false); }
   }
 
