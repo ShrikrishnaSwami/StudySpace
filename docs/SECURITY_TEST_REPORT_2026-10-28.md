@@ -104,3 +104,31 @@ Counts below are rows visible to each authenticated JWT claim set at audit time,
 | syllabus_imports | 0 | 0 | 0 | 1 |
 
 Storage object metadata visibility: student 1, student B 0, guest 0, admin 7. This confirms policy-filtered metadata visibility for this snapshot; it does not prove that every download/upload/delete HTTP operation succeeds or fails correctly.
+
+
+## Follow-up verification — 2026-10-28 (evening EDT)
+
+This addendum updates deployment/configuration observations without changing the historical results above.
+
+### Deployment
+
+- The Vercel production deployment for commit `4d31f61acdfa11f53df63c4015aa71eafbc10283` (README and launch-checklist documentation updates on `main`) reached **READY** and is assigned to `www.studyspace.wiki` and `studyspace.wiki`.
+- This deployment includes the previously merged reliability changes from PR #18 as well as the later documentation commits.
+- The Vercel runtime-log query for the 30 minutes ending 2026-10-29 00:35 UTC returned no warning/error log records. The 24-hour grouped error summary still showed one earlier AI Tutor temporary-unavailable event. No direct HTTP/browser smoke test could be performed from the available environment, so authentication, AI generation, upload/download, grading, and deletion are not certified by this deployment-state check alone.
+- The combined GitHub status endpoint continued to report a Vercel build-rate-limit failure for an earlier commit, but the latest Vercel deployment object itself reported READY for `4d31f61`. Use the deployment's commit SHA and state as the current deployment evidence; do not infer live functionality from the stale status alone.
+
+### Current configuration and security-advisor observations
+
+- Vercel environment-variable metadata confirms that production configuration entries exist for `NEXT_PUBLIC_SUPABASE_URL`, public Supabase key names, `GEMINI_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_SECRET_KEY`. Secret values were not read or reproduced during this check. Their presence does **not** prove that the provider key works or that exposed credentials have been rotated.
+- Supabase's current Security Advisor still reports leaked-password protection disabled. Enable it in Auth settings if supported by the project plan.
+- The advisor flags six authenticated-callable SECURITY DEFINER functions: `admin_dashboard_stats`, `consume_ai_quota_for_user` (two overloads), `consume_my_api_rate_limit`, `get_my_ai_usage`, and `join_study_group_by_invite`. A direct catalog inspection found an empty `search_path` on each; no `anon` execution privilege; and function-specific checks that derive the caller from `auth.uid()` or, for admin statistics, require the trusted `app_metadata.role = 'admin'` claim. The quota compatibility overload delegates to the trusted one-argument function and ignores caller-supplied limits. These advisor warnings are not automatically proof of an exploitable issue, but their grants and bodies must be re-reviewed after changes.
+- The advisor also flags policies on user-owned tables because the project permits anonymous Auth users, which can receive the `authenticated` database role. A read-only `pg_policies` query found no policies whose role list explicitly names `anon` or `public`. The prior simulated role matrix showed zero guest-visible rows in the tested snapshot. Keep anonymous/guest access only if it is an intentional product feature, and continue verifying that every policy is scoped to the user's own `auth.uid()` and that guest accounts cannot access other users' data.
+- The 24-hour runtime-error summary contains one historical AI Tutor temporary-unavailable event. The latest 30-minute runtime log query returned no warning/error records; absence of logs is not a full end-to-end test.
+
+### Still required before beta
+
+1. Rotate/revoke any Gemini or Supabase credentials that were shared in chat and replace them in Vercel; rotation is not verified by this report.
+2. Enable leaked-password protection where supported.
+3. Run live smoke tests using real test accounts for sign-up/sign-in/logout, AI generation and quota exhaustion, syllabus import, homework/Storage access, quiz submission, assignment grading, export/deletion, admin denial for a normal student, and cross-student isolation.
+4. Create an off-site database export and separate Storage export, then complete a restore drill in a non-production project.
+5. Publish current privacy/terms/support information and document monitoring/rollback before inviting external students.
