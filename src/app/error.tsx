@@ -12,7 +12,7 @@ export default function ErrorBoundary({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("StudySpace route error", { message: error.message, digest: error.digest });
+    console.error("StudySpace route error", { digest: error.digest || "unavailable" });
   }, [error]);
 
   return (
