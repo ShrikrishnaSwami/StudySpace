@@ -26,7 +26,7 @@ function parseAiJson(value: string): { events?: unknown[] } {
         const char = cleaned[i];
         if (inString) {
           if (escaped) escaped = false;
-          else if (char === "\\\\") escaped = true;
+          else if (char === "\\") escaped = true;
           else if (char === '"') inString = false;
           continue;
         }
