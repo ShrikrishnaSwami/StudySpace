@@ -78,6 +78,7 @@ Run locally and confirm GitHub Actions is green:
 npm ci
 npm run lint
 npm run test:retrieval
+npm run test:syllabus
 npx tsc --noEmit
 npm run build
 npm audit --audit-level=high
