@@ -1,0 +1,127 @@
+name: StudySpace encrypted off-site backup
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: studyspace-offsite-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      SUPABASE_URL: ${{ secrets.BACKUP_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.BACKUP_SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_DB_URL: ${{ secrets.BACKUP_SUPABASE_DB_URL }}
+      STORAGE_BUCKETS: assignment-files,assignment-submissions,homework
+      AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
+      R2_ACCOUNT_ID: ${{ secrets.BACKUP_R2_ACCOUNT_ID }}
+      R2_BUCKET: ${{ secrets.BACKUP_R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      AWS_EC2_METADATA_DISABLED: "true"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Validate required backup configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY SUPABASE_DB_URL AGE_RECIPIENT R2_ACCOUNT_ID R2_BUCKET AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error::Missing required GitHub Actions secret for ${name}. See docs/OFFSITE_BACKUP_SETUP.md."
+              exit 1
+            fi
+          done
+          [[ "$SUPABASE_URL" == https://* ]] || { echo "::error::SUPABASE_URL must use HTTPS"; exit 1; }
+          [[ "$AGE_RECIPIENT" == age1* ]] || { echo "::error::AGE_RECIPIENT must be an age public recipient (age1...)"; exit 1; }
+
+      - name: Install backup tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes age postgresql-client python3
+          python3 --version
+          pg_dump --version
+          age --version
+          aws --version
+
+      - name: Export PostgreSQL application schema and data
+        shell: bash
+        env:
+          PGPASSWORD: ${{ secrets.BACKUP_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p backup-work encrypted
+          # Direct database URL must target the production project's direct connection.
+          # Exclude managed Supabase schemas; public application schema/data and RLS
+          # policies are included. Auth user metadata and Storage objects are exported
+          # separately by the next step.
+          pg_dump --dbname="$SUPABASE_DB_URL" --schema=public --format=custom --no-owner --no-privileges --file=backup-work/public-database.dump
+          test -s backup-work/public-database.dump
+          age --recipient "$AGE_RECIPIENT" --output encrypted/public-database.dump.age backup-work/public-database.dump
+          rm -f backup-work/public-database.dump
+
+      - name: Export private Storage objects and Auth metadata
+        run: python3 scripts/backup/export_storage.py
+
+      - name: Archive and encrypt Storage objects and Auth metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar --create --gzip --file=backup-work/storage-and-auth.tar.gz --directory=backup-work storage auth-users.json export-summary.json
+          test -s backup-work/storage-and-auth.tar.gz
+          age --recipient "$AGE_RECIPIENT" --output encrypted/storage-and-auth.tar.gz.age backup-work/storage-and-auth.tar.gz
+          rm -rf backup-work
+
+      - name: Create integrity manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          files = {}
+          for path in sorted(Path("encrypted").glob("*.age")):
+              digest = hashlib.sha256(path.read_bytes()).hexdigest()
+              files[path.name] = {"bytes": path.stat().st_size, "sha256": digest}
+          manifest = {
+              "product": "StudySpace",
+              "created_at_utc": datetime.now(timezone.utc).isoformat(),
+              "format_version": 1,
+              "encryption": "age",
+              "files": files,
+              "source_commit": os.getenv("GITHUB_SHA", "unknown"),
+              "restore_note": "Auth user metadata excludes passwords/sessions; users may need password reset after recovery.",
+          }
+          Path("encrypted/manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+          PY
+
+      - name: Upload encrypted backups to Cloudflare R2
+        shell: bash
+        run: |
+          set -euo pipefail
+          endpoint="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+          prefix="studyspace/daily/$(date -u +%Y/%m/%d)/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          aws --endpoint-url "$endpoint" s3 cp encrypted/ "s3://${R2_BUCKET}/${prefix}/" --recursive --only-show-errors
+          # Verify that every uploaded object is readable and has the same byte size.
+          for file in encrypted/*; do
+            name="$(basename "$file")"
+            local_size="$(stat -c %s "$file")"
+            remote_size="$(aws --endpoint-url "$endpoint" s3api head-object --bucket "$R2_BUCKET" --key "${prefix}/${name}" --query ContentLength --output text)"
+            [[ "$local_size" == "$remote_size" ]] || { echo "::error::R2 size verification failed for ${name}"; exit 1; }
+          done
+          echo "Encrypted backup uploaded and size-verified at ${prefix}"
+
+      - name: Remove local backup material
+        if: always()
+        run: rm -rf backup-work encrypted
