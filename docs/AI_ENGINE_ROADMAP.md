@@ -21,7 +21,7 @@ The retrieval baseline now ranks individual records (for example, one note or as
 
 ### Hybrid semantic retrieval and source-linked cache
 
-- Semantic retrieval is enabled by default when `GEMINI_API_KEY` and authenticated user context are available. Set `STUDYSPACE_SEMANTIC_RETRIEVAL=false` to force lexical-only retrieval.
+- Fast lexical retrieval is the default to minimize time-to-first-token. Set `STUDYSPACE_SEMANTIC_RETRIEVAL=true` to opt into semantic embedding enrichment; the Tutor route still races this enrichment against a short lexical fallback.
 - Formatted course, note, resource, assignment, quiz, homework, and calendar records now carry stable record IDs into retrieval candidates. Cache rows store `source_id` and `source_type` alongside content hashes.
 - When all chunks for a currently loaded source are enumerated, obsolete cached chunks for that source are deleted. When a full, unfiltered student context is loaded, stale cache entries for deleted courses, notes, resources, assignments, quizzes, and homework are also removed. Cleanup avoids course-filtered contexts and categories whose loaded records are capped, and remains best-effort.
 
