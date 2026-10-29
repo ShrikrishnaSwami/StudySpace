@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { isAdminUser } from "@/lib/admin";
+import { hasAal2Token, isAdminUser } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,13 @@ export async function GET(request: NextRequest) {
     }
     if (!user.email_confirmed_at || !isAdminUser(user)) {
       return NextResponse.json({ error: "Verified administrator access required." }, { status: 403 });
+    }
+
+    if (!hasAal2Token(token)) {
+      return NextResponse.json({
+        error: "Administrator multi-factor authentication is required. Enable an authenticator in Settings.",
+        code: "MFA_REQUIRED",
+      }, { status: 403, headers: { "Cache-Control": "no-store" } });
     }
 
     const { data, error } = await client.rpc("admin_dashboard_stats");
