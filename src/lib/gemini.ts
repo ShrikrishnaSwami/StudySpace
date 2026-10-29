@@ -456,6 +456,7 @@ export async function generateAIResponseFromPdf({
           systemInstruction: buildSystemInstruction(systemInstruction, "syllabus"),
           temperature: 0.2,
           maxOutputTokens: outputTokenLimit("syllabus"),
+          responseMimeType: "application/json",
         },
       });
       const result = response.text?.trim();
