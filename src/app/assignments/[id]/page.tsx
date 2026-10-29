@@ -380,12 +380,17 @@ export default function AssignmentWorkspacePage() {
   async function updateAssignment(changes: Partial<Assignment>) {
     if (!assignment) return;
 
+    const previous = assignment;
+    const optimistic = { ...previous, ...changes, updated_at: new Date().toISOString() };
+    // Reflect status/progress edits immediately, then reconcile with the
+    // database response. If persistence fails, restore the last known state.
+    setAssignment(optimistic);
     setBusy(true);
     setError("");
 
     const { data, error: updateError } = await supabase
       .from("assignments")
-      .update({ ...changes, updated_at: new Date().toISOString() })
+      .update({ ...changes, updated_at: optimistic.updated_at })
       .eq("id", assignment.id)
       .eq("user_id", assignment.user_id)
       .select(`
@@ -397,7 +402,8 @@ export default function AssignmentWorkspacePage() {
       .single();
 
     if (updateError) {
-      setError(updateError.message);
+      setAssignment(previous);
+      setError(updateError.message || "Could not save the assignment change. Your previous values were restored.");
     } else {
       setAssignment(data as unknown as Assignment);
     }
