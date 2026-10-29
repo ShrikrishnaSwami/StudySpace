@@ -24,8 +24,9 @@ Use this checklist against the actual production environment before inviting rea
 - [ ] Enable Supabase leaked-password protection in the Auth password/security settings.
 - [ ] Review Supabase security and performance advisors; resolve warnings appropriate to the production workload.
 - [ ] Test account deletion with a dedicated test account and confirm associated user-owned data is removed according to the documented retention policy.
-- [ ] Confirm backups/recovery expectations before storing real coursework.
-- [ ] Follow docs/BACKUP_AND_RECOVERY_RUNBOOK.md: create off-site database and Storage exports, then complete a restore drill in a non-production project.
+- [ ] Configure the encrypted daily off-site backup workflow using [docs/OFFSITE_BACKUP_SETUP.md](./OFFSITE_BACKUP_SETUP.md); verify the first GitHub Actions run succeeds and encrypted database/Storage archives exist in the private R2 bucket.
+- [ ] Confirm the admin dashboard shows the latest successful backup timestamp.
+- [ ] Follow [docs/BACKUP_AND_RECOVERY_RUNBOOK.md](./BACKUP_AND_RECOVERY_RUNBOOK.md): complete a successful restore drill in a non-production project. Until then, recovery is **not verified**.
 
 ## 3. Authentication and account flows
 
