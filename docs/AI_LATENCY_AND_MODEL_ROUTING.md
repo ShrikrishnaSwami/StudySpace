@@ -1,45 +1,28 @@
-# AI latency and model routing
+# StudySpace AI quality and performance — public overview
 
-StudySpace routes AI work through the server-only adapter in `src/lib/gemini.ts`. The goal is to choose a low-latency model appropriate to the task, keep prompts and outputs bounded, and move to a different supported model when a provider reports a transient failure.
+## Goals
 
-## Current default model assignment
+StudySpace aims to make AI-assisted study features responsive, reliable, and useful without sacrificing clarity or responsible handling of student content.
 
-| Task | Default primary | Fallback order | Why |
-| --- | --- | --- | --- |
-| AI Tutor | `gemini-3.6-flash` | `gemini-3.5-flash-lite`, then `gemini-3.1-flash-lite` | Balanced conversational speed and explanation quality |
-| Quiz generation | `gemini-3.6-flash` | `gemini-3.5-flash-lite`, then `gemini-3.1-flash-lite` | Structured question quality without defaulting to the most expensive/slowest reasoning path |
-| Homework analysis | `gemini-3.6-flash` | `gemini-3.5-flash-lite`, then `gemini-3.1-flash-lite` | Multimodal input support with a bounded fallback path |
-| Syllabus extraction | `gemini-3.6-flash` | `gemini-3.5-flash-lite`, then `gemini-3.1-flash-lite` | Document extraction with conservative output size |
-| Notes extraction | `gemini-3.6-flash` | `gemini-3.5-flash-lite` | Uploaded documents use a two-model limit and a larger structured-output budget |
-| Assignment grading | `gemini-3.6-flash` | `gemini-3.5-flash-lite` | Rubric-based grading uses a two-model limit and a structured JSON result |
-| Flashcards | `gemini-3.5-flash-lite` | `gemini-3.6-flash`, then `gemini-3.1-flash-lite` | High-volume concise generation |
-| Recommendations | `gemini-3.5-flash-lite` | `gemini-3.6-flash`, then `gemini-3.1-flash-lite` | Short structured output and lower latency |
+## What we evaluate
 
-Model availability and quotas depend on the provider project. The models above are supported model IDs listed by Google's [Gemini API model documentation](https://ai.google.dev/gemini-api/docs/models); if a model is unavailable to the project's key, the adapter attempts a different model. File-heavy paths intentionally stop after one fallback to keep execution time bounded; text tasks can try the third model (`gemini-3.1-flash-lite`) after a transient failure. The `gemini-3.7-flash` alias is deliberately avoided because Google's deprecation guide says it now routes to `gemini-3.8-flash`.
+- **Response time:** whether common tasks complete within a reasonable time.
+- **Reliability:** how the application behaves when an AI provider is temporarily unavailable.
+- **Quality:** whether explanations and generated study materials are relevant and accurate.
+- **Context use:** whether responses reflect available workspace material when appropriate.
+- **User feedback:** whether students can report unhelpful or incorrect results.
+- **Cost awareness:** whether AI usage remains sustainable during beta.
 
-## Configuration
+## Design approach
 
-Optional server-side variables:
+AI requests are handled by the application, and the project may adjust its model selection and fallback behavior as providers and product needs change. Provider availability, latency, model capabilities, and pricing can change over time.
 
-- `GEMINI_TUTOR_MODEL`: override the Tutor primary.
-- `GEMINI_REASONING_MODEL`: override quiz, homework, and syllabus primary.
-- `GEMINI_FAST_MODEL`: override flashcard and recommendation primary.
-- `GEMINI_FALLBACK_MODEL`: add a preferred tertiary fallback after the task-specific fast fallback; `gemini-3.7-flash` and `gemini-3.8-flash` are ignored here to avoid the recent overload path.
+## Known limitations
 
-The legacy `GEMINI_MODEL` variable is not used as a universal primary override anymore because it forced all tasks onto one model, including during the recorded high-demand errors. Do not configure OpenAI or Anthropic routing unless those provider keys and model IDs are actually provisioned; those services may incur separate charges.
+AI responses may be incorrect or incomplete. A temporary provider failure can prevent a feature from completing. Extracted syllabus dates and generated educational material should be checked before being used to make academic decisions.
 
-## Latency improvements
+## Next steps
 
-- The Gemini HTTP timeout is bounded at 20 seconds rather than 45 seconds.
-- Each model is attempted at most once per generation path; the adapter does not repeat a saturated primary model before trying a fallback.
-- Output token ceilings are task-specific to avoid needlessly long generations.
-- Text generation uses the shared adapter. Homework's multimodal route now uses the same task routing, output limits, and fallback policy.
-- The Tutor streams output and logs safe timing metadata: model/task, time to first token, total generation duration, and prompt/output character counts. It does not log the student's message or prompt contents.
-- Tutor context loading and retrieval timings are logged separately. Lexical retrieval is the default; semantic embeddings are opt-in with `STUDYSPACE_SEMANTIC_RETRIEVAL=true` because they add an external request and can increase latency.
-- The Tutor browser request has a 75-second timeout and shows a useful retry message instead of leaving the interface waiting indefinitely.
+The controlled beta will help identify slow or unreliable workflows and prioritize improvements. Performance observations should be based on representative tests and not on isolated successful requests.
 
-## What to measure
-
-Compare time to first token and total time separately. A useful target for a normal text Tutor question is to show the first token as soon as practical and avoid multi-minute requests; complex file analysis can take longer. Compare typical requests with slow outliers and include model/status details from Vercel logs. Never log API keys, full prompts, student messages, private file paths, or student record contents.
-
-Streaming improves perceived latency but does not guarantee a shorter total generation time. Provider congestion, rate limits, database latency, large uploaded files, and hosting limits can still affect the response.
+This public overview does not publish internal model-selection rules, implementation details, private usage thresholds, provider credentials, or infrastructure configuration.
