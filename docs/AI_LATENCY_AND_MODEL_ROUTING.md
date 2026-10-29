@@ -6,16 +6,16 @@ StudySpace routes AI work through the server-only adapter in `src/lib/gemini.ts`
 
 | Task | Default primary | Fallback order | Why |
 | --- | --- | --- | --- |
-| AI Tutor | `gemini-3.6-flash` | `gemini-3.5-flash-lite`, then `gemini-3.7-flash` | Balanced conversational speed and explanation quality |
-| Quiz generation | `gemini-3.6-flash` | `gemini-3.5-flash-lite`, then `gemini-3.7-flash` | Structured question quality without defaulting to the most expensive/slowest reasoning path |
-| Homework analysis | `gemini-3.6-flash` | `gemini-3.5-flash-lite`, then `gemini-3.7-flash` | Multimodal input support with a bounded fallback path |
-| Syllabus extraction | `gemini-3.6-flash` | `gemini-3.5-flash-lite`, then `gemini-3.7-flash` | Document extraction with conservative output size |
+| AI Tutor | `gemini-3.6-flash` | `gemini-3.5-flash-lite`, then `gemini-3.1-flash-lite` | Balanced conversational speed and explanation quality |
+| Quiz generation | `gemini-3.6-flash` | `gemini-3.5-flash-lite`, then `gemini-3.1-flash-lite` | Structured question quality without defaulting to the most expensive/slowest reasoning path |
+| Homework analysis | `gemini-3.6-flash` | `gemini-3.5-flash-lite`, then `gemini-3.1-flash-lite` | Multimodal input support with a bounded fallback path |
+| Syllabus extraction | `gemini-3.6-flash` | `gemini-3.5-flash-lite`, then `gemini-3.1-flash-lite` | Document extraction with conservative output size |
 | Notes extraction | `gemini-3.6-flash` | `gemini-3.5-flash-lite` | Uploaded documents use a two-model limit and a larger structured-output budget |
 | Assignment grading | `gemini-3.6-flash` | `gemini-3.5-flash-lite` | Rubric-based grading uses a two-model limit and a structured JSON result |
-| Flashcards | `gemini-3.5-flash-lite` | `gemini-3.6-flash`, then `gemini-3.7-flash` | High-volume concise generation |
-| Recommendations | `gemini-3.5-flash-lite` | `gemini-3.6-flash`, then `gemini-3.7-flash` | Short structured output and lower latency |
+| Flashcards | `gemini-3.5-flash-lite` | `gemini-3.6-flash`, then `gemini-3.1-flash-lite` | High-volume concise generation |
+| Recommendations | `gemini-3.5-flash-lite` | `gemini-3.6-flash`, then `gemini-3.1-flash-lite` | Short structured output and lower latency |
 
-Model availability and quotas depend on the provider project. The models above are supported model IDs listed by Google's [Gemini API model documentation](https://ai.google.dev/gemini-api/docs/models); if a model is unavailable to the project's key, the adapter attempts a different model. File-heavy paths intentionally stop after one fallback to keep execution time bounded; text tasks can try the third model after a transient failure.
+Model availability and quotas depend on the provider project. The models above are supported model IDs listed by Google's [Gemini API model documentation](https://ai.google.dev/gemini-api/docs/models); if a model is unavailable to the project's key, the adapter attempts a different model. File-heavy paths intentionally stop after one fallback to keep execution time bounded; text tasks can try the third model (`gemini-3.1-flash-lite`) after a transient failure. The `gemini-3.7-flash` alias is deliberately avoided because Google's deprecation guide says it now routes to `gemini-3.8-flash`.
 
 ## Configuration
 
