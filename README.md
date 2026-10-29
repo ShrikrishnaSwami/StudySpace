@@ -109,6 +109,10 @@ In-app types include assignment due/overdue, upcoming quizzes, quiz results, stu
 
 Account/preferences settings and a rolling 24-hour AI usage display for the current user. Usage is read through user-bound database functions rather than exposing private event tables. This depends on correct Supabase configuration and quota/usage migrations.
 
+### Off-site backups
+
+Daily encrypted PostgreSQL application-data and private Storage exports are provided by [the GitHub Actions backup workflow](.github/workflows/offsite-backup.yml). Configure its required repository secrets and complete the first restore drill using [the off-site backup setup guide](docs/OFFSITE_BACKUP_SETUP.md) before storing real student coursework. The admin dashboard displays the latest workflow status; a successful upload is not the same as a verified restore.
+
 ### Admin dashboard — `/admin`
 
 Restricted operational dashboard for aggregate application and AI feedback statistics. Protected endpoints and a narrow RPC provide permitted aggregate information. Admin authorization must use the trusted Supabase Auth `app_metadata.role = "admin"` claim, never user-editable `user_metadata`, display names, or client-only checks. The dashboard is not intended to expose all students' private messages or notes.
