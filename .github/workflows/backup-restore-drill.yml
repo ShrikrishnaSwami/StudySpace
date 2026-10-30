@@ -170,6 +170,22 @@ jobs:
           CREATE TABLE restore_validation.auth_user_metadata (payload jsonb NOT NULL);
           SQL
 
+      - name: Create Supabase roles needed for ACL restoration
+        shell: bash
+        run: |
+          set -euo pipefail
+          for role in anon authenticated authenticator service_role supabase_admin supabase_auth_admin supabase_storage_admin supabase_functions_admin supabase_realtime_admin supabase_replication_admin supabase_etl_admin supabase_read_only_user dashboard_user pgbouncer; do
+            exists="$(docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -Atc "SELECT 1 FROM pg_roles WHERE rolname = '$role'")"
+            if [[ "$exists" != "1" ]]; then
+              if [[ "$role" == "service_role" ]]; then
+                docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "CREATE ROLE service_role NOLOGIN BYPASSRLS"
+              else
+                docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "CREATE ROLE \"$role\" NOLOGIN"
+              fi
+            fi
+          done
+          docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "ALTER ROLE service_role BYPASSRLS"
+
       - name: Restore the PostgreSQL application archive
         shell: bash
         run: |
@@ -194,8 +210,8 @@ jobs:
           CREATE OR REPLACE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $ SELECT NULL::text $;
           CREATE OR REPLACE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS $ SELECT '{}'::jsonb $;
           SQL
-          docker exec --user postgres "$PG_CONTAINER" pg_restore --section=pre-data --use-list=/tmp/restore.list --dbname=postgres --no-owner --no-privileges --exit-on-error /tmp/public-database.dump
-          docker exec --user postgres "$PG_CONTAINER" pg_restore --section=data --use-list=/tmp/restore.list --dbname=postgres --no-owner --no-privileges --exit-on-error /tmp/public-database.dump
+          docker exec --user postgres "$PG_CONTAINER" pg_restore --section=pre-data --use-list=/tmp/restore.list --dbname=postgres --no-owner --exit-on-error /tmp/public-database.dump
+          docker exec --user postgres "$PG_CONTAINER" pg_restore --section=data --use-list=/tmp/restore.list --dbname=postgres --no-owner --exit-on-error /tmp/public-database.dump
 
       - name: Load Auth metadata into the isolated validation database
         shell: bash
@@ -266,7 +282,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker exec --user postgres "$PG_CONTAINER" pg_restore --section=post-data --use-list=/tmp/restore.list --dbname=postgres --no-owner --no-privileges --exit-on-error /tmp/public-database.dump
+          docker exec --user postgres "$PG_CONTAINER" pg_restore --section=post-data --use-list=/tmp/restore.list --dbname=postgres --no-owner --exit-on-error /tmp/public-database.dump
 
       - name: Run student data RLS isolation tests
         shell: bash
