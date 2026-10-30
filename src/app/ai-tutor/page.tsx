@@ -994,12 +994,13 @@ export default function AITutorPage() {
     const kind = childNodeKind as StudyNode["kind"];
     const item = studyWorkspaceItems.find(entry => entry.kind === kind);
     const siblings = studyNodes.filter(node => node.parentId === parent.id).length;
+    const minX = typeof window !== "undefined" && window.innerWidth <= 700 ? 20 : 8;
     const next: StudyNode = {
       id: crypto.randomUUID(),
       kind,
       title: item?.title || "New study node",
-      x: Math.max(8, Math.min(92, parent.x + (siblings % 2 === 0 ? 13 : -13))),
-      y: Math.max(12, Math.min(88, parent.y + 13 + Math.floor(siblings / 2) * 8)),
+      x: Math.max(minX, Math.min(100 - minX, parent.x + (siblings % 2 === 0 ? 13 : -13))),
+      y: Math.max(12, Math.min(82, parent.y + 13 + Math.floor(siblings / 2) * 8)),
       parentId: parent.id,
       courseId: parent.courseId,
     };
@@ -1013,19 +1014,20 @@ export default function AITutorPage() {
     const capacity = Math.max(0, 24 - studyNodes.length);
     const total = Math.min(amount, capacity);
     const roots = studyNodes.filter(node => !node.parentId).length;
+    const minX = typeof window !== "undefined" && window.innerWidth <= 700 ? 20 : 8;
     const next = Array.from({ length: total }, (_, i) => {
       const index = roots + i;
       const angle = (index * 2.399963229728653) - Math.PI / 2;
-      const radiusX = 34 + (Math.floor(index / 8) * 7);
-      const radiusY = 29 + (Math.floor(index / 8) * 6);
+      const radiusX = 32 + (Math.floor(index / 8) * 6);
+      const radiusY = 22 + (Math.floor(index / 8) * 5);
       const kind = kinds[i % kinds.length];
       const item = studyWorkspaceItems.find(entry => entry.kind === kind);
       return {
         id: crypto.randomUUID(),
         kind,
         title: item?.title || "Study node",
-        x: Math.max(8, Math.min(92, 50 + Math.cos(angle) * radiusX)),
-        y: Math.max(12, Math.min(86, 48 + Math.sin(angle) * radiusY)),
+        x: Math.max(minX, Math.min(100 - minX, 50 + Math.cos(angle) * radiusX)),
+        y: Math.max(15, Math.min(78, 48 + Math.sin(angle) * radiusY)),
         parentId: null,
       } satisfies StudyNode;
     });
