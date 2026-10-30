@@ -6,6 +6,7 @@ import {
   Check,
   CheckCheck,
   Clock3,
+  RefreshCw,
   FileText,
   GraduationCap,
   Lightbulb,
@@ -20,6 +21,7 @@ import {
   getUnreadNotificationCount,
   markAllNotificationsRead,
   markNotificationRead,
+  subscribeToNotifications,
   type Notification,
   type NotificationType,
 } from "@/lib/notifications";
@@ -33,6 +35,9 @@ function getNotificationIcon(type: NotificationType) {
       return AlertTriangle;
 
     case "quiz_upcoming":
+    case "class_upcoming":
+      return CalendarDays;
+
     case "quiz_result":
       return GraduationCap;
 
@@ -91,6 +96,9 @@ export default function NotificationCenter() {
   >([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState<"all" | "unread">("all");
+
+  const visibleNotifications = notifications.filter(item => filter === "all" || !item.read);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -116,17 +124,23 @@ export default function NotificationCenter() {
   }
 
   useEffect(() => {
-    const initialLoad = window.setTimeout(() => {
-      void loadNotifications();
-    }, 0);
+    let active = true;
+    let unsubscribe = () => undefined;
+    const initialLoad = window.setTimeout(() => { void loadNotifications(); }, 0);
+    const fallback = window.setInterval(() => { void loadNotifications(); }, 60000);
 
-    const interval = window.setInterval(() => {
-      void loadNotifications();
-    }, 30000);
+    void subscribeToNotifications(() => {
+      if (active) void loadNotifications();
+    }).then(cleanup => {
+      if (active) unsubscribe = cleanup;
+      else cleanup();
+    }).catch(error => console.error("Notification realtime subscription failed:", error));
 
     return () => {
+      active = false;
       window.clearTimeout(initialLoad);
-      window.clearInterval(interval);
+      window.clearInterval(fallback);
+      unsubscribe();
     };
   }, []);
 
@@ -262,13 +276,12 @@ export default function NotificationCenter() {
               </h3>
 
               <p className="mt-0.5 text-xs text-white/40">
-                {unreadCount > 0
-                  ? `${unreadCount} unread`
-                  : "You're all caught up"}
+                {unreadCount > 0 ? `${unreadCount} unread · ${notifications.length} total` : "You're all caught up"}
               </p>
             </div>
 
             <div className="flex items-center gap-1">
+              <button type="button" onClick={() => void loadNotifications()} aria-label="Refresh notifications" title="Refresh" className="grid h-7 w-7 place-items-center rounded-lg text-white/35 transition hover:bg-white/5 hover:text-white"><RefreshCw size={13} className={loading ? "animate-spin" : ""}/></button>
               {unreadCount > 0 && (
                 <button
                   type="button"
@@ -290,6 +303,9 @@ export default function NotificationCenter() {
             </div>
           </div>
 
+          <div className="flex items-center gap-1 border-b border-white/[0.06] px-4 py-2">
+            {(["all","unread"] as const).map(value=><button key={value} type="button" onClick={()=>setFilter(value)} className={`rounded-lg px-3 py-1.5 text-[10px] font-medium transition ${filter===value?"bg-violet-500/15 text-violet-200":"text-white/35 hover:bg-white/[0.04] hover:text-white/70"}`}>{value==="all"?"All":"Unread"}</button>)}
+          </div>
           <div className="max-h-[500px] overflow-y-auto">
             {loading && notifications.length === 0 ? (
               <div className="px-5 py-10 text-center">
@@ -299,7 +315,7 @@ export default function NotificationCenter() {
                   Loading notifications...
                 </p>
               </div>
-            ) : notifications.length === 0 ? (
+            ) : visibleNotifications.length === 0 ? (
               <div className="px-5 py-12 text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/10">
                   <Bell
@@ -313,11 +329,11 @@ export default function NotificationCenter() {
                 </h4>
 
                 <p className="mt-1 text-xs text-white/40">
-                  Important updates will appear here.
+                  {filter === "unread" ? "You have no unread notifications." : "Important updates will appear here."}
                 </p>
               </div>
             ) : (
-              notifications.map((notification) => {
+              visibleNotifications.map((notification) => {
                 const Icon =
                   getNotificationIcon(
                     notification.type
