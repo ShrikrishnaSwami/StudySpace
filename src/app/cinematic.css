@@ -804,3 +804,17 @@ body:has(.ss-landing)::-webkit-scrollbar,body:has(.ss-neural-tutor)::-webkit-scr
 
 .ss-jarvis-stage .ss-neural-hotspots .brain-action.is-selected{border-color:#d2bd98;background:rgba(75,64,47,.94);box-shadow:0 0 0 1px rgba(210,189,152,.12),0 0 28px rgba(185,167,131,.16)}
 .ss-jarvis-stage .ss-neural-hotspots .brain-action.is-selected b{background:rgba(185,167,131,.14);color:#f0dfbb}
+
+
+/* JARVIS student workspace — independently movable, closable branches. */
+.ss-jarvis-window{border-radius:3px;min-width:260px;min-height:190px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 92px);transition:box-shadow .16s ease,border-color .16s ease}
+.ss-jarvis-window:focus-within{border-color:rgba(210,189,152,.48)}
+.ss-jarvis-window-head{min-height:58px;cursor:grab;user-select:none;-webkit-user-select:none}
+.ss-jarvis-window-head:active{cursor:grabbing}
+.ss-jarvis-window>div{scrollbar-width:thin;scrollbar-color:rgba(185,167,131,.22) transparent}
+.ss-jarvis-window a:focus-visible,.ss-jarvis-window button:focus-visible,.ss-jarvis-window textarea:focus-visible{outline:2px solid rgba(210,189,152,.8);outline-offset:2px}
+@media(max-width:700px){
+ .ss-jarvis-window{left:12px!important;top:auto!important;right:12px!important;bottom:12px!important;width:auto!important;height:min(72dvh,620px)!important;max-width:none!important;max-height:calc(100dvh - 92px)!important}
+ .ss-jarvis-window-head{cursor:default;touch-action:auto}
+}
+@media(prefers-reduced-motion:reduce){.ss-jarvis-window{transition:none!important}}
