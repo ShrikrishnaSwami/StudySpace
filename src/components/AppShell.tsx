@@ -332,7 +332,7 @@ function NotificationDropdown({
             </p>
 
             <p className="mt-1 text-xs text-white/25">
-              You're up to date.
+              You&apos;re up to date.
             </p>
           </div>
         ) : (
