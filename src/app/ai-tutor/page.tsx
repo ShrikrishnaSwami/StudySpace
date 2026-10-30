@@ -1459,17 +1459,21 @@ export default function AITutorPage() {
 
                   <div className="text-center">
 
-                    <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-[20px] border border-violet-400/10 bg-violet-500/[0.07] shadow-xl shadow-violet-950/10">
-                      <Bot className="h-7 w-7 text-violet-300" />
-
-                      <span className="absolute inset-[-5px] rounded-[24px] border border-violet-400/[0.04]" />
+                    <div className={`ss-jarvis-core relative mx-auto flex h-32 w-32 items-center justify-center sm:h-40 sm:w-40 ${sending ? "is-thinking" : "is-idle"}`} role="img" aria-label="StudySpace AI core, online">
+                      <span className="ss-jarvis-orbit ss-jarvis-orbit-one" />
+                      <span className="ss-jarvis-orbit ss-jarvis-orbit-two" />
+                      <span className="ss-jarvis-orbit ss-jarvis-orbit-three" />
+                      <span className="ss-jarvis-scan" />
+                      <span className="ss-jarvis-core-glow" />
+                      <span className="ss-jarvis-core-center"><Sparkles className="h-7 w-7 sm:h-9 sm:w-9" /></span>
+                      <span className="ss-jarvis-core-label">S / AI</span>
                     </div>
 
                     <div className="mt-6 flex items-center justify-center gap-2">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
 
                       <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/25">
-                        AI Tutor online
+                        STUDYSPACE INTELLIGENCE · ONLINE
                       </span>
                     </div>
 
