@@ -24,6 +24,7 @@ jobs:
       BACKUP_DB_PASSWORD: ${{ secrets.BACKUP_DB_PASSWORD }}
       STORAGE_BUCKETS: assignment-files,assignment-submissions,homework
       AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
+      AGE_RECIPIENT_RESTORE: ${{ secrets.BACKUP_AGE_RECIPIENT_RESTORE }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -32,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for name in SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY SUPABASE_DB_URL BACKUP_DB_PASSWORD AGE_RECIPIENT; do
+          for name in SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY SUPABASE_DB_URL BACKUP_DB_PASSWORD AGE_RECIPIENT AGE_RECIPIENT_RESTORE; do
             if [[ -z "${!name:-}" ]]; then
               echo "::error::Missing required GitHub Actions secret for ${name}. See docs/OFFSITE_BACKUP_SETUP.md."
               exit 1
@@ -40,6 +41,7 @@ jobs:
           done
           [[ "$SUPABASE_URL" == https://* ]] || { echo "::error::SUPABASE_URL must use HTTPS"; exit 1; }
           [[ "$AGE_RECIPIENT" == age1* ]] || { echo "::error::AGE_RECIPIENT must be an age public recipient (age1...)"; exit 1; }
+          [[ "$AGE_RECIPIENT_RESTORE" == age1* ]] || { echo "::error::AGE_RECIPIENT_RESTORE must be an age public recipient (age1...)"; exit 1; }
 
       - name: Record backup start in admin dashboard
         shell: bash
@@ -70,7 +72,7 @@ jobs:
           # separately by the next step.
           pg_dump --dbname="$SUPABASE_DB_URL" --schema=public --format=custom --no-owner --no-privileges --file=backup-work/public-database.dump
           test -s backup-work/public-database.dump
-          age --recipient "$AGE_RECIPIENT" --output encrypted/public-database.dump.age backup-work/public-database.dump
+          age --recipient "$AGE_RECIPIENT" --recipient "$AGE_RECIPIENT_RESTORE" --output encrypted/public-database.dump.age backup-work/public-database.dump
           rm -f backup-work/public-database.dump
 
       - name: Export private Storage objects and Auth metadata
