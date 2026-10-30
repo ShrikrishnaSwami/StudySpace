@@ -1006,28 +1006,6 @@ export default function AITutorPage() {
      LOADING
   ======================================================= */
 
-  if (loading) {
-    return (
-      <AppShell>
-        <div className="flex min-h-[calc(100vh-68px)] items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-violet-400/10 bg-violet-500/[0.07]">
-              <Sparkles className="h-5 w-5 animate-pulse text-violet-300" />
-            </div>
-
-            <p className="mt-4 text-sm font-medium text-white/60">
-              Preparing your tutor
-            </p>
-
-            <p className="mt-1 text-xs text-white/25">
-              Loading your conversations...
-            </p>
-          </div>
-        </div>
-      </AppShell>
-    );
-  }
-
   /* =======================================================
      MAIN UI
   ======================================================= */
