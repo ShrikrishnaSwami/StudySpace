@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { generateAIResponseFromParts } from "@/lib/gemini";
-import { consumeAiQuota, consumeApiRateLimit } from "@/lib/api-security";
+import { consumeAiQuota, consumeApiRateLimit, readBoundedFormData } from "@/lib/api-security";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -27,8 +27,7 @@ export async function POST(request: NextRequest) {
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
     const apiKey = process.env.GEMINI_API_KEY;
     if (!url || !anonKey || !apiKey) return NextResponse.json({ error: "AI note extraction is not configured on the server." }, { status: 503 });
-    const length = Number(request.headers.get("content-length") || 0);
-    if (length > MAX_FILE_BYTES + 128 * 1024) return NextResponse.json({ error: "Choose a file smaller than 12 MB." }, { status: 413 });
+
 
     const client = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }, global: { headers: { Authorization: "Bearer " + token } } });
     const { data: { user }, error: authError } = await client.auth.getUser(token);
@@ -36,7 +35,13 @@ export async function POST(request: NextRequest) {
     const rate = await consumeApiRateLimit(user.id, "ai-note-extraction", 5, 600, token);
     if (!rate.allowed) return NextResponse.json({ error: "Too many file conversions. Wait a few minutes and try again." }, { status: 429 });
 
-    const form = await request.formData();
+    let form: FormData;
+    try {
+      form = await readBoundedFormData(request, MAX_FILE_BYTES + 128 * 1024);
+    } catch (error) {
+      const tooLarge = error instanceof Error && error.message === "REQUEST_TOO_LARGE";
+      return NextResponse.json({ error: tooLarge ? "Choose a file smaller than 12 MB." : "Invalid file upload." }, { status: tooLarge ? 413 : 400 });
+    }
     const file = form.get("file");
     const courseId = String(form.get("courseId") || "").trim();
     const unitName = String(form.get("unitName") || "General").trim().slice(0, 100) || "General";
