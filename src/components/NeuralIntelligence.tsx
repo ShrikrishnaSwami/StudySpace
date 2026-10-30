@@ -3,9 +3,9 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 type Action = "new-chat" | "history" | "tools";
-type Props = { active?: boolean; listening?: boolean; showControls?: boolean; controlsOnly?: boolean; onPrompt?: (prompt: string) => void; onAction?: (action: Action) => void };
+type Props = { active?: boolean; listening?: boolean; showControls?: boolean; controlsOnly?: boolean; activeAction?: Action; onPrompt?: (prompt: string) => void; onAction?: (action: Action) => void };
 
-export default function NeuralIntelligence({active=false,listening=false,showControls=true,controlsOnly=false,onPrompt,onAction}:Props) {
+export default function NeuralIntelligence({active=false,listening=false,showControls=true,controlsOnly=false,activeAction,onPrompt,onAction}:Props) {
  const host=useRef<HTMLDivElement>(null);
  const mode=useRef({active,listening}); mode.current={active,listening};
  useEffect(()=>{
@@ -46,9 +46,9 @@ export default function NeuralIntelligence({active=false,listening=false,showCon
  return <div ref={host} className={["ss-neural-universe","ss-neural-universe-concrete",active?"is-active":"",listening?"is-listening":""].join(" ")}>
   <div className="ss-neural-vignette"/><div className="ss-neural-readout"><span>STUDYSPACE / INTELLIGENCE</span><span>{listening?"LISTENING":active?"THINKING":"NEURAL NETWORK READY"}</span></div>
   {showControls&&<div className="ss-neural-hotspots" aria-label="Neural workspace controls">
-   <button type="button" className="brain-action action-new" onClick={()=>onAction?.("new-chat")}><b>＋</b><span>New chat</span></button>
-   <button type="button" className="brain-action action-history" onClick={()=>onAction?.("history")}><b>↶</b><span>History</span></button>
-   <button type="button" className="brain-action action-tools" onClick={()=>onAction?.("tools")}><b>⌘</b><span>Study tools</span></button>
+   <button type="button" aria-pressed={activeAction==="new-chat"} className={["brain-action","action-new",activeAction==="new-chat"?"is-selected":""].join(" ")} onClick={()=>onAction?.("new-chat")}><b>＋</b><span>New chat</span></button>
+   <button type="button" aria-pressed={activeAction==="history"} className={["brain-action","action-history",activeAction==="history"?"is-selected":""].join(" ")} onClick={()=>onAction?.("history")}><b>↶</b><span>History</span></button>
+   <button type="button" aria-pressed={activeAction==="tools"} className={["brain-action","action-tools",activeAction==="tools"?"is-selected":""].join(" ")} onClick={()=>onAction?.("tools")}><b>⌘</b><span>Study tools</span></button>
   </div>}
  </div>;
 }
