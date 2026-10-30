@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { generateAIResponseFromParts } from "@/lib/gemini";
-import { consumeAiQuota, consumeApiRateLimit } from "@/lib/api-security";
+import { consumeAiQuota, consumeApiRateLimit, readBoundedJson } from "@/lib/api-security";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -72,12 +72,12 @@ export async function POST(request: NextRequest) {
     const rate = await consumeApiRateLimit(user.id, "assignment-ai-grade", 5, 600, token);
     if (!rate.allowed) return NextResponse.json({ error: "Too many AI grading requests. Please wait before trying again." }, { status: 429 });
 
-    if (Number(request.headers.get("content-length") || 0) > 32768) {
-      return NextResponse.json({ error: "Grading request is too large." }, { status: 413 });
-    }
     let body: unknown;
-    try { body = await request.json(); } catch {
-      return NextResponse.json({ error: "Invalid grading request." }, { status: 400 });
+    try {
+      body = await readBoundedJson(request, 32768);
+    } catch (error) {
+      const tooLarge = error instanceof Error && error.message === "REQUEST_TOO_LARGE";
+      return NextResponse.json({ error: tooLarge ? "Grading request is too large." : "Invalid grading request." }, { status: tooLarge ? 413 : 400 });
     }
     const gradingRequestSchema = z.object({
       submissionId: z.string().uuid(),
