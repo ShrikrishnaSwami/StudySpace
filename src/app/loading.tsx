@@ -1,24 +1,42 @@
+import StudySpaceMark from "@/components/StudySpaceMark";
+
+const loadingTiles = [
+  { label: "Courses", className: "ss-loader-tile-one" },
+  { label: "Your work", className: "ss-loader-tile-two" },
+  { label: "Study plan", className: "ss-loader-tile-three" },
+];
+
 export default function Loading() {
   return (
     <main
+      id="main-content"
       aria-label="Loading StudySpace"
       aria-busy="true"
-      className="min-h-[70vh] bg-[#07050b] px-5 py-10 text-white"
+      className="ss-loading-screen"
     >
-      <div className="mx-auto w-full max-w-7xl animate-pulse space-y-6">
-        <div className="h-8 w-56 rounded-lg bg-white/[0.08]" />
-        <div className="h-4 w-80 max-w-full rounded bg-white/[0.05]" />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }, (_, index) => (
-            <div key={index} className="h-28 rounded-2xl border border-white/[0.06] bg-white/[0.025]" />
+      <div className="ss-loading-grid" aria-hidden="true" />
+      <div className="ss-loading-glow ss-loading-glow-a" aria-hidden="true" />
+      <div className="ss-loading-glow ss-loading-glow-b" aria-hidden="true" />
+      <section className="ss-loading-content">
+        <div className="ss-loading-mark-wrap">
+          <span className="ss-loading-orbit ss-loading-orbit-a" />
+          <span className="ss-loading-orbit ss-loading-orbit-b" />
+          <StudySpaceMark size={76} />
+        </div>
+        <p className="ss-loading-kicker">YOUR SPACE IS TAKING SHAPE</p>
+        <h1>Getting everything <span>in sync.</span></h1>
+        <p className="ss-loading-copy">Lining up your courses, plans and next steps.</p>
+        <div className="ss-loading-progress" aria-hidden="true"><span /></div>
+        <div className="ss-loading-tiles" aria-hidden="true">
+          {loadingTiles.map((tile) => (
+            <div key={tile.label} className={`ss-loading-tile ${tile.className}`}>
+              <span className="ss-loading-tile-dot" />
+              {tile.label}
+            </div>
           ))}
         </div>
-        <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-          <div className="h-72 rounded-2xl border border-white/[0.06] bg-white/[0.025]" />
-          <div className="h-72 rounded-2xl border border-white/[0.06] bg-white/[0.025]" />
-        </div>
-        <p className="text-sm text-white/40">Loading your workspace…</p>
-      </div>
+        <p className="ss-loading-foot"><span /> STUDYSPACE · MAKE ROOM FOR WHAT MATTERS</p>
+      </section>
     </main>
   );
 }
