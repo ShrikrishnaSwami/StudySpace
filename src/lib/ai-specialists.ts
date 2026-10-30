@@ -152,6 +152,43 @@ export function resolveProviderForTask(
   return task === "tutor" ? "gemini" : "groq";
 }
 
+export function resolveConfiguredProvidersForTask(
+  task: AITask,
+  environment: ProviderEnvironment = process.env,
+): AIProviderName[] {
+  const preferred = resolveProviderForTask(task, environment);
+  const configured = (provider: AIProviderName) => {
+    if (provider === "gemini") return Boolean(environment.GEMINI_API_KEY);
+    if (provider === "groq") return Boolean(environment.GROQ_API_KEY) && environment.GROQ_ALLOW_STUDENT_DATA === "true";
+    return Boolean(environment.OPENROUTER_API_KEY) && environment.OPENROUTER_ALLOW_STUDENT_DATA === "true";
+  };
+  return [preferred, "gemini", "groq", "openrouter"]
+    .filter((provider, index, all) => all.indexOf(provider) === index && configured(provider));
+}
+
+export function resolveExternalModelForTask(
+  provider: Exclude<AIProviderName, "gemini">,
+  task: AITask,
+  environment: ProviderEnvironment = process.env,
+): string {
+  if (provider === "groq") {
+    const defaults: Record<AITask, string> = {
+      tutor: "openai/gpt-oss-120b",
+      quiz: "qwen/qwen3.8-27b",
+      flashcards: "openai/gpt-oss-20b",
+      homework: "qwen/qwen3.8-27b",
+      syllabus: "openai/gpt-oss-20b",
+      recommendations: "openai/gpt-oss-20b",
+      notes: "openai/gpt-oss-20b",
+      grading: "openai/gpt-oss-120b",
+    };
+    return environment["GROQ_MODEL_" + task.toUpperCase()]?.trim() ||
+      environment.GROQ_MODEL?.trim() || defaults[task];
+  }
+  return environment["OPENROUTER_MODEL_" + task.toUpperCase()]?.trim() ||
+    environment.OPENROUTER_MODEL?.trim() || "openrouter/free";
+}
+
 export function buildSpecialistInstructions(task: AITask): string {
   const profile = specialistForTask(task);
   return [
