@@ -768,7 +768,7 @@ function CourseCard({
           <Link href={`/courses/${course.id}`} className="flex flex-1 items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs font-medium text-white/55 transition hover:border-white/[0.1] hover:bg-white/[0.045] hover:text-white/80">
             <span>Open course workspace</span><ChevronRight size={15}/>
           </Link>
-          <button type="button" onClick={onToggleArchive} className="rounded-xl border border-white/[0.06] px-3 py-3 text-[10px] text-white/35 transition hover:border-white/15 hover:text-white/75">{course.archived ? "Reopen" : "Close course"}</button>
+          <button type="button" onClick={onToggleArchive} className="rounded-xl border border-white/[0.06] px-3 py-3 text-[10px] text-white/35 transition hover:border-white/15 hover:text-white/75">{course.archived ? "Restore" : "Archive"}</button>
         </div>
       </div>
     </article>
