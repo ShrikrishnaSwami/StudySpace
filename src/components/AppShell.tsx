@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import StudySpaceMark from "@/components/StudySpaceMark";
 import { usePathname, useRouter } from "next/navigation";
 import {
   useCallback,
@@ -755,12 +756,7 @@ export default function AppShell({
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#111016] text-white">
         <div className="text-center">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center border border-white/10 bg-white/[0.04]">
-            <GraduationCap
-              size={20}
-              className="text-white/60"
-            />
-          </div>
+          <StudySpaceMark size={48} />
 
           <p className="mt-4 text-xs text-white/25">
             Loading StudySpace...
@@ -855,12 +851,7 @@ export default function AppShell({
                 : "gap-3",
             ].join(" ")}
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center border border-white/[0.1] bg-white/[0.06]">
-              <GraduationCap
-                size={19}
-                className="text-white/75"
-              />
-            </div>
+            <StudySpaceMark size={38} />
 
             {!collapsed && (
               <div className="min-w-0">
