@@ -519,11 +519,18 @@ ${clean(event.multitask) || "false"}
 }
 `);
 
-  const formatted = sections.join("\n\n");
-  const maxContextCharacters = 60000;
-  return formatted.length > maxContextCharacters
-    ? formatted.slice(0, maxContextCharacters) + "\n\n[Context window capped at 60,000 characters; use retrieved relevant excerpts for detailed answers.]"
-    : formatted;
+  // Reserve space for every category so a large notes section cannot push
+  // assignments, quiz performance, homework, or calendar data out entirely.
+  const sectionBudgets = [1200, 4000, 16000, 6000, 8000, 3000, 5000, 9000, 7000];
+  const boundedSections = sections.map((section, index) => {
+    const budget = sectionBudgets[index] ?? 4000;
+    if (section.length <= budget) return section;
+    const excerpt = section.slice(0, budget);
+    const boundary = excerpt.lastIndexOf("\n\n");
+    return (boundary > 0 ? excerpt.slice(0, boundary) : excerpt)
+      + "\n[This section was shortened to fit the AI context budget.]";
+  });
+  return boundedSections.join("\n\n");
 }
 
 
