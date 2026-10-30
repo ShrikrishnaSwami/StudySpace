@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { consumeAiQuota } from "@/lib/api-security";
+import { consumeAiQuota, readBoundedJson } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 
 import { generateAIResponse } from "@/lib/gemini";
@@ -79,8 +79,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (Number(request.headers.get("content-length") || 0) > 32768) return NextResponse.json({ error: "Request is too large." }, { status: 413 });
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await readBoundedJson(request, 32768);
+    } catch (error) {
+      const tooLarge = error instanceof Error && error.message === "REQUEST_TOO_LARGE";
+      return NextResponse.json({ error: tooLarge ? "Request is too large." : "Invalid request body." }, { status: tooLarge ? 413 : 400 });
+    }
 
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
