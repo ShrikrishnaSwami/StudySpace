@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 
 import AppShell from "@/components/AppShell";
+import ViewportPortal from "@/components/ViewportPortal";
 import { supabase } from "@/lib/supabase";
 
 type Course = {
@@ -53,6 +54,12 @@ type Course = {
   semester: string | null;
   syllabus_url: string | null;
   archived: boolean;
+  start_date: string | null;
+  end_date: string | null;
+  class_start_time: string | null;
+  class_end_time: string | null;
+  class_days: number[];
+  timezone: string;
 };
 
 type Note = {
@@ -1757,9 +1764,13 @@ function EditCourseModal({
   const [name, setName] = useState(course.name);
   const [code, setCode] = useState(course.code);
   const [room, setRoom] = useState(course.room || "");
-  const [schedule, setSchedule] = useState(
-    course.schedule || ""
-  );
+  const [schedule, setSchedule] = useState(course.schedule || "");
+  const [startDate, setStartDate] = useState(course.start_date || "");
+  const [endDate, setEndDate] = useState(course.end_date || "");
+  const [classStartTime, setClassStartTime] = useState(course.class_start_time?.slice(0,5) || "09:00");
+  const [classEndTime, setClassEndTime] = useState(course.class_end_time?.slice(0,5) || "10:00");
+  const [classDays, setClassDays] = useState<number[]>(course.class_days || []);
+  const [timezone, setTimezone] = useState(course.timezone || "UTC");
   const [progress, setProgress] = useState(
     String(course.progress ?? 0)
   );
@@ -1775,6 +1786,14 @@ function EditCourseModal({
   async function submit(event: FormEvent) {
     event.preventDefault();
 
+    if (!startDate || !endDate || endDate < startDate) {
+      setError("Choose a valid course start and end date.");
+      return;
+    }
+    if (classDays.length > 0 && (!classStartTime || !classEndTime || classEndTime <= classStartTime)) {
+      setError("Choose a class end time that is after its start time.");
+      return;
+    }
     setSaving(true);
     setError("");
 
@@ -1786,6 +1805,12 @@ function EditCourseModal({
           code: code.trim(),
           room: room.trim() || null,
           schedule: schedule.trim() || null,
+          start_date: startDate,
+          end_date: endDate,
+          class_start_time: classDays.length ? classStartTime : null,
+          class_end_time: classDays.length ? classEndTime : null,
+          class_days: classDays,
+          timezone,
           progress: Number(progress),
           target_grade: targetGrade
             ? Number(targetGrade)
@@ -1831,6 +1856,25 @@ function EditCourseModal({
             value={schedule}
             onChange={setSchedule}
           />
+        </div>
+
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
+          <p className="mb-3 text-sm font-medium text-white/75">Course dates</p>
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Start date" type="date" value={startDate} onChange={setStartDate}/>
+            <Input label="End date" type="date" value={endDate} onChange={setEndDate} min={startDate}/>
+          </div>
+          <div className="mt-4 border-t border-white/[0.07] pt-4">
+            <p className="text-xs text-white/55">Weekly class days</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((day,index)=><button key={day} type="button" aria-pressed={classDays.includes(index)} onClick={()=>setClassDays(current=>current.includes(index)?current.filter(value=>value!==index):[...current,index].sort((a,b)=>a-b))} className={`rounded-lg border px-2.5 py-2 text-[10px] ${classDays.includes(index)?"border-violet-400/40 bg-violet-500/15 text-violet-200":"border-white/10 text-white/40"}`}>{day}</button>)}
+            </div>
+            {classDays.length > 0 && <div className="mt-3 grid grid-cols-2 gap-3">
+              <Input label="Class starts" type="time" value={classStartTime} onChange={setClassStartTime}/>
+              <Input label="Class ends" type="time" value={classEndTime} onChange={setClassEndTime}/>
+            </div>}
+            <p className="mt-2 text-[10px] text-white/30">Calendar classes update automatically when you save. Time zone: {timezone}.</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -2176,8 +2220,9 @@ function Modal({
   onClose: () => void;
 }) {
   return (
+    <ViewportPortal>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-lg rounded-3xl border border-white/[0.09] bg-[#100b1c] shadow-2xl">
+      <div className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/[0.09] bg-[#100b1c] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/[0.07] p-5">
           <h2 className="font-semibold text-white">
             {title}
@@ -2194,6 +2239,7 @@ function Modal({
         <div className="p-5">{children}</div>
       </div>
     </div>
+    </ViewportPortal>
   );
 }
 
