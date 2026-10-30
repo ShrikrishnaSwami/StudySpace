@@ -1,14 +1,19 @@
 import { NextRequest,NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { generateAIResponse } from "@/lib/gemini";
-import { consumeAiQuota } from "@/lib/api-security";
+import { consumeAiQuota, readBoundedJson } from "@/lib/api-security";
 export async function POST(request:NextRequest){
  try{
   const token=request.headers.get("authorization")?.replace(/^Bearer\s+/i,"");if(!token)return NextResponse.json({error:"Sign in to generate flashcards."},{status:401});
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY||process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;if(!url||!key)return NextResponse.json({error:"Supabase authentication is not configured on the server."},{status:503});
   const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:"Bearer "+token}}});const {data:{user},error}=await client.auth.getUser(token);if(error||!user)return NextResponse.json({error:"Your session expired. Sign in again."},{status:401});
-  if(Number(request.headers.get("content-length")||0)>16384)return NextResponse.json({error:"Request is too large."},{status:413});
-  const body=await request.json(),topic=typeof body.topic==="string"?body.topic.trim().slice(0,240):"",count=Math.min(20,Math.max(5,Number(body.count)||10)),courseId=typeof body.courseId==="string"?body.courseId.trim():"";if(!topic)return NextResponse.json({error:"Enter a topic."},{status:400});
+  let body: unknown;
+  try { body = await readBoundedJson(request, 16384); } catch (error) {
+   const tooLarge = error instanceof Error && error.message === "REQUEST_TOO_LARGE";
+   return NextResponse.json({error:tooLarge?"Request is too large.":"Invalid request body."},{status:tooLarge?413:400});
+  }
+  if(!body||typeof body!=="object"||Array.isArray(body))return NextResponse.json({error:"Invalid request body."},{status:400});
+  const input=body as Record<string,unknown>,topic=typeof input.topic==="string"?input.topic.trim().slice(0,240):"",count=Math.min(20,Math.max(5,Number(input.count)||10)),courseId=typeof input.courseId==="string"?input.courseId.trim():"";if(!topic)return NextResponse.json({error:"Enter a topic."},{status:400});
   let courseName="";
   let courseNotes="";
   if(courseId){
