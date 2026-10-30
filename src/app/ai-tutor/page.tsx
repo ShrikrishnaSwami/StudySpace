@@ -232,12 +232,6 @@ export default function AITutorPage() {
      DERIVED STATE
   ======================================================= */
 
-  const selectedCourse =
-    courses.find(
-      (course) =>
-        course.id === selectedCourseId
-    ) || null;
-
   const conversationMessages =
     useMemo(
       () =>
