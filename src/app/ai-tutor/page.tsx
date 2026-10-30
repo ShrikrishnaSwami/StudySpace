@@ -1007,7 +1007,8 @@ export default function AITutorPage() {
 
   function createStudyNodes() {
     const amount = Math.max(1, Math.min(12, Number.parseInt(nodeCount, 10) || 1));
-    const kinds = selectedToolKinds.length ? selectedToolKinds : ["notes" as StudyNode["kind"]];
+    const kinds: StudyNode["kind"][] = selectedToolKinds.filter((kind): kind is StudyNode["kind"] => !["history", "tools", "course"].includes(kind));
+    if (kinds.length === 0) kinds.push("notes");
     const capacity = Math.max(0, 24 - studyNodes.length);
     const total = Math.min(amount, capacity);
     const roots = studyNodes.filter(node => !node.parentId).length;
@@ -1241,11 +1242,6 @@ export default function AITutorPage() {
         <header onPointerDown={event => startWindowDrag(event, workspace.id)} className="ss-jarvis-window-head flex shrink-0 cursor-grab touch-none items-center justify-between border-b border-[#b9a783]/20 px-4 py-3 active:cursor-grabbing">
           <div className="flex min-w-0 items-center gap-2"><Grip className="h-3.5 w-3.5 shrink-0 text-[#b9a783]/65"/><div className="min-w-0"><p className="text-[8px] tracking-[.2em] text-[#b9a783]/65">STUDYSPACE / WORKSPACE</p><h2 className="truncate text-sm font-light text-stone-100">{workspace.title}</h2></div></div>
           <div className="ml-2 flex shrink-0 items-center gap-1">
-            <select aria-label={`New node type from ${workspace.title}`} value={childNodeKind} onChange={event => setChildNodeKind(event.target.value as WorkspaceKind)} className="max-w-[94px] border border-[#b9a783]/20 bg-[#171612] px-1.5 py-1.5 text-[9px] text-stone-300 outline-none">
-              <option value="chat">Chat</option><option value="notes">Notes</option><option value="courses">Courses</option><option value="assignments">Assignments</option><option value="quizzes">Quizzes</option><option value="flashcards">Flashcards</option><option value="calendar">Calendar</option>
-            </select>
-            <button type="button" onClick={() => createChildNode(workspace)} aria-label={`Create a node from ${workspace.title}`} title="Create connected node" className="grid h-8 w-8 shrink-0 place-items-center border border-[#b9a783]/25 text-[#c7b58f] transition hover:bg-[#b9a783]/10"><Plus className="h-4 w-4"/></button>
-            <button type="button" onClick={() => closeWorkspace(workspace.id)} aria-label={`Delete ${workspace.title} node`} title="Delete node" className="grid h-8 w-8 shrink-0 place-items-center text-stone-500 transition hover:bg-red-400/10 hover:text-red-300"><Trash2 className="h-3.5 w-3.5"/></button>
             <button type="button" onClick={() => closeWorkspace(workspace.id)} aria-label={`Close ${workspace.title}`} className="grid h-8 w-8 shrink-0 place-items-center text-stone-400 transition hover:bg-white/10 hover:text-white"><X className="h-4 w-4"/></button>
           </div>
         </header>
