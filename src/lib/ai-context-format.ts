@@ -114,7 +114,7 @@ Semester:
 ${clean(course.semester) || "Not provided"}
 
 Description:
-${clean(course.description) || "Not provided"}
+${clean(course.description, 1000) || "Not provided"}
 `
         )
         .join("\n")
@@ -253,7 +253,7 @@ Title:
 ${clean(assignment.title)}
 
 Description:
-${clean(assignment.description) || "Not provided"}
+${clean(assignment.description, 1600) || "Not provided"}
 
 Due:
 ${formatDate(assignment.due_date)}
@@ -353,6 +353,7 @@ ${
 Correct:
 ${
   pickText(attempt, [
+    "correct_count",
     "correct_answers",
     "correct",
   ]) || "Not provided"
@@ -409,19 +410,19 @@ Assignment ID:
 ${clean(item.assignment_id)}
 
 Title:
-${clean(item.title)}
+${clean(item.title, 200)}
 
 Description:
-${clean(item.description) || "Not provided"}
+${clean(item.description, 1200) || "Not provided"}
 
 File:
-${clean(item.file_name) || "Not provided"}
+${clean(item.file_name, 200) || "Not provided"}
 
 Status:
 ${clean(item.status)}
 
 AI Summary:
-${clean(item.ai_summary) || "No AI summary available."}
+${clean(item.ai_summary, 900) || "No AI summary available."}
 
 AI Explanation:
 ${
@@ -469,10 +470,10 @@ Record ID:
 ${clean(event.id)}
 
 Title:
-${clean(event.title)}
+${clean(event.title, 200)}
 
 Subtitle:
-${clean(event.subtitle)}
+${clean(event.subtitle, 300)}
 
 Type:
 ${clean(event.event_type)}
@@ -484,16 +485,16 @@ End:
 ${formatDate(event.end_at)}
 
 Location:
-${clean(event.location) || "Not provided"}
+${clean(event.location, 200) || "Not provided"}
 
 Course ID:
 ${clean(event.course_id) || "Not provided"}
 
 Description:
-${clean(event.description) || "Not provided"}
+${clean(event.description, 700) || "Not provided"}
 
 Notes:
-${clean(event.notes) || "Not provided"}
+${clean(event.notes, 500) || "Not provided"}
 
 Multitask:
 ${clean(event.multitask) || "false"}
