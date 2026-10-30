@@ -35,6 +35,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 
+import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import NeuralIntelligence from "@/components/NeuralIntelligence";
 import { supabase } from "@/lib/supabase";
@@ -62,6 +63,21 @@ type Conversation = {
 type WorkspaceKind = "chat" | "history" | "tools" | "courses" | "course" | "notes" | "assignments" | "quizzes" | "flashcards" | "calendar";
 type WorkspaceWindow = { id: string; kind: WorkspaceKind; title: string; x: number; y: number; width: number; height: number; courseId?: string };
 
+type SpeechRecognitionAlternativeLike = { transcript: string };
+type SpeechRecognitionResultLike = ArrayLike<SpeechRecognitionAlternativeLike>;
+type SpeechRecognitionEventLike = { results: ArrayLike<SpeechRecognitionResultLike> };
+type SpeechRecognitionErrorEventLike = { error: string };
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEventLike) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
 type Message = {
   id: string;
   conversation_id: string;
@@ -169,7 +185,7 @@ export default function AITutorPage() {
   const [voiceReplies, setVoiceReplies] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState("READY");
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const voiceRepliesRef = useRef(false);
 
   const [workspaceWindows, setWorkspaceWindows] = useState<WorkspaceWindow[]>([]);
@@ -213,7 +229,8 @@ export default function AITutorPage() {
     );
 
   useEffect(() => {
-    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const speechWindow = window as Window & { SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike };
+    const SpeechRecognitionCtor = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
     setVoiceSupported(Boolean(SpeechRecognitionCtor));
     return () => {
       recognitionRef.current?.stop?.();
@@ -243,13 +260,13 @@ export default function AITutorPage() {
       recognition.interimResults = true;
       recognition.continuous = false;
       recognition.onstart = () => { setVoiceListening(true); setVoiceStatus("LISTENING"); setError(""); };
-      recognition.onresult = (event: any) => {
-        const transcript = Array.from(event.results as ArrayLike<any>)
-          .map((result: any) => result[0]?.transcript || "")
+      recognition.onresult = (event: SpeechRecognitionEventLike) => {
+        const transcript = Array.from(event.results)
+          .map((result) => result[0]?.transcript || "")
           .join(" ");
         setInput(transcript);
       };
-      recognition.onerror = (event: any) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEventLike) => {
         setVoiceListening(false);
         setVoiceStatus("READY");
         if (event.error !== "aborted" && event.error !== "no-speech") {
@@ -1079,9 +1096,9 @@ export default function AITutorPage() {
         {workspace.kind === "history" && historyPanel}
         {workspace.kind === "tools" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="mb-4 text-xs text-stone-400">Open the spaces you need. Every branch is its own movable window.</p><div className="grid grid-cols-2 gap-2">{studyWorkspaceItems.map(({kind,title,description,icon:Icon})=><button key={kind} type="button" onClick={() => openWorkspace(kind,title)} className="min-h-28 border border-white/[0.08] bg-white/[0.025] p-3 text-left transition hover:border-[#b9a783]/45 hover:bg-[#b9a783]/[0.06]"><Icon className="h-4 w-4 text-[#b9a783]"/><span className="mt-3 block text-xs text-stone-200">{title}</span><span className="mt-1 block text-[10px] leading-4 text-stone-500">{description}</span></button>)}</div></div>}
         {workspace.kind === "courses" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="mb-3 text-xs text-stone-400">Choose one of your courses to create a dedicated branch.</p>{courses.length === 0 ? <p className="py-10 text-center text-xs text-stone-500">Your courses will appear here once you add them.</p> : <div className="space-y-2">{courses.map(course=><button key={course.id} type="button" onClick={() => openWorkspace("course",course.code ? `${course.code} · Study space` : course.name,course.id)} className="flex w-full items-center justify-between border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><span><span className="block text-xs text-stone-200">{course.code || course.name}</span><span className="mt-1 block text-[10px] text-stone-500">{course.code ? course.name : course.professor || "Course workspace"}</span></span><Plus className="h-4 w-4 text-[#b9a783]"/></button>)}</div>}</div>}
-        {workspace.kind === "course" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="text-xs text-stone-400">Your course branch keeps its related study spaces together.</p><div className="mt-4 grid grid-cols-2 gap-2">{[{kind:"notes" as const,title:"Course notes",icon:NotebookPen},{kind:"assignments" as const,title:"Assignments",icon:ClipboardList},{kind:"quizzes" as const,title:"Quizzes",icon:BrainCircuit},{kind:"flashcards" as const,title:"Flashcards",icon:Layers},{kind:"calendar" as const,title:"Calendar",icon:CalendarDays},{kind:"chat" as const,title:"Ask AI Tutor",icon:Sparkles}].map(({kind,title,icon:Icon})=><button key={kind} type="button" onClick={()=>{if(kind==="chat"){setSelectedCourseId(workspace.courseId||"");void createConversation(workspace.courseId||"");}openWorkspace(kind,title,workspace.courseId);}} className="border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><Icon className="h-4 w-4 text-[#b9a783]"/><span className="mt-2 block text-xs text-stone-200">{title}</span></button>)}</div><a href="/courses" className="mt-5 inline-flex items-center gap-2 text-[10px] text-[#c7b58f] hover:text-stone-100">Open full course manager <ExternalLink className="h-3 w-3"/></a></div>}
+        {workspace.kind === "course" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="text-xs text-stone-400">Your course branch keeps its related study spaces together.</p><div className="mt-4 grid grid-cols-2 gap-2">{[{kind:"notes" as const,title:"Course notes",icon:NotebookPen},{kind:"assignments" as const,title:"Assignments",icon:ClipboardList},{kind:"quizzes" as const,title:"Quizzes",icon:BrainCircuit},{kind:"flashcards" as const,title:"Flashcards",icon:Layers},{kind:"calendar" as const,title:"Calendar",icon:CalendarDays},{kind:"chat" as const,title:"Ask AI Tutor",icon:Sparkles}].map(({kind,title,icon:Icon})=><button key={kind} type="button" onClick={()=>{if(kind==="chat"){setSelectedCourseId(workspace.courseId||"");void createConversation(workspace.courseId||"");}openWorkspace(kind,title,workspace.courseId);}} className="border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><Icon className="h-4 w-4 text-[#b9a783]"/><span className="mt-2 block text-xs text-stone-200">{title}</span></button>)}</div><Link href="/courses" className="mt-5 inline-flex items-center gap-2 text-[10px] text-[#c7b58f] hover:text-stone-100">Open full course manager <ExternalLink className="h-3 w-3"/></Link></div>}
         {workspace.kind === "notes" && <div className="flex min-h-0 flex-1 flex-col p-4"><p className="mb-3 text-[10px] text-stone-500">A scratchpad branch for ideas, lecture notes, and revision points. This draft stays in this open workspace.</p><textarea value={noteDrafts[workspace.id] || ""} onChange={event=>{const value=event.target.value;setNoteDrafts(current=>({...current,[workspace.id]:value}));try{localStorage.setItem(`studyspace-ai-note-${workspace.courseId || "general"}`,value);}catch{}}} placeholder="Start writing your notes…" className="min-h-0 flex-1 resize-none border border-[#b9a783]/20 bg-black/20 p-3 text-xs leading-6 text-stone-200 outline-none placeholder:text-stone-600 focus:border-[#b9a783]/50"/></div>}
-        {["assignments","quizzes","flashcards","calendar"].includes(workspace.kind) && <div className="min-h-0 flex-1 overflow-y-auto p-5"><p className="text-xs leading-6 text-stone-400">{workspace.kind === "assignments" ? "Your assignment workspace." : workspace.kind === "quizzes" ? "Your quiz and practice workspace." : workspace.kind === "flashcards" ? "Your active-recall workspace." : "Your schedule and deadlines workspace."}</p><a href={workspace.kind === "assignments" ? "/assignments" : workspace.kind === "quizzes" ? "/quizzes" : workspace.kind === "flashcards" ? "/flashcards" : "/calendar"} className="mt-5 inline-flex items-center gap-2 border border-[#b9a783]/30 px-4 py-3 text-xs text-[#d8c7a7] transition hover:bg-[#b9a783]/10">Open {workspace.title} <ExternalLink className="h-3.5 w-3.5"/></a><p className="mt-4 text-[10px] leading-5 text-stone-600">You can keep this branch open beside your other StudySpace windows while you work.</p></div>}
+        {["assignments","quizzes","flashcards","calendar"].includes(workspace.kind) && <div className="min-h-0 flex-1 overflow-y-auto p-5"><p className="text-xs leading-6 text-stone-400">{workspace.kind === "assignments" ? "Your assignment workspace." : workspace.kind === "quizzes" ? "Your quiz and practice workspace." : workspace.kind === "flashcards" ? "Your active-recall workspace." : "Your schedule and deadlines workspace."}</p><Link href={workspace.kind === "assignments" ? "/assignments" : workspace.kind === "quizzes" ? "/quizzes" : workspace.kind === "flashcards" ? "/flashcards" : "/calendar"} className="mt-5 inline-flex items-center gap-2 border border-[#b9a783]/30 px-4 py-3 text-xs text-[#d8c7a7] transition hover:bg-[#b9a783]/10">Open {workspace.title} <ExternalLink className="h-3.5 w-3.5"/></Link><p className="mt-4 text-[10px] leading-5 text-stone-600">You can keep this branch open beside your other StudySpace windows while you work.</p></div>}
         {workspace.kind === "chat" && <>
           {error&&<div role="alert" className="mx-4 mt-3 border border-red-400/20 bg-red-400/[0.06] px-3 py-2 text-xs text-red-200">{error}</div>}
           <div ref={chatLogRef} className="ss-jarvis-chatlog min-h-0 flex-1 overflow-y-auto px-4 py-5">
