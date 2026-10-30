@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import StudySpaceMark from "@/components/StudySpaceMark";
+import ViewportPortal from "@/components/ViewportPortal";
 import { usePathname, useRouter } from "next/navigation";
 import {
   useCallback,
@@ -769,6 +770,7 @@ export default function AppShell({
   return (
     <div className="ss-shell atelier-shell min-h-screen bg-[#14130f] text-white">
       {commandOpen && (
+        <ViewportPortal>
         <div
           className="ss-command-backdrop fixed inset-0 z-[120] flex items-start justify-center px-4 pt-[14vh] sm:pt-[18vh]"
           role="presentation"
@@ -816,6 +818,7 @@ export default function AppShell({
             <div className="flex items-center justify-between border-t border-white/[0.08] px-4 py-3 text-[10px] text-white/30"><span>STUDYSPACE QUICK JUMP</span><span><kbd className="rounded border border-white/[0.1] px-1.5 py-1">CTRL</kbd> + <kbd className="rounded border border-white/[0.1] px-1.5 py-1">K</kbd> to toggle</span></div>
           </section>
         </div>
+        </ViewportPortal>
       )}
 
       {/* Mobile overlay */}
