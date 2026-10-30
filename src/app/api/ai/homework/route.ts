@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { consumeAiQuota } from "@/lib/api-security";
+import { consumeAiQuota, readBoundedJson } from "@/lib/api-security";
 
 import { createClient } from "@supabase/supabase-js";
 import { generateAIResponseFromInlineData } from "@/lib/gemini";
@@ -61,35 +61,6 @@ async function readLimitedFile(response: Response, maxBytes: number): Promise<Bu
 }
 
 
-async function readLimitedJson(request: Request, maxBytes: number): Promise<unknown> {
-  const declaredLength = Number(request.headers.get("content-length") || 0);
-  if (declaredLength > maxBytes) throw new Error("REQUEST_TOO_LARGE");
-  if (!request.body) throw new Error("INVALID_JSON");
-  const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      total += value.byteLength;
-      if (total > maxBytes) {
-        await reader.cancel();
-        throw new Error("REQUEST_TOO_LARGE");
-      }
-      chunks.push(value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  const bytes = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)), total);
-  try {
-    return JSON.parse(bytes.toString("utf8")) as unknown;
-  } catch {
-    throw new Error("INVALID_JSON");
-  }
-}
-
 function cleanJson(text: string) {
   return text
     .replace(/^```json\s*/i, "")
@@ -148,7 +119,7 @@ export async function POST(
 
     let body: unknown;
     try {
-      body = await readLimitedJson(request, 32768);
+      body = await readBoundedJson(request, 32768);
     } catch (error) {
       if (error instanceof Error && error.message === "REQUEST_TOO_LARGE") {
         return NextResponse.json({ error: "Request is too large." }, { status: 413 });
