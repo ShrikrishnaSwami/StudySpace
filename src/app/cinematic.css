@@ -666,3 +666,5 @@ body > main[class~="items-center"][class~="justify-center"] > div[class*="rounde
 .ss-landing-primary{border-color:rgba(198,177,143,.5)!important;background:rgba(198,177,143,.1)!important}
 .ss-landing-primary:hover{background:rgba(198,177,143,.18)!important}
 @media(max-width:640px){.ss-landing-universe-forefront .ss-landing-universe-fade{background:linear-gradient(90deg,rgba(13,13,11,.94),rgba(13,13,11,.58)),linear-gradient(0deg,#0d0d0b,transparent 42%)}.ss-landing-hero-content{width:100%!important}}
+
+.ss-neural-tutor.has-messages:not(.is-chat-open) .ss-neural-chatlog{display:none!important}
