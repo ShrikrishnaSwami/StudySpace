@@ -129,9 +129,9 @@ function formatSize(bytes: number) {
 }
 
 function formatDate(value: string | null) {
-  if (!value) return "No due date";
+  if (!value) return "No due date set";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "No due date";
+  if (Number.isNaN(date.getTime())) return "No due date set";
 
   return new Intl.DateTimeFormat("en-CA", {
     month: "short",
@@ -182,7 +182,7 @@ function StatusLabel({ status }: { status: Submission["status"] }) {
 
   const labels = {
     draft: "Draft",
-    ready_to_submit: "Ready to submit",
+    ready_to_submit: "Ready to hand in",
     submitted: "Submitted",
   };
 
@@ -300,7 +300,7 @@ export default function AssignmentWorkspacePage() {
 
     if (queryError) {
       console.error(queryError);
-      setError("Couldn't load this assignment. Check that it exists and belongs to your account.");
+      setError("Couldn't find this assignment. It may have been deleted, or the link may be old.");
     } else {
       setAssignment(data as unknown as Assignment);
     }
@@ -350,7 +350,7 @@ export default function AssignmentWorkspacePage() {
       setFileError(
         loadError instanceof Error
           ? loadError.message
-          : "Couldn't load assignment files and submission history. Please retry.",
+          : "Couldn't load the files or submission history. Try again.",
       );
     } finally {
       setLoadingFiles(false);
@@ -404,7 +404,7 @@ export default function AssignmentWorkspacePage() {
 
     if (updateError) {
       setAssignment(previous);
-      setError(updateError.message || "Could not save the assignment change. Your previous values were restored.");
+      setError(updateError.message || "Couldn't save that change. Your previous details are still in place.");
     } else {
       setAssignment(data as unknown as Assignment);
     }
@@ -474,7 +474,7 @@ export default function AssignmentWorkspacePage() {
     }
 
     if (mode === "submission" && activeSubmission?.status === "submitted") {
-      setFileError("This attempt is already submitted. Start a new attempt to upload revised files.");
+      setFileError("This attempt has been submitted. Start another attempt if you need to upload a revised file.");
       return;
     }
 
@@ -1488,7 +1488,7 @@ export default function AssignmentWorkspacePage() {
                 <Clock3 className={`mt-0.5 h-4 w-4 ${isOverdue ? "text-red-300" : "text-white/45"}`} />
                 <div>
                   <p className={`text-sm font-medium ${isOverdue ? "text-red-300" : "text-white/75"}`}>
-                    {isOverdue ? "Past due" : assignment.due_date ? "Due date" : "No due date"}
+                    {isOverdue ? "Past due" : assignment.due_date ? "Due date" : "No due date set"}
                   </p>
                   <p className="mt-1 text-xs text-white/35">{formatDate(assignment.due_date)}</p>
                 </div>
