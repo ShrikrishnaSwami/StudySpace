@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     if (courseError) throw courseError;
     if (!course) return NextResponse.json({ error: "That course was not found in your account." }, { status: 404 });
 
-    const quota = await consumeAiQuota(token, "homework");
+    const quota = await consumeAiQuota(token, "notes");
     if (!quota.allowed) return NextResponse.json({ error: quota.scope === "rate" ? "Too many AI requests. Please wait a few minutes and try again." : quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You have reached today's AI processing limit. Try again later.", usage: quota }, { status: 429 });
 
     const bytes = Buffer.from(await file.arrayBuffer());
