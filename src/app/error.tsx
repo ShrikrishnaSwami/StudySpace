@@ -39,6 +39,7 @@ export default function ErrorBoundary({
           <div className="ss-error-actions">
             <button type="button" onClick={() => reset()} className="ss-error-primary"><RefreshCw size={16} /> Try again</button>
             <Link href="/dashboard" className="ss-error-secondary"><ArrowLeft size={16} /> Back to dashboard</Link>
+            <a href="https://github.com/ShrikrishnaSwami/StudySpace/issues/new?template=beta-bug-report.yml" target="_blank" rel="noreferrer" className="ss-error-secondary">Report a bug <ArrowRight size={16} /></a>
           </div>
           {error.digest ? <p className="ss-error-reference">Support reference <span>{error.digest}</span></p> : null}
         </section>
