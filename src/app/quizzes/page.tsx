@@ -524,7 +524,12 @@ export default function QuizzesPage() {
             </div>
 
             <button
-              onClick={() => setShowGenerator(true)}
+              type="button"
+              onClick={() => {
+                setShowGenerator(true);
+              }}
+              aria-haspopup="dialog"
+              aria-expanded={showGenerator}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-500 active:scale-[0.98]"
             >
               <Sparkles size={17} />
