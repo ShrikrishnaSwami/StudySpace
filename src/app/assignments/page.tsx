@@ -178,7 +178,7 @@ export default function AssignmentsPage() {
       setError(
         err instanceof Error
           ? err.message
-          : "Couldn't load your assignments. Please try again.",
+          : "Couldn't load the assignment list. Check your connection and try again.",
       );
     } finally {
       setLoading(false);
@@ -392,11 +392,11 @@ export default function AssignmentsPage() {
 
   if (loading) {
     return (
-      <AppShell title="Assignments" description="Organize your deadlines and keep your coursework moving.">
+      <AppShell title="Assignments" description="Keep assignment instructions, due dates, files and feedback together.">
         <main className="min-h-[calc(100vh-80px)] px-4 py-10 sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-6xl items-center justify-center gap-3 py-32 text-sm text-white/45">
             <Loader2 className="h-5 w-5 animate-spin" />
-            Loading assignments...
+            Getting your assignments…
           </div>
         </main>
       </AppShell>
@@ -404,7 +404,7 @@ export default function AssignmentsPage() {
   }
 
   return (
-    <AppShell title="Assignments" description="Organize your deadlines and keep your coursework moving.">
+    <AppShell title="Assignments" description="Keep assignment instructions, due dates, files and feedback together.">
       <main className="min-h-[calc(100vh-80px)] px-4 py-7 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
@@ -416,7 +416,7 @@ export default function AssignmentsPage() {
               Assignments
             </h1>
             <p className="mt-2 text-sm text-white/45">
-              Organize your deadlines and keep your coursework moving.
+              Keep assignment instructions, due dates, files and feedback together.
             </p>
           </div>
 
@@ -428,7 +428,7 @@ export default function AssignmentsPage() {
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-purple-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-purple-400"
           >
             <Plus className="h-4 w-4" />
-            New assignment
+            Add assignment
           </button>
         </div>
 
@@ -502,7 +502,7 @@ export default function AssignmentsPage() {
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
             <input type="search" aria-label="Search assignments" value={search} onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search assignments or courses..."
+              placeholder="Try “math assignment” or a course name…"
               className="w-full rounded-xl border border-white/10 bg-white/[0.025] py-3 pl-10 pr-4 text-sm text-white outline-none placeholder:text-white/30 focus:border-purple-400/50"
             />
           </div>
@@ -552,13 +552,13 @@ export default function AssignmentsPage() {
               </div>
               <h2 className="mt-4 text-base font-semibold text-white">
                 {assignments.length === 0
-                  ? "No assignments yet"
-                  : "No matching assignments"}
+                  ? "Nothing on your assignment list yet"
+                  : "Nothing matches that search"}
               </h2>
               <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-white/40">
                 {assignments.length === 0
-                  ? "Add your first assignment to keep track of deadlines, priorities, and progress."
-                  : "Try a different search or filter to see your assignments."}
+                  ? "Add an assignment with its due date so you can keep an eye on it."
+                  : "Try another search or choose a different course or status."}
               </p>
               {assignments.length === 0 && (
                 <button
@@ -729,7 +729,7 @@ export default function AssignmentsPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-semibold text-white">
-                  New assignment
+                  Add assignment
                 </h2>
                 <p className="mt-1 text-sm text-white/40">
                   Add the details so you can keep track of your work.
