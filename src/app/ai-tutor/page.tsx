@@ -132,6 +132,20 @@ function formatConversationDate(
   );
 }
 
+function isStudyNode(value: unknown): value is StudyNode {
+  if (!value || typeof value !== "object") return false;
+  const node = value as Record<string, unknown>;
+  const validKinds = ["chat", "notes", "courses", "assignments", "quizzes", "flashcards", "calendar"];
+  return typeof node.id === "string"
+    && typeof node.title === "string"
+    && typeof node.kind === "string"
+    && validKinds.includes(node.kind)
+    && typeof node.x === "number" && Number.isFinite(node.x) && node.x >= 0 && node.x <= 100
+    && typeof node.y === "number" && Number.isFinite(node.y) && node.y >= 0 && node.y <= 100
+    && (node.parentId === null || typeof node.parentId === "string")
+    && (node.courseId === undefined || typeof node.courseId === "string");
+}
+
 function formatMessageTime(
   dateString: string
 ) {
@@ -1112,24 +1126,79 @@ export default function AITutorPage() {
   }, []);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("studyspace-ai-brain-nodes-v1");
-      if (saved) {
-        const parsed = JSON.parse(saved) as StudyNode[];
-        if (Array.isArray(parsed)) setStudyNodes(parsed.filter(node =>
-          node && typeof node.id === "string" && typeof node.title === "string" &&
-          Number.isFinite(node.x) && Number.isFinite(node.y) &&
-          node.x >= 0 && node.x <= 100 && node.y >= 0 && node.y <= 100
-        ).slice(0, 24));
+    let active = true;
+    const loadStudyWorkspace = async () => {
+      let localNodes: StudyNode[] = [];
+      try {
+        const saved = localStorage.getItem("studyspace-ai-brain-nodes-v1");
+        if (saved) {
+          const parsed: unknown = JSON.parse(saved);
+          if (Array.isArray(parsed)) localNodes = parsed.filter(isStudyNode).slice(0, 24);
+        }
+      } catch { /* Ignore malformed local canvas data and try the account copy. */ }
+
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError) throw authError;
+        if (!user) {
+          if (active) setStudyNodes(localNodes);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("ai_study_workspaces")
+          .select("nodes")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (error) throw error;
+
+        if (data && Array.isArray(data.nodes)) {
+          if (active) setStudyNodes(data.nodes.filter(isStudyNode).slice(0, 24));
+        } else {
+          if (active) setStudyNodes(localNodes);
+          if (localNodes.length) {
+            const { error: migrationError } = await supabase.from("ai_study_workspaces").upsert({
+              user_id: user.id,
+              nodes: localNodes,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "user_id" });
+            if (migrationError) throw migrationError;
+          }
+        }
+      } catch (loadError) {
+        console.error("Could not load the account AI canvas; using this browser's saved copy.", loadError);
+        if (active) setStudyNodes(localNodes);
+      } finally {
+        if (active) setStudyNodesHydrated(true);
       }
-    } catch { /* Ignore malformed saved canvas state. */ }
-    setStudyNodesHydrated(true);
+    };
+    void loadStudyWorkspace();
+    return () => { active = false; };
   }, []);
 
   useEffect(() => {
     if (!studyNodesHydrated) return;
     try { localStorage.setItem("studyspace-ai-brain-nodes-v1", JSON.stringify(studyNodes)); }
     catch { /* The canvas remains usable when storage is unavailable. */ }
+
+    let active = true;
+    const saveTimer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const { data: { user }, error: authError } = await supabase.auth.getUser();
+          if (authError || !user || !active) return;
+          const { error } = await supabase.from("ai_study_workspaces").upsert({
+            user_id: user.id,
+            nodes: studyNodes,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: "user_id" });
+          if (error) console.error("Could not sync the AI study canvas:", error.message);
+        } catch (saveError) {
+          console.error("Could not sync the AI study canvas.", saveError);
+        }
+      })();
+    }, 650);
+    return () => { active = false; window.clearTimeout(saveTimer); };
   }, [studyNodes, studyNodesHydrated]);
 
   useEffect(() => {
