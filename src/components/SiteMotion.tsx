@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 
 const TARGETS = [
@@ -35,7 +36,7 @@ function shouldSkip(element: HTMLElement) {
   );
 }
 
-export default function SiteMotion() {
+export default function SiteMotion({ children }: { children: ReactNode }) {
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -99,5 +100,5 @@ export default function SiteMotion() {
     };
   }, []);
 
-  return <div ref={rootRef} className="ss-motion-root" style={{ display: "contents" }}>{/* Motion is applied to eligible page text as it enters view. */}</div>;
+  return <div ref={rootRef} className="ss-motion-root" style={{ display: "contents" }}>{children}</div>;
 }
