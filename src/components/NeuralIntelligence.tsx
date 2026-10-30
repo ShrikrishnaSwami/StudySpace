@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-type Props = { active?: boolean; listening?: boolean };
-export default function NeuralIntelligence({active=false,listening=false}:Props) {
+type Props = { active?: boolean; listening?: boolean; showControls?: boolean; onPrompt?: (prompt: string) => void };
+export default function NeuralIntelligence({active=false,listening=false,showControls=false,onPrompt}:Props) {
  const host=useRef<HTMLDivElement>(null);
  const mode=useRef({active,listening}); mode.current={active,listening};
  useEffect(()=>{
@@ -37,8 +37,12 @@ export default function NeuralIntelligence({active=false,listening=false}:Props)
   const dustPos=new Float32Array(500*3);for(let i=0;i<500;i++){dustPos[i*3]=(rand()-.5)*25;dustPos[i*3+1]=(rand()-.5)*14;dustPos[i*3+2]=(rand()-.5)*12-2;}
   const dustGeo=new THREE.BufferGeometry();dustGeo.setAttribute("position",new THREE.BufferAttribute(dustPos,3));const dustMat=new THREE.PointsMaterial({color:0x79aaff,size:.02,transparent:true,opacity:.48});scene.add(new THREE.Points(dustGeo,dustMat));
   const resize=()=>{const w=Math.max(1,root.clientWidth),h=Math.max(1,root.clientHeight);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);};const observer=new ResizeObserver(resize);observer.observe(root);
-  let raf=0;const clock=new THREE.Clock();const animate=()=>{raf=requestAnimationFrame(animate);const t=clock.getElapsedTime(),m=mode.current;brain.rotation.y=reduced?0:Math.sin(t*.2)*.18;brain.rotation.x=reduced?0:Math.sin(t*.14)*.08;brain.position.y=reduced?0:Math.sin(t*.7)*.13;brain.scale.setScalar(m.active?1.15+(reduced?0:Math.sin(t*4)*.025):m.listening?1.08:1);world.rotation.y=reduced?0:Math.sin(t*.07)*.08;net.rotation.y=reduced?0:-t*.014;glow.intensity=m.active?32:m.listening?27:22;renderer.render(scene,camera);};animate();
-  return()=>{cancelAnimationFrame(raf);observer.disconnect();scene.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.LineSegments||o instanceof THREE.Points){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose());}});renderer.dispose();renderer.domElement.remove();};
+  let raf=0,px=0,py=0,tx=0,ty=0,focus=0;
+  const pointer=(e:PointerEvent)=>{const r=root.getBoundingClientRect();tx=((e.clientX-r.left)/r.width-.5)*.65;ty=((e.clientY-r.top)/r.height-.5)*.45;};
+  const click=()=>{focus=performance.now()+1200;};
+  root.addEventListener("pointermove",pointer);root.addEventListener("click",click);
+  let raf=0;const clock=new THREE.Clock();const animate=()=>{raf=requestAnimationFrame(animate);const t=clock.getElapsedTime(),m=mode.current;px+=(tx-px)*.035;py+=(ty-py)*.035;brain.rotation.y=(reduced?0:Math.sin(t*.2)*.18)+px*.45;brain.rotation.x=(reduced?0:Math.sin(t*.14)*.08)+py*.3;brain.position.y=reduced?0:Math.sin(t*.7)*.13;const focused=performance.now()<focus;brain.scale.setScalar((m.active?1.15:m.listening?1.08:focused?1.1:1)*(1+(m.active&&!reduced?Math.sin(t*4)*.025:0)));world.rotation.y=(reduced?0:Math.sin(t*.07)*.08)+px*.12;world.rotation.x=py*.1;net.rotation.y=reduced?0:-t*.014;glow.intensity=m.active?32:m.listening?27:focused?30:22;renderer.render(scene,camera);};animate();
+  return()=>{cancelAnimationFrame(raf);observer.disconnect();root.removeEventListener("pointermove",pointer);root.removeEventListener("click",click);scene.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.LineSegments||o instanceof THREE.Points){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose());}});renderer.dispose();renderer.domElement.remove();};
  },[]);
- return <div ref={host} className={["ss-neural-universe",active?"is-active":"",listening?"is-listening":""].join(" ")} aria-hidden="true"><div className="ss-neural-vignette"/><div className="ss-neural-readout"><span>NEURAL CORE / 01</span><span>{listening?"INPUT STREAM":active?"SYNAPTIC PROCESSING":"NETWORK ONLINE"}</span></div><div className="ss-neural-crosshair">✳</div></div>;
+ return <div ref={host} className={["ss-neural-universe",active?"is-active":"",listening?"is-listening":""].join(" ")} aria-hidden="true"><div className="ss-neural-vignette"/><div className="ss-neural-readout"><span>NEURAL CORE / 01</span><span>{listening?"INPUT STREAM":active?"SYNAPTIC PROCESSING":"NETWORK ONLINE"}</span></div><div className="ss-neural-crosshair">✳</div>{showControls&&<div className="ss-neural-hotspots"><button type="button" onClick={()=>onPrompt?.("Explain a difficult concept from my course in simple terms.")}>01 <span>Understand</span></button><button type="button" onClick={()=>onPrompt?.("Give me practice questions on the topic I am studying.")}>02 <span>Practice</span></button><button type="button" onClick={()=>onPrompt?.("Help me make a study plan for my upcoming work.")}>03 <span>Plan</span></button><button type="button" onClick={()=>onPrompt?.("Help me understand this homework problem step by step.")}>04 <span>Work through</span></button></div>}</div>;
 }
