@@ -359,7 +359,7 @@ export default function AITutorPage() {
         setError(
           err instanceof Error
             ? err.message
-            : "Failed to load AI Tutor."
+            : "Failed to load StudySpace tutor."
         );
       } finally {
         setLoading(false);
@@ -630,9 +630,9 @@ export default function AITutorPage() {
 
       if (!response.ok) {
         const failure = await response.json().catch(() => ({}));
-        throw new Error(failure.error || "AI Tutor failed.");
+        throw new Error(failure.error || "StudySpace tutor failed.");
       }
-      if (!response.body) throw new Error("The AI Tutor response stream was unavailable. Please try again.");
+      if (!response.body) throw new Error("The StudySpace tutor response stream was unavailable. Please try again.");
 
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
@@ -668,7 +668,7 @@ export default function AITutorPage() {
             item.id === assistantMessage.id ? { ...item, content: answer } : item
           ));
         } else if (event.type === "error") {
-          throw new Error(event.error || "The AI Tutor could not complete that response.");
+          throw new Error(event.error || "The StudySpace tutor could not complete that response.");
         }
       };
 
@@ -682,7 +682,7 @@ export default function AITutorPage() {
       }
       pending += decoder.decode();
       if (pending.trim()) processLine(pending);
-      if (!answer.trim()) throw new Error("The AI Tutor returned an empty response. Please try again.");
+      if (!answer.trim()) throw new Error("The StudySpace tutor returned an empty response. Please try again.");
       streamCompleted = true;
 
       const {
@@ -762,7 +762,7 @@ export default function AITutorPage() {
       }
       setError(
         requestController.signal.aborted
-          ? "This response took too long. Please try again; the AI service may be busy."
+          ? "That took too long. Try again in a moment."
           : err instanceof Error
             ? err.message
             : "Something went wrong."
@@ -1009,7 +1009,7 @@ export default function AITutorPage() {
         setFocusedWindowId(existing.id);
         return;
       }
-      openWorkspace("history", "Conversation history");
+      openWorkspace("history", "Your past questions");
       return;
     }
 
@@ -1036,11 +1036,11 @@ export default function AITutorPage() {
   ======================================================= */
 
 
-  if (loading) return <AppShell><main className="flex min-h-[calc(100dvh-68px)] items-center justify-center bg-[#171612]"><div className="text-center"><div className="mx-auto h-10 w-10 animate-pulse rounded-full border border-[#b9a783]/45 shadow-[0_0_35px_rgba(185,167,131,.2)]"/><p className="mt-4 text-[9px] tracking-[.24em] text-[#b9a783]/70">INITIALIZING INTELLIGENCE</p></div></main></AppShell>;
+  if (loading) return <AppShell><main className="flex min-h-[calc(100dvh-68px)] items-center justify-center bg-[#171612]"><div className="text-center"><div className="mx-auto h-10 w-10 animate-pulse rounded-full border border-[#b9a783]/45 shadow-[0_0_35px_rgba(185,167,131,.2)]"/><p className="mt-4 text-[9px] tracking-[.24em] text-[#b9a783]/70">GETTING YOUR TUTOR READY</p></div></main></AppShell>;
 
   const historyPanel = <div className="min-h-0 flex-1 overflow-y-auto p-5">
-    <div className="mb-4 flex items-center justify-between border-b border-[#b9a783]/15 pb-3"><div><p className="text-[9px] tracking-[.22em] text-[#b9a783]/65">ARCHIVE</p><h2 className="mt-1 text-lg font-light text-stone-100">Conversation history</h2></div><span className="text-[10px] text-stone-500">{conversations.length} saved</span></div>
-    {conversations.length===0?<p className="py-12 text-center text-xs text-stone-500">Your conversations will appear here.</p>:conversations.map((item)=><div key={item.id} className="group flex items-center border-b border-white/[0.05] hover:bg-white/[0.03]"><button type="button" onClick={()=>{void selectConversation(item);openWorkspace("chat","AI Tutor");}} className="min-w-0 flex-1 px-3 py-3 text-left"><span className="block truncate text-xs text-stone-200">{item.title||"Untitled conversation"}</span><span className="mt-1 block text-[9px] text-stone-600">{formatConversationDate(item.updated_at)}</span></button><button type="button" onClick={()=>setDeleteTarget(item.id)} aria-label="Delete conversation" className="mr-2 p-2 text-stone-600 opacity-0 hover:text-red-300 group-hover:opacity-100 focus:opacity-100"><Trash2 className="h-3.5 w-3.5"/></button></div>)}
+    <div className="mb-4 flex items-center justify-between border-b border-[#b9a783]/15 pb-3"><div><p className="text-[9px] tracking-[.22em] text-[#b9a783]/65">ARCHIVE</p><h2 className="mt-1 text-lg font-light text-stone-100">Your past questions</h2></div><span className="text-[10px] text-stone-500">{conversations.length} saved</span></div>
+    {conversations.length===0?<p className="py-12 text-center text-xs text-stone-500">Your previous chats will show up here.</p>:conversations.map((item)=><div key={item.id} className="group flex items-center border-b border-white/[0.05] hover:bg-white/[0.03]"><button type="button" onClick={()=>{void selectConversation(item);openWorkspace("chat","StudySpace tutor");}} className="min-w-0 flex-1 px-3 py-3 text-left"><span className="block truncate text-xs text-stone-200">{item.title||"New conversation"}</span><span className="mt-1 block text-[9px] text-stone-600">{formatConversationDate(item.updated_at)}</span></button><button type="button" onClick={()=>setDeleteTarget(item.id)} aria-label="Delete conversation" className="mr-2 p-2 text-stone-600 opacity-0 hover:text-red-300 group-hover:opacity-100 focus:opacity-100"><Trash2 className="h-3.5 w-3.5"/></button></div>)}
   </div>;
 
   return <AppShell>
@@ -1069,7 +1069,7 @@ export default function AITutorPage() {
       </div>
       <div className="pointer-events-none absolute bottom-7 left-1/2 z-[3] -translate-x-1/2 text-center">
         <p className="text-[9px] tracking-[.18em] text-stone-500">
-          {voiceListening ? "VOICE INPUT ACTIVE" : sending ? "PROCESSING REQUEST" : "OPEN A NEW CHAT OR YOUR HISTORY"}
+          {voiceListening ? "VOICE INPUT ACTIVE" : sending ? "PROCESSING REQUEST" : "OPEN A CHAT OR PICK UP AN OLD ONE"}
         </p>
       </div>
 
@@ -1092,9 +1092,9 @@ export default function AITutorPage() {
         {workspace.kind === "chat" && <>
           {error&&<div role="alert" className="mx-4 mt-3 border border-red-400/20 bg-red-400/[0.06] px-3 py-2 text-xs text-red-200">{error}</div>}
           <div ref={chatLogRef} className="ss-jarvis-chatlog min-h-0 flex-1 overflow-y-auto px-4 py-5">
-            {conversationMessages.length===0?<div className="flex min-h-full flex-col items-center justify-center py-8 text-center"><div className="mb-4 grid h-14 w-14 place-items-center rounded-full border border-[#b9a783]/25 bg-[#b9a783]/[0.06] text-[#c7b58f]"><Sparkles className="h-5 w-5"/></div><h3 className="text-lg font-light text-stone-100">Ready when you are.</h3><p className="mt-2 max-w-xs text-xs leading-5 text-stone-500">Ask a question, unpack a difficult idea, or practise until it clicks.</p></div>:<div className="space-y-5">{conversationMessages.map(message=>{const mine=message.role==="user";return <article key={message.id} className={["flex gap-3",mine?"justify-end":"justify-start"].join(" ")}>{!mine&&<div className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[#b9a783]/20 text-[#c7b58f]"><Sparkles className="h-3.5 w-3.5"/></div>}<div className={["min-w-0 max-w-[88%]",mine?"text-right":""].join(" ")}><div className={["whitespace-pre-wrap break-words border text-xs leading-6",mine?"border-[#b9a783]/25 bg-[#b9a783]/10 px-3 py-2.5 text-[#e7dcc8]":"border-white/[0.07] bg-black/20 px-3 py-2.5 text-stone-200"].join(" ")}>{message.content}</div><div className="mt-1 flex items-center gap-2 text-[9px] text-stone-600"><span>{mine?"You":"StudySpace AI"}</span><span>·</span><span>{formatMessageTime(message.created_at)}</span>{!mine&&<span className="ml-1 inline-flex gap-1"><button type="button" aria-label="Helpful answer" disabled={Boolean(feedbackSaving[message.id])} onClick={()=>void rateAnswer(message,1)} className="p-1 text-stone-600 hover:text-emerald-300"><ThumbsUp className="h-3 w-3"/></button><button type="button" aria-label="Unhelpful answer" disabled={Boolean(feedbackSaving[message.id])} onClick={()=>void rateAnswer(message,-1)} className="p-1 text-stone-600 hover:text-rose-300"><ThumbsDown className="h-3 w-3"/></button>{feedbackStatus[message.id]&&<span>{feedbackStatus[message.id]}</span>}</span>}</div></div>{mine&&<div className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full border border-white/10 text-stone-400"><User className="h-3 w-3"/></div>}</article>})}{sending&&<p className="pl-10 text-[10px] text-[#b9a783]/70">Processing your request…</p>}</div>}
+            {conversationMessages.length===0?<div className="flex min-h-full flex-col items-center justify-center py-8 text-center"><div className="mb-4 grid h-14 w-14 place-items-center rounded-full border border-[#b9a783]/25 bg-[#b9a783]/[0.06] text-[#c7b58f]"><Sparkles className="h-5 w-5"/></div><h3 className="text-lg font-light text-stone-100">What are you stuck on?</h3><p className="mt-2 max-w-xs text-xs leading-5 text-stone-500">Ask about a lecture, paste a bit of code, or tell it which step stopped making sense. Basic questions are fine.</p></div>:<div className="space-y-5">{conversationMessages.map(message=>{const mine=message.role==="user";return <article key={message.id} className={["flex gap-3",mine?"justify-end":"justify-start"].join(" ")}>{!mine&&<div className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[#b9a783]/20 text-[#c7b58f]"><Sparkles className="h-3.5 w-3.5"/></div>}<div className={["min-w-0 max-w-[88%]",mine?"text-right":""].join(" ")}><div className={["whitespace-pre-wrap break-words border text-xs leading-6",mine?"border-[#b9a783]/25 bg-[#b9a783]/10 px-3 py-2.5 text-[#e7dcc8]":"border-white/[0.07] bg-black/20 px-3 py-2.5 text-stone-200"].join(" ")}>{message.content}</div><div className="mt-1 flex items-center gap-2 text-[9px] text-stone-600"><span>{mine?"You":"StudySpace AI"}</span><span>·</span><span>{formatMessageTime(message.created_at)}</span>{!mine&&<span className="ml-1 inline-flex gap-1"><button type="button" aria-label="Helpful answer" disabled={Boolean(feedbackSaving[message.id])} onClick={()=>void rateAnswer(message,1)} className="p-1 text-stone-600 hover:text-emerald-300"><ThumbsUp className="h-3 w-3"/></button><button type="button" aria-label="Unhelpful answer" disabled={Boolean(feedbackSaving[message.id])} onClick={()=>void rateAnswer(message,-1)} className="p-1 text-stone-600 hover:text-rose-300"><ThumbsDown className="h-3 w-3"/></button>{feedbackStatus[message.id]&&<span>{feedbackStatus[message.id]}</span>}</span>}</div></div>{mine&&<div className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full border border-white/10 text-stone-400"><User className="h-3 w-3"/></div>}</article>})}{sending&&<p className="pl-10 text-[10px] text-[#b9a783]/70">Working through that…</p>}</div>}
           </div>
-          <div className="shrink-0 border-t border-[#b9a783]/15 bg-black/15 p-3"><form onSubmit={sendMessage} className="border border-[#b9a783]/20 bg-[#14130f]/75 p-2"><textarea ref={textareaRef} aria-label="Message your AI tutor" maxLength={12000} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();void sendMessage();}}} placeholder="Ask your tutor anything…" rows={2} className="max-h-36 min-h-[54px] w-full resize-y bg-transparent px-2 py-2 text-xs leading-6 text-stone-100 outline-none placeholder:text-stone-600"/><div className="flex items-center justify-between px-1 pt-1"><div className="flex items-center gap-1"><button type="button" onClick={toggleVoiceInput} disabled={!voiceSupported||sending} aria-label="Voice input" className="p-2 text-stone-500 hover:text-stone-200"><Mic className="h-4 w-4"/></button><button type="button" onClick={()=>setVoiceReplies(v=>!v)} aria-label="Toggle spoken replies" className="p-2 text-stone-500 hover:text-stone-200">{voiceReplies?<Volume2 className="h-4 w-4"/>:<VolumeX className="h-4 w-4"/>}</button>{voiceStatus!=="READY"&&<span className="text-[8px] text-[#b9a783]/65">{voiceStatus}</span>}</div><button type="submit" disabled={!input.trim()||sending} aria-label="Send message" className="grid h-9 w-9 place-items-center bg-[#b9a783] text-[#211e18] hover:bg-[#d0bd98] disabled:opacity-35"><ArrowUp className="h-4 w-4"/></button></div></form><p className="mt-2 text-center text-[8px] text-stone-600">Enter to send · Shift + Enter for a new line</p></div>
+          <div className="shrink-0 border-t border-[#b9a783]/15 bg-black/15 p-3"><form onSubmit={sendMessage} className="border border-[#b9a783]/20 bg-[#14130f]/75 p-2"><textarea ref={textareaRef} aria-label="Message your AI tutor" maxLength={12000} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();void sendMessage();}}} placeholder="e.g. Why does this Python code throw a KeyError?" rows={2} className="max-h-36 min-h-[54px] w-full resize-y bg-transparent px-2 py-2 text-xs leading-6 text-stone-100 outline-none placeholder:text-stone-600"/><div className="flex items-center justify-between px-1 pt-1"><div className="flex items-center gap-1"><button type="button" onClick={toggleVoiceInput} disabled={!voiceSupported||sending} aria-label="Voice input" className="p-2 text-stone-500 hover:text-stone-200"><Mic className="h-4 w-4"/></button><button type="button" onClick={()=>setVoiceReplies(v=>!v)} aria-label="Toggle spoken replies" className="p-2 text-stone-500 hover:text-stone-200">{voiceReplies?<Volume2 className="h-4 w-4"/>:<VolumeX className="h-4 w-4"/>}</button>{voiceStatus!=="READY"&&<span className="text-[8px] text-[#b9a783]/65">{voiceStatus}</span>}</div><button type="submit" disabled={!input.trim()||sending} aria-label="Send message" className="grid h-9 w-9 place-items-center bg-[#b9a783] text-[#211e18] hover:bg-[#d0bd98] disabled:opacity-35"><ArrowUp className="h-4 w-4"/></button></div></form><p className="mt-2 text-center text-[8px] text-stone-600">Enter to send · Shift + Enter for a new line</p></div>
         </>}
         <button
           type="button"
