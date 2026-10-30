@@ -45,7 +45,7 @@ export default function NeuralIntelligence({active=false,listening=false,showCon
   return()=>{cancelAnimationFrame(raf);observer.disconnect();root.removeEventListener("pointermove",pointer);root.removeEventListener("click",click);scene.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.LineSegments||o instanceof THREE.Points){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose());}});renderer.dispose();renderer.domElement.remove();};
  },[controlsOnly]);
  return <div ref={host} className={["ss-neural-universe","ss-neural-universe-concrete",controlsOnly?"pointer-events-none":"",active?"is-active":"",listening?"is-listening":""].join(" ")}>
-  <div className="ss-neural-vignette"/><div className="ss-neural-readout"><span>STUDYSPACE / INTELLIGENCE</span><span>{listening?"LISTENING":active?"THINKING":"NEURAL NETWORK READY"}</span></div>
+  <div className="ss-neural-vignette"/><div className="ss-neural-readout"><span>STUDYSPACE / AI TUTOR</span><span>{listening?"LISTENING":active?"THINKING":"READY FOR A QUESTION"}</span></div>
   {showControls&&<div className="ss-neural-hotspots" aria-label="Neural workspace controls">
    <button type="button" aria-pressed={activeAction==="new-chat"} className={["brain-action","action-new",activeAction==="new-chat"?"is-selected":""].join(" ")} onClick={()=>onAction?.("new-chat")}><b>＋</b><span>New chat</span></button>
    <button type="button" aria-pressed={activeAction==="history"} className={["brain-action","action-history",activeAction==="history"?"is-selected":""].join(" ")} onClick={()=>onAction?.("history")}><b>↶</b><span>History</span></button>
