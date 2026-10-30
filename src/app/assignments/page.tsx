@@ -725,7 +725,7 @@ export default function AssignmentsPage() {
             }
           }}
         >
-          <div className="my-auto w-full max-w-lg rounded-2xl border border-white/10 bg-[#17151d] p-5 shadow-2xl sm:p-6">
+          <div className="mt-0 mb-auto max-h-[calc(100dvh-7rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#17151d] p-5 shadow-2xl sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-semibold text-white">
