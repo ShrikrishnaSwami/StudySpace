@@ -400,6 +400,7 @@ export async function* streamAIResponse({
   const { candidates } = configuredGeminiModels(task);
   const models = candidates.slice(0, 4);
   let lastError: unknown;
+  let emittedAny = false;
 
   for (const model of models) {
     let emitted = false;
@@ -425,6 +426,7 @@ export async function* streamAIResponse({
         if (text) {
           if (firstTokenAt === null) firstTokenAt = Date.now();
           emitted = true;
+          emittedAny = true;
           yield text;
         }
       }
@@ -445,10 +447,34 @@ export async function* streamAIResponse({
     }
   }
 
+  // If Gemini failed before emitting any text, try another configured free
+  // cloud provider. Never append a second answer after partial output was sent.
+  if (!emittedAny) {
+    for (const provider of providersForTask(task).filter((candidate) => candidate !== "gemini")) {
+      try {
+        const fallback = await generateWithCloudProvider({
+          provider,
+          task,
+          systemInstruction,
+          prompt,
+        });
+        yield fallback;
+        return;
+      } catch (error) {
+        console.warn("StudySpace tutor cross-provider fallback failed", {
+          provider, task, retryable: isRetryableError(error),
+          credentialError: isCredentialError(error),
+          reason: errorSummary(error),
+        });
+      }
+    }
+  }
+
   // Avoid restarting a failed request against the same models after streaming
-  // has already exhausted the bounded model ladder.
-  console.warn("Gemini streaming exhausted model fallback", {
+  // has already emitted partial output or exhausted every configured provider.
+  console.warn("StudySpace streaming exhausted provider fallback", {
     task,
+    emittedAny,
     retryable: isRetryableError(lastError),
     error: errorSummary(lastError),
   });
