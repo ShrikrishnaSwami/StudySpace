@@ -693,7 +693,7 @@ export default function CalendarPage() {
               </h1>
 
               <p className="mt-2 max-w-xl text-sm leading-6 text-white/35 sm:text-base">
-                See your class times, due dates and study sessions together. Add an event when something isn't already on the calendar.
+                See your class times, due dates and study sessions together. Add an event when something isn&apos;t already on the calendar.
               </p>
             </div>
 
