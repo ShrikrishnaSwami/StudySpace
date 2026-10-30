@@ -1116,7 +1116,7 @@ export default function AITutorPage() {
             DESKTOP CONVERSATION SIDEBAR
         ================================================= */}
 
-        <aside className="ss-neural-history hidden w-[285px] shrink-0 border-r border-cyan-200/[0.09] bg-[#030b1b]/95 lg:flex lg:flex-col">
+        <aside className={`ss-neural-history absolute inset-y-0 left-0 z-50 w-[min(330px,88vw)] border-r border-cyan-200/[0.12] bg-[#030b1b]/[.98] ${showHistory ? "flex" : "hidden"}`}>
 
           {/* SIDEBAR HEADER */}
 
@@ -1256,7 +1256,6 @@ export default function AITutorPage() {
 
         <main className="ss-neural-main relative flex min-w-0 flex-1 flex-col">
           <div className="ss-neural-backdrop" aria-hidden="true"><NeuralIntelligence active={sending} listening={voiceListening} /></div>
-          <div className="ss-neural-backdrop" aria-hidden="true"></div>
 
           {/* =================================================
               CHAT HEADER
@@ -1273,8 +1272,8 @@ export default function AITutorPage() {
                   (value) => !value
                 )
               }
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-white/40 transition hover:bg-white/[0.05] hover:text-white lg:hidden"
-              aria-label="Conversation history"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cyan-200/15 bg-cyan-200/[0.04] text-cyan-100/70 transition hover:bg-cyan-200/[0.1] hover:text-white"
+              aria-label="Toggle past topics" title="Past topics"
             >
               {showHistory ? (
                 <X className="h-4 w-4" />
@@ -1534,7 +1533,7 @@ export default function AITutorPage() {
                  EMPTY / WELCOME
               ============================================= */
 
-              <div className="flex min-h-full items-center justify-center px-5 py-12">
+              <div className="ss-neural-welcome flex min-h-full items-center justify-center px-5 py-12">
 
                 <div className="w-full max-w-3xl">
 
@@ -1633,7 +1632,7 @@ export default function AITutorPage() {
                  CHAT
               ============================================= */
 
-              <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+              <div className="ss-neural-chatlog mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
 
                 {conversationMessages.map(
                   (message, index) => {
@@ -1785,7 +1784,7 @@ export default function AITutorPage() {
               COMPOSER
           ================================================= */}
 
-          <div className="shrink-0 border-t border-white/[0.06] bg-[#080611]/95 px-3 py-3 backdrop-blur-xl sm:px-5 sm:py-4">
+          <div className="ss-neural-composer shrink-0 border-t border-white/[0.06] bg-[#080611]/95 px-3 py-3 backdrop-blur-xl sm:px-5 sm:py-4">
 
             <form
               onSubmit={sendMessage}
