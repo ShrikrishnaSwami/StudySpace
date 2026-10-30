@@ -962,14 +962,14 @@ export default function AITutorPage() {
     }
   }
 
-  function openWorkspace(kind: WorkspaceKind, title: string, courseId?: string, parentId?: string) {
+  function openWorkspace(kind: WorkspaceKind, title: string, courseId?: string, parentId?: string, placementIndex = 0) {
     const id = crypto.randomUUID();
     const parent = parentId ? workspaceWindows.find(item => item.id === parentId) : undefined;
-    const offset = workspaceWindows.length % 7;
+    const offset = (workspaceWindows.length + placementIndex) % 7;
     const next: WorkspaceWindow = {
       id, kind, title, courseId, parentId,
-      x: Math.max(18, Math.min(window.innerWidth - 540, (parent?.x ?? 90) + 46 + offset * 13)),
-      y: Math.max(82, Math.min(window.innerHeight - 520, (parent?.y ?? 100) + 54 + offset * 13)),
+      x: Math.max(18, Math.min(window.innerWidth - 540, (parent?.x ?? 90) + 46 + offset * 42)),
+      y: Math.max(82, Math.min(window.innerHeight - 520, (parent?.y ?? 100) + 54 + offset * 34)),
       width: kind === "chat" ? 500 : kind === "history" ? 390 : 420,
       height: kind === "chat" ? 560 : 480,
     };
@@ -997,7 +997,7 @@ export default function AITutorPage() {
     for (let i = 0; i < total; i++) {
       const kind = kinds[i % kinds.length];
       const item = studyWorkspaceItems.find(entry => entry.kind === kind);
-      openWorkspace(kind, item?.title || "Study node");
+      openWorkspace(kind, item?.title || "Study node", undefined, undefined, i);
     }
   }
 
