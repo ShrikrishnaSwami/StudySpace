@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import StudySpaceMark from "@/components/StudySpaceMark";
-import MotionSystem from "@/components/MotionSystem";
 import { useState } from "react";
 import {
   ArrowDown,
@@ -32,7 +31,6 @@ export default function Home() {
 
   return (
     <main id="main-content" className="atelier-home">
-      <MotionSystem />
       <div className="atelier-grain" aria-hidden="true" />
       <header className="atelier-header">
         <Link href="/" className="atelier-wordmark" aria-label="StudySpace home">
