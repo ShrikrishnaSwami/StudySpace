@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { consumeApiRateLimit } from "@/lib/api-security";
+import { consumeApiRateLimit, readBoundedJson } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 
 function createServerSupabase(token: string) {
@@ -73,15 +73,12 @@ export async function POST(
 
     const { id: quizId } = await context.params;
 
-    if (Number(request.headers.get("content-length") || 0) > 32768) {
-      return NextResponse.json({ error: "Quiz answers are too large." }, { status: 413 });
-    }
-
     let body: unknown;
     try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid quiz submission." }, { status: 400 });
+      body = await readBoundedJson(request, 32768);
+    } catch (error) {
+      const tooLarge = error instanceof Error && error.message === "REQUEST_TOO_LARGE";
+      return NextResponse.json({ error: tooLarge ? "Quiz answers are too large." : "Invalid quiz submission." }, { status: tooLarge ? 413 : 400 });
     }
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json({ error: "Invalid quiz submission." }, { status: 400 });
