@@ -1255,7 +1255,7 @@ export default function AITutorPage() {
         ================================================= */}
 
         <main className="ss-neural-main relative flex min-w-0 flex-1 flex-col">
-          <div className="ss-neural-backdrop" aria-hidden="true"><NeuralIntelligence active={sending} listening={voiceListening} /></div>
+          <div className="ss-neural-backdrop" aria-hidden="true"><NeuralIntelligence active={sending} listening={voiceListening} showControls={conversationMessages.length===0} onPrompt={handleStarterPrompt} /></div>
 
           {/* =================================================
               CHAT HEADER
@@ -1575,50 +1575,7 @@ export default function AITutorPage() {
 
                   {/* STARTERS */}
 
-                  <div className="mt-10 grid gap-3 sm:grid-cols-2">
-
-                    {starterPrompts.map(
-                      (item) => {
-                        const Icon =
-                          item.icon;
-
-                        return (
-                          <button
-                            key={
-                              item.title
-                            }
-                            type="button"
-                            onClick={() =>
-                              handleStarterPrompt(
-                                item.prompt
-                              )
-                            }
-                            className="group rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 text-left transition hover:border-violet-400/15 hover:bg-violet-500/[0.035]"
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.035] text-white/35 transition group-hover:bg-violet-500/[0.1] group-hover:text-violet-300">
-                                <Icon className="h-4 w-4" />
-                              </div>
-
-                              <div>
-                                <p className="text-xs font-semibold text-white/70">
-                                  {
-                                    item.title
-                                  }
-                                </p>
-
-                                <p className="mt-1 text-[11px] leading-5 text-white/25">
-                                  {
-                                    item.description
-                                  }
-                                </p>
-                              </div>
-                            </div>
-                          </button>
-                        );
-                      }
-                    )}
-                  </div>
+                  <div className="ss-neural-hotspot-hint">SELECT A SIGNAL TO BEGIN · OR ASK YOUR OWN QUESTION</div>
 
                   <p className="mt-6 text-center text-[10px] text-white/15">
                     Press Enter to send ·
