@@ -1005,24 +1005,6 @@ export default function AITutorPage() {
     setFocusedWindowId(current => current === id ? null : current);
   }
 
-  function createChildNode(parent: StudyNode) {
-    if (studyNodes.length >= 24) return;
-    const kind = selectedNodeKind;
-    const item = studyWorkspaceItems.find(entry => entry.kind === kind);
-    const siblings = studyNodes.filter(node => node.parentId === parent.id).length;
-    const minX = typeof window !== "undefined" && window.innerWidth <= 700 ? 20 : 8;
-    const next: StudyNode = {
-      id: crypto.randomUUID(),
-      kind,
-      title: item?.title || "New study node",
-      x: Math.max(minX, Math.min(100 - minX, parent.x + (siblings % 2 === 0 ? 13 : -13))),
-      y: Math.max(12, Math.min(82, parent.y + 13 + Math.floor(siblings / 2) * 8)),
-      parentId: parent.id,
-      courseId: parent.courseId,
-    };
-    setStudyNodes(current => [...current, next]);
-  }
-
   function addRootStudyNode(kind: StudyNode["kind"], title: string, courseId?: string) {
     if (studyNodes.length >= 24) return;
     const roots = studyNodes.filter(node => !node.parentId).length;
