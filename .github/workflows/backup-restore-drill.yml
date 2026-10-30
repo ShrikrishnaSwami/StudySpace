@@ -74,6 +74,7 @@ jobs:
         shell: bash
         env:
           AGE_IDENTITY: ${{ secrets.BACKUP_AGE_IDENTITY_RESTORE }}
+          AGE_RECIPIENT_RESTORE: ${{ secrets.BACKUP_AGE_RECIPIENT_RESTORE }}
         run: |
           set -euo pipefail
           if [[ -z "${AGE_IDENTITY:-}" ]]; then
@@ -84,6 +85,13 @@ jobs:
           identity_file="$RUNNER_TEMP/studyspace-backup.agekey"
           printf '%s' "$AGE_IDENTITY" > "$identity_file"
           unset AGE_IDENTITY
+          derived_recipient="$(age-keygen -y "$identity_file")"
+          if [[ "$derived_recipient" != "$AGE_RECIPIENT_RESTORE" ]]; then
+            echo "::error::The stored recovery identity does not match the configured recovery recipient."
+            echo "Derived recipient: $derived_recipient"
+            echo "Configured recipient: $AGE_RECIPIENT_RESTORE"
+            exit 1
+          fi
           mkdir -p restore-work
           age --decrypt --identity "$identity_file" --output restore-work/public-database.dump encrypted/public-database.dump.age
           age --decrypt --identity "$identity_file" --output restore-work/storage-and-auth.tar.gz encrypted/storage-and-auth.tar.gz.age
