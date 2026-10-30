@@ -19,6 +19,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import AppShell from "@/components/AppShell";
+import ViewportPortal from "@/components/ViewportPortal";
 
 import {
   deleteNotification,
@@ -602,6 +603,7 @@ export default function NotificationsPage() {
 
       {/* Delete confirmation */}
       {deletingId && (
+        <ViewportPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
           <div
             role="dialog"
@@ -656,6 +658,7 @@ export default function NotificationsPage() {
             </div>
           </div>
         </div>
+        </ViewportPortal>
       )}
     </AppShell>
   );
