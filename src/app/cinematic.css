@@ -11,7 +11,7 @@
 }
 html, body { background: #100f0c !important; color: var(--atelier-paper); }
 body { isolation: isolate; }
-body > :not(.studyspace-atmosphere):not(.studyspace-atmosphere-vignette) { position: relative; z-index: 2; }
+body > :not(.studyspace-atmosphere):not(.studyspace-atmosphere-vignette):not([data-viewport-portal]) { position: relative; z-index: 2; }
 .studyspace-atmosphere {
   position: fixed; inset: 0; z-index: 0; display: block; width: 100%; height: 100%;
   pointer-events: none; background: #100f0c;
