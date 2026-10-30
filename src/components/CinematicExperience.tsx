@@ -467,7 +467,6 @@ export default function CinematicExperience() {
     <>
       <canvas id="studyspace-atmosphere" className="studyspace-atmosphere" aria-hidden="true" />
       <div className="studyspace-atmosphere-vignette" aria-hidden="true" />
-      <div className="ss-scroll-progress" aria-hidden="true" />
     </>
   );
 }
