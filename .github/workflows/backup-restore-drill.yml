@@ -144,8 +144,9 @@ jobs:
           CREATE SCHEMA IF NOT EXISTS storage;
           CREATE SCHEMA IF NOT EXISTS restore_validation;
           DROP EXTENSION IF EXISTS vector CASCADE;
+          CREATE EXTENSION vector;
           CREATE SCHEMA IF NOT EXISTS extensions;
-          CREATE EXTENSION vector WITH SCHEMA extensions;
+          ALTER EXTENSION vector SET SCHEMA extensions;
           CREATE TABLE IF NOT EXISTS auth.users (
             id uuid PRIMARY KEY, aud varchar(255), role varchar(255),
             email varchar(255), phone text, raw_app_meta_data jsonb,
