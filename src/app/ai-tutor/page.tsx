@@ -323,27 +323,6 @@ export default function AITutorPage() {
     }
   }
 
-  function speakLatestAnswer() {
-    if (!("speechSynthesis" in window)) {
-      setError("Spoken replies are not supported in this browser.");
-      return;
-    }
-    const latest = [...conversationMessages].reverse().find((message) => message.role === "assistant" && message.content.trim());
-    if (!latest) return;
-    if (window.speechSynthesis.speaking) {
-      window.speechSynthesis.cancel();
-      setVoiceStatus("READY");
-      return;
-    }
-    const utterance = new SpeechSynthesisUtterance(latest.content);
-    utterance.rate = 1.02;
-    utterance.pitch = 0.92;
-    utterance.onstart = () => setVoiceStatus("SPEAKING");
-    utterance.onend = () => setVoiceStatus("READY");
-    utterance.onerror = () => setVoiceStatus("READY");
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  }
 
   /* =======================================================
      SCROLL TO BOTTOM
