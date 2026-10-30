@@ -1057,7 +1057,7 @@ export default function AITutorPage() {
   function openStudyNode(node: StudyNode) {
     if (node.kind === "chat") {
       setSelectedCourseId(node.courseId || "");
-      void createConversation(node.courseId || undefined).then(conversation => {
+      void createConversation(node.courseId || "").then(conversation => {
         if (conversation) {
           const id = openWorkspace("chat", node.title, node.courseId, node.parentId || undefined);
           setFocusedWindowId(id);
