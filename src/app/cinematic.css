@@ -710,7 +710,6 @@ body > main[class~="items-center"][class~="justify-center"] > div[class*="rounde
 .ss-neural-tutor .ss-neural-header button,.ss-neural-tutor .ss-neural-header [class*=border]{border-color:rgba(199,180,147,.24)!important}
 .ss-neural-tutor .ss-neural-header .text-violet-300{color:#c9b58f!important}
 .ss-neural-tutor .ss-neural-header .bg-violet-600{background:#9c8967!important}
-.ss-neural-tutor .ss-neural-header .bg-violet-500\/\\[0\\.1\\]{background:rgba(182,161,123,.16)!important}
 .ss-neural-tutor .ss-neural-composer form>div+div{color:rgba(224,214,195,.38)!important}
 .ss-neural-tutor .ss-neural-composer form>div button:not([type=submit]){color:#bcae96!important}
 .ss-neural-tutor .ss-neural-composer form>div button:not([type=submit]):hover{background:rgba(199,180,147,.12)!important}
