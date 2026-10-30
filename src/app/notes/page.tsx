@@ -102,7 +102,7 @@ export default function NotesPage() {
   async function createFromUpload(e: FormEvent) {
     e.preventDefault(); setError(""); setNotice("");
     if (!courseId || !uploadFile) { setError("Choose a course and a PDF or image."); return; }
-    if (uploadFile.size > 12 * 1024 * 1024) { setError("Choose a file smaller than 12 MB."); return; }
+    if (uploadFile.size > 4 * 1024 * 1024) { setError("Choose a file smaller than 4 MB."); return; }
     setUploading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
