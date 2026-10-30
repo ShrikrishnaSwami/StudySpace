@@ -10,7 +10,8 @@
     "test:retrieval": "node --conditions=react-server --experimental-strip-types --test src/lib/studyspace-retrieval.test.ts",
     "test:syllabus": "node --experimental-strip-types --test src/lib/syllabus-parser.test.ts",
     "test:security": "node --test tests/security-migrations.test.mjs",
-    "test:hardening": "node --experimental-strip-types --test src/lib/request-body.test.ts src/lib/account-storage-cleanup.test.ts"
+    "test:hardening": "node --experimental-strip-types --test src/lib/request-body.test.ts src/lib/account-storage-cleanup.test.ts",
+    "test:ai": "node --experimental-strip-types --test src/lib/ai-routing.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.31.0",
@@ -33,9 +34,12 @@
     "@types/react-dom": "^19",
     "@types/three": "^0.186.0",
     "babel-plugin-react-compiler": "1.0.0",
-    "eslint": "^10",
+    "eslint": "10.13.0",
     "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
     "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.13.0 <23"
   }
 }

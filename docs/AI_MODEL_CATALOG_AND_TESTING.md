@@ -12,7 +12,7 @@ StudySpace uses task-specialised AI workflows rather than one generic chatbot:
 | Memory AI | Flashcards | Active recall, spaced review content, and concise flashcard generation |
 | Planner AI | Recommendations | Study priorities and recommendations grounded in the student's own records |
 
-These are specialised application-level agents. They share the secure provider adapter but retain task-specific instructions, context boundaries, output formats, and evaluation criteria.
+These are specialised application-level agents, not five separately trained foundation models. They share a secure provider adapter but have distinct task ownership, dedicated workflows, capability boundaries, output contracts, and independently configurable provider/model choices. Tutor, Research, Assessment, Memory, and Planner can each select a different provider through their own AI_PROVIDER_* environment variable; model IDs remain task-specific.
 
 ## Cloud provider strategy
 
@@ -22,7 +22,7 @@ These are specialised application-level agents. They share the secure provider a
 
 Provider credentials are server-only. Requests are routed through the server; browser clients never receive provider keys. When a configured provider is unavailable, the server tries another configured provider. Providers without credentials are skipped.
 
-The existing Gemini multimodal paths (PDF and inline file parts) remain Gemini-only; text workflows can use the cloud provider fallback chain. Streaming tutor responses continue to use Gemini streaming when Gemini is the selected provider; other providers currently use a non-streaming response through the same API contract.
+The existing Gemini multimodal paths (PDF and inline file parts) remain Gemini-only because OpenRouter's current API documentation does not list PDF file input as supported and StudySpace has not validated equivalent Groq file handling. Text workflows use the configured provider fallback chain. Structured text tasks send JSON mode to Groq/OpenRouter; Tutor remains ordinary conversational text. Streaming tutor responses continue to use Gemini streaming when Gemini is selected; cloud-provider tutor fallback is non-streaming.
 
 ## Free-tier limitations
 
@@ -46,3 +46,18 @@ No provider is enabled merely by adding this code. An administrator must add the
 Use representative test cases, review outputs rather than relying only on automated scores, and record issues without exposing private student content. AI-generated grades or feedback should be reviewed carefully and must follow the product's intended academic workflow.
 
 Passing a test set does not guarantee that every response will be correct. Model capabilities and provider behaviour may change, so evaluation is ongoing.
+
+
+## Independent specialist configuration
+
+Set these independently in the server environment:
+
+- `AI_PROVIDER_TUTOR`: conversation and RAG tutoring.
+- `AI_PROVIDER_RESEARCH`: syllabus extraction and document-to-notes workflows.
+- `AI_PROVIDER_ASSESSMENT`: quiz generation, homework feedback, and grading.
+- `AI_PROVIDER_MEMORY`: flashcards and active-recall generation.
+- `AI_PROVIDER_PLANNER`: workload analysis and study recommendations.
+
+The older `AI_PROVIDER_REASONING` and `AI_PROVIDER_FAST` values remain as compatibility fallbacks when a specialist-specific setting is absent. Task-specific model variables such as `GROQ_MODEL_QUIZ` and `GEMINI_SYLLABUS_MODEL` remain supported.
+
+The specialist workflows are application-level orchestration profiles. They do not imply separate model training, independent persistent memories, or guaranteed factual correctness. The application supplies each specialist only the context required by its route and validates structured results before saving them.
