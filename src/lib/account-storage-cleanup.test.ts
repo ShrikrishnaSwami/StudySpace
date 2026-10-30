@@ -48,12 +48,14 @@ function createFakeBucket(initialPaths: string[], options: { failRemove?: boolea
 test("cleans every cursor-paginated object and deeply nested folder", async () => {
   const paths = Array.from({ length: 1001 }, (_, index) => `${userId}/file-${String(index).padStart(4, "0")}.pdf`);
   paths.push(`${userId}/one/two/three/four/five/six/deep.pdf`);
+  paths.push("11111111-1111-4111-8111-111111111112/another-user.pdf");
   const bucket = createFakeBucket(paths);
 
   const removed = await cleanUserStoragePrefix(bucket, userId);
 
   assert.equal(removed, 1002);
-  assert.equal(bucket.objects.size, 0);
+  assert.equal(bucket.objects.size, 1);
+  assert.ok(bucket.objects.has("11111111-1111-4111-8111-111111111112/another-user.pdf"));
   assert.equal(bucket.removeCalls.length, 2);
   assert.ok(bucket.removeCalls.every((batch) => batch.length <= 1000));
 });
