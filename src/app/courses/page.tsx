@@ -383,7 +383,7 @@ export default function CoursesPage() {
               </div>
 
               <h2 className="relative mt-6 text-xl font-semibold text-white">
-                Add the courses you're taking
+                Add the courses you&apos;re taking
               </h2>
 
               <p className="relative mt-2 max-w-md text-sm leading-6 text-white/40">
