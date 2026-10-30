@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import StudySpaceMark from "@/components/StudySpaceMark";
 
 const stages = [
-  "Preparing your space",
-  "Gathering your courses",
-  "Setting your day in order",
-  "Almost ready",
+  "Loading your courses",
+  "Getting your notes and files",
+  "Checking what is coming up",
+  "Nearly there",
 ];
 
 export default function Loading() {
@@ -52,8 +52,8 @@ export default function Loading() {
             <span className="atelier-loading-cross atelier-loading-cross-two" />
           </div>
 
-          <p className="atelier-loading-eyebrow">A MOMENT, PLEASE</p>
-          <h1>Making room<br /><em>for what matters.</em></h1>
+          <p className="atelier-loading-eyebrow">JUST A SECOND</p>
+          <h1>Getting your<br /><em>workspace ready.</em></h1>
           <div className="atelier-loading-status" aria-live="polite">
             <span className="atelier-loading-status-dot" />
             <span>{stages[stage]}</span>
@@ -62,14 +62,14 @@ export default function Loading() {
             <span key={stage} className="atelier-loading-track-fill" />
           </div>
           <p className="atelier-loading-caption">
-            YOUR ACADEMIC WORLD, COMING TOGETHER
+            COURSES, NOTES AND DEADLINES LOADING
           </p>
         </section>
 
         <footer className="atelier-loading-footer">
           <span>STUDYSPACE</span>
           <span className="atelier-loading-footer-line" />
-          <span>AN INTENTIONAL SPACE TO LEARN</span>
+          <span>YOUR COURSEWORK, READY WHEN YOU ARE</span>
         </footer>
       </div>
     </main>
