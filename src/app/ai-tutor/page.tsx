@@ -17,13 +17,11 @@ import {
   Volume2,
   VolumeX,
   MessageSquare,
-  Plus,
   Sparkles,
   Trash2,
   ThumbsDown,
   ThumbsUp,
   User,
-  X,
 } from "lucide-react";
 
 import AppShell from "@/components/AppShell";
