@@ -243,14 +243,12 @@ export async function POST(request: NextRequest) {
      * Load the student's data in parallel with the conversation history above.
      */
     let studySpaceContext = "";
-    let studySpaceContextComplete = false;
     const contextLoadStartedAt = Date.now();
     let contextLoadMs = 0;
 
     try {
       const context = await getStudentAIContext(token, courseId);
       studySpaceContext = formatStudentAIContext(context);
-      studySpaceContextComplete = true;
       contextLoadMs = Date.now() - contextLoadStartedAt;
     } catch (contextError) {
       contextLoadMs = Date.now() - contextLoadStartedAt;
@@ -288,7 +286,6 @@ information is unavailable.
     const retrievalPromise = retrieveRelevantStudyContextHybrid(studySpaceContext, message, {
       userId: user.id,
       accessToken: token,
-      completeContext: studySpaceContextComplete && !courseId,
     });
     // Semantic embedding is optional enrichment. If it is not quick, use the
     // local lexical ranker so students see the first token sooner.
