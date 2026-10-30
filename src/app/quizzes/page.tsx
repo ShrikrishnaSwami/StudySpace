@@ -950,14 +950,19 @@ function QuizGenerator({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm"
       role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !generating) {
+          onClose();
+        }
+      }}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="quiz-generator-title"
-        className="my-auto max-h-[min(90dvh,900px)] w-full max-w-xl overflow-y-auto overscroll-contain rounded-3xl border border-white/[0.09] bg-[#100b1c] shadow-2xl shadow-black/50"
+        className="my-auto max-h-[min(90dvh,900px)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#17151d] p-5 shadow-2xl sm:p-6"
       >
         <div className="sticky top-0 z-10 flex items-start justify-between border-b border-white/[0.07] bg-[#100b1c]/95 p-5 backdrop-blur-xl sm:p-6">
           <div>
