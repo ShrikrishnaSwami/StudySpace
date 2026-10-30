@@ -351,7 +351,7 @@ export default function CinematicExperience() {
                     ".atelier-shell main [class*='rounded-2xl'], .atelier-shell main [class*='rounded-xl'], .atelier-shell main article",
                   ),
                 );
-              workspaceCards.forEach((card: any, index: number) => {
+              workspaceCards.forEach((card: HTMLElement, index: number) => {
                 gsap.fromTo(card,
                   { y: 68, scale: 0.94, rotateX: 7, transformPerspective: 1100, autoAlpha: 0, filter: "blur(7px)" },
                   {
@@ -445,7 +445,7 @@ export default function CinematicExperience() {
                 );
               });
 
-              gsap.utils.toArray<HTMLElement>(".ss-editorial-preview, .ss-method-aside > div").forEach((panel: any, index: number) => {
+              gsap.utils.toArray<HTMLElement>(".ss-editorial-preview, .ss-method-aside > div").forEach((panel: HTMLElement, index: number) => {
                 gsap.fromTo(panel,
                   { y: 55, rotateY: index % 2 ? 7 : -7, scale: .94, transformPerspective: 1000 },
                   { y: 0, rotateY: 0, scale: 1, duration: 1.1, ease: premiumEase,
