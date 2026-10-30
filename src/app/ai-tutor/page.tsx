@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 
 import {
@@ -224,6 +225,8 @@ export default function AITutorPage() {
     useState(false);
   const [showChatPanel, setShowChatPanel] = useState(false);
   const [showToolsPanel, setShowToolsPanel] = useState(false);
+  const [chatPosition, setChatPosition] = useState({ x: 0, y: 0 });
+  const chatDragRef = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
 
   const [error, setError] =
     useState("");
@@ -1073,6 +1076,24 @@ export default function AITutorPage() {
      STARTER PROMPT
   ======================================================= */
 
+  function startChatDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    if ((event.target as HTMLElement).closest("button")) return;
+    chatDragRef.current = { x: event.clientX, y: event.clientY, left: chatPosition.x, top: chatPosition.y };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function moveChatDrag(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!chatDragRef.current) return;
+    setChatPosition({
+      x: chatDragRef.current.left + event.clientX - chatDragRef.current.x,
+      y: chatDragRef.current.top + event.clientY - chatDragRef.current.y,
+    });
+  }
+
+  function stopChatDrag() {
+    chatDragRef.current = null;
+  }
+
   function handleStarterPrompt(
     prompt: string
   ) {
@@ -1263,7 +1284,7 @@ export default function AITutorPage() {
         ================================================= */}
 
         <main className="ss-neural-main relative flex min-w-0 flex-1 flex-col">
-          <div className="ss-neural-backdrop" aria-hidden="true"><NeuralIntelligence active={sending} listening={voiceListening} showControls onAction={(action) => { if (action === "new-chat") { void (async () => { const conversation = await createConversation(); if (conversation) setShowChatPanel(true); })(); } else if (action === "history") { setShowHistory(true); } else { setShowToolsPanel(true); } }} onPrompt={handleStarterPrompt} /></div>
+          <div className="ss-neural-backdrop"><NeuralIntelligence active={sending} listening={voiceListening} showControls onAction={(action) => { if (action === "new-chat") { void (async () => { const conversation = await createConversation(); if (conversation) setShowChatPanel(true); })(); } else if (action === "history") { setShowHistory(true); } else { setShowToolsPanel(true); } }} onPrompt={handleStarterPrompt} /></div>
 
           {showToolsPanel && <DraggablePanel title="Study instruments" onClose={() => setShowToolsPanel(false)} className="ss-neural-tools-panel">
             <p className="mb-4 text-xs leading-6 text-stone-400">Choose a direction and the neural workspace will open a prompt for you.</p>
@@ -1536,7 +1557,7 @@ export default function AITutorPage() {
                  CHAT
               ============================================= */
 
-              <div className="ss-neural-chatlog mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+              <div style={{ transform: `translate3d(${chatPosition.x}px, ${chatPosition.y}px, 0)` }} className="ss-neural-chatlog mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
 
                 {conversationMessages.map(
                   (message, index) => {
@@ -1688,8 +1709,8 @@ export default function AITutorPage() {
               COMPOSER
           ================================================= */}
 
-          <div className="ss-neural-composer shrink-0 border-t border-white/[0.06] bg-[#080611]/95 px-3 py-3 backdrop-blur-xl sm:px-5 sm:py-4">
-            <div className="ss-neural-composer-title"><span>LIVE CONVERSATION</span><button type="button" onClick={() => setShowChatPanel(false)} aria-label="Close conversation window"><X className="h-3.5 w-3.5"/></button></div>
+          <div style={{ transform: `translate3d(${chatPosition.x}px, ${chatPosition.y}px, 0)` }} className="ss-neural-composer shrink-0 border-t border-white/[0.06] bg-[#080611]/95 px-3 py-3 backdrop-blur-xl sm:px-5 sm:py-4">
+            <div className="ss-neural-composer-title" onPointerDown={startChatDrag} onPointerMove={moveChatDrag} onPointerUp={stopChatDrag} onPointerCancel={stopChatDrag}><span>LIVE CONVERSATION · DRAG TO MOVE</span><button type="button" onClick={() => setShowChatPanel(false)} aria-label="Close conversation window"><X className="h-3.5 w-3.5"/></button></div>
 
             <form
               onSubmit={sendMessage}
