@@ -14,5 +14,5 @@ export default function ViewportPortal({ children }: { children: ReactNode }) {
     setMounted(true);
   }, []);
 
-  return mounted ? createPortal(children, document.body) : null;
+  return mounted ? createPortal(<div data-viewport-portal="" className="contents">{children}</div>, document.body) : null;
 }
