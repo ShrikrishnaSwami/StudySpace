@@ -11,12 +11,13 @@
 }
 html, body { background: #100f0c !important; color: var(--atelier-paper); }
 body { isolation: isolate; }
+body > :not(.studyspace-atmosphere):not(.studyspace-atmosphere-vignette) { position: relative; z-index: 2; }
 .studyspace-atmosphere {
-  position: fixed; inset: 0; z-index: -2; display: block; width: 100%; height: 100%;
+  position: fixed; inset: 0; z-index: 0; display: block; width: 100%; height: 100%;
   pointer-events: none; background: #100f0c;
 }
 .studyspace-atmosphere-vignette {
-  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
   background: radial-gradient(ellipse at 50% 40%, transparent 22%, rgba(7,7,5,.38) 100%);
 }
 .atelier-home, .atelier-shell { position: relative; isolation: isolate; }
