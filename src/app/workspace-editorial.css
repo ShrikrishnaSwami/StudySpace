@@ -877,6 +877,7 @@ html[data-theme="light"] .fr-home .fr-feature-icon {
   to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
 }
 .ss-motion-reveal {
+  animation: none !important;
   opacity: 0;
   transform: translate3d(0, 20px, 0);
   filter: blur(3px);
