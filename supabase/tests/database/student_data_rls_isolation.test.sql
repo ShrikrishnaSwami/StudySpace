@@ -3,7 +3,7 @@
 -- are scoped to this transaction and rolled back at the end.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT extensions.plan(16);
+SELECT extensions.plan(19);
 
 CREATE TEMP TABLE rls_test_ids ON COMMIT DROP AS
 WITH assignment_owner AS (
@@ -62,6 +62,31 @@ SELECT extensions.ok(
 SELECT extensions.ok(
   (SELECT reloptions @> ARRAY['security_invoker=true'] FROM pg_class WHERE oid = 'public.ai_context_courses'::regclass),
   'bounded AI course context view executes with invoker permissions and RLS'
+);
+SELECT extensions.is(
+  (SELECT count(*)::integer FROM pg_class c
+   JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'public' AND c.relkind = 'v'
+     AND c.relname LIKE 'ai_context_%'
+     AND c.reloptions @> ARRAY['security_invoker=true']),
+  8,
+  'all eight bounded AI context views use security invoker'
+);
+SELECT extensions.ok(
+  NOT EXISTS (
+    SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname LIKE 'ai_context_%'
+      AND c.relkind = 'v' AND has_table_privilege('anon', c.oid, 'select')
+  ),
+  'anonymous users cannot select any bounded AI context view'
+);
+SELECT extensions.ok(
+  NOT EXISTS (
+    SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname LIKE 'ai_context_%'
+      AND c.relkind = 'v' AND NOT has_table_privilege('authenticated', c.oid, 'select')
+  ),
+  'authenticated students can select the bounded AI context views'
 );
 SELECT extensions.ok(
   EXISTS (SELECT 1 FROM pg_temp.rls_test_ids),
