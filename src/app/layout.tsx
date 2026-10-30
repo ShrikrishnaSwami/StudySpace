@@ -4,6 +4,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "./polish.css";
 import "./atelier.css";
+import "./cinematic.css";
+import CinematicExperience from "@/components/CinematicExperience";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,7 +62,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col"><a className="ss-skip-link" href="#main-content">Skip to content</a>{children}</body>
+      <body className="min-h-full flex flex-col"><CinematicExperience /><a className="ss-skip-link" href="#main-content">Skip to content</a>{children}</body>
     </html>
   );
 }
