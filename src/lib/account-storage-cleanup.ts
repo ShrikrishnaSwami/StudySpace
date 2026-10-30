@@ -25,7 +25,8 @@ export async function cleanUserStoragePrefix(bucket: StorageBucketLike, userId: 
 
   function resolvePath(prefix: string, rawName: unknown): string {
     if (typeof rawName !== "string" || !rawName) throw new Error("Storage returned an invalid path.");
-    const name = rawName.replace(/\\/+$/, "");
+    let name = rawName;
+    while (name.endsWith("/")) name = name.slice(0, -1);
     const path = name.startsWith(userId + "/") ? name : prefix + "/" + name;
     if (
       !path.startsWith(userId + "/") ||
