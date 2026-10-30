@@ -630,11 +630,9 @@ export default function CoursePage() {
                         <span>{course.room}</span>
                       )}
 
-                      {course.schedule && (
-                        <span>
-                          {course.schedule}
-                        </span>
-                      )}
+                      {course.schedule && <span>{course.schedule}</span>}
+                      {course.start_date && <span>{course.start_date} – {course.end_date || "No end date"}</span>}
+                      {course.class_days?.length > 0 && course.class_start_time && course.class_end_time && <span>{course.class_days.map(day => ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][day]).join(", ")} · {course.class_start_time.slice(0,5)}–{course.class_end_time.slice(0,5)}</span>}
                     </div>
                   </div>
                 </div>
@@ -954,12 +952,9 @@ function OverviewSection({
               }
             />
 
-            <InfoRow
-              label="Schedule"
-              value={
-                course.schedule || "Not set"
-              }
-            />
+            <InfoRow label="Schedule" value={course.schedule || "Not set"}/>
+            <InfoRow label="Course dates" value={course.start_date && course.end_date ? `${course.start_date} – ${course.end_date}` : "Not set"}/>
+            <InfoRow label="Weekly classes" value={course.class_days?.length && course.class_start_time && course.class_end_time ? `${course.class_days.map(day => ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][day]).join(", ")} · ${course.class_start_time.slice(0,5)}–${course.class_end_time.slice(0,5)}` : "No recurring class schedule"}/>
           </div>
         </div>
       </div>
