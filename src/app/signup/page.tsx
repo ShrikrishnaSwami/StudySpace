@@ -102,11 +102,11 @@ export default function SignupPage() {
               </p>
 
               <h1 className="max-w-md text-4xl font-bold leading-tight">
-                One space for your
+                Set up your
                 <br />
-                entire
+                courses, notes and
                 <br />
-                <span className="text-purple-400">coursework.</span>
+                <span className="text-purple-400">deadlines.</span>
               </h1>
 
               <p className="mt-6 max-w-md leading-7 text-zinc-400">
