@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { generateAIResponseFromParts } from "@/lib/gemini";
 import { consumeAiQuota, consumeApiRateLimit, readBoundedFormData } from "@/lib/api-security";
+import { logAiMetric } from "@/lib/ai-observability";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -20,6 +21,7 @@ function cleanJson(value: string) {
 }
 
 export async function POST(request: NextRequest) {
+  const aiStartedAt = Date.now();
   try {
     const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
     if (!token) return NextResponse.json({ error: "Sign in to convert files into notes." }, { status: 401 });
@@ -86,8 +88,10 @@ Extract the actual content visible in the file. Preserve important definitions, 
       unit_name: unitName, category, source_file_name: file.name.slice(0, 255), source_mime_type: expectedMime,
     }).select("id,title,unit_name,category,source_file_name").single();
     if (saveError) throw saveError;
+    logAiMetric({ task: "notes", outcome: "success", startedAt: aiStartedAt, statusCode: 200 });
     return NextResponse.json({ note: saved });
   } catch (error) {
+    logAiMetric({ task: "notes", outcome: "failure", startedAt: aiStartedAt, statusCode: 500 });
     console.error("AI note extraction failed:", error instanceof Error ? error.message : "unknown error");
     return NextResponse.json({ error: error instanceof Error && /configured|limit|too large|wait|file/i.test(error.message) ? error.message : "The file could not be converted into notes. Check the file and try again." }, { status: 500 });
   }
