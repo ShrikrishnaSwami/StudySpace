@@ -3,7 +3,7 @@
 -- are scoped to this transaction and rolled back at the end.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT extensions.plan(15);
+SELECT extensions.plan(16);
 
 CREATE TEMP TABLE rls_test_ids ON COMMIT DROP AS
 WITH assignment_owner AS (
@@ -98,6 +98,10 @@ SELECT extensions.ok(
 SELECT extensions.ok(
   (SELECT allowed FROM public.consume_my_api_rate_limit('ai-notes', 3, 600)),
   'note extraction burst limiter is allowlisted'
+);
+SELECT extensions.ok(
+  (SELECT allowed FROM public.consume_my_api_rate_limit('ai-note-extraction', 5, 600)),
+  'multipart note upload limiter is allowlisted before parsing'
 );
 SELECT extensions.ok(
   (SELECT allowed FROM public.consume_my_api_rate_limit('ai-grading', 2, 600)),
