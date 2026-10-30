@@ -179,7 +179,9 @@ jobs:
           docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "SELECT 1 FROM pg_namespace WHERE nspname = 'extensions'"
           docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "SELECT 1 FROM pg_extension WHERE extname = 'vector' AND extnamespace = 'extensions'::regnamespace"
           docker exec --user postgres "$PG_CONTAINER" pg_restore --list /tmp/public-database.dump > restore-work/restore.list
-          sed -i '/ SCHEMA - public /d' restore-work/restore.list
+          echo "Dump schema entries:"
+          grep -E ' SCHEMA - ' restore-work/restore.list || true
+          sed -i -E '/ SCHEMA - (public|auth|extensions) /d; / TABLE( DATA)? - auth users /d' restore-work/restore.list
           docker cp restore-work/restore.list "$PG_CONTAINER:/tmp/restore.list"
           docker exec --user root "$PG_CONTAINER" chmod 0644 /tmp/restore.list
           docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
