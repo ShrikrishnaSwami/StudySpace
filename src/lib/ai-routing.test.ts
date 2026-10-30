@@ -12,6 +12,8 @@ import {
   buildSpecialistInstructions,
   providerEnvKeyForTask,
   resolveProviderForTask,
+  resolveConfiguredProvidersForTask,
+  resolveExternalModelForTask,
   specialistForTask,
 } from "./ai-specialists.ts";
 
@@ -157,6 +159,62 @@ test("each specialist honors its own provider environment setting", () => {
   for (const [task, envKey, provider] of cases) {
     assert.equal(resolveProviderForTask(task, { [envKey]: provider }), provider);
   }
+});
+
+test("each of the five specialists prioritizes its configured provider in the production resolver", () => {
+  const cases = [
+    ["tutor", "AI_PROVIDER_TUTOR", "gemini"],
+    ["notes", "AI_PROVIDER_RESEARCH", "groq"],
+    ["quiz", "AI_PROVIDER_ASSESSMENT", "openrouter"],
+    ["flashcards", "AI_PROVIDER_MEMORY", "gemini"],
+    ["recommendations", "AI_PROVIDER_PLANNER", "groq"],
+  ] as const;
+  for (const [task, envKey, provider] of cases) {
+    const environment = {
+      [envKey]: provider,
+      GEMINI_API_KEY: "test-gemini",
+      GROQ_API_KEY: "test-groq",
+      GROQ_ALLOW_STUDENT_DATA: "true",
+      OPENROUTER_API_KEY: "test-openrouter",
+      OPENROUTER_ALLOW_STUDENT_DATA: "true",
+    };
+    assert.equal(resolveConfiguredProvidersForTask(task, environment)[0], provider, task);
+  }
+});
+
+test("provider fallback excludes cloud vendors without explicit student-data privacy opt-in", () => {
+  assert.deepEqual(
+    resolveConfiguredProvidersForTask("quiz", {
+      AI_PROVIDER_ASSESSMENT: "openrouter",
+      OPENROUTER_API_KEY: "test-openrouter",
+      GROQ_API_KEY: "test-groq",
+      GEMINI_API_KEY: "test-gemini",
+    }),
+    ["gemini"],
+  );
+});
+
+test("Groq model selection is independently configurable for every specialist task", () => {
+  const cases = [
+    ["tutor", "GROQ_MODEL_TUTOR", "openai/gpt-oss-120b"],
+    ["notes", "GROQ_MODEL_NOTES", "openai/gpt-oss-20b"],
+    ["quiz", "GROQ_MODEL_QUIZ", "qwen/qwen3.8-27b"],
+    ["flashcards", "GROQ_MODEL_FLASHCARDS", "openai/gpt-oss-20b"],
+    ["recommendations", "GROQ_MODEL_RECOMMENDATIONS", "openai/gpt-oss-20b"],
+  ] as const;
+  for (const [task, envKey, fallback] of cases) {
+    assert.equal(resolveExternalModelForTask("groq", task, {}), fallback);
+    assert.equal(resolveExternalModelForTask("groq", task, { [envKey]: "custom-model" }), "custom-model");
+  }
+});
+
+test("OpenRouter model selection honors task overrides and defaults to its free router", () => {
+  assert.equal(resolveExternalModelForTask("openrouter", "quiz", {}), "openrouter/free");
+  assert.equal(
+    resolveExternalModelForTask("openrouter", "quiz", { OPENROUTER_MODEL_QUIZ: "vendor/model:free" }),
+    "vendor/model:free",
+  );
+  assert.equal(resolveExternalModelForTask("openrouter", "notes", { OPENROUTER_MODEL: "openrouter/free" }), "openrouter/free");
 });
 
 test("specialist provider settings override legacy grouped settings", () => {
