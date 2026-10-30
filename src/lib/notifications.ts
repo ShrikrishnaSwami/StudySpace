@@ -57,8 +57,8 @@ export async function getNotifications(
 }
 
 /**
- * Create missing in-app reminders for assignments due soon/overdue and
- * quiz events starting within the next 24 hours. Runs when the dashboard
+ * Create missing in-app reminders for assignments, quizzes, and scheduled
+ * course classes starting within the next 24 hours. Runs when the dashboard
  * is opened/refreshed; it does not send email.
  */
 export async function syncAcademicReminders() {
@@ -78,7 +78,7 @@ export async function syncAcademicReminders() {
     .from("notifications")
     .select("type,metadata")
     .eq("user_id", user.id)
-    .in("type", ["assignment_due", "assignment_overdue", "quiz_upcoming"])
+    .in("type", ["assignment_due", "assignment_overdue", "quiz_upcoming", "class_upcoming"])
     .limit(1000);
   if (existingError) throw new Error(existingError.message);
 
