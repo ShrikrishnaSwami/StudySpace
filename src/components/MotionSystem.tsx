@@ -133,5 +133,5 @@ export default function MotionSystem() {
     };
   }, []);
 
-  return <div className="ss-scroll-progress" aria-hidden="true" />;
+  return null;
 }
