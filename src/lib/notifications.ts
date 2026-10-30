@@ -4,6 +4,7 @@ export type NotificationType =
   | "assignment_due"
   | "assignment_overdue"
   | "quiz_upcoming"
+  | "class_upcoming"
   | "quiz_result"
   | "study_reminder"
   | "calendar_conflict"
@@ -68,7 +69,8 @@ export async function syncAcademicReminders() {
   const settings = user.user_metadata?.studyspace_settings || {};
   const assignmentReminders = settings.assignmentReminders !== false;
   const quizReminders = settings.quizReminders !== false;
-  if (!assignmentReminders && !quizReminders) return 0;
+  const classReminders = settings.classReminders !== false;
+  if (!assignmentReminders && !quizReminders && !classReminders) return 0;
 
   const now = new Date();
   const soon = new Date(now.getTime() + 24 * 60 * 60 * 1000);
@@ -145,6 +147,34 @@ export async function syncAcademicReminders() {
         type: "quiz_upcoming",
         title: "Quiz coming up",
         message: event.title + " starts within 24 hours.",
+        href: "/calendar",
+        metadata: { source_type: "calendar_event", source_id: event.id, start_at: event.start_at },
+      });
+    }
+  }
+
+  if (classReminders) {
+    const { data: classEvents, error } = await supabase
+      .from("calendar_events")
+      .select("id,title,start_at,location")
+      .eq("user_id", user.id)
+      .eq("event_type", "class")
+      .eq("source", "course")
+      .eq("enabled", true)
+      .gte("start_at", now.toISOString())
+      .lte("start_at", soon.toISOString())
+      .limit(200);
+    if (error) throw new Error(error.message);
+
+    for (const event of classEvents || []) {
+      const key = "class_upcoming:" + event.id;
+      if (existingKeys.has(key)) continue;
+      existingKeys.add(key);
+      pending.push({
+        user_id: user.id,
+        type: "class_upcoming",
+        title: "Class coming up",
+        message: event.title + " starts within 24 hours" + (event.location ? " · " + event.location : "") + ".",
         href: "/calendar",
         metadata: { source_type: "calendar_event", source_id: event.id, start_at: event.start_at },
       });
