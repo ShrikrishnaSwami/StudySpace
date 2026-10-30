@@ -144,7 +144,7 @@ export default function CinematicExperience() {
             particleScene = new THREE.Scene();
             particleCamera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 120);
             particleCamera.position.z = 27;
-            const particleCount = window.innerWidth < 700 ? 420 : 920;
+            const particleCount = window.innerWidth < 700 ? 560 : 1450;
             const particlePositions = new Float32Array(particleCount * 3);
             const particleSizes = new Float32Array(particleCount);
             for (let i = 0; i < particleCount; i++) {
@@ -162,9 +162,9 @@ export default function CinematicExperience() {
             particleGeometry.setAttribute("aSize", new THREE.BufferAttribute(particleSizes, 1));
             particleMaterial = new THREE.PointsMaterial({
               color: new THREE.Color("#b9a27a"),
-              size: window.innerWidth < 700 ? 0.075 : 0.095,
+              size: window.innerWidth < 700 ? 0.16 : 0.22,
               transparent: true,
-              opacity: 0.46,
+              opacity: 0.68,
               depthWrite: false,
               blending: THREE.AdditiveBlending,
               sizeAttenuation: true,
@@ -190,9 +190,11 @@ export default function CinematicExperience() {
               material.uniforms.uTime.value = time * 0.001;
               material.uniforms.uPointer.value.set(pointerX, pointerY);
               if (particles) {
-                particles.rotation.y += (targetX * 0.055 - particles.rotation.y) * 0.012;
-                particles.rotation.x += (targetY * 0.04 - particles.rotation.x) * 0.012;
-                particles.rotation.z = Math.sin(time * 0.00008) * 0.025;
+                particles.rotation.y += (targetX * 0.16 + Math.sin(time * 0.00012) * 0.035 - particles.rotation.y) * 0.018;
+                particles.rotation.x += (targetY * 0.12 + Math.cos(time * 0.0001) * 0.025 - particles.rotation.x) * 0.018;
+                particles.rotation.z = Math.sin(time * 0.00008) * 0.045;
+                particles.position.y = Math.sin(time * 0.00018) * 0.42;
+                particles.position.x = Math.cos(time * 0.00013) * 0.28;
               }
               renderer.clear();
               renderer.render(scene, camera);
@@ -333,16 +335,68 @@ export default function CinematicExperience() {
               });
             }
 
-            gsap.utils.toArray(".atelier-shell main > *").forEach((section: any) => {
-              gsap.fromTo(section,
-                { y: 24, autoAlpha: 0 },
-                {
-                  y: 0, autoAlpha: 1, duration: 0.8, ease: premiumEase,
-                  immediateRender: false,
-                  scrollTrigger: { trigger: section, start: "top 88%", once: true },
-                },
+            // Carry the cinematic language into the signed-in product:
+            // page sections, data cards, stat blocks, tables and side navigation
+            // receive the same depth, scale and staggered entrance treatment.
+            const workspace = document.querySelector(".atelier-shell");
+            if (workspace) {
+              gsap.fromTo(".atelier-shell .ss-sidebar",
+                { x: -42, autoAlpha: 0, filter: "blur(8px)" },
+                { x: 0, autoAlpha: 1, filter: "blur(0px)", duration: 1.05, ease: premiumEase, delay: 0.12 },
               );
-            });
+              gsap.fromTo(".atelier-shell .ss-topbar",
+                { y: -28, autoAlpha: 0, filter: "blur(7px)" },
+                { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: 0.9, ease: premiumEase, delay: 0.2 },
+              );
+
+              const workspaceCards = gsap.utils.toArray(
+                ".atelier-shell main [class*='rounded-2xl'], .atelier-shell main [class*='rounded-xl'], .atelier-shell main article, .atelier-shell main tr",
+              ).filter((node: any) => !node.closest("[role='dialog']"));
+              workspaceCards.forEach((card: any, index: number) => {
+                gsap.fromTo(card,
+                  { y: 68, scale: 0.94, rotateX: 7, transformPerspective: 1100, autoAlpha: 0, filter: "blur(7px)" },
+                  {
+                    y: 0, scale: 1, rotateX: 0, autoAlpha: 1, filter: "blur(0px)",
+                    duration: 1.05, delay: Math.min(index % 7, 5) * 0.065,
+                    ease: premiumEase, immediateRender: false,
+                    scrollTrigger: { trigger: card, start: "top 94%", once: true },
+                  },
+                );
+              });
+
+              gsap.utils.toArray(".atelier-shell main h1, .atelier-shell main h2").forEach((heading: any) => {
+                gsap.fromTo(heading,
+                  { y: 42, letterSpacing: "-.075em", autoAlpha: 0, filter: "blur(8px)" },
+                  { y: 0, letterSpacing: "-.035em", autoAlpha: 1, filter: "blur(0px)", duration: 1.1, ease: premiumEase, delay: 0.12 },
+                );
+              });
+
+              // Pointer-reactive depth: dashboard cards physically tilt toward
+              // the cursor, then settle back when the pointer leaves.
+              workspaceCards.forEach((card: any) => {
+                if (card.matches("tr")) return;
+                const moveCard = (event: PointerEvent) => {
+                  if (event.pointerType === "touch") return;
+                  const bounds = card.getBoundingClientRect();
+                  const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+                  const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+                  gsap.to(card, {
+                    rotateY: x * 5.5,
+                    rotateX: y * -5.5,
+                    z: 18,
+                    transformPerspective: 1000,
+                    duration: 0.38,
+                    ease: "power2.out",
+                    overwrite: "auto",
+                  });
+                };
+                const resetCard = () => gsap.to(card, {
+                  rotateX: 0, rotateY: 0, z: 0, duration: 0.7, ease: "elastic.out(1, 0.55)", overwrite: "auto",
+                });
+                card.addEventListener("pointermove", moveCard, { passive: true });
+                card.addEventListener("pointerleave", resetCard);
+              });
+            }
 
             gsap.utils.toArray(".atelier-shell main button, .atelier-shell main a, .atelier-home .atelier-primary, .atelier-home .atelier-enter").forEach((item: any) => {
               const lift = () => gsap.to(item, { y: -3, duration: 0.22, ease: "power2.out", overwrite: "auto" });
