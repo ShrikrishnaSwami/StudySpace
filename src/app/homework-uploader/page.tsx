@@ -653,7 +653,7 @@ export default function HomeworkUploaderPage() {
                 </h1>
 
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-white/40 sm:text-[15px]">
-                  Keep your coursework together, then use AI
+                  Upload a file. Get help understanding it.
                   to understand the problems instead of just
                   getting an answer.
                 </p>
@@ -665,7 +665,7 @@ export default function HomeworkUploaderPage() {
                 className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-medium text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-500 active:scale-[0.98]"
               >
                 <Plus className="h-4 w-4" />
-                Upload homework
+                Upload an assignment file
               </button>
             </div>
           </div>
@@ -755,7 +755,7 @@ export default function HomeworkUploaderPage() {
                 </div>
 
                 <p className="mt-1 text-xs text-white/35">
-                  Waiting for your review
+                  Ready for you to look over
                 </p>
               </div>
 
@@ -788,7 +788,7 @@ export default function HomeworkUploaderPage() {
                 <input type="search" aria-label="Search homework submissions" value={search} onChange={(event) =>
                     setSearch(event.target.value)
                   }
-                  placeholder="Search homework, files, or courses..."
+                  placeholder="Search by file name, assignment or course…"
                   className="input h-11 pl-10"
                 />
               </div>
@@ -842,7 +842,7 @@ export default function HomeworkUploaderPage() {
             <div className="flex min-h-[360px] items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.02]">
               <div className="flex items-center gap-3 text-sm text-white/40">
                 <Loader2 className="h-5 w-5 animate-spin" />
-                Loading your homework...
+                Loading your uploaded files…
               </div>
             </div>
           ) : filteredHomework.length === 0 ? (
@@ -858,13 +858,13 @@ export default function HomeworkUploaderPage() {
               <h2 className="mt-5 text-lg font-semibold text-white">
                 {search || statusFilter !== "all"
                   ? "Nothing matches your filters"
-                  : "Your homework workspace is empty"}
+                  : "No homework files here yet"}
               </h2>
 
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-white/35">
                 {search || statusFilter !== "all"
                   ? "Try a different search or status filter."
-                  : "Upload a homework file and StudySpace will organize it and give you an AI-powered explanation when you're ready."}
+                  : "Upload a PDF, photo or document. You can link it to a course or assignment, then ask AI to explain the parts you're stuck on."}
               </p>
 
               {!search && statusFilter === "all" && (
@@ -874,7 +874,7 @@ export default function HomeworkUploaderPage() {
                   className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-500"
                 >
                   <Upload className="h-4 w-4" />
-                  Upload your first file
+                  Upload a file
                 </button>
               )}
             </div>
@@ -924,7 +924,7 @@ export default function HomeworkUploaderPage() {
 
                           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-white/30">
                             <span className="truncate">
-                              {item.file_name || "No file attached"}
+                              {item.file_name || "No file attached yet"}
                             </span>
 
                             <span className="text-white/15">
@@ -969,7 +969,7 @@ export default function HomeworkUploaderPage() {
                           </p>
                         ) : (
                           <span className="text-xs text-white/20">
-                            No description
+                            No extra details added
                           </span>
                         )}
                       </div>
@@ -1055,7 +1055,7 @@ export default function HomeworkUploaderPage() {
                     </div>
 
                     <h2 className="text-lg font-semibold text-white">
-                      Upload homework
+                      Upload an assignment file
                     </h2>
                   </div>
 
@@ -1087,7 +1087,7 @@ export default function HomeworkUploaderPage() {
                   <input maxLength={180} value={title} onChange={(event) =>
                       setTitle(event.target.value)
                     }
-                    placeholder="e.g. Physics Problem Set 3"
+                    placeholder="e.g. MATH 1350 — Problem set 4"
                     className="input"
                     disabled={uploading}
                   />
@@ -1272,7 +1272,7 @@ export default function HomeworkUploaderPage() {
                     ) : (
                       <>
                         <Upload className="h-4 w-4" />
-                        Upload homework
+                        Upload an assignment file
                       </>
                     )}
                   </button>
@@ -1325,7 +1325,7 @@ export default function HomeworkUploaderPage() {
 
                   <p className="mt-1 truncate text-xs text-white/30">
                     {selectedHomework.file_name ||
-                      "No file attached"}
+                      "No file attached yet"}
                   </p>
                 </div>
 
