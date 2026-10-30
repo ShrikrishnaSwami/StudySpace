@@ -233,12 +233,12 @@ export default function QuizzesPage() {
 
       if (!response.ok) {
         throw new Error(
-          data.error || "Failed to generate quiz."
+          data.error || "Couldn't make the quiz. Try again with a different topic."
         );
       }
 
       if (!Array.isArray(data.questions) || data.questions.length === 0) {
-        throw new Error("The AI did not return any usable questions. Please try again with a shorter topic or fewer questions.");
+        throw new Error("No usable questions came back. Try a shorter topic or ask for fewer questions.");
       }
 
       const course = courses.find(
@@ -321,7 +321,7 @@ export default function QuizzesPage() {
           ? "Quiz generation timed out. Please try again with fewer questions."
           : error instanceof Error
             ? error.message
-            : "Failed to generate quiz.";
+            : "Couldn't make the quiz. Try again with a different topic.";
       window.alert(message);
     } finally {
       setGenerating(false);
@@ -476,7 +476,7 @@ export default function QuizzesPage() {
     return (
       <AppShell
         title="Quizzes"
-        description="Practice with personalized quizzes."
+        description="Make a practice quiz from a course topic and see which questions need another look."
       >
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="flex flex-col items-center gap-3">
@@ -485,7 +485,7 @@ export default function QuizzesPage() {
               className="animate-spin text-violet-400"
             />
             <span className="text-xs text-white/30">
-              Loading quizzes...
+              Loading your saved quizzes…
             </span>
           </div>
         </div>
@@ -496,7 +496,7 @@ export default function QuizzesPage() {
   return (
     <AppShell
       title="Quizzes"
-      description="Practice with personalized quizzes."
+      description="Make a practice quiz from a course topic and see which questions need another look."
     >
       <div className="mx-auto max-w-[1500px] space-y-7 pb-10">
         {/* Header */}
@@ -516,7 +516,7 @@ export default function QuizzesPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-white/45 sm:text-base">
-                Turn your courses into personalized practice
+                Pick a course and topic. Get questions based on what you're studying.
                 sessions and find out what you actually know.
               </p>
             </div>
@@ -531,7 +531,7 @@ export default function QuizzesPage() {
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-500 active:scale-[0.98]"
             >
               <Sparkles size={17} />
-              Generate quiz
+              Make a practice quiz
             </button>
           </div>
         </section>
@@ -577,7 +577,7 @@ export default function QuizzesPage() {
                 onChange={(event) =>
                   setSearch(event.target.value)
                 }
-                placeholder="Search quizzes or courses..."
+                placeholder="Search a quiz, topic or course…"
                 className="w-full rounded-xl border border-white/[0.07] bg-black/20 py-3 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-violet-500/40"
               />
             </div>
@@ -618,7 +618,7 @@ export default function QuizzesPage() {
         <div className="flex items-end justify-between">
           <div>
             <p className="text-sm font-semibold text-white">
-              Your practice library
+              Your saved quizzes
             </p>
 
             <p className="mt-1 text-xs text-white/30">
