@@ -171,8 +171,12 @@ export async function retrieveRelevantStudyContextHybrid(
   if (!candidates.length) return lexical;
   // Enumerate all current chunks for safe per-source invalidation, while only embedding
   // the bounded 40-candidate set used for ranking. Avoid destructive cleanup if capped.
-  const allSourceCandidates = getStudyContextEmbeddingCandidates(context, 1000);
-  const sourceEnumerationComplete = allSourceCandidates.length < 1000;
+  const allSourceCandidates = auth.completeContext
+    ? getStudyContextEmbeddingCandidates(context, 1000)
+    : [];
+  // A bounded recent context is intentionally partial. Never interpret records
+  // omitted by its query limits as deleted student sources.
+  const sourceEnumerationComplete = auth.completeContext === true && allSourceCandidates.length < 1000;
 
   try {
     const supabase = createUserSupabaseClient(auth.accessToken);
