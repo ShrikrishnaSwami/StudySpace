@@ -14,6 +14,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import AppShell from "@/components/AppShell";
+import ViewportPortal from "@/components/ViewportPortal";
 import { supabase } from "@/lib/supabase";
 
 type Course = {
@@ -389,6 +390,7 @@ export default function CoursesPage() {
 
       {/* Add course modal */}
       {showAddCourse && (
+        <ViewportPortal>
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
           <div
             className="absolute inset-0"
@@ -488,10 +490,12 @@ export default function CoursesPage() {
             </form>
           </div>
         </div>
+        </ViewportPortal>
       )}
 
       {/* Delete confirmation */}
       {deleteCourse && (
+        <ViewportPortal>
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
           <div
             className="absolute inset-0"
@@ -536,6 +540,7 @@ export default function CoursesPage() {
             </div>
           </div>
         </div>
+        </ViewportPortal>
       )}
     </AppShell>
   );
