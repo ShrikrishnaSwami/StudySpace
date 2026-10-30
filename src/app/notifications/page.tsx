@@ -145,18 +145,6 @@ export default function NotificationsPage() {
   const [workingId, setWorkingId] = useState<string | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
 
-  const load = async () => {
-    try {
-      setLoading(true);
-      const data = await getNotifications(100);
-      setNotifications(data);
-    } catch (error) {
-      console.error("Failed to load notifications:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     let active = true;
     let unsubscribe: () => void = () => {};
