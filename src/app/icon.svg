@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="5" y1="3" x2="58" y2="61" gradientUnits="userSpaceOnUse"><stop stop-color="#B69AFF"/><stop offset=".52" stop-color="#8062F4"/><stop offset="1" stop-color="#4B55C9"/></linearGradient>
+    <linearGradient id="page" x1="15" y1="18" x2="48" y2="48" gradientUnits="userSpaceOnUse"><stop stop-color="#fff"/><stop offset="1" stop-color="#D8D0FF"/></linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="19" fill="url(#bg)"/>
+  <path d="M13 20c0-2.2 1.8-4 4-4h30c2.2 0 4 1.8 4 4v25c0 2.2-1.8 4-4 4H17c-2.2 0-4-1.8-4-4V20Z" fill="#fff" fill-opacity=".08"/>
+  <path d="M19 24c6.3-2 10.8-.7 13 3.2 2.2-3.9 6.7-5.2 13-3.2v20c-6.3-1.8-10.8-.5-13 3.2-2.2-3.7-6.7-5-13-3.2V24Z" stroke="url(#page)" stroke-width="2.8" stroke-linejoin="round" fill="none"/>
+  <path d="M32 27v20M24 31c2.1-.1 4 .4 5.4 1.5M24 37c2.1-.1 4 .4 5.4 1.5M40 31c-2.1-.1-4 .4-5.4 1.5M40 37c-2.1-.1-4 .4-5.4 1.5" stroke="#fff" stroke-opacity=".85" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="m47 7 1.8 4.5 4.5 1.8-4.5 1.8L47 19.6l-1.8-4.5-4.5-1.8 4.5-1.8L47 7Z" fill="#fff"/>
+</svg>
