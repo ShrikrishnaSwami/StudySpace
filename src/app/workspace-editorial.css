@@ -1225,3 +1225,8 @@ html[data-theme="light"] .fr-home .fr-feature-icon {
     }
   }
 }
+
+/* The final three headline words are nested inside the italic emphasis element. */
+.ss-editorial-opening h1 em .ss-word:nth-of-type(1) { animation-delay: 1080ms; }
+.ss-editorial-opening h1 em .ss-word:nth-of-type(2) { animation-delay: 1260ms; }
+.ss-editorial-opening h1 em .ss-word:nth-of-type(3) { animation-delay: 1440ms; }
