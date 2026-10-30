@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -948,9 +947,9 @@ function QuizGenerator({
 }) {
   const canGenerate = Boolean(selectedCourse);
 
-  return createPortal(
+  return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !generating) {
@@ -1144,8 +1143,7 @@ function QuizGenerator({
           </button>
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
 function QuizRunner({
