@@ -8,7 +8,7 @@ StudySpace uses an encrypted automated backup workflow for application data, pri
 
 ## Recovery status
 
-<badge>Verified — 2026-10-30</badge>
+**Verified — 2026-10-30**
 
 A full encrypted-backup restoration was completed successfully on 2026-10-30 in an isolated, non-production environment.
 
