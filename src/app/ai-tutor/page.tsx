@@ -259,7 +259,11 @@ export default function AITutorPage() {
       setVoiceStatus("READY");
       return;
     }
-    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const speechWindow = window as Window & {
+      SpeechRecognition?: new () => SpeechRecognitionLike;
+      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+    };
+    const SpeechRecognitionCtor = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
     if (!SpeechRecognitionCtor) {
       setError("Voice input is not supported in this browser. Try Chrome or Edge.");
       return;
