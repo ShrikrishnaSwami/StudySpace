@@ -33,16 +33,16 @@ export default function ErrorBoundary({
             <span className="ss-error-spark ss-error-spark-a">✳</span>
             <span className="ss-error-spark ss-error-spark-b">✦</span>
           </div>
-          <p className="ss-error-eyebrow">A little detour</p>
-          <h1 id="error-title">That wasn’t part of the study plan.</h1>
-          <p className="ss-error-copy">Something unexpected interrupted this page. Your saved work should still be there. Give it another try, or head back to your workspace.</p>
+          <p className="ss-error-eyebrow">PAGE ERROR</p>
+          <h1 id="error-title">This page hit a snag.</h1>
+          <p className="ss-error-copy">Something went wrong while this page was loading. Your saved work should still be there. Try again, or head back to your dashboard.</p>
           <div className="ss-error-actions">
             <button type="button" onClick={() => reset()} className="ss-error-primary"><RefreshCw size={16} /> Try again</button>
-            <Link href="/dashboard" className="ss-error-secondary"><ArrowLeft size={16} /> Back to workspace</Link>
+            <Link href="/dashboard" className="ss-error-secondary"><ArrowLeft size={16} /> Back to dashboard</Link>
           </div>
           {error.digest ? <p className="ss-error-reference">Support reference <span>{error.digest}</span></p> : null}
         </section>
-        <p className="ss-error-footnote">STUDYSPACE <span>·</span> MAKE ROOM FOR WHAT MATTERS</p>
+        <p className="ss-error-footnote">STUDYSPACE <span>·</span> COURSES, NOTES AND DEADLINES IN ONE PLACE</p>
       </div>
     </main>
   );
