@@ -197,7 +197,7 @@ export default function SettingsPage() {
       const link = document.createElement("a");
       link.href = url; link.download = "studyspace-data-export.json"; link.click();
       window.URL.revokeObjectURL(url);
-      setExportMessage("Your export was downloaded. Keep it somewhere private because it contains your academic data.");
+      setExportMessage("Your data export is ready. Keep the file somewhere private; it includes your coursework and account data.");
     } catch (error) {
       setExportMessage(error instanceof Error ? error.message : "Could not export your data.");
     } finally { setExporting(false); }
@@ -251,7 +251,7 @@ export default function SettingsPage() {
     try {
       const { error } = await supabase.auth.updateUser({ data: { studyspace_settings: preferences } });
       if (error) throw error;
-      setPreferencesMessage("Preferences saved to your account.");
+      setPreferencesMessage("Settings saved.");
     } catch (error) {
       setPreferencesMessage(error instanceof Error ? error.message : "Could not save preferences.");
     } finally { setSavingPreferences(false); }
@@ -286,17 +286,17 @@ export default function SettingsPage() {
     }
   }
 
-  return <AppShell title="Settings" description="Manage your StudySpace account and preferences.">
+  return <AppShell title="Settings" description="Update your profile, sign-in security, notifications and saved preferences.">
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-5 sm:px-6 sm:py-7">
       <header>
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-violet-300/70">Preferences</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">Settings</h1>
-        <p className="mt-2 text-sm leading-6 text-white/45">Your account, security and saved preferences.</p>
+        <p className="mt-2 text-sm leading-6 text-white/45">Profile, password, security and notification settings.</p>
         {email && <p className="mt-3 text-xs text-white/35">Signed in as <span className="text-white/60">{email}</span></p>}
       </header>
       {pageError && <div role="alert" className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-200">{pageError}</div>}
-      {loading ? <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-8 text-sm text-white/50"><RefreshCw size={16} className="mr-2 inline animate-spin"/>Loading your saved settings…</div> : <>
-        <Section icon={User} title="Profile" description="Update the name shown across your workspace.">
+      {loading ? <div className="rounded-2xl border border-white/10 bg-white/[0.025] p-8 text-sm text-white/50"><RefreshCw size={16} className="mr-2 inline animate-spin"/>Loading your settings…</div> : <>
+        <Section icon={User} title="Profile" description="Change the name shown around StudySpace.">
           <form onSubmit={saveProfile} className="space-y-4">
             <div><label htmlFor="profile-name" className="mb-2 block text-xs font-medium text-white/55">Full name</label><input id="profile-name" autoComplete="name" maxLength={100} required value={name} onChange={e=>{setName(e.target.value);setProfileMessage("");}} placeholder="Your name" className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-white outline-none placeholder:text-white/25 focus:border-violet-400/40"/></div>
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4"><p aria-live="polite" className={`text-xs ${profileMessage.includes("successfully") ? "text-emerald-300" : "text-red-300"}`}>{profileMessage}</p><button type="submit" disabled={savingProfile} className="inline-flex h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"><Save size={15}/>{savingProfile?"Saving…":"Save profile"}</button></div>
