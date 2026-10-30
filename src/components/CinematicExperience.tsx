@@ -90,6 +90,11 @@ export default function CinematicExperience() {
         let scene: any;
         let camera: any;
         let material: any;
+        let particleGeometry: any;
+        let particleMaterial: any;
+        let particleScene: any;
+        let particleCamera: any;
+        let particles: any;
         let frame = 0;
         let pointerX = 0;
         let pointerY = 0;
@@ -117,9 +122,45 @@ export default function CinematicExperience() {
             });
             scene.add(new THREE.Mesh(geometry, material));
 
+            // A real 3D particle field layered over the atmospheric shader.
+            // The deterministic distribution avoids random render-time output.
+            particleScene = new THREE.Scene();
+            particleCamera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 120);
+            particleCamera.position.z = 27;
+            const particleCount = window.innerWidth < 700 ? 420 : 920;
+            const particlePositions = new Float32Array(particleCount * 3);
+            const particleSizes = new Float32Array(particleCount);
+            for (let i = 0; i < particleCount; i++) {
+              const seed = i + 1;
+              const randomA = Math.abs(Math.sin(seed * 127.1) * 43758.5453) % 1;
+              const randomB = Math.abs(Math.sin(seed * 311.7) * 24634.6345) % 1;
+              const randomC = Math.abs(Math.sin(seed * 74.7) * 56445.234) % 1;
+              particlePositions[i * 3] = (randomA - 0.5) * 46;
+              particlePositions[i * 3 + 1] = (randomB - 0.5) * 29;
+              particlePositions[i * 3 + 2] = (randomC - 0.5) * 34;
+              particleSizes[i] = 0.5 + randomC * 1.8;
+            }
+            particleGeometry = new THREE.BufferGeometry();
+            particleGeometry.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+            particleGeometry.setAttribute("aSize", new THREE.BufferAttribute(particleSizes, 1));
+            particleMaterial = new THREE.PointsMaterial({
+              color: new THREE.Color("#b9a27a"),
+              size: window.innerWidth < 700 ? 0.075 : 0.095,
+              transparent: true,
+              opacity: 0.46,
+              depthWrite: false,
+              blending: THREE.AdditiveBlending,
+              sizeAttenuation: true,
+            });
+            particles = new THREE.Points(particleGeometry, particleMaterial);
+            particleScene.add(particles);
+            renderer.autoClear = false;
+
             const resize = () => {
               renderer.setSize(window.innerWidth, window.innerHeight, false);
               material.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+              particleCamera.aspect = window.innerWidth / window.innerHeight;
+              particleCamera.updateProjectionMatrix();
             };
             const move = (event: PointerEvent) => {
               if (event.pointerType === "touch") return;
@@ -131,7 +172,14 @@ export default function CinematicExperience() {
               pointerY += (targetY - pointerY) * 0.025;
               material.uniforms.uTime.value = time * 0.001;
               material.uniforms.uPointer.value.set(pointerX, pointerY);
+              if (particles) {
+                particles.rotation.y += (targetX * 0.055 - particles.rotation.y) * 0.012;
+                particles.rotation.x += (targetY * 0.04 - particles.rotation.x) * 0.012;
+                particles.rotation.z = Math.sin(time * 0.00008) * 0.025;
+              }
+              renderer.clear();
               renderer.render(scene, camera);
+              renderer.render(particleScene, particleCamera);
               frame = window.requestAnimationFrame(render);
             };
             window.addEventListener("resize", resize);
@@ -143,6 +191,8 @@ export default function CinematicExperience() {
               window.cancelAnimationFrame(frame);
               geometry.dispose();
               material.dispose();
+              particleGeometry?.dispose();
+              particleMaterial?.dispose();
               renderer.dispose();
             };
           } catch (webglError) {
@@ -211,13 +261,60 @@ export default function CinematicExperience() {
               );
             });
 
-            gsap.utils.toArray(".atelier-home .atelier-index-art, .atelier-home .atelier-ritual-art, .atelier-home .atelier-record-art").forEach((art: any) => {
+            gsap.utils.toArray(".atelier-home .atelier-index-art, .atelier-home .atelier-ritual-art, .atelier-home .atelier-record-art").forEach((art: any, index) => {
+              const chapter = art.closest(".atelier-chapter");
+              const direction = index % 2 === 0 ? -1 : 1;
+              gsap.fromTo(art,
+                { scale: 0.78, rotateY: direction * 13, rotateX: 5, y: 110, transformPerspective: 1200 },
+                {
+                  scale: 1, rotateY: 0, rotateX: 0, y: -45,
+                  ease: "none",
+                  scrollTrigger: {
+                    trigger: chapter || art,
+                    start: "top bottom",
+                    end: "bottom top",
+                    scrub: 1.25,
+                  },
+                },
+              );
               gsap.to(art, {
-                yPercent: -6,
+                boxShadow: "0 55px 130px rgba(0,0,0,.42)",
                 ease: "none",
-                scrollTrigger: { trigger: art, start: "top bottom", end: "bottom top", scrub: 1.2 },
+                scrollTrigger: { trigger: chapter || art, start: "top 75%", end: "center center", scrub: 1 },
               });
             });
+
+            // Large editorial typography moves through a real scroll timeline,
+            // rather than receiving another small opacity-only reveal.
+            gsap.utils.toArray(".atelier-manifesto h2, .atelier-chapter-copy h2, .atelier-closing h2").forEach((heading: any) => {
+              gsap.fromTo(heading,
+                { scale: 0.82, y: 90, rotateX: -8, transformOrigin: "50% 100%", filter: "blur(8px)" },
+                {
+                  scale: 1, y: 0, rotateX: 0, filter: "blur(0px)", ease: "none",
+                  scrollTrigger: { trigger: heading, start: "top 92%", end: "top 38%", scrub: 1.1 },
+                },
+              );
+            });
+
+            gsap.utils.toArray(".atelier-chapter-heading .atelier-chapter-rule").forEach((rule: any) => {
+              gsap.fromTo(rule, { scaleX: 0, transformOrigin: "left center" }, {
+                scaleX: 1, ease: "none",
+                scrollTrigger: { trigger: rule, start: "top 88%", end: "top 55%", scrub: 0.8 },
+              });
+            });
+
+            // A cinematic color-and-scale passage between the opening and the
+            // first chapter, driven by scroll rather than a timed fade.
+            const opening = document.querySelector(".atelier-opening");
+            if (opening) {
+              gsap.to(opening, {
+                scale: 0.92,
+                borderRadius: "0 0 28px 28px",
+                transformOrigin: "50% 0%",
+                ease: "none",
+                scrollTrigger: { trigger: opening, start: "top top", end: "bottom top", scrub: 1 },
+              });
+            }
 
             gsap.utils.toArray(".atelier-shell main > *").forEach((section: any) => {
               gsap.fromTo(section,
