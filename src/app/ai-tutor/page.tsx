@@ -1120,13 +1120,15 @@ export default function AITutorPage() {
 
           {/* SIDEBAR HEADER */}
 
-          <div className="border-b border-white/[0.06] p-4">
+          <div className="border-b border-white/[0.06] p-4 relative">
+            <button type="button" onClick={() => setShowHistory(false)} aria-label="Close past topics" className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center border border-cyan-200/15 bg-cyan-200/[0.05] text-cyan-100/70 hover:bg-cyan-200/10"><X className="h-4 w-4" /></button>
 
             <button
               type="button"
-              onClick={() =>
-                void createConversation()
-              }
+              onClick={() => {
+                void createConversation();
+                setShowHistory(false);
+              }}
               className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 text-xs font-semibold text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-500"
             >
               <Plus className="h-4 w-4" />
