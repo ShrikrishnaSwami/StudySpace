@@ -201,9 +201,6 @@ jobs:
           docker cp restore-work/auth-users.ndjson "$PG_CONTAINER:/tmp/auth-users.ndjson"
           docker exec --user root "$PG_CONTAINER" chmod 0644 /tmp/auth-users.ndjson
           cat > restore-work/load-auth.sql <<'SQL'
-          SELECT 'CREATE ROLE anon NOLOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') \gexec
-          SELECT 'CREATE ROLE authenticated NOLOGIN' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') \gexec
-          SELECT 'CREATE ROLE service_role NOLOGIN BYPASSRLS' WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') \gexec
           CREATE SCHEMA IF NOT EXISTS auth;
           CREATE SCHEMA IF NOT EXISTS restore_validation;
           CREATE TABLE IF NOT EXISTS auth.users (
@@ -239,6 +236,15 @@ jobs:
           SQL
           docker cp restore-work/load-auth.sql "$PG_CONTAINER:/tmp/load-auth.sql"
           docker exec --user root "$PG_CONTAINER" chmod 0644 /tmp/load-auth.sql
+          if ! docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -Atc "SELECT 1 FROM pg_roles WHERE rolname = 'anon'" | grep -q 1; then
+            docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "CREATE ROLE anon NOLOGIN"
+          fi
+          if ! docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -Atc "SELECT 1 FROM pg_roles WHERE rolname = 'authenticated'" | grep -q 1; then
+            docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "CREATE ROLE authenticated NOLOGIN"
+          fi
+          if ! docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -Atc "SELECT 1 FROM pg_roles WHERE rolname = 'service_role'" | grep -q 1; then
+            docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "CREATE ROLE service_role NOLOGIN BYPASSRLS"
+          fi
           docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /tmp/load-auth.sql
           auth_ready="$(docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -Atc "SELECT (to_regnamespace('auth') IS NOT NULL AND to_regclass('auth.users') IS NOT NULL)")"
           test "$auth_ready" = "t"
