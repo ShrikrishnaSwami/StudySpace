@@ -498,3 +498,14 @@ body > main[class~="items-center"][class~="justify-center"] > div[class*="rounde
   .ss-jarvis-core, .ss-jarvis-orbit, .ss-jarvis-core-glow, .ss-jarvis-scan,
   .ss-course-progress-fill, .ss-flashcard, .ss-flashcard-copy { animation: none !important; transition: none !important; }
 }
+
+
+.ss-voice-listening {
+  animation: ss-voice-pulse 1.15s ease-in-out infinite;
+  box-shadow: 0 0 0 0 rgba(218,188,132,.34), 0 0 22px rgba(218,188,132,.12);
+}
+@keyframes ss-voice-pulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(218,188,132,.3), 0 0 12px rgba(218,188,132,.12); transform: scale(1); }
+  50% { box-shadow: 0 0 0 9px rgba(218,188,132,0), 0 0 25px rgba(218,188,132,.25); transform: scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) { .ss-voice-listening { animation: none; } }
