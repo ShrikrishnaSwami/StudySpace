@@ -441,7 +441,7 @@ export default function CoursesPage() {
       {/* Add course modal */}
       {showAddCourse && (
         <ViewportPortal>
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/70 px-4 pt-20 pb-8 backdrop-blur-md sm:pt-24">
           <div
             className="absolute inset-0"
             onClick={() => !saving && setShowAddCourse(false)}
@@ -554,7 +554,7 @@ export default function CoursesPage() {
       {/* Delete confirmation */}
       {deleteCourse && (
         <ViewportPortal>
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+        <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/70 px-4 pt-20 pb-8 backdrop-blur-md sm:pt-24">
           <div
             className="absolute inset-0"
             onClick={() => !deleting && setDeleteCourse(null)}
