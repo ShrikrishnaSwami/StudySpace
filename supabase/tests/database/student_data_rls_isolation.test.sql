@@ -3,7 +3,7 @@
 -- are scoped to this transaction and rolled back at the end.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT extensions.plan(11);
+SELECT extensions.plan(15);
 
 CREATE TEMP TABLE rls_test_ids ON COMMIT DROP AS
 WITH assignment_owner AS (
@@ -86,6 +86,23 @@ SELECT set_config('request.jwt.claims', json_build_object(
   'role', 'authenticated',
   'aal', 'aal1'
 )::text, true);
+
+SELECT extensions.ok(
+  (SELECT allowed AND limit_count = 15 FROM public.consume_ai_quota_for_user('notes')),
+  'note extraction has its own 15-request quota'
+);
+SELECT extensions.ok(
+  (SELECT allowed AND limit_count = 10 FROM public.consume_ai_quota_for_user('grading')),
+  'assignment grading has its own 10-request quota'
+);
+SELECT extensions.ok(
+  (SELECT allowed FROM public.consume_my_api_rate_limit('ai-notes', 3, 600)),
+  'note extraction burst limiter is allowlisted'
+);
+SELECT extensions.ok(
+  (SELECT allowed FROM public.consume_my_api_rate_limit('ai-grading', 2, 600)),
+  'assignment grading burst limiter is allowlisted'
+);
 
 SELECT extensions.is(
   (SELECT count(*)::integer FROM public.ai_context_courses WHERE id = (SELECT owner_a_course_id FROM pg_temp.rls_test_ids)),
