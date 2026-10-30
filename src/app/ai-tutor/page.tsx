@@ -1045,7 +1045,20 @@ export default function AITutorPage() {
   }
 
   function deleteStudyNode(id: string) {
-    setStudyNodes(current => current.filter(node => node.id !== id && node.parentId !== id));
+    setStudyNodes(current => {
+      const removed = new Set([id]);
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const node of current) {
+          if (node.parentId && removed.has(node.parentId) && !removed.has(node.id)) {
+            removed.add(node.id);
+            changed = true;
+          }
+        }
+      }
+      return current.filter(node => !removed.has(node.id));
+    });
   }
 
   function startWindowDrag(event: ReactPointerEvent, id: string) {
@@ -1259,7 +1272,7 @@ export default function AITutorPage() {
           </div>
           <div className="mb-3 flex items-center justify-between"><p className="text-[9px] tracking-[.18em] text-[#b9a783]/70">CHOOSE YOUR TOOLS</p><span className="text-[9px] text-stone-600">{selectedToolKinds.length} selected</span></div>
           <div className="grid grid-cols-2 gap-2">
-            {studyWorkspaceItems.filter(item => item.kind !== "courses").map(({kind,title,description,icon:Icon})=><label key={kind} className={["min-h-[104px] cursor-pointer border p-3 transition",selectedToolKinds.includes(kind)?"border-[#b9a783]/50 bg-[#b9a783]/[0.08]":"border-white/[0.08] bg-white/[0.025] hover:border-[#b9a783]/30"].join(" ")}>
+            {studyWorkspaceItems.map(({kind,title,description,icon:Icon})=><label key={kind} className={["min-h-[104px] cursor-pointer border p-3 transition",selectedToolKinds.includes(kind)?"border-[#b9a783]/50 bg-[#b9a783]/[0.08]":"border-white/[0.08] bg-white/[0.025] hover:border-[#b9a783]/30"].join(" ")}>
               <span className="flex items-center justify-between"><Icon className="h-4 w-4 text-[#b9a783]"/><input type="checkbox" checked={selectedToolKinds.includes(kind)} onChange={event => setSelectedToolKinds(current => event.target.checked ? [...current,kind] : current.filter(item => item !== kind))} className="accent-[#b9a783]"/></span>
               <span className="mt-3 block text-xs text-stone-200">{title}</span><span className="mt-1 block text-[10px] leading-4 text-stone-500">{description}</span>
             </label>)}
