@@ -727,3 +727,16 @@ body:has(.ss-landing),body:has(.ss-neural-tutor){scrollbar-width:none!important}
 body:has(.ss-landing)::-webkit-scrollbar,body:has(.ss-neural-tutor)::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
 .ss-neural-tutor .ss-neural-chatlog,.ss-neural-tutor .ss-neural-history .overflow-y-auto{scrollbar-width:none!important}
 .ss-neural-tutor .ss-neural-chatlog::-webkit-scrollbar,.ss-neural-tutor .ss-neural-history .overflow-y-auto::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+
+
+/* AI Tutor v2 — one stable workspace; the neural canvas is welcome-only decoration. */
+.ss-ai-tutor-v2{isolation:isolate}
+.ss-ai-tutor-v2 .ss-neural-universe{height:100%!important;min-height:0!important;background:radial-gradient(ellipse at 50% 52%,rgba(190,166,121,.18),rgba(110,96,71,.07) 38%,transparent 72%)!important}
+.ss-ai-tutor-v2 .ss-neural-vignette{background:radial-gradient(ellipse at center,transparent 24%,rgba(23,22,18,.16) 70%,#171612 100%)!important}
+.ss-ai-tutor-v2 .ss-neural-readout{display:none!important}
+.ss-ai-tutor-v2 .ss-neural-universe canvas{filter:sepia(.22) saturate(.72)}
+.ss-ai-tutor-v2 .ss-ai2-scroll{overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(185,167,131,.2) transparent}
+.ss-ai-tutor-v2 .ss-ai2-scroll::-webkit-scrollbar{width:6px}
+.ss-ai-tutor-v2 .ss-ai2-scroll::-webkit-scrollbar-thumb{background:rgba(185,167,131,.2);border-radius:8px}
+@media(max-width:640px){.ss-ai-tutor-v2{height:calc(100dvh - 68px);min-height:520px}.ss-ai-tutor-v2 .ss-neural-universe{height:100%!important}}
+@media(prefers-reduced-motion:reduce){.ss-ai-tutor-v2 *{scroll-behavior:auto!important;transition-duration:.01ms!important}}
