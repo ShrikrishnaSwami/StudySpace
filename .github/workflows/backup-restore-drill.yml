@@ -189,15 +189,51 @@ jobs:
           CREATE OR REPLACE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $ SELECT NULL::text $;
           CREATE OR REPLACE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS $ SELECT '{}'::jsonb $;
           SQL
-          docker exec --user postgres "$PG_CONTAINER" pg_restore --use-list=/tmp/restore.list --dbname=postgres --no-owner --no-privileges --exit-on-error /tmp/public-database.dump
+          docker exec --user postgres "$PG_CONTAINER" pg_restore --section=pre-data --use-list=/tmp/restore.list --dbname=postgres --no-owner --no-privileges --exit-on-error /tmp/public-database.dump
+          docker exec --user postgres "$PG_CONTAINER" pg_restore --section=data --use-list=/tmp/restore.list --dbname=postgres --no-owner --no-privileges --exit-on-error /tmp/public-database.dump
 
       - name: Load Auth metadata into the isolated validation database
         shell: bash
         run: |
           set -euo pipefail
           docker cp restore-work/auth-users.ndjson "$PG_CONTAINER:/tmp/auth-users.ndjson"
-          docker exec "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-            -c "COPY restore_validation.auth_user_metadata(payload) FROM '/tmp/auth-users.ndjson'"
+          docker exec --user root "$PG_CONTAINER" chmod 0644 /tmp/auth-users.ndjson
+          docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE SCHEMA IF NOT EXISTS auth;
+          CREATE TABLE IF NOT EXISTS auth.users (
+            id uuid PRIMARY KEY, aud varchar(255), role varchar(255),
+            email varchar(255), phone text, raw_app_meta_data jsonb,
+            raw_user_meta_data jsonb, created_at timestamptz, updated_at timestamptz,
+            email_confirmed_at timestamptz, phone_confirmed_at timestamptz,
+            last_sign_in_at timestamptz, is_anonymous boolean DEFAULT false
+          );
+          CREATE TABLE IF NOT EXISTS restore_validation.auth_user_metadata (payload jsonb NOT NULL);
+          COPY restore_validation.auth_user_metadata(payload) FROM '/tmp/auth-users.ndjson';
+          INSERT INTO auth.users (
+            id, aud, role, email, phone, raw_app_meta_data, raw_user_meta_data,
+            created_at, updated_at, email_confirmed_at, phone_confirmed_at,
+            last_sign_in_at, is_anonymous
+          )
+          SELECT
+            (payload->>'id')::uuid, payload->>'aud', payload->>'role',
+            payload->>'email', payload->>'phone',
+            COALESCE(payload->'raw_app_meta_data', '{}'::jsonb),
+            COALESCE(payload->'raw_user_meta_data', '{}'::jsonb),
+            NULLIF(payload->>'created_at', '')::timestamptz,
+            NULLIF(payload->>'updated_at', '')::timestamptz,
+            NULLIF(payload->>'email_confirmed_at', '')::timestamptz,
+            NULLIF(payload->>'phone_confirmed_at', '')::timestamptz,
+            NULLIF(payload->>'last_sign_in_at', '')::timestamptz,
+            COALESCE((payload->>'is_anonymous')::boolean, false)
+          FROM restore_validation.auth_user_metadata
+          ON CONFLICT (id) DO NOTHING;
+          SQL
+
+      - name: Restore PostgreSQL constraints, indexes, and policies
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec --user postgres "$PG_CONTAINER" pg_restore --section=post-data --use-list=/tmp/restore.list --dbname=postgres --no-owner --no-privileges --exit-on-error /tmp/public-database.dump
 
       - name: Verify the restored database, Auth metadata, and Storage payloads
         shell: bash
@@ -205,10 +241,12 @@ jobs:
           set -euo pipefail
           relation_count="$(docker exec "$PG_CONTAINER" psql -U postgres -d postgres -Atc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p','v','m')")"
           auth_count="$(docker exec "$PG_CONTAINER" psql -U postgres -d postgres -Atc 'SELECT count(*) FROM restore_validation.auth_user_metadata')"
+          restored_auth_count="$(docker exec "$PG_CONTAINER" psql -U postgres -d postgres -Atc 'SELECT count(*) FROM auth.users')"
           test "$relation_count" -gt 0
           expected_auth="$(python3 -c 'import json; print(json.load(open("restore-work/extracted/export-summary.json"))["auth_users"])')"
           test "$auth_count" -eq "$expected_auth"
-          echo "Restore drill passed: $relation_count public relations restored; $auth_count Auth metadata records loaded; Storage file counts and byte totals verified."
+          test "$restored_auth_count" -eq "$expected_auth"
+          echo "Restore drill passed: $relation_count public relations restored; $auth_count Auth metadata records loaded into auth.users; Storage file counts and byte totals verified."
           echo "This is an isolated PostgreSQL/filesystem recovery test, not a write to production Supabase."
 
       - name: Remove decrypted backup material
