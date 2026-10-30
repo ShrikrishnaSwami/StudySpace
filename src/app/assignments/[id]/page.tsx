@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import ViewportPortal from "@/components/ViewportPortal";
 
 type Course = {
   id: string;
