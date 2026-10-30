@@ -1134,7 +1134,7 @@ export default function AITutorPage() {
 
             <div className="mt-4 flex items-center justify-between px-1">
               <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/20">
-                Conversations
+                Past topics
               </span>
 
               <span className="text-[10px] text-white/20">
@@ -1243,7 +1243,7 @@ export default function AITutorPage() {
               <Sparkles className="h-3 w-3 text-violet-400/60" />
 
               <span>
-                Powered by StudySpace AI
+                Your learning history · private to you
               </span>
             </div>
           </div>
@@ -1283,8 +1283,8 @@ export default function AITutorPage() {
             {/* AI IDENTITY */}
 
             <div className="flex min-w-0 items-center gap-3">
-              <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-400/10 bg-violet-500/[0.08]">
-                <Sparkles className="h-4 w-4 text-violet-300" />
+              <div className="ss-neural-mini relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+                <span className="ss-neural-mini-core" />
 
                 <span className="absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border-2 border-[#080611] bg-emerald-400" />
               </div>
@@ -1537,15 +1537,11 @@ export default function AITutorPage() {
 
                   <div className="text-center">
 
-                    <div className={`ss-jarvis-core relative mx-auto flex h-32 w-32 items-center justify-center sm:h-40 sm:w-40 ${sending ? "is-thinking" : "is-idle"}`} role="img" aria-label="StudySpace AI core, online">
-                      <span className="ss-jarvis-orbit ss-jarvis-orbit-one" />
-                      <span className="ss-jarvis-orbit ss-jarvis-orbit-two" />
-                      <span className="ss-jarvis-orbit ss-jarvis-orbit-three" />
-                      <span className="ss-jarvis-scan" />
-                      <span className="ss-jarvis-core-glow" />
-                      <span className="ss-jarvis-core-center"><Sparkles className="h-7 w-7 sm:h-9 sm:w-9" /></span>
-                      <span className="ss-jarvis-core-label">{voiceListening ? "LISTENING" : sending ? "PROCESSING" : "S / AI"}</span>
-                    </div>
+<div className={["ss-neural-scene relative mx-auto h-[250px] w-full max-w-[760px] sm:h-[330px] lg:h-[390px]", sending ? "is-thinking" : "", voiceListening ? "is-listening" : ""].join(" ")} role="img" aria-label="A luminous digital brain suspended in an interconnected neural network">
+<svg className="ss-neural-web absolute inset-0 h-full w-full" viewBox="0 0 760 390" fill="none" aria-hidden="true"><defs><radialGradient id="neural-field"><stop stopColor="#2874c8" stopOpacity=".34"/><stop offset="1" stopColor="#06152d" stopOpacity="0"/></radialGradient><linearGradient id="neural-lines" x1="0" y1="0" x2="760" y2="390"><stop stopColor="#48baff" stopOpacity=".04"/><stop offset=".5" stopColor="#69c9ff" stopOpacity=".8"/><stop offset="1" stopColor="#7a8dff" stopOpacity=".05"/></linearGradient></defs><ellipse cx="380" cy="195" rx="355" ry="185" fill="url(#neural-field)"/>{Array.from({length:34},(_,i)=>{const x=24+(i*97)%712,y=20+(i*67)%350,x2=24+((i*97+173)%712),y2=20+((i*67+119)%350);return <g key={i}><path d={`M ${x} ${y} Q ${(x+x2)/2+((i%3)-1)*40} ${(y+y2)/2} ${x2} ${y2}`} stroke="url(#neural-lines)" strokeWidth={i%4===0?1.3:.7} opacity={i%3===0?.65:.28}/><circle cx={x} cy={y} r={i%5===0?2.4:1.25} fill="#75d4ff" opacity=".8"/></g>})}<path d="M110 196 C170 70 248 68 310 120 M650 194 C590 70 512 68 450 120 M85 252 C170 320 235 310 300 270 M675 252 C590 320 525 310 460 270" stroke="#4aaeff" strokeOpacity=".35" strokeWidth="1.2"/><path d="M0 194 H760 M380 0 V390" stroke="#5cbaff" strokeOpacity=".12" strokeDasharray="2 12"/></svg>
+<div className="ss-brain-aura absolute left-1/2 top-1/2 h-[190px] w-[250px] -translate-x-1/2 -translate-y-1/2 sm:h-[250px] sm:w-[340px]"/>
+<svg className="ss-digital-brain absolute left-1/2 top-1/2 h-[190px] w-[245px] -translate-x-1/2 -translate-y-1/2 sm:h-[255px] sm:w-[330px]" viewBox="0 0 340 250" fill="none" aria-hidden="true"><defs><linearGradient id="brain-fill" x1="40" y1="20" x2="300" y2="230"><stop stopColor="#a9eaff" stopOpacity=".9"/><stop offset=".45" stopColor="#328fe7" stopOpacity=".62"/><stop offset="1" stopColor="#605cff" stopOpacity=".28"/></linearGradient><filter id="brain-glow"><feGaussianBlur stdDeviation="7" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path d="M167 31 C145 7 112 18 105 43 C75 29 48 52 57 81 C27 94 35 130 54 143 C36 169 53 198 81 199 C91 229 126 232 151 211 L169 195 C183 218 213 233 239 213 C269 219 292 195 282 169 C308 146 296 116 278 103 C291 73 267 48 239 52 C221 22 188 18 167 31Z" fill="url(#brain-fill)" fillOpacity=".25" stroke="#8edcff" strokeWidth="2.1" filter="url(#brain-glow)"/><path d="M169 34 C160 62 177 76 166 98 C153 119 174 136 166 158 C159 178 166 190 169 195" stroke="#a8eaff" strokeWidth="2" strokeOpacity=".9"/><g stroke="#9cddff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" opacity=".88"><path d="M104 49 C82 60 89 81 109 87 C88 98 92 119 113 124 C91 139 105 161 128 157 C113 177 130 194 151 184"/><path d="M128 31 C119 51 139 61 132 80 C120 98 140 109 131 127 C122 143 143 157 151 171"/><path d="M215 40 C238 53 224 74 210 82 C235 90 239 112 217 124 C242 140 229 160 208 161 C226 181 206 198 189 185"/><path d="M250 66 C267 83 248 99 235 100 C254 118 249 137 228 145 C243 163 229 183 211 188"/><path d="M75 104 L113 124 L132 80 L166 98 L210 82 L235 100 L278 103 M54 143 L113 124 L128 157 L166 158 L208 161 L228 145 L282 169 M81 199 L128 157 L151 184 L169 195 L189 185 L211 188 L239 213"/></g><g fill="#c5f2ff" filter="url(#brain-glow)"><circle cx="113" cy="124" r="3.5"/><circle cx="166" cy="98" r="3.5"/><circle cx="210" cy="82" r="3.5"/><circle cx="128" cy="157" r="3"/><circle cx="208" cy="161" r="3"/><circle cx="169" cy="195" r="3.5"/><circle cx="235" cy="100" r="2.8"/></g></svg>
+<div className="ss-neural-caption absolute bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-medium uppercase tracking-[.32em]">{voiceListening?"NEURAL INPUT · LISTENING":sending?"SYNAPTIC ACTIVITY · PROCESSING":"STUDYSPACE NEURAL INTELLIGENCE"}</div></div>
 
                     <div className="mt-6 flex items-center justify-center gap-2">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
