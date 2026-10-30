@@ -1331,3 +1331,25 @@ body:has(.ss-landing)::-webkit-scrollbar,body:has(.ss-neural-tutor)::-webkit-scr
 .atelier-shell .atelier-main input:focus-visible,.atelier-shell .atelier-main select:focus-visible,
 .atelier-shell .atelier-main textarea:focus-visible{outline:2px solid rgba(185,162,122,.7);outline-offset:3px}
 @media(max-width:640px){.atelier-shell .atelier-main [class*="rounded-2xl"][class*="border"]:not(button):not(a),.atelier-shell .atelier-main [class*="rounded-xl"][class*="border"]:not(button):not(a){box-shadow:0 8px 24px rgba(0,0,0,.1)!important}}
+
+/* Prefer editorial rows and open layouts over a wall of boxed cards. */
+.atelier-shell .atelier-main [class*="rounded-2xl"][class*="border"]:not(button):not(a),
+.atelier-shell .atelier-main [class*="rounded-xl"][class*="border"]:not(button):not(a),
+.atelier-shell .atelier-main [class*="rounded-lg"][class*="border"]:not(button):not(a){
+ border-radius:2px!important;
+ border-top-color:transparent!important;
+ border-left-color:transparent!important;
+ border-right-color:transparent!important;
+ border-bottom:1px solid rgba(232,225,212,.15)!important;
+ background:linear-gradient(90deg,rgba(185,162,122,.035),transparent 72%)!important;
+ box-shadow:none!important;
+}
+.atelier-shell .atelier-main [class*="rounded-2xl"][class*="border"]:not(button):not(a):hover,
+.atelier-shell .atelier-main [class*="rounded-xl"][class*="border"]:not(button):not(a):hover{
+ border-bottom-color:rgba(197,173,130,.52)!important;
+ background:linear-gradient(90deg,rgba(185,162,122,.07),transparent 85%)!important;
+ box-shadow:none!important;
+}
+.atelier-shell .atelier-main [class*="bg-white/"]:not(button):not(a){
+ background-color:rgba(232,225,212,.018)!important;
+}
