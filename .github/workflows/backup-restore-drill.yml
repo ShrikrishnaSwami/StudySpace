@@ -200,7 +200,7 @@ jobs:
           set -euo pipefail
           docker cp restore-work/auth-users.ndjson "$PG_CONTAINER:/tmp/auth-users.ndjson"
           docker exec --user root "$PG_CONTAINER" chmod 0644 /tmp/auth-users.ndjson
-          docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          cat > restore-work/load-auth.sql <<'SQL'
           CREATE SCHEMA IF NOT EXISTS auth;
           CREATE TABLE IF NOT EXISTS auth.users (
             id uuid PRIMARY KEY, aud varchar(255), role varchar(255),
@@ -230,6 +230,11 @@ jobs:
           FROM restore_validation.auth_user_metadata
           ON CONFLICT (id) DO NOTHING;
           SQL
+          docker cp restore-work/load-auth.sql "$PG_CONTAINER:/tmp/load-auth.sql"
+          docker exec --user root "$PG_CONTAINER" chmod 0644 /tmp/load-auth.sql
+          docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /tmp/load-auth.sql
+          auth_ready="$(docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -Atc "SELECT (to_regnamespace('auth') IS NOT NULL AND to_regclass('auth.users') IS NOT NULL)::text")"
+          test "$auth_ready" = "t"
 
       - name: Restore PostgreSQL constraints, indexes, and policies
         shell: bash
