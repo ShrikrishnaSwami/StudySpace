@@ -208,6 +208,7 @@ export default function QuizzesPage() {
 
       const response = await fetch("/api/ai/quiz", {
         method: "POST",
+        signal: AbortSignal.timeout(50_000),
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
@@ -220,12 +221,16 @@ export default function QuizzesPage() {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(
           data.error || "Failed to generate quiz."
         );
+      }
+
+      if (!Array.isArray(data.questions) || data.questions.length === 0) {
+        throw new Error("The AI did not return any usable questions. Please try again with a shorter topic or fewer questions.");
       }
 
       const course = courses.find(
@@ -302,11 +307,14 @@ export default function QuizzesPage() {
       await loadData();
     } catch (error) {
       console.error(error);
-      window.alert(
-        error instanceof Error
-          ? error.message
-          : "Failed to generate quiz."
-      );
+      const message = error instanceof Error && error.name === "TimeoutError"
+        ? "Quiz generation took too long. Please try again with fewer questions."
+        : error instanceof Error && error.name === "AbortError"
+          ? "Quiz generation timed out. Please try again with fewer questions."
+          : error instanceof Error
+            ? error.message
+            : "Failed to generate quiz.";
+      window.alert(message);
     } finally {
       setGenerating(false);
     }
@@ -1043,7 +1051,7 @@ function QuizGenerator({
             </div>
 
             <div className="grid grid-cols-5 gap-2">
-              {[5, 10, 15, 20, 30].map((count) => (
+              {[5, 10, 15, 20].map((count) => (
                 <button
                   key={count}
                   type="button"
