@@ -1123,20 +1123,41 @@ export default function AITutorPage() {
 
   useEffect(() => {
     const move = (event: PointerEvent) => {
-      const drag = nodeDragState.current;
+      const windowDrag = dragState.current;
+      if (windowDrag) {
+        const maxX = Math.max(0, window.innerWidth - 280);
+        const maxY = Math.max(0, window.innerHeight - 140);
+        setWorkspaceWindows(current => current.map(item => item.id === windowDrag.id ? {
+          ...item,
+          x: Math.max(0, Math.min(maxX, event.clientX - windowDrag.offsetX)),
+          y: Math.max(0, Math.min(maxY, event.clientY - windowDrag.offsetY)),
+        } : item));
+      }
+
+      const nodeDrag = nodeDragState.current;
       const canvas = canvasRef.current;
-      if (!drag || !canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      setStudyNodes(current => current.map(node => node.id === drag.id ? {
-        ...node,
-        x: Math.max(5, Math.min(95, ((event.clientX - rect.left - drag.offsetX) / rect.width) * 100)),
-        y: Math.max(8, Math.min(92, ((event.clientY - rect.top - drag.offsetY) / rect.height) * 100)),
-      } : node));
+      if (nodeDrag && canvas) {
+        const rect = canvas.getBoundingClientRect();
+        setStudyNodes(current => current.map(node => node.id === nodeDrag.id ? {
+          ...node,
+          x: Math.max(5, Math.min(95, ((event.clientX - rect.left - nodeDrag.offsetX) / rect.width) * 100)),
+          y: Math.max(8, Math.min(92, ((event.clientY - rect.top - nodeDrag.offsetY) / rect.height) * 100)),
+        } : node));
+      }
     };
-    const end = () => { nodeDragState.current = null; };
+    const end = () => {
+      dragState.current = null;
+      nodeDragState.current = null;
+      windowResizeState.current = null;
+    };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", end);
-    return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end); };
+    window.addEventListener("pointercancel", end);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+    };
   }, []);
 
   useEffect(() => {
