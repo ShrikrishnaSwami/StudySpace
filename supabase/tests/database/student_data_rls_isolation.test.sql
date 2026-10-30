@@ -3,7 +3,7 @@
 -- are scoped to this transaction and rolled back at the end.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT extensions.plan(10);
+SELECT extensions.plan(11);
 
 CREATE TEMP TABLE rls_test_ids ON COMMIT DROP AS
 WITH assignment_owner AS (
@@ -55,11 +55,15 @@ SELECT extensions.ok(
   (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.courses'::regclass),
   'courses has row-level security enabled'
 );
-SELECT ok(
+SELECT extensions.ok(
   (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.assignments'::regclass),
   'assignments has row-level security enabled'
 );
-SELECT ok(
+SELECT extensions.ok(
+  (SELECT reloptions @> ARRAY['security_invoker=true'] FROM pg_class WHERE oid = 'public.ai_context_courses'::regclass),
+  'bounded AI course context view executes with invoker permissions and RLS'
+);
+SELECT extensions.ok(
   EXISTS (SELECT 1 FROM pg_temp.rls_test_ids),
   'the live database contains two student owners and an owned assignment for isolation tests'
 );
@@ -84,17 +88,17 @@ SELECT set_config('request.jwt.claims', json_build_object(
 )::text, true);
 
 SELECT extensions.is(
-  (SELECT count(*)::integer FROM public.courses WHERE id = (SELECT owner_a_course_id FROM pg_temp.rls_test_ids)),
+  (SELECT count(*)::integer FROM public.ai_context_courses WHERE id = (SELECT owner_a_course_id FROM pg_temp.rls_test_ids)),
   1,
   'student A can read their own course'
 );
-SELECT is(
-  (SELECT count(*)::integer FROM public.courses WHERE id = (SELECT owner_b_course_id FROM pg_temp.rls_test_ids)),
+SELECT extensions.is(
+  (SELECT count(*)::integer FROM public.ai_context_courses WHERE id = (SELECT owner_b_course_id FROM pg_temp.rls_test_ids)),
   0,
   'student A cannot read student B course'
 );
-SELECT is(
-  (SELECT count(*)::integer FROM public.assignments WHERE id = (SELECT owner_a_assignment_id FROM pg_temp.rls_test_ids)),
+SELECT extensions.is(
+  (SELECT count(*)::integer FROM public.ai_context_assignments WHERE id = (SELECT owner_a_assignment_id FROM pg_temp.rls_test_ids)),
   1,
   'student A can read their own assignment'
 );
@@ -106,13 +110,13 @@ SELECT set_config('request.jwt.claims', json_build_object(
   'aal', 'aal1'
 )::text, true);
 
-SELECT is(
-  (SELECT count(*)::integer FROM public.courses WHERE id = (SELECT owner_a_course_id FROM pg_temp.rls_test_ids)),
+SELECT extensions.is(
+  (SELECT count(*)::integer FROM public.ai_context_courses WHERE id = (SELECT owner_a_course_id FROM pg_temp.rls_test_ids)),
   0,
   'student B cannot read student A course'
 );
-SELECT is(
-  (SELECT count(*)::integer FROM public.courses WHERE id = (SELECT owner_b_course_id FROM pg_temp.rls_test_ids)),
+SELECT extensions.is(
+  (SELECT count(*)::integer FROM public.ai_context_courses WHERE id = (SELECT owner_b_course_id FROM pg_temp.rls_test_ids)),
   1,
   'student B can read their own course'
 );
