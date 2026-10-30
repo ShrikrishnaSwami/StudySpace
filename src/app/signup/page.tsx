@@ -6,7 +6,6 @@ import StudySpaceMark from "@/components/StudySpaceMark";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  BookOpen,
   Eye,
   EyeOff,
   Lock,
