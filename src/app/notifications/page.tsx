@@ -26,6 +26,7 @@ import {
   getNotifications,
   markAllNotificationsRead,
   markNotificationRead,
+  subscribeToNotifications,
   type Notification,
   type NotificationType,
 } from "@/lib/notifications";
@@ -41,6 +42,8 @@ function getIcon(type: NotificationType) {
     case "quiz_upcoming":
     case "quiz_result":
       return GraduationCap;
+    case "class_upcoming":
+      return CalendarDays;
     case "study_reminder":
       return Clock3;
     case "calendar_conflict":
@@ -60,6 +63,8 @@ function getTypeLabel(type: NotificationType) {
       return "Overdue";
     case "quiz_upcoming":
       return "Quiz";
+    case "class_upcoming":
+      return "Class";
     case "quiz_result":
       return "Quiz result";
     case "study_reminder":
@@ -154,29 +159,30 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     let active = true;
-
-    const runLoad = async () => {
+    let unsubscribe: () => void = () => {};
+    const refresh = async (initial = false) => {
       try {
-        setLoading(true);
-
+        if (initial && active) setLoading(true);
         const data = await getNotifications(100);
-
-        if (active) {
-          setNotifications(data);
-        }
+        if (active) setNotifications(data);
       } catch (error) {
-        console.error("Failed to load notifications:", error);
+        console.error("Failed to refresh notifications:", error);
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (initial && active) setLoading(false);
       }
     };
 
-    runLoad();
+    void refresh(true);
+    void subscribeToNotifications(() => { if (active) void refresh(); }).then(cleanup => {
+      if (active) unsubscribe = cleanup;
+      else cleanup();
+    }).catch(error => console.error("Notification realtime subscription failed:", error));
+    const fallback = window.setInterval(() => { void refresh(); }, 60000);
 
     return () => {
       active = false;
+      window.clearInterval(fallback);
+      unsubscribe();
     };
   }, []);
 
