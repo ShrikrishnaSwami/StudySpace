@@ -1120,20 +1120,24 @@ body:has(.ss-landing)::-webkit-scrollbar,body:has(.ss-neural-tutor)::-webkit-scr
 .atelier-shell .ss-dashboard-quick>a>span:nth-child(2)>span:last-child { color: #b9b1a3 !important; font-size: 10px !important; }
 .atelier-shell .ss-dashboard-quick>a>svg { color: #cdb486 !important; }
 .atelier-shell .ss-dashboard section.overflow-hidden.rounded-2xl.border,
-.atelier-shell .ss-dashboard section.relative.overflow-hidden.rounded-2xl.border {
+.atelier-shell .ss-dashboard section.relative.overflow-hidden.rounded-2xl.border,
+.atelier-shell .ss-dashboard > section.relative.overflow-hidden.border {
   overflow: hidden !important; border: 1px solid rgba(218,205,179,.18) !important;
   border-radius: 18px !important;
   background: linear-gradient(145deg,rgba(31,29,25,.79),rgba(16,16,14,.72)) !important;
   box-shadow: 0 18px 48px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.035) !important;
   backdrop-filter: blur(15px);
 }
-.atelier-shell .ss-dashboard section.overflow-hidden.rounded-2xl.border>div.border-b {
+.atelier-shell .ss-dashboard section.overflow-hidden.rounded-2xl.border>div.border-b,
+.atelier-shell .ss-dashboard > section.relative.overflow-hidden.border>div.border-b {
   padding: 20px 22px !important; border-color: rgba(232,225,212,.13) !important;
 }
-.atelier-shell .ss-dashboard section.overflow-hidden.rounded-2xl.border>div.border-b h2 {
+.atelier-shell .ss-dashboard section.overflow-hidden.rounded-2xl.border>div.border-b h2,
+.atelier-shell .ss-dashboard > section.relative.overflow-hidden.border>div.border-b h2 {
   color: #f2eee5 !important; font-family: Georgia,serif !important; font-size: 21px !important; font-weight: 400 !important;
 }
-.atelier-shell .ss-dashboard section.overflow-hidden.rounded-2xl.border>div.border-b p { color: #b8b0a2 !important; }
+.atelier-shell .ss-dashboard section.overflow-hidden.rounded-2xl.border>div.border-b p,
+.atelier-shell .ss-dashboard > section.relative.overflow-hidden.border>div.border-b p { color: #b8b0a2 !important; }
 .atelier-shell .ss-dashboard section.overflow-hidden.rounded-2xl.border .divide-y>div { padding-inline: 20px !important; }
 .atelier-shell .ss-dashboard section.overflow-hidden.rounded-2xl.border .divide-y>div:hover { background: rgba(232,225,212,.045) !important; }
 .atelier-shell .ss-dashboard section.overflow-hidden.rounded-2xl.border .grid.gap-3.p-4 { padding: 18px !important; }
