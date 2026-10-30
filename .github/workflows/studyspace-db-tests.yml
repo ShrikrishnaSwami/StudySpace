@@ -50,7 +50,7 @@ jobs:
             echo "Running $test_file"
             output=$(psql "$SUPABASE_TEST_DB_URL" -X -v ON_ERROR_STOP=1 -q -f "$test_file")
             printf '%s\n' "$output"
-            if printf '%s\\n' "$output" | grep -Eq 'not ok|Looks like you failed'; then
+            if printf '%s\n' "$output" | grep -Eq 'not ok|Looks like you failed'; then
               echo "pgTAP reported a failing assertion in $test_file"
               exit 1
             fi
