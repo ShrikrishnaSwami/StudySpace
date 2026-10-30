@@ -36,7 +36,7 @@ export async function cleanUserStoragePrefix(bucket: StorageBucketLike, userId: 
         for (const rawEntry of entries) {
           const entry = rawEntry as StorageEntry;
           const name = entry.name;
-          if (typeof name !== "string" || !name || name === "." || name === ".." || name.includes("/") || name.includes("\\\\")) {
+          if (typeof name !== "string" || !name || name === "." || name === ".." || name.includes("/") || name.includes("\\")) {
             throw new Error("Storage returned an invalid path segment.");
           }
           if (entry.id !== null && typeof entry.id !== "string") {
