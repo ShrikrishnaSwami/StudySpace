@@ -118,6 +118,7 @@ function notificationIcon(type: Notification["type"]) {
     case "quiz_result":
       return CheckSquare;
 
+    case "class_upcoming":
     case "study_reminder":
     case "calendar_conflict":
       return CalendarDays;
