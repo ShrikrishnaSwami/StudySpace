@@ -1129,7 +1129,7 @@ function WeekCalendar({
                           e.stopPropagation();
                           onEventClick(event);
                         }}
-                        className={`absolute left-1 right-1 z-10 overflow-hidden rounded-xl border text-left transition hover:brightness-125 ${
+                        className={`ss-calendar-event absolute left-1 right-1 z-10 overflow-hidden rounded-xl border text-left transition hover:brightness-125 ${
                           event.enabled
                             ? ""
                             : "opacity-35 grayscale"
@@ -1294,7 +1294,7 @@ function MonthCalendar({
                         onClick={() =>
                           onEventClick(event)
                         }
-                        className={`flex w-full items-center gap-1.5 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition hover:brightness-125 ${
+                        className={`ss-calendar-event ss-calendar-event-month flex w-full items-center gap-1.5 overflow-hidden rounded-lg border px-2 py-1.5 text-left transition hover:brightness-125 ${
                           event.enabled
                             ? ""
                             : "opacity-35"
