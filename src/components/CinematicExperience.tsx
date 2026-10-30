@@ -7,6 +7,8 @@ type RuntimeWindow = Window & {
   THREE?: any;
   gsap?: any;
   Lenis?: any;
+  ScrollTrigger?: any;
+  CustomEase?: any;
 };
 
 const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js";
@@ -118,9 +120,10 @@ export default function CinematicExperience() {
         const gsap = runtime.gsap;
         if (!THREE || !gsap) return;
 
-        gsap.registerPlugin(gsap.plugins?.ScrollTrigger || runtime.gsap.ScrollTrigger, runtime.gsap.CustomEase);
-        const ScrollTrigger = runtime.gsap.ScrollTrigger;
-        const CustomEase = runtime.gsap.CustomEase;
+        const ScrollTrigger = runtime.ScrollTrigger || gsap.plugins?.ScrollTrigger;
+        const CustomEase = runtime.CustomEase || gsap.plugins?.CustomEase;
+        if (ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
+        if (CustomEase) gsap.registerPlugin(CustomEase);
         if (CustomEase) CustomEase.create("atelier-weight", "0.22, 1, 0.36, 1");
 
         const canvas = document.querySelector<HTMLCanvasElement>("#studyspace-atmosphere");
@@ -135,6 +138,7 @@ export default function CinematicExperience() {
         let targetY = 0;
 
         if (canvas && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          try {
           renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: "low-power" });
           renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
           renderer.setSize(window.innerWidth, window.innerHeight, false);
@@ -182,6 +186,9 @@ export default function CinematicExperience() {
             material.dispose();
             renderer.dispose();
           };
+          } catch (webglError) {
+            console.warn("WebGL atmosphere unavailable; continuing with motion and smooth scrolling.", webglError);
+          }
         }
 
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -223,6 +230,14 @@ export default function CinematicExperience() {
               gsap.fromTo(heading, { y: 22, autoAlpha: 0, letterSpacing: "-0.025em" }, {
                 y: 0, autoAlpha: 1, letterSpacing: "normal", duration: 1.15, ease: "atelier-weight",
                 scrollTrigger: { trigger: heading, start: "top 92%", once: true },
+              });
+            });
+
+            gsap.utils.toArray(".atelier-home .atelier-index-art, .atelier-home .atelier-ritual-art, .atelier-home .atelier-record-art").forEach((art: any) => {
+              gsap.to(art, {
+                yPercent: -7,
+                ease: "none",
+                scrollTrigger: { trigger: art, start: "top bottom", end: "bottom top", scrub: 1.2 },
               });
             });
 
