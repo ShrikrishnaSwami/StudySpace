@@ -18,49 +18,18 @@ const chapters = [
 export default function Home() {
   const [menu, setMenu] = useState(false);
   const [activeChapter, setActiveChapter] = useState("courses");
-  const [chapterOrder, setChapterOrder] = useState(chapters.map((chapter) => chapter.id));
-  const chapterNodes = useRef(new Map<string, HTMLButtonElement>());
-  const previousPositions = useRef(new Map<string, DOMRect>());
   const active = chapters.find((item) => item.id === activeChapter) ?? chapters[0];
-  const orderedChapters = chapterOrder
-    .map((id) => chapters.find((chapter) => chapter.id === id))
-    .filter((chapter): chapter is (typeof chapters)[number] => Boolean(chapter));
-
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const chapterIds = chapters.map((chapter) => chapter.id);
     const cycle = window.setInterval(() => {
-      previousPositions.current = new Map(
-        Array.from(chapterNodes.current.entries()).map(([id, node]) => [id, node.getBoundingClientRect()]),
-      );
-      setChapterOrder((current) => [...current.slice(1), current[0]]);
+      setActiveChapter((current) => {
+        const currentIndex = chapterIds.indexOf(current);
+        return chapterIds[(currentIndex + 1) % chapterIds.length];
+      });
     }, 3600);
     return () => window.clearInterval(cycle);
   }, []);
-
-  useLayoutEffect(() => {
-    const moves: Array<{ node: HTMLButtonElement; x: number; y: number }> = [];
-    chapterNodes.current.forEach((node, id) => {
-      const before = previousPositions.current.get(id);
-      if (!before) return;
-      const after = node.getBoundingClientRect();
-      const x = before.left - after.left;
-      const y = before.top - after.top;
-      if (Math.abs(x) + Math.abs(y) > 1) {
-        node.style.transition = "none";
-        node.style.transform = `translate(${x}px, ${y}px)`;
-        moves.push({ node, x, y });
-      }
-    });
-    if (moves.length) {
-      requestAnimationFrame(() => {
-        moves.forEach(({ node }) => {
-          node.style.transition = "";
-          node.style.transform = "";
-        });
-      });
-    }
-    previousPositions.current.clear();
-  }, [chapterOrder]);
   const PreviewIcon = active.icon;
 
   return (
@@ -104,7 +73,7 @@ export default function Home() {
         <div className="ss-editorial-section-head"><p className="ss-editorial-kicker">A PLACE FOR EACH PART OF THE WORK</p><span>01 — 04 / EXPLORE THE DESK</span></div>
         <div className="ss-editorial-workspace-layout">
           <div className="ss-editorial-chapters" role="tablist" aria-label="StudySpace features">
-            {orderedChapters.map((chapter) => { const Icon = chapter.icon; const selected = activeChapter === chapter.id; return <button ref={(node) => { if (node) chapterNodes.current.set(chapter.id, node); else chapterNodes.current.delete(chapter.id); }} key={chapter.id} type="button" role="tab" aria-selected={selected} aria-controls="ss-feature-preview" onMouseEnter={() => setActiveChapter(chapter.id)} onFocus={() => setActiveChapter(chapter.id)} onClick={() => setActiveChapter(chapter.id)} className={selected ? "is-active" : ""}><span className="ss-chapter-number">{chapter.number}</span><span className="ss-chapter-copy"><b>{chapter.title}</b><small>{chapter.copy}</small></span><Icon className="ss-chapter-icon" size={18}/><ArrowUpRight className="ss-chapter-arrow" size={16}/></button>; })}
+            {chapters.map((chapter) => { const Icon = chapter.icon; const selected = activeChapter === chapter.id; return <button key={chapter.id} type="button" role="tab" aria-selected={selected} aria-controls="ss-feature-preview" onMouseEnter={() => setActiveChapter(chapter.id)} onFocus={() => setActiveChapter(chapter.id)} onClick={() => setActiveChapter(chapter.id)} className={selected ? "is-active" : ""}><span className="ss-chapter-number">{chapter.number}</span><span className="ss-chapter-copy"><b>{chapter.title}</b><small>{chapter.copy}</small></span><Icon className="ss-chapter-icon" size={18}/><ArrowUpRight className="ss-chapter-arrow" size={16}/></button>; })}
           </div>
           <div className="ss-editorial-preview-wrap">
             <div className="ss-editorial-preview" id="ss-feature-preview" role="tabpanel" aria-label={active.title}>
