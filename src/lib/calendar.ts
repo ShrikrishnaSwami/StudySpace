@@ -88,23 +88,23 @@ export type CreateCalendarEvent = {
 };
 
 const EVENT_COLORS: Record<CalendarEventType, string> = {
-  class: "#7c3aed",
-  lab: "#06b6d4",
-  study: "#f59e0b",
-  assignment: "#ef4444",
-  quiz: "#ec4899",
-  exam: "#dc2626",
-  meeting: "#8b5cf6",
-  office: "#a855f7",
-  break: "#64748b",
-  other: "#6366f1",
+  class: "#b9a783",
+  lab: "#a6a395",
+  study: "#c5b38c",
+  assignment: "#a99b8b",
+  quiz: "#b2a99a",
+  exam: "#b49a88",
+  meeting: "#9f9b8d",
+  office: "#aaa38f",
+  break: "#858b83",
+  other: "#aaa69b",
 };
 
 export function getEventColor(
   type: CalendarEventType,
   customColor?: string | null
 ) {
-  return customColor || EVENT_COLORS[type] || EVENT_COLORS.other;
+  // Keep event blocks in the same muted neutral family; legacy saved custom colors are ignored.\n  void customColor;\n  return EVENT_COLORS[type] || EVENT_COLORS.other;
 }
 
 function overlaps(
