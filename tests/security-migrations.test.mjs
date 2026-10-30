@@ -128,3 +128,11 @@ test("main CI runs dependency auditing and avoids duplicate workflow concurrency
   assert.match(workflow, /npm run lint/);
   assert.match(workflow, /github\.workflow/);
 });
+
+
+test("bounded context never marks omitted student sources as deleted", () => {
+  const semantic = read("src/lib/studyspace-semantic-retrieval.ts");
+  const tutor = read("src/app/api/ai/tutor/route.ts");
+  assert.match(semantic, /auth\.completeContext === true && allSourceCandidates\.length < 1000/);
+  assert.doesNotMatch(tutor, /completeContext:/);
+});
