@@ -567,3 +567,5 @@ body > main[class~="items-center"][class~="justify-center"] > div[class*="rounde
 @keyframes ss-neural-pulse{from{opacity:.4;transform:translate(-50%,-50%) scale(.8)}to{opacity:1;transform:translate(-50%,-50%) scale(1.25)}}
 @media(max-width:640px){.ss-neural-tutor .ss-neural-universe{height:300px}.ss-neural-readout{font-size:7px;gap:10px;letter-spacing:.12em}}
 @media(prefers-reduced-motion:reduce){.ss-neural-universe.is-active .ss-neural-crosshair{animation:none}}
+
+.ss-neural-backdrop{position:absolute;inset:68px 0 78px;z-index:0;pointer-events:none;opacity:.38;overflow:hidden}.ss-neural-backdrop .ss-neural-universe{height:100%!important;max-height:none!important}.ss-neural-main>header,.ss-neural-main>.flex-1,.ss-neural-main>div:not(.ss-neural-backdrop){position:relative;z-index:1}.ss-neural-main>.flex-1{background:linear-gradient(180deg,rgba(2,8,23,.12),rgba(2,8,23,.55))}.ss-neural-main .ss-neural-backdrop{z-index:0}
