@@ -1330,11 +1330,10 @@ export default function AITutorPage() {
         {studyNodes.map(node => {
           const item = studyWorkspaceItems.find(entry => entry.kind === node.kind);
           const Icon = item?.icon || Sparkles;
-          const href = node.kind === "courses" && node.courseId ? `/courses/${node.courseId}` : item?.href || (node.kind === "notes" ? "/notes" : node.kind === "courses" ? "/courses" : "/ai-tutor");
           return <div key={node.id} onPointerDown={event => startNodeDrag(event, node.id)} style={{ left: `${node.x}%`, top: `${node.y}%`, transform: "translate(-50%,-50%)" }} className="ss-brain-study-node pointer-events-auto absolute flex min-w-[148px] max-w-[190px] touch-none items-center gap-2 border border-[#b9a783]/35 bg-[#211f19]/95 px-3 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,.4)] backdrop-blur-xl">
             <span className="grid h-8 w-8 shrink-0 place-items-center border border-[#b9a783]/25 bg-[#b9a783]/[0.08] text-[#d4c3a0]"><Icon className="h-4 w-4"/></span>
             <div className="min-w-0 flex-1"><button type="button" onClick={() => openStudyNode(node)} className="block w-full truncate text-left text-[10px] font-medium text-stone-100 hover:text-[#e4d3b0]">{node.title}</button><span className="block text-[8px] tracking-[.12em] text-[#b9a783]/55">{node.parentId ? "CONNECTED BRANCH" : "BRAIN NODE"}</span></div>
-            <button type="button" onClick={() => { setSelectedNodeKind(selectedNodeKind); createChildNode(node); }} title="Create a connected child node" aria-label={`Create a node from ${node.title}`} className="grid h-7 w-7 shrink-0 place-items-center text-[#c7b58f]/70 hover:bg-[#b9a783]/10 hover:text-[#e5d3ad]"><Plus className="h-3.5 w-3.5"/></button>
+            <button type="button" onClick={() => createChildNode(node)} title="Create a connected child node" aria-label={`Create a node from ${node.title}`} className="grid h-7 w-7 shrink-0 place-items-center text-[#c7b58f]/70 hover:bg-[#b9a783]/10 hover:text-[#e5d3ad]"><Plus className="h-3.5 w-3.5"/></button>
             <button type="button" onClick={() => deleteStudyNode(node.id)} title="Delete node" aria-label={`Delete ${node.title} node`} className="grid h-7 w-7 shrink-0 place-items-center text-stone-600 hover:bg-red-400/10 hover:text-red-300"><X className="h-3.5 w-3.5"/></button>
           </div>;
         })}
