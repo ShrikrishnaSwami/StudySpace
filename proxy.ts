@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const MAX_API_BODY_BYTES = 8 * 1024 * 1024;
+const MAX_API_BODY_BYTES = 16 * 1024 * 1024;
 
 function allowedOrigin(origin: string, request: NextRequest) {
   if (origin === request.nextUrl.origin) return true;
@@ -34,10 +34,17 @@ export function proxy(request: NextRequest) {
     return NextResponse.json({ error: "Cross-origin request blocked." }, { status: 403 });
   }
 
-  const contentLength = Number(request.headers.get("content-length") || 0);
-  if (contentLength > MAX_API_BODY_BYTES) {
-    return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
+  const declaredLength = request.headers.get("content-length");
+  if (declaredLength !== null) {
+    if (!/^\\d+$/.test(declaredLength)) {
+      return NextResponse.json({ error: "Invalid request length." }, { status: 400 });
+    }
+    if (Number(declaredLength) > MAX_API_BODY_BYTES) {
+      return NextResponse.json({ error: "Request body is too large." }, { status: 413 });
+    }
   }
+  // Routes enforce their own streamed limits. This proxy check is only an
+  // early global ceiling; missing Content-Length is never treated as zero.
 
   const response = NextResponse.next();
   response.headers.set("Cache-Control", "no-store");
