@@ -75,57 +75,6 @@ type Message = {
    STARTER PROMPTS
 ========================================================= */
 
-const starterPrompts = [
-  {
-    icon: BookOpen,
-    title: "Explain something",
-    description:
-      "Break down a difficult concept in simple terms.",
-    prompt:
-      "Explain a difficult concept from my course in simple terms.",
-  },
-  {
-    icon: Clock3,
-    title: "Build a study plan",
-    description:
-      "Turn my upcoming work into a realistic plan.",
-    prompt:
-      "Help me make a study plan for my upcoming work.",
-  },
-  {
-    icon: Sparkles,
-    title: "Practice with me",
-    description:
-      "Generate questions and test what I know.",
-    prompt:
-      "Give me practice questions on the topic I am studying.",
-  },
-  {
-    icon: MessageSquare,
-    title: "Homework help",
-    description:
-      "Work through a problem with me step by step.",
-    prompt:
-      "Help me understand this homework problem step by step.",
-  },
-  {
-    icon: Sparkles,
-    title: "Make a practice quiz",
-    description:
-      "Test my understanding with questions and answers.",
-    prompt:
-      "Create a short practice quiz from the course material available to you. Ask one question at a time, wait for my answer, then explain the result.",
-  },
-  {
-    icon: BookOpen,
-    title: "Create flashcards",
-    description:
-      "Turn key ideas into active-recall cards.",
-    prompt:
-      "Help me create a set of concise active-recall flashcards from the course material available to you. Show one card at a time and let me try to answer before revealing the explanation.",
-  },
-];
-
 /* =========================================================
    HELPERS
 ========================================================= */
@@ -1036,14 +985,6 @@ export default function AITutorPage() {
     return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end); };
   }, []);
 
-  async function handleStarterPrompt(prompt: string) {
-    openWorkspace("chat", "AI Tutor");
-    const conversation = await createConversation();
-    if (!conversation) return;
-    setInput(prompt);
-    window.setTimeout(() => textareaRef.current?.focus(), 100);
-  }
-
   async function handleNeuralAction(action: "new-chat" | "history" | "tools") {
     if (action === "new-chat") {
       openWorkspace("chat", "New chat");
@@ -1085,7 +1026,7 @@ export default function AITutorPage() {
 
   const historyPanel = <div className="min-h-0 flex-1 overflow-y-auto p-5">
     <div className="mb-4 flex items-center justify-between border-b border-[#b9a783]/15 pb-3"><div><p className="text-[9px] tracking-[.22em] text-[#b9a783]/65">ARCHIVE</p><h2 className="mt-1 text-lg font-light text-stone-100">Conversation history</h2></div><span className="text-[10px] text-stone-500">{conversations.length} saved</span></div>
-    {conversations.length===0?<p className="py-12 text-center text-xs text-stone-500">Your conversations will appear here.</p>:conversations.map((item)=><div key={item.id} className="group flex items-center border-b border-white/[0.05] hover:bg-white/[0.03]"><button type="button" onClick={()=>{void selectConversation(item);setActivePanel("new-chat");}} className="min-w-0 flex-1 px-3 py-3 text-left"><span className="block truncate text-xs text-stone-200">{item.title||"Untitled conversation"}</span><span className="mt-1 block text-[9px] text-stone-600">{formatConversationDate(item.updated_at)}</span></button><button type="button" onClick={()=>setDeleteTarget(item.id)} aria-label="Delete conversation" className="mr-2 p-2 text-stone-600 opacity-0 hover:text-red-300 group-hover:opacity-100 focus:opacity-100"><Trash2 className="h-3.5 w-3.5"/></button></div>)}
+    {conversations.length===0?<p className="py-12 text-center text-xs text-stone-500">Your conversations will appear here.</p>:conversations.map((item)=><div key={item.id} className="group flex items-center border-b border-white/[0.05] hover:bg-white/[0.03]"><button type="button" onClick={()=>{void selectConversation(item);openWorkspace("chat","AI Tutor");}} className="min-w-0 flex-1 px-3 py-3 text-left"><span className="block truncate text-xs text-stone-200">{item.title||"Untitled conversation"}</span><span className="mt-1 block text-[9px] text-stone-600">{formatConversationDate(item.updated_at)}</span></button><button type="button" onClick={()=>setDeleteTarget(item.id)} aria-label="Delete conversation" className="mr-2 p-2 text-stone-600 opacity-0 hover:text-red-300 group-hover:opacity-100 focus:opacity-100"><Trash2 className="h-3.5 w-3.5"/></button></div>)}
   </div>;
 
   return <AppShell>
@@ -1103,7 +1044,7 @@ export default function AITutorPage() {
             <span className="ss-jarvis-core-label">STUDYSPACE</span>
           </div>
         </div>
-        <NeuralIntelligence active={sending} listening={voiceListening} controlsOnly showControls activeAction={activePanel || undefined} onAction={handleNeuralAction}/>
+        <NeuralIntelligence active={sending} listening={voiceListening} controlsOnly showControls activeAction={workspaceWindows.some(item=>item.kind==="chat")?"new-chat":workspaceWindows.some(item=>item.kind==="history")?"history":workspaceWindows.some(item=>item.kind==="tools")?"tools":undefined} onAction={handleNeuralAction}/>
       </div>
       <div className="pointer-events-none absolute bottom-6 z-[3] text-center"><p className="text-[9px] tracking-[.35em] text-[#b9a783]/55">STUDYSPACE INTELLIGENCE</p><h1 className="mt-2 text-xl font-light tracking-[.18em] text-stone-200/80 sm:text-2xl">J.A.R.V.I.S.</h1><p className="mt-2 text-[9px] tracking-[.18em] text-stone-500">SELECT A NODE TO BEGIN</p><p className="mt-1 text-[8px] tracking-[.12em] text-stone-600">{voiceListening?"VOICE INPUT ACTIVE":sending?"PROCESSING REQUEST":"SYSTEM STANDBY"}</p></div>
 
@@ -1124,7 +1065,7 @@ export default function AITutorPage() {
         {workspace.kind === "tools" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="mb-4 text-xs text-stone-400">Open the spaces you need. Every branch is its own movable window.</p><div className="grid grid-cols-2 gap-2">{studyWorkspaceItems.map(({kind,title,description,icon:Icon})=><button key={kind} type="button" onClick={() => openWorkspace(kind,title)} className="min-h-28 border border-white/[0.08] bg-white/[0.025] p-3 text-left transition hover:border-[#b9a783]/45 hover:bg-[#b9a783]/[0.06]"><Icon className="h-4 w-4 text-[#b9a783]"/><span className="mt-3 block text-xs text-stone-200">{title}</span><span className="mt-1 block text-[10px] leading-4 text-stone-500">{description}</span></button>)}</div></div>}
         {workspace.kind === "courses" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="mb-3 text-xs text-stone-400">Choose one of your courses to create a dedicated branch.</p>{courses.length === 0 ? <p className="py-10 text-center text-xs text-stone-500">Your courses will appear here once you add them.</p> : <div className="space-y-2">{courses.map(course=><button key={course.id} type="button" onClick={() => openWorkspace("course",course.code ? `${course.code} · Study space` : course.name,course.id)} className="flex w-full items-center justify-between border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><span><span className="block text-xs text-stone-200">{course.code || course.name}</span><span className="mt-1 block text-[10px] text-stone-500">{course.code ? course.name : course.professor || "Course workspace"}</span></span><Plus className="h-4 w-4 text-[#b9a783]"/></button>)}</div>}</div>}
         {workspace.kind === "course" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="text-xs text-stone-400">Your course branch keeps its related study spaces together.</p><div className="mt-4 grid grid-cols-2 gap-2">{[{kind:"notes" as const,title:"Course notes",icon:NotebookPen},{kind:"assignments" as const,title:"Assignments",icon:ClipboardList},{kind:"quizzes" as const,title:"Quizzes",icon:BrainCircuit},{kind:"flashcards" as const,title:"Flashcards",icon:Layers},{kind:"calendar" as const,title:"Calendar",icon:CalendarDays},{kind:"chat" as const,title:"Ask AI Tutor",icon:Sparkles}].map(({kind,title,icon:Icon})=><button key={kind} type="button" onClick={()=>{if(kind==="chat"){setSelectedCourseId(workspace.courseId||"");void createConversation(workspace.courseId||"");}openWorkspace(kind,title,workspace.courseId);}} className="border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><Icon className="h-4 w-4 text-[#b9a783]"/><span className="mt-2 block text-xs text-stone-200">{title}</span></button>)}</div><a href="/courses" className="mt-5 inline-flex items-center gap-2 text-[10px] text-[#c7b58f] hover:text-stone-100">Open full course manager <ExternalLink className="h-3 w-3"/></a></div>}
-        {workspace.kind === "notes" && <div className="flex min-h-0 flex-1 flex-col p-4"><p className="mb-3 text-[10px] text-stone-500">A scratchpad branch for ideas, lecture notes, and revision points. This draft stays in this open workspace.</p><textarea value={noteDrafts[workspace.id] || ""} onChange={event=>setNoteDrafts(current=>({...current,[workspace.id]:event.target.value}))} placeholder="Start writing your notes…" className="min-h-0 flex-1 resize-none border border-[#b9a783]/20 bg-black/20 p-3 text-xs leading-6 text-stone-200 outline-none placeholder:text-stone-600 focus:border-[#b9a783]/50"/></div>}
+        {workspace.kind === "notes" && <div className="flex min-h-0 flex-1 flex-col p-4"><p className="mb-3 text-[10px] text-stone-500">A scratchpad branch for ideas, lecture notes, and revision points. This draft stays in this open workspace.</p><textarea value={noteDrafts[workspace.id] ?? (typeof window !== "undefined" ? localStorage.getItem(`studyspace-ai-note-${workspace.id}`) || "" : "")} onChange={event=>{const value=event.target.value;setNoteDrafts(current=>({...current,[workspace.id]:value}));try{localStorage.setItem(`studyspace-ai-note-${workspace.id}`,value);}catch{}}} placeholder="Start writing your notes…" className="min-h-0 flex-1 resize-none border border-[#b9a783]/20 bg-black/20 p-3 text-xs leading-6 text-stone-200 outline-none placeholder:text-stone-600 focus:border-[#b9a783]/50"/></div>}
         {["assignments","quizzes","flashcards","calendar"].includes(workspace.kind) && <div className="min-h-0 flex-1 overflow-y-auto p-5"><p className="text-xs leading-6 text-stone-400">{workspace.kind === "assignments" ? "Your assignment workspace." : workspace.kind === "quizzes" ? "Your quiz and practice workspace." : workspace.kind === "flashcards" ? "Your active-recall workspace." : "Your schedule and deadlines workspace."}</p><a href={workspace.kind === "assignments" ? "/assignments" : workspace.kind === "quizzes" ? "/quizzes" : workspace.kind === "flashcards" ? "/flashcards" : "/calendar"} className="mt-5 inline-flex items-center gap-2 border border-[#b9a783]/30 px-4 py-3 text-xs text-[#d8c7a7] transition hover:bg-[#b9a783]/10">Open {workspace.title} <ExternalLink className="h-3.5 w-3.5"/></a><p className="mt-4 text-[10px] leading-5 text-stone-600">You can keep this branch open beside your other StudySpace windows while you work.</p></div>}
         {workspace.kind === "chat" && <>
           {error&&<div role="alert" className="mx-4 mt-3 border border-red-400/20 bg-red-400/[0.06] px-3 py-2 text-xs text-red-200">{error}</div>}
