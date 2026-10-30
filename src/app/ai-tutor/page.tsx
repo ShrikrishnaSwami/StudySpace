@@ -1209,7 +1209,7 @@ export default function AITutorPage() {
           return <div key={node.id} onPointerDown={event => startNodeDrag(event, node.id)} style={{ left: `${node.x}%`, top: `${node.y}%`, transform: "translate(-50%,-50%)" }} className="ss-brain-study-node pointer-events-auto absolute flex min-w-[148px] max-w-[190px] touch-none items-center gap-2 border border-[#b9a783]/35 bg-[#211f19]/95 px-3 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,.4)] backdrop-blur-xl">
             <span className="grid h-8 w-8 shrink-0 place-items-center border border-[#b9a783]/25 bg-[#b9a783]/[0.08] text-[#d4c3a0]"><Icon className="h-4 w-4"/></span>
             <div className="min-w-0 flex-1"><Link href={href} className="block truncate text-[10px] font-medium text-stone-100 hover:text-[#e4d3b0]">{node.title}</Link><span className="block text-[8px] tracking-[.12em] text-[#b9a783]/55">{node.parentId ? "CONNECTED BRANCH" : "BRAIN NODE"}</span></div>
-            <button type="button" onClick={() => { setChildNodeKind(node.kind); createChildNode(node); }} title="Create a connected child node" aria-label={`Create a node from ${node.title}`} className="grid h-7 w-7 shrink-0 place-items-center text-[#c7b58f]/70 hover:bg-[#b9a783]/10 hover:text-[#e5d3ad]"><Plus className="h-3.5 w-3.5"/></button>
+            <button type="button" onClick={() => createChildNode(node)} title="Create a connected child node" aria-label={`Create a node from ${node.title}`} className="grid h-7 w-7 shrink-0 place-items-center text-[#c7b58f]/70 hover:bg-[#b9a783]/10 hover:text-[#e5d3ad]"><Plus className="h-3.5 w-3.5"/></button>
             <button type="button" onClick={() => deleteStudyNode(node.id)} title="Delete node" aria-label={`Delete ${node.title} node`} className="grid h-7 w-7 shrink-0 place-items-center text-stone-600 hover:bg-red-400/10 hover:text-red-300"><X className="h-3.5 w-3.5"/></button>
           </div>;
         })}
@@ -1248,7 +1248,14 @@ export default function AITutorPage() {
               </label>
               <button type="button" onClick={createStudyNodes} disabled={workspaceWindows.length >= 18} className="flex h-[39px] items-center gap-2 bg-[#b9a783] px-4 text-[10px] font-semibold tracking-wide text-[#211e18] transition hover:bg-[#d0bd98] disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5"/> Create nodes</button>
             </div>
-            <p className="mt-2 text-[9px] text-stone-600">Up to 12 at a time · 18 open nodes maximum</p>
+            <div className="mt-3">
+              <label className="text-[9px] tracking-[.12em] text-stone-500">CHILD NODE TYPE
+                <select value={childNodeKind} onChange={event => setChildNodeKind(event.target.value as WorkspaceKind)} className="mt-2 block w-full border border-[#b9a783]/25 bg-[#171612] px-3 py-2 text-xs text-stone-200 outline-none focus:border-[#b9a783]/60">
+                  <option value="notes">Notes</option><option value="courses">Courses</option><option value="assignments">Assignments</option><option value="quizzes">Quizzes</option><option value="flashcards">Flashcards</option><option value="calendar">Calendar</option><option value="chat">AI chat</option>
+                </select>
+              </label>
+            </div>
+            <p className="mt-2 text-[9px] text-stone-600">Up to 12 at a time · 24 brain nodes maximum</p>
           </div>
           <div className="mb-3 flex items-center justify-between"><p className="text-[9px] tracking-[.18em] text-[#b9a783]/70">CHOOSE YOUR TOOLS</p><span className="text-[9px] text-stone-600">{selectedToolKinds.length} selected</span></div>
           <div className="grid grid-cols-2 gap-2">
