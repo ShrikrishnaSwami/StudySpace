@@ -1255,6 +1255,8 @@ export default function AITutorPage() {
         ================================================= */}
 
         <main className="ss-neural-main relative flex min-w-0 flex-1 flex-col">
+          <div className="ss-neural-backdrop" aria-hidden="true"><NeuralIntelligence active={sending} listening={voiceListening} /></div>
+          <div className="ss-neural-backdrop" aria-hidden="true"></div>
 
           {/* =================================================
               CHAT HEADER
@@ -1538,7 +1540,7 @@ export default function AITutorPage() {
 
                   <div className="text-center">
 
-<NeuralIntelligence active={sending} listening={voiceListening} />
+
 
                     <div className="mt-6 flex items-center justify-center gap-2">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
