@@ -1294,7 +1294,7 @@ export default function AITutorPage() {
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_50%_48%,rgba(185,167,131,.13),transparent_38%),linear-gradient(180deg,#171612,#14130f)]"/>
       <div className="ss-jarvis-stage absolute inset-0 z-[1]">
         <div className="ss-jarvis-core-wrap">
-          <button type="button" onClick={addBrainNode} disabled={studyNodes.length >= 24} aria-label={`Add a ${selectedNodeKind} node to the brain`} title="Click to add the selected node" className={["ss-jarvis-core group cursor-pointer border-0 bg-transparent p-0",sending||voiceListening?"is-thinking":""].join(" ")}>
+          <button type="button" onClick={addBrainNode} disabled={studyNodes.length >= 24} aria-label={`Add a ${selectedNodeKind} node to the brain`} title="Click to add the selected node" className={["ss-jarvis-core group pointer-events-auto cursor-pointer border-0 bg-transparent p-0",sending||voiceListening?"is-thinking":"",studyNodes.length >= 24 ? "cursor-not-allowed opacity-70" : ""].join(" ")}>
             <div className="ss-jarvis-orbit ss-jarvis-orbit-one"/>
             <div className="ss-jarvis-orbit ss-jarvis-orbit-two"/>
             <div className="ss-jarvis-orbit ss-jarvis-orbit-three"/>
