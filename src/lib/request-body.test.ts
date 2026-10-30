@@ -31,7 +31,7 @@ test("rejects declared oversized JSON before reading", async () => {
   const request = new Request("https://studyspace.test/api", {
     method: "POST",
     headers: { "content-length": "500", "content-type": "application/json" },
-    body: "{}",
+    body: "x".repeat(500),
   });
   await assert.rejects(readBoundedJson(request, 32), { message: "REQUEST_TOO_LARGE" });
 });
