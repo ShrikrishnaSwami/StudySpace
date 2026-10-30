@@ -290,7 +290,7 @@ export default function CoursesPage() {
   return (
     <AppShell
       title="Courses"
-      description="Your courses, organized in one place."
+      description="Add each course once. Keep its syllabus, notes, assignments and class times together."
     >
       <div className="mx-auto max-w-[1450px] space-y-8">
         {/* Page header */}
@@ -383,12 +383,11 @@ export default function CoursesPage() {
               </div>
 
               <h2 className="relative mt-6 text-xl font-semibold text-white">
-                Start building your semester
+                Add the courses you're taking
               </h2>
 
               <p className="relative mt-2 max-w-md text-sm leading-6 text-white/40">
-                Add your first course and StudySpace can start connecting it
-                with assignments, quizzes, calendar events, and study tools.
+                Add a course, then attach its syllabus and lecture files. Your assignments and study tools can live with it.
               </p>
 
               <button
@@ -397,7 +396,7 @@ export default function CoursesPage() {
                 className="relative mt-7 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-500"
               >
                 <Plus size={17} />
-                Add your first course
+                Add a course
               </button>
             </div>
           </section>
@@ -420,7 +419,7 @@ export default function CoursesPage() {
             {visibleCourses.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.015] px-5 py-14 text-center">
                 <p className="text-sm text-white/55">No {courseFilter} courses yet.</p>
-                <p className="mt-2 text-xs text-white/30">Courses remain available in their status section and can always be opened.</p>
+                <p className="mt-2 text-xs text-white/30">You can still find future and completed courses in their own sections.</p>
               </div>
             ) : (
               <div className="grid gap-4 lg:grid-cols-2">
@@ -454,7 +453,7 @@ export default function CoursesPage() {
                   Add a course
                 </h2>
                 <p className="mt-1 text-xs text-white/35">
-                  Create a new course workspace.
+                  Add the course details you have. You can fill in the rest later.
                 </p>
               </div>
 
@@ -471,7 +470,7 @@ export default function CoursesPage() {
               <div className="grid gap-5 sm:grid-cols-2">
                 <InputField
                   label="Course code"
-                  placeholder="e.g. PHY 1001"
+                  placeholder="e.g. BIO 213"
                   value={code}
                   onChange={setCode}
                   required
@@ -479,7 +478,7 @@ export default function CoursesPage() {
 
                 <InputField
                   label="Course name"
-                  placeholder="e.g. Introductory Physics"
+                  placeholder="e.g. Cell Biology"
                   value={name}
                   onChange={setName}
                   required
@@ -487,8 +486,8 @@ export default function CoursesPage() {
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">
-                <InputField label="Room" placeholder="e.g. CB 302" value={room} onChange={setRoom}/>
-                <InputField label="Schedule (optional)" placeholder="e.g. Mon/Wed lecture" value={schedule} onChange={setSchedule}/>
+                <InputField label="Room" placeholder="e.g. CRX 120" value={room} onChange={setRoom}/>
+                <InputField label="Schedule (optional)" placeholder="e.g. Tue/Thu, 8:30 AM" value={schedule} onChange={setSchedule}/>
               </div>
 
               <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
