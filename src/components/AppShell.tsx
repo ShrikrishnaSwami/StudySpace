@@ -767,7 +767,7 @@ export default function AppShell({
   }
 
   return (
-    <div className="ss-shell min-h-screen bg-[#111016] text-white">
+    <div className="ss-shell atelier-shell min-h-screen bg-[#14130f] text-white">
       {commandOpen && (
         <div
           className="ss-command-backdrop fixed inset-0 z-[120] flex items-start justify-center px-4 pt-[14vh] sm:pt-[18vh]"
@@ -831,7 +831,7 @@ export default function AppShell({
       {/* Sidebar */}
       <aside
         className={[
-          "ss-sidebar fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/[0.08] bg-[#15141a]",
+          "ss-sidebar atelier-sidebar fixed inset-y-0 left-0 z-50 flex flex-col border-r border-white/[0.08] bg-[#191812]",
           "transition-all duration-200",
           collapsed ? "w-[72px]" : "w-[244px]",
           sidebarOpen
@@ -1092,7 +1092,7 @@ export default function AppShell({
         ].join(" ")}
       >
         {/* Top bar */}
-        <header className="ss-topbar sticky top-0 z-30 flex min-h-[68px] items-center border-b border-white/[0.08] bg-[#111016]/95 px-4 sm:px-6">
+        <header className="ss-topbar atelier-topbar sticky top-0 z-30 flex min-h-[68px] items-center border-b border-white/[0.08] bg-[#14130f]/95 px-4 sm:px-6">
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <button
               type="button"
@@ -1146,7 +1146,7 @@ export default function AppShell({
         </header>
 
         {/* Page content */}
-        <main id="main-content" className="min-h-[calc(100vh-68px)]">
+        <main id="main-content" className="atelier-main min-h-[calc(100vh-68px)]">
           {children}
         </main>
       </div>
