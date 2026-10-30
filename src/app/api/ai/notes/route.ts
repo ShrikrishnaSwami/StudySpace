@@ -6,7 +6,7 @@ import { consumeAiQuota, consumeApiRateLimit, readBoundedFormData } from "@/lib/
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const MAX_FILE_BYTES = 12 * 1024 * 1024;
+const MAX_FILE_BYTES = 4 * 1024 * 1024;
 const supported = new Map<string, string>([
   ["pdf", "application/pdf"],
   ["png", "image/png"],
@@ -40,14 +40,14 @@ export async function POST(request: NextRequest) {
       form = await readBoundedFormData(request, MAX_FILE_BYTES + 128 * 1024);
     } catch (error) {
       const tooLarge = error instanceof Error && error.message === "REQUEST_TOO_LARGE";
-      return NextResponse.json({ error: tooLarge ? "Choose a file smaller than 12 MB." : "Invalid file upload." }, { status: tooLarge ? 413 : 400 });
+      return NextResponse.json({ error: tooLarge ? "Choose a file smaller than 4 MB." : "Invalid file upload." }, { status: tooLarge ? 413 : 400 });
     }
     const file = form.get("file");
     const courseId = String(form.get("courseId") || "").trim();
     const unitName = String(form.get("unitName") || "General").trim().slice(0, 100) || "General";
     const category = String(form.get("category") || "Lecture notes").trim().slice(0, 60) || "Lecture notes";
     if (!(file instanceof File) || !courseId) return NextResponse.json({ error: "Choose a course and a file." }, { status: 400 });
-    if (file.size < 1 || file.size > MAX_FILE_BYTES) return NextResponse.json({ error: "Choose a non-empty file smaller than 12 MB." }, { status: 413 });
+    if (file.size < 1 || file.size > MAX_FILE_BYTES) return NextResponse.json({ error: "Choose a non-empty file smaller than 4 MB." }, { status: 413 });
     const ext = file.name.split(".").pop()?.toLowerCase() || "";
     const expectedMime = supported.get(ext);
     if (!expectedMime || (file.type && file.type !== expectedMime)) return NextResponse.json({ error: "Only PDF, PNG, JPG, and WEBP files are supported." }, { status: 415 });
