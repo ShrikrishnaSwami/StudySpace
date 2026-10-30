@@ -13,11 +13,9 @@ import {
 import {
   ArrowUp,
   BookOpen,
-  Clock3,
   Mic,
   Volume2,
   VolumeX,
-  MessageSquare,
   Sparkles,
   Trash2,
   ThumbsDown,
