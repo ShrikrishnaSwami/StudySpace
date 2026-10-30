@@ -1402,7 +1402,7 @@ function QuizRunner({
           <div className="mt-4 flex items-center gap-3">
             <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
               <div
-                className="h-full rounded-full bg-violet-500 transition-all"
+                className="ss-quiz-progress-fill h-full rounded-full bg-violet-500"
                 style={{
                   width: `${progress}%`,
                 }}
@@ -1487,7 +1487,7 @@ function QuestionCard({
       : question.options;
 
   return (
-    <section className="rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 sm:p-6">
+    <section key={question.id} className="ss-quiz-question rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 sm:p-6">
       <div className="flex items-center justify-between gap-4">
         <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-400">
           Question {index + 1} / {total}
@@ -1528,7 +1528,7 @@ function QuestionCard({
               <button
                 key={`${question.id}-${option}`}
                 onClick={() => onAnswer(option)}
-                className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left text-sm transition ${
+                data-selected={selected} className={`ss-quiz-option flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left text-sm transition ${
                   selected
                     ? "border-violet-500/40 bg-violet-500/10 text-white"
                     : "border-white/[0.07] bg-white/[0.015] text-white/55 hover:border-white/[0.12] hover:bg-white/[0.035] hover:text-white"
