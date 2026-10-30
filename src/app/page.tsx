@@ -66,7 +66,7 @@ export default function Home() {
       </section>
 
       <section className="ss-editorial-manifesto" id="about">
-        <p className="ss-editorial-kicker">THE PROBLEM ISN'T YOU</p>
+        <p className="ss-editorial-kicker">THE PROBLEM ISN&apos;T YOU</p>
         <div className="ss-editorial-manifesto-grid"><h2>Studying is hard enough.<br/><em>Finding your stuff shouldn&apos;t be.</em></h2><div><p>The lecture is in one app. The assignment is in another. Your notes are somewhere in a downloads folder. And the deadline? You meant to check that.</p><p>StudySpace gives the pieces a shared home, without pretending the work itself is easy.</p></div></div>
       </section>
 
@@ -92,7 +92,7 @@ export default function Home() {
         <div className="ss-method-aside"><div><Layers3 size={17}/><span>COURSES</span><b>Organize the material</b></div><div><BrainCircuit size={17}/><span>STUDY</span><b>Ask, practise, understand</b></div><div><CalendarDays size={17}/><span>PLAN</span><b>Keep an eye on what&apos;s next</b></div></div>
       </section>
 
-      <section className="ss-editorial-closing"><p className="ss-editorial-kicker">WHEN YOU'RE READY</p><h2>Get back to<br/><em>the actual studying.</em></h2><p>No perfect routine required. Just a place to start.</p><Link href="/signup" className="ss-landing-primary">Create your space <ArrowUpRight size={17}/></Link><div className="ss-final-existing">Already using StudySpace? <Link href="/login">Sign in <ArrowRight size={13}/></Link></div></section>
+      <section className="ss-editorial-closing"><p className="ss-editorial-kicker">WHEN YOU&apos;RE READY</p><h2>Get back to<br/><em>the actual studying.</em></h2><p>No perfect routine required. Just a place to start.</p><Link href="/signup" className="ss-landing-primary">Create your space <ArrowUpRight size={17}/></Link><div className="ss-final-existing">Already using StudySpace? <Link href="/login">Sign in <ArrowRight size={13}/></Link></div></section>
       <footer className="ss-landing-footer"><Link href="/" className="ss-landing-brand"><StudySpaceMark size={28}/><span>STUDYSPACE</span></Link><span className="ss-editorial-footer-note">A LITTLE MORE ROOM TO THINK.</span><div><Link href="/login">Sign in</Link><Link href="/signup">Create account</Link></div><small>© {new Date().getFullYear()} StudySpace</small></footer>
     </main>
   );
