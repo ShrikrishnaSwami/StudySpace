@@ -1,35 +1,4 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Compass, GraduationCap } from "lucide-react";
-
-export default function NotFound() {
-  return (
-    <main className="ss-error-page">
-      <div className="ss-error-grid" aria-hidden="true" />
-      <div className="ss-error-glow ss-error-glow-one" aria-hidden="true" />
-      <div className="ss-error-glow ss-error-glow-two" aria-hidden="true" />
-      <div className="ss-error-layout">
-        <Link href="/" className="ss-error-brand">
-          <span className="ss-error-brand-mark"><GraduationCap size={18} /></span>
-          <span>studyspace<span>.</span></span>
-        </Link>
-        <section className="ss-error-card ss-not-found-card" aria-labelledby="not-found-title">
-          <div className="ss-error-visual ss-not-found-visual">
-            <span className="ss-error-orbit ss-error-orbit-a" />
-            <span className="ss-error-orbit ss-error-orbit-b" />
-            <span className="ss-error-icon"><Compass size={27} /></span>
-            <span className="ss-error-spark ss-error-spark-a">?</span>
-            <span className="ss-error-spark ss-error-spark-b">✦</span>
-          </div>
-          <p className="ss-error-eyebrow">404 · Off the map</p>
-          <h1 id="not-found-title">Looks like this page skipped class.</h1>
-          <p className="ss-error-copy">We couldn’t find the page you were looking for. The link may have changed, but your next step is easy: head back to your workspace and pick up where you left off.</p>
-          <div className="ss-error-actions">
-            <Link href="/dashboard" className="ss-error-primary"><ArrowLeft size={16} /> Back to workspace</Link>
-            <Link href="/" className="ss-error-secondary">Explore StudySpace <ArrowRight size={16} /></Link>
-          </div>
-        </section>
-        <p className="ss-error-footnote">STUDYSPACE <span>·</span> MAKE ROOM FOR WHAT MATTERS</p>
-      </div>
-    </main>
-  );
-}
+import {ArrowLeft,ArrowUpRight,Compass,Orbit} from "lucide-react";
+import StudySpaceMark from "@/components/StudySpaceMark";
+export default function NotFound(){return <main className="ss-404"><div className="ss-404-grid"/><div className="ss-404-glow"/><header><Link href="/" className="ss-landing-brand"><StudySpaceMark size={32}/><span>STUDYSPACE</span></Link><Link href="/login">Enter your space <ArrowUpRight size={14}/></Link></header><section><div className="ss-404-art"><div className="ss-404-orbit o1"/><div className="ss-404-orbit o2"/><div className="ss-404-orbit o3"/><div className="ss-404-core"><Compass size={42}/></div><span className="ss-404-coordinate">LOCATION NOT FOUND</span></div><p className="ss-404-kicker">ERROR / 404</p><h1>This page isn't<br/><em>in your orbit.</em></h1><p className="ss-404-copy">The page may have moved, or the address may be incomplete. Your StudySpace is still right where you left it.</p><div className="ss-404-actions"><Link href="/dashboard" className="ss-landing-primary"><ArrowLeft size={16}/> Back to workspace</Link><Link href="/" className="ss-404-secondary">Explore StudySpace <ArrowUpRight size={15}/></Link></div></section><footer>STUDYSPACE <span>·</span> FIND YOUR NEXT STEP</footer></main>}
