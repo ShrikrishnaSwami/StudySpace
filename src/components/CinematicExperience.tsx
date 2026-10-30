@@ -76,6 +76,7 @@ export default function CinematicExperience() {
   useEffect(() => {
     let disposed = false;
     let cleanup: (() => void) | undefined;
+    let bootTimer: number | undefined;
 
     async function boot() {
       try {
@@ -97,53 +98,53 @@ export default function CinematicExperience() {
 
         if (canvas && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
           try {
-          renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: "low-power" });
-          renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-          renderer.setSize(window.innerWidth, window.innerHeight, false);
-          scene = new THREE.Scene();
-          camera = new THREE.Camera();
-          const geometry = new THREE.PlaneGeometry(2, 2);
-          material = new THREE.ShaderMaterial({
-            vertexShader,
-            fragmentShader,
-            uniforms: {
-              uTime: { value: 0 },
-              uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-              uPointer: { value: new THREE.Vector2(0, 0) },
-            },
-            depthWrite: false,
-            depthTest: false,
-          });
-          scene.add(new THREE.Mesh(geometry, material));
-
-          const resize = () => {
+            renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false, powerPreference: "low-power" });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
             renderer.setSize(window.innerWidth, window.innerHeight, false);
-            material.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
-          };
-          const move = (event: PointerEvent) => {
-            if (event.pointerType === "touch") return;
-            targetX = (event.clientX / window.innerWidth - 0.5) * 2;
-            targetY = (event.clientY / window.innerHeight - 0.5) * -2;
-          };
-          const render = (time: number) => {
-            pointerX += (targetX - pointerX) * 0.025;
-            pointerY += (targetY - pointerY) * 0.025;
-            material.uniforms.uTime.value = time * 0.001;
-            material.uniforms.uPointer.value.set(pointerX, pointerY);
-            renderer.render(scene, camera);
+            scene = new THREE.Scene();
+            camera = new THREE.Camera();
+            const geometry = new THREE.PlaneGeometry(2, 2);
+            material = new THREE.ShaderMaterial({
+              vertexShader,
+              fragmentShader,
+              uniforms: {
+                uTime: { value: 0 },
+                uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                uPointer: { value: new THREE.Vector2(0, 0) },
+              },
+              depthWrite: false,
+              depthTest: false,
+            });
+            scene.add(new THREE.Mesh(geometry, material));
+
+            const resize = () => {
+              renderer.setSize(window.innerWidth, window.innerHeight, false);
+              material.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+            };
+            const move = (event: PointerEvent) => {
+              if (event.pointerType === "touch") return;
+              targetX = (event.clientX / window.innerWidth - 0.5) * 2;
+              targetY = (event.clientY / window.innerHeight - 0.5) * -2;
+            };
+            const render = (time: number) => {
+              pointerX += (targetX - pointerX) * 0.025;
+              pointerY += (targetY - pointerY) * 0.025;
+              material.uniforms.uTime.value = time * 0.001;
+              material.uniforms.uPointer.value.set(pointerX, pointerY);
+              renderer.render(scene, camera);
+              frame = window.requestAnimationFrame(render);
+            };
+            window.addEventListener("resize", resize);
+            window.addEventListener("pointermove", move, { passive: true });
             frame = window.requestAnimationFrame(render);
-          };
-          window.addEventListener("resize", resize);
-          window.addEventListener("pointermove", move, { passive: true });
-          frame = window.requestAnimationFrame(render);
-          cleanup = () => {
-            window.removeEventListener("resize", resize);
-            window.removeEventListener("pointermove", move);
-            window.cancelAnimationFrame(frame);
-            geometry.dispose();
-            material.dispose();
-            renderer.dispose();
-          };
+            cleanup = () => {
+              window.removeEventListener("resize", resize);
+              window.removeEventListener("pointermove", move);
+              window.cancelAnimationFrame(frame);
+              geometry.dispose();
+              material.dispose();
+              renderer.dispose();
+            };
           } catch (webglError) {
             console.warn("WebGL atmosphere unavailable; continuing with motion and smooth scrolling.", webglError);
           }
@@ -160,7 +161,7 @@ export default function CinematicExperience() {
             touchMultiplier: 1.15,
             anchors: true,
           });
-          lenis.on("scroll", () => ScrollTrigger?.update());
+          lenis.on("scroll", () => ScrollTrigger.update());
           lenisFrame = (time: number) => lenis.raf(time * 1000);
           gsap.ticker.add(lenisFrame);
           gsap.ticker.lagSmoothing(0);
@@ -230,9 +231,9 @@ export default function CinematicExperience() {
               });
             });
           }
-          if (ScrollTrigger) ScrollTrigger.refresh();
+          ScrollTrigger.refresh();
         }, 180);
-        if (ScrollTrigger) ScrollTrigger.refresh();
+        ScrollTrigger.refresh();
         cleanup = (() => {
           const previous = cleanup;
           return () => {
@@ -250,9 +251,16 @@ export default function CinematicExperience() {
       }
     }
 
-    void boot();
+    // Let Next.js finish hydrating the page before GSAP touches React-owned
+    // elements. GSAP writes inline styles and data attributes, which otherwise
+    // race with hydration and produce attribute-mismatch warnings.
+    bootTimer = window.setTimeout(() => {
+      if (!disposed) void boot();
+    }, 1200);
+
     return () => {
       disposed = true;
+      if (bootTimer !== undefined) window.clearTimeout(bootTimer);
       cleanup?.();
     };
   }, [pathname]);
