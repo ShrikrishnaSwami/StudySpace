@@ -1,4 +1,5 @@
 import "server-only";
+import { logAiMetric } from "@/lib/ai-observability";
 
 import { GoogleGenAI } from "@google/genai";
 import { buildGeminiPartsRequest, buildGeminiPdfRequest, isFreeOpenRouterModel, requestChatCompletion, withProviderFallback } from "./ai-provider-core";
@@ -436,10 +437,14 @@ export async function generateAIResponseFromParts({
       const result = response.text?.trim();
       if (!result) throw new Error("The AI provider returned an empty response.");
       const inlineBytes = parts.reduce((sum, part) => sum + ("inlineData" in part ? Math.floor(part.inlineData.data.length * 0.75) : 0), 0);
+      const usage = (response as unknown as { usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number } }).usageMetadata;
       console.info("StudySpace AI multimodal generation completed", {
         task, provider: "gemini", model, durationMs: Date.now() - startedAt,
         inputBytes: inlineBytes || undefined,
         inputParts: parts.length, outputCharacters: result.length,
+        promptTokens: usage?.promptTokenCount,
+        outputTokens: usage?.candidatesTokenCount,
+        totalTokens: usage?.totalTokenCount,
       });
       return result;
     } catch (error) {
@@ -447,7 +452,8 @@ export async function generateAIResponseFromParts({
       const credentialError = isCredentialError(error);
       const retryable = isRetryableError(error);
       console.warn("Gemini multimodal model attempt failed", {
-        task, model, retryable, credentialError, reason: errorSummary(error),
+        task, provider: "gemini", model, durationMs: Date.now() - startedAt,
+        retryable, credentialError, reason: errorSummary(error),
       });
       if (credentialError || (!retryable && model === candidates[0])) break;
     }
