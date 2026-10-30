@@ -516,7 +516,7 @@ export default function QuizzesPage() {
               </h1>
 
               <p className="mt-3 text-sm leading-6 text-white/45 sm:text-base">
-                Pick a course and topic. Get questions based on what you're studying.
+                Pick a course and topic. Get questions based on what you&apos;re studying.
                 sessions and find out what you actually know.
               </p>
             </div>
