@@ -3,7 +3,7 @@ import "server-only";
 import { GoogleGenAI } from "@google/genai";
 import { buildGeminiPartsRequest, buildGeminiPdfRequest, isFreeOpenRouterModel, requestChatCompletion, withProviderFallback } from "./ai-provider-core";
 import type { GeminiInputPart } from "./ai-provider-core";
-import { buildSpecialistInstructions, resolveProviderForTask, type AITask } from "./ai-specialists";
+import { buildSpecialistInstructions, resolveConfiguredProvidersForTask, resolveExternalModelForTask, type AITask } from "./ai-specialists";
 
 type AIProvider = "gemini" | "groq" | "openrouter";
 
@@ -27,12 +27,9 @@ function providerIsConfigured(provider: AIProvider) {
 }
 
 function providersForTask(task: AITask): AIProvider[] {
-  const preferred = providerForTask(task);
-  // Only providers with server-side credentials participate. No paid provider
-  // is included, and OpenRouter is restricted to its free-model router/variants.
-  return [preferred, "gemini", "groq", "openrouter"]
-    .filter((provider, index, all): provider is AIProvider =>
-      all.indexOf(provider) === index && providerIsConfigured(provider as AIProvider));
+  // The pure resolver is shared with unit tests so every specialist's provider
+  // priority and privacy opt-in are verified against the production path.
+  return resolveConfiguredProvidersForTask(task) as AIProvider[];
 }
 
 const GEMINI_MODEL_CATALOG = [
@@ -193,26 +190,7 @@ async function generateWithGemini({
 }
 
 function externalModel(provider: Exclude<AIProvider, "gemini">, task: AITask) {
-  const suffix = task.toUpperCase();
-  if (provider === "groq") {
-    const specialistDefaults: Record<AITask, string> = {
-      tutor: "openai/gpt-oss-120b",
-      quiz: "qwen/qwen3.8-27b",
-      flashcards: "openai/gpt-oss-20b",
-      homework: "qwen/qwen3.8-27b",
-      syllabus: "openai/gpt-oss-20b",
-      recommendations: "openai/gpt-oss-20b",
-      notes: "openai/gpt-oss-20b",
-      grading: "openai/gpt-oss-120b",
-    };
-    return process.env["GROQ_MODEL_" + suffix]?.trim() ||
-      process.env.GROQ_MODEL?.trim() || specialistDefaults[task];
-  }
-  // The free router chooses among currently available free models. Explicit
-  // model overrides must use a :free model ID so this integration cannot
-  // silently spend credits.
-  return process.env["OPENROUTER_MODEL_" + suffix]?.trim() ||
-    process.env.OPENROUTER_MODEL?.trim() || "openrouter/free";
+  return resolveExternalModelForTask(provider, task);
 }
 
 async function generateWithCloudProvider({
