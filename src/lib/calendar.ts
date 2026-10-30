@@ -104,7 +104,9 @@ export function getEventColor(
   type: CalendarEventType,
   customColor?: string | null
 ) {
-  // Keep event blocks in the same muted neutral family; legacy saved custom colors are ignored.\n  void customColor;\n  return EVENT_COLORS[type] || EVENT_COLORS.other;
+  // Keep event blocks in the same muted neutral family; legacy saved custom colors are ignored.
+  void customColor;
+  return EVENT_COLORS[type] || EVENT_COLORS.other;
 }
 
 function overlaps(
