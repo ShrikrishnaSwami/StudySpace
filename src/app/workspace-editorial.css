@@ -400,3 +400,256 @@ body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-command-p
 .ss-jarvis-scan {
   background: conic-gradient(from 0deg, transparent 0 68%, rgba(167, 139, 250, .3) 78%, transparent 88% 100%) !important;
 }
+
+
+/* --------------------------------------------------------------------------
+   StudySpace gold-forward signature palette.
+   Gold/yellow is the primary brand colour; violet is a restrained gradient
+   companion. These rules intentionally cover both theme modes and shared UI.
+   -------------------------------------------------------------------------- */
+:root {
+  --ss-gold: #e5bd59;
+  --ss-gold-bright: #f5d77e;
+  --ss-gold-deep: #9a7028;
+  --ss-violet-accent: #8a68d8;
+  --ss-brand-gradient: linear-gradient(112deg, #f0ca68 0%, #dfb34e 62%, #8d6bd4 100%);
+  --ss-brand-gradient-soft: linear-gradient(112deg, rgba(240,202,104,.2), rgba(141,107,212,.08));
+  --ss-brand-line: rgba(229,189,89,.34);
+  --ss-ring: 0 0 0 3px rgba(229,189,89,.2);
+}
+html:not([data-theme="light"]) {
+  --workspace-gold: #e5bd59;
+  --workspace-line: rgba(229,189,89,.2);
+}
+html:not([data-theme="light"]) body:has(.atelier-main) .atelier-shell {
+  background:
+    radial-gradient(ellipse at 12% 8%, rgba(229,189,89,.11), transparent 34%),
+    radial-gradient(ellipse at 88% 0%, rgba(132,98,205,.09), transparent 30%),
+    #100f0c !important;
+}
+html:not([data-theme="light"]) body:has(.atelier-main) .atelier-shell .ss-sidebar {
+  background: linear-gradient(180deg, rgba(31,27,17,.98), rgba(15,14,11,.98)) !important;
+  border-color: rgba(229,189,89,.2) !important;
+}
+html:not([data-theme="light"]) body:has(.atelier-main) .atelier-shell .ss-topbar {
+  background: linear-gradient(100deg, rgba(27,24,16,.96), rgba(18,16,14,.92)) !important;
+  border-color: rgba(229,189,89,.18) !important;
+}
+html:not([data-theme="light"]) body:has(.atelier-main) .atelier-shell .ss-sidebar a[aria-current="page"],
+html:not([data-theme="light"]) body:has(.atelier-main) .atelier-shell .ss-sidebar a[class~="bg-white/[0.07]"] {
+  background: linear-gradient(105deg, rgba(229,189,89,.22), rgba(229,189,89,.08) 72%, rgba(132,98,205,.08)) !important;
+  color: #fff3d2 !important;
+  box-shadow: inset 3px 0 0 #e5bd59, 0 0 24px rgba(229,189,89,.06) !important;
+}
+html:not([data-theme="light"]) body:has(.atelier-main) .atelier-shell .atelier-main {
+  background:
+    radial-gradient(ellipse at 78% 0%, rgba(229,189,89,.105), transparent 32%),
+    radial-gradient(ellipse at 8% 42%, rgba(132,98,205,.055), transparent 34%),
+    linear-gradient(180deg, rgba(22,20,14,.97), rgba(13,13,11,.98)) !important;
+}
+html:not([data-theme="light"]) .atelier-shell .atelier-main [class*="text-violet-"],
+html:not([data-theme="light"]) .atelier-shell .atelier-main [class*="text-purple-"],
+html:not([data-theme="light"]) .atelier-shell .ss-sidebar [class*="text-violet"],
+html:not([data-theme="light"]) .atelier-shell .ss-topbar [class*="text-violet"] {
+  color: #f0ce79 !important;
+}
+html:not([data-theme="light"]) .atelier-shell .atelier-main [class*="bg-violet-"],
+html:not([data-theme="light"]) .atelier-shell .atelier-main [class*="bg-purple-"] {
+  background-color: rgba(229,189,89,.14) !important;
+}
+html:not([data-theme="light"]) .atelier-shell .atelier-main [class*="border-violet-"],
+html:not([data-theme="light"]) .atelier-shell .atelier-main [class*="border-purple-"] {
+  border-color: rgba(229,189,89,.3) !important;
+}
+html:not([data-theme="light"]) .atelier-shell .atelier-main button[class*="bg-violet-"],
+html:not([data-theme="light"]) .atelier-shell .atelier-main button[class*="bg-purple-"],
+html:not([data-theme="light"]) .atelier-shell .atelier-main a[class*="bg-violet-"],
+html:not([data-theme="light"]) .atelier-shell .atelier-main a[class*="bg-purple-"] {
+  color: #211a0c !important;
+  background: linear-gradient(112deg, #f0ca68 0%, #dcae48 68%, #9772d5 100%) !important;
+  border-color: rgba(245,215,126,.55) !important;
+  box-shadow: 0 8px 24px rgba(210,164,59,.16) !important;
+}
+html:not([data-theme="light"]) .atelier-shell .atelier-main button:focus-visible,
+html:not([data-theme="light"]) .atelier-shell .atelier-main a:focus-visible,
+html:not([data-theme="light"]) .atelier-shell .atelier-main input:focus-visible,
+html:not([data-theme="light"]) .atelier-shell .atelier-main textarea:focus-visible,
+html:not([data-theme="light"]) .atelier-shell .atelier-main select:focus-visible {
+  outline-color: #f0ce79 !important;
+}
+html:not([data-theme="light"]) .atelier-shell .atelier-main [class*="rounded-2xl"][class*="border"],
+html:not([data-theme="light"]) .atelier-shell .atelier-main [class*="rounded-xl"][class*="border"],
+html:not([data-theme="light"]) .atelier-shell .atelier-main [class*="rounded-lg"][class*="border"] {
+  border-color: rgba(229,189,89,.17) !important;
+  background-image: linear-gradient(112deg, rgba(229,189,89,.045), rgba(132,98,205,.025) 70%, transparent) !important;
+}
+html:not([data-theme="light"]) .atelier-shell .atelier-main [class*="rounded-2xl"][class*="border"]:hover,
+html:not([data-theme="light"]) .atelier-shell .atelier-main [class*="rounded-xl"][class*="border"]:hover {
+  border-color: rgba(229,189,89,.38) !important;
+}
+
+/* Public-facing landing and shared brand actions follow the same balance. */
+.ss-landing .ss-landing-primary,
+.ss-editorial .ss-landing-primary,
+.ss-editorial .ss-landing-signup,
+.ss-home .ss-join,
+.ss-home .ss-cta,
+.fr-home .fr-primary,
+.landing-page .landing-signup,
+.landing-page .hero-primary {
+  color: #211a0c !important;
+  background: linear-gradient(112deg, #f0ca68 0%, #dfb34e 68%, #9874d4 100%) !important;
+  border-color: rgba(245,215,126,.58) !important;
+  box-shadow: 0 10px 30px rgba(210,164,59,.18), 0 0 24px rgba(132,98,205,.07) !important;
+}
+.ss-landing .ss-landing-primary:hover,
+.ss-editorial .ss-landing-primary:hover,
+.ss-editorial .ss-landing-signup:hover,
+.ss-home .ss-join:hover,
+.ss-home .ss-cta:hover,
+.fr-home .fr-primary:hover,
+.landing-page .landing-signup:hover,
+.landing-page .hero-primary:hover {
+  filter: brightness(1.07) saturate(1.04);
+}
+.ss-landing .ss-landing-kicker,
+.ss-editorial .ss-editorial-kicker,
+.ss-home .ss-kicker,
+.fr-home .fr-announcement,
+.landing-page .hero-badge,
+.landing-page .section-eyebrow {
+  color: #e8c66e !important;
+}
+.ss-landing .ss-landing-title span,
+.ss-editorial .ss-editorial-title span,
+.ss-home .ss-hero h1 span,
+.fr-home .fr-hero h1 span,
+.landing-page .hero-copy h1 span,
+.landing-page .section-heading h2 span {
+  background: linear-gradient(105deg, #f0ce79 0%, #e2b94f 68%, #9a79d7 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+}
+
+/* Light mode: warm ivory canvas, visible golden controls, and only a hint of violet. */
+html[data-theme="light"] {
+  --background: #fbf8ef;
+  --foreground: #282316;
+  --muted: #746b58;
+  --purple: #b58a35;
+  --purple-light: #e4bd62;
+  --purple-dark: #876329;
+  --ss-brand-line: rgba(164,120,35,.28);
+}
+html[data-theme="light"] body {
+  background:
+    radial-gradient(ellipse at 10% 0%, rgba(229,189,89,.19), transparent 34%),
+    radial-gradient(ellipse at 92% 4%, rgba(141,107,212,.08), transparent 28%),
+    #fbf8ef !important;
+  color: #282316 !important;
+}
+html[data-theme="light"] body:has(.atelier-main) .atelier-shell {
+  background: linear-gradient(135deg, rgba(255,255,255,.94), rgba(250,246,233,.98)) !important;
+  color: #302918 !important;
+}
+html[data-theme="light"] body:has(.atelier-main) .atelier-shell .ss-sidebar {
+  background: linear-gradient(180deg, #fffdf7, #f6f0df) !important;
+  border-color: rgba(164,120,35,.2) !important;
+}
+html[data-theme="light"] body:has(.atelier-main) .atelier-shell .ss-topbar {
+  background: rgba(255,252,242,.94) !important;
+  border-color: rgba(164,120,35,.2) !important;
+}
+html[data-theme="light"] body:has(.atelier-main) .atelier-shell .atelier-main {
+  background:
+    radial-gradient(ellipse at 78% 0%, rgba(229,189,89,.16), transparent 34%),
+    radial-gradient(ellipse at 8% 40%, rgba(141,107,212,.055), transparent 34%),
+    linear-gradient(180deg, #fcfaf3, #f8f4e9) !important;
+  color: #302918 !important;
+}
+html[data-theme="light"] .atelier-shell .atelier-main h1,
+html[data-theme="light"] .atelier-shell .atelier-main h2,
+html[data-theme="light"] .atelier-shell .atelier-main h3,
+html[data-theme="light"] .atelier-shell .ss-topbar h1 {
+  color: #302716 !important;
+}
+html[data-theme="light"] .atelier-shell .atelier-main p,
+html[data-theme="light"] .atelier-shell .atelier-main label,
+html[data-theme="light"] .atelier-shell .ss-sidebar a,
+html[data-theme="light"] .atelier-shell .ss-topbar {
+  color: #62583f !important;
+}
+html[data-theme="light"] .atelier-shell .ss-sidebar a[aria-current="page"],
+html[data-theme="light"] .atelier-shell .ss-sidebar a[class~="bg-white/[0.07]"] {
+  color: #493514 !important;
+  background: linear-gradient(105deg, rgba(229,189,89,.3), rgba(229,189,89,.12) 72%, rgba(141,107,212,.06)) !important;
+  box-shadow: inset 3px 0 0 #bd8d32 !important;
+}
+html[data-theme="light"] .atelier-shell .atelier-main [class*="text-violet-"],
+html[data-theme="light"] .atelier-shell .atelier-main [class*="text-purple-"],
+html[data-theme="light"] .atelier-shell .ss-sidebar [class*="text-violet"],
+html[data-theme="light"] .atelier-shell .ss-topbar [class*="text-violet"] {
+  color: #946b20 !important;
+}
+html[data-theme="light"] .atelier-shell .atelier-main [class*="bg-violet-"],
+html[data-theme="light"] .atelier-shell .atelier-main [class*="bg-purple-"] {
+  background-color: rgba(229,189,89,.2) !important;
+}
+html[data-theme="light"] .atelier-shell .atelier-main [class*="border-violet-"],
+html[data-theme="light"] .atelier-shell .atelier-main [class*="border-purple-"] {
+  border-color: rgba(164,120,35,.3) !important;
+}
+html[data-theme="light"] .atelier-shell .atelier-main button[class*="bg-violet-"],
+html[data-theme="light"] .atelier-shell .atelier-main button[class*="bg-purple-"],
+html[data-theme="light"] .atelier-shell .atelier-main a[class*="bg-violet-"],
+html[data-theme="light"] .atelier-shell .atelier-main a[class*="bg-purple-"] {
+  color: #2c210d !important;
+  background: linear-gradient(112deg, #f1d47f 0%, #ddb24f 72%, #a68bdc 100%) !important;
+  border-color: rgba(164,120,35,.35) !important;
+}
+html[data-theme="light"] .atelier-shell .atelier-main [class*="rounded-2xl"][class*="border"],
+html[data-theme="light"] .atelier-shell .atelier-main [class*="rounded-xl"][class*="border"],
+html[data-theme="light"] .atelier-shell .atelier-main [class*="rounded-lg"][class*="border"] {
+  border-color: rgba(164,120,35,.2) !important;
+  background-image: linear-gradient(112deg, rgba(229,189,89,.09), rgba(141,107,212,.025) 78%, transparent) !important;
+}
+html[data-theme="light"] .atelier-shell .atelier-main input,
+html[data-theme="light"] .atelier-shell .atelier-main textarea,
+html[data-theme="light"] .atelier-shell .atelier-main select {
+  color: #302716 !important;
+  background: #fffdf7 !important;
+  border-color: rgba(164,120,35,.28) !important;
+}
+html[data-theme="light"] .atelier-shell .atelier-main :focus-visible {
+  outline-color: #a77a28 !important;
+}
+
+/* Light landing pages retain contrast while adopting the warm gold-led identity. */
+html[data-theme="light"] .ss-landing,
+html[data-theme="light"] .ss-editorial,
+html[data-theme="light"] .ss-home,
+html[data-theme="light"] .fr-home,
+html[data-theme="light"] .landing-page {
+  background-color: #fbf8ef !important;
+  color: #282316 !important;
+}
+html[data-theme="light"] .ss-landing .ss-landing-primary,
+html[data-theme="light"] .ss-editorial .ss-landing-primary,
+html[data-theme="light"] .ss-editorial .ss-landing-signup,
+html[data-theme="light"] .ss-home .ss-join,
+html[data-theme="light"] .ss-home .ss-cta,
+html[data-theme="light"] .fr-home .fr-primary,
+html[data-theme="light"] .landing-page .landing-signup,
+html[data-theme="light"] .landing-page .hero-primary {
+  color: #2c210d !important;
+  background: linear-gradient(112deg, #f1d47f 0%, #ddb24f 72%, #a68bdc 100%) !important;
+}
+html[data-theme="light"] .ss-landing .ss-landing-kicker,
+html[data-theme="light"] .ss-editorial .ss-editorial-kicker,
+html[data-theme="light"] .ss-home .ss-kicker,
+html[data-theme="light"] .fr-home .fr-announcement,
+html[data-theme="light"] .landing-page .hero-badge,
+html[data-theme="light"] .landing-page .section-eyebrow {
+  color: #91681f !important;
+}
