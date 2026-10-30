@@ -106,18 +106,17 @@ export default function SignupPage() {
                 <br />
                 entire
                 <br />
-                <span className="text-purple-400">student life.</span>
+                <span className="text-purple-400">coursework.</span>
               </h1>
 
               <p className="mt-6 max-w-md leading-7 text-zinc-400">
-                Organize your academic life, track what matters and spend less
-                time figuring out what to study next.
+                Keep your courses, notes, due dates and study tools together. Add a class and start with whatever is on your plate.
               </p>
             </div>
           </div>
 
           <p className="text-sm text-zinc-600">
-            Your workspace. Your progress. Your StudySpace.
+            Your courses. Your notes. Your StudySpace.
           </p>
         </div>
 
@@ -134,7 +133,7 @@ export default function SignupPage() {
               </h2>
 
               <p className="mt-3 text-sm leading-6 text-zinc-400">
-                Set up your StudySpace and start organizing your studies.
+                Create an account and add the courses you're taking.
               </p>
             </div>
 
