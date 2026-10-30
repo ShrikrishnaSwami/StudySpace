@@ -22,12 +22,15 @@ export default function NeuralIntelligence({active=false,listening=false,showCon
   const fill=new THREE.PointLight(0x8174b5,15,20);fill.position.set(4,-2,1);scene.add(fill);
   const goldLight=new THREE.PointLight(0xffd45c,19,18);goldLight.position.set(2.8,2.1,3.6);scene.add(goldLight);
   const brain=new THREE.Group();world.add(brain);
-  const material=new THREE.MeshPhysicalMaterial({color:0xe4ce83,emissive:0x76551b,emissiveIntensity:.3,metalness:.22,roughness:.39,transparent:true,opacity:.96,clearcoat:.8});
-  const seamMat=new THREE.MeshStandardMaterial({color:0x78633a,metalness:.28,roughness:.48});
+  const material=new THREE.MeshPhysicalMaterial({color:0xffffff,emissive:0x241735,emissiveIntensity:.22,metalness:.18,roughness:.4,vertexColors:true,transparent:true,opacity:.96,clearcoat:.8});
+  const seamMat=new THREE.MeshStandardMaterial({color:0x51436c,metalness:.28,roughness:.48});
   for(const side of [-1,1]){
    const geo=new THREE.IcosahedronGeometry(1.52,5),pos=geo.attributes.position as THREE.BufferAttribute,v=new THREE.Vector3();
-   for(let i=0;i<pos.count;i++){v.fromBufferAttribute(pos,i);const fold=1+Math.sin(v.y*11+v.z*7)*.035+Math.sin(v.x*15-v.y*5)*.022+Math.cos(v.z*17+v.x*4)*.018;pos.setXYZ(i,v.x*fold*.78,v.y*fold,v.z*fold*.84);}
-   geo.computeVertexNormals();const lobe=new THREE.Mesh(geo,material.clone());lobe.position.set(side*.55,0,0);lobe.scale.set(1,.98,1);brain.add(lobe);const glintPositions:number[]=[];for(let i=29;i<pos.count;i+=173){v.fromBufferAttribute(pos,i);glintPositions.push(v.x+side*.55,v.y*.98,v.z);}const glintGeo=new THREE.BufferGeometry();glintGeo.setAttribute("position",new THREE.Float32BufferAttribute(glintPositions,3));const glints=new THREE.Points(glintGeo,new THREE.PointsMaterial({color:0xffdf72,size:.039,transparent:true,opacity:.86,depthWrite:false}));brain.add(glints);
+   const surfaceColors:number[]=[];
+   const purple=new THREE.Color(0x8054e8),gold=new THREE.Color(0xf5c95f),blend=new THREE.Color();
+   for(let i=0;i<pos.count;i++){v.fromBufferAttribute(pos,i);const fold=1+Math.sin(v.y*11+v.z*7)*.035+Math.sin(v.x*15-v.y*5)*.022+Math.cos(v.z*17+v.x*4)*.018;pos.setXYZ(i,v.x*fold*.78,v.y*fold,v.z*fold*.84);const worldX=v.x*.78+side*.55;const gradient=THREE.MathUtils.clamp((worldX*.48+v.y*.78+1.75)/3.5,0,1);blend.copy(purple).lerp(gold,THREE.MathUtils.smoothstep(gradient,0,1));surfaceColors.push(blend.r,blend.g,blend.b);}
+   geo.setAttribute("color",new THREE.Float32BufferAttribute(surfaceColors,3));
+   geo.computeVertexNormals();const lobe=new THREE.Mesh(geo,material.clone());lobe.position.set(side*.55,0,0);lobe.scale.set(1,.98,1);brain.add(lobe);const glintPositions:number[]=[];for(let i=29;i<pos.count;i+=173){v.fromBufferAttribute(pos,i);glintPositions.push(v.x+side*.55,v.y*.98,v.z);}const glintGeo=new THREE.BufferGeometry();glintGeo.setAttribute("position",new THREE.Float32BufferAttribute(glintPositions,3));const glints=new THREE.Points(glintGeo,new THREE.PointsMaterial({color:0xffe08a,size:.035,transparent:true,opacity:.82,depthWrite:false}));brain.add(glints);
    const wire=new THREE.LineSegments(new THREE.EdgesGeometry(geo,25),new THREE.LineBasicMaterial({color:0xd9b85b,transparent:true,opacity:.2}));wire.position.copy(lobe.position);brain.add(wire);
    const folds=new THREE.Group();for(let k=0;k<8;k++){const curve=new THREE.TorusGeometry(.72+k*.045,.012,5,90,.95*Math.PI);const line=new THREE.Mesh(curve,new THREE.MeshBasicMaterial({color:0x8066ad,transparent:true,opacity:.25}));line.position.set(side*.55,(k-3.5)*.16,.92-(k%3)*.12);line.rotation.y=side*.3;line.scale.set(.85,.58,.45);folds.add(line);}brain.add(folds);
   }
