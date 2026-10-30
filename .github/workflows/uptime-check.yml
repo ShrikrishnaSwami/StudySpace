@@ -1,0 +1,27 @@
+name: StudySpace uptime check
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: studyspace-uptime
+  cancel-in-progress: true
+
+jobs:
+  check-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check application liveness
+        run: curl --fail --silent --show-error --max-time 15 --retry 2 --retry-delay 3 https://studyspace-zeta.vercel.app/api/health
+
+      - name: Check database readiness
+        run: |
+          response="$(curl --silent --show-error --max-time 20 --retry 2 --retry-delay 3 --output /tmp/readiness.json --write-out '%{http_code}' https://studyspace-zeta.vercel.app/api/health/ready)"
+          cat /tmp/readiness.json
+          test "$response" = "200"
