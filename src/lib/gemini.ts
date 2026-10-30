@@ -36,7 +36,7 @@ function providerForTask(task: AITask): AIProvider {
 
 function providerIsConfigured(provider: AIProvider) {
   if (provider === "gemini") return Boolean(process.env.GEMINI_API_KEY);
-  if (provider === "groq") return Boolean(process.env.GROQ_API_KEY);
+  if (provider === "groq") return Boolean(process.env.GROQ_API_KEY) && process.env.GROQ_ALLOW_STUDENT_DATA === "true";
   return Boolean(process.env.OPENROUTER_API_KEY) && process.env.OPENROUTER_ALLOW_STUDENT_DATA === "true";
 }
 
