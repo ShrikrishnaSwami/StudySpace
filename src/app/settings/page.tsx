@@ -325,6 +325,10 @@ export default function SettingsPage() {
           <div className="border-t border-white/[0.06] pt-5"><Toggle title="Assignment reminders" description="Show in-app reminders for due-soon and overdue assignments. Checks run when you open or refresh the dashboard." value={preferences.assignmentReminders} onChange={v=>setPreferences(p=>({...p,assignmentReminders:v}))}/></div>
           <div className="border-t border-white/[0.06] pt-5"><Toggle title="Quiz reminders" description="Show in-app reminders for quiz events on your calendar starting within 24 hours." value={preferences.quizReminders} onChange={v=>setPreferences(p=>({...p,quizReminders:v}))}/></div>
           <div className="border-t border-white/[0.06] pt-5"><Toggle title="Class reminders" description="Show in-app reminders before automatically scheduled course classes begin." value={preferences.classReminders} onChange={v=>setPreferences(p=>({...p,classReminders:v}))}/></div>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-5">
+            <p role="status" aria-live="polite" className="text-xs text-white/45">{preferencesMessage}</p>
+            <button type="button" onClick={()=>void savePreferences()} disabled={savingPreferences} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:opacity-50"><Save size={14}/>{savingPreferences ? "Saving…" : "Save notification preferences"}</button>
+          </div>
         </Section>
 
         <Section icon={Gauge} title="AI usage" description="View your rolling 24-hour generation limits.">
