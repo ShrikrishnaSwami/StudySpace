@@ -3,6 +3,7 @@
 -- are scoped to this transaction and rolled back at the end.
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
+SET LOCAL search_path = extensions, public;
 SELECT extensions.plan(19);
 
 CREATE TEMP TABLE rls_test_ids ON COMMIT DROP AS
