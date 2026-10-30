@@ -3,10 +3,9 @@ import "server-only";
 import { GoogleGenAI } from "@google/genai";
 import { buildGeminiPartsRequest, buildGeminiPdfRequest, isFreeOpenRouterModel, requestChatCompletion, withProviderFallback } from "./ai-provider-core";
 import type { GeminiInputPart } from "./ai-provider-core";
-import { buildSpecialistInstructions, providerEnvKeyForTask, type AITask } from "./ai-specialists";
+import { buildSpecialistInstructions, resolveProviderForTask, type AITask } from "./ai-specialists";
 
 type AIProvider = "gemini" | "groq" | "openrouter";
-type ModelGroup = "tutor" | "reasoning" | "fast";
 
 let geminiClient: GoogleGenAI | null = null;
 
@@ -17,25 +16,8 @@ function getGeminiClient() {
   return geminiClient;
 }
 
-function groupForTask(task: AITask): ModelGroup {
-  if (task === "tutor") return "tutor";
-  if (task === "flashcards" || task === "recommendations") return "fast";
-  return "reasoning";
-}
-
 function providerForTask(task: AITask): AIProvider {
-  const group = groupForTask(task);
-  const legacyGroupKey = group === "tutor" ? "AI_PROVIDER_TUTOR" :
-    group === "reasoning" ? "AI_PROVIDER_REASONING" : "AI_PROVIDER_FAST";
-  const configured = (
-    process.env[providerEnvKeyForTask(task)] ||
-    process.env[legacyGroupKey]
-  )?.trim().toLowerCase();
-  if (configured === "groq" || configured === "openrouter") return configured;
-  // Tutor keeps Gemini as its primary. Research/assessment and quick-study
-  // tasks prefer Groq when a free-tier key is configured, otherwise Gemini
-  // is selected automatically by providersForTask().
-  return group === "tutor" ? "gemini" : "groq";
+  return resolveProviderForTask(task);
 }
 
 function providerIsConfigured(provider: AIProvider) {
@@ -73,7 +55,6 @@ const GEMINI_MODEL_CATALOG = [
  * Paid-only models require an explicit server environment opt-in.
  */
 function configuredGeminiModels(task: AITask) {
-  const group = groupForTask(task);
   const defaults: Record<AITask, string> = {
     tutor: "gemini-3.6-flash",
     quiz: "gemini-3.6-flash",

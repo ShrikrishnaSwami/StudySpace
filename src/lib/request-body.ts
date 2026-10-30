@@ -18,7 +18,11 @@ async function readBoundedBytes(request: Request, maxBytes: number): Promise<Uin
       if (done) break;
       total += value.byteLength;
       if (total > maxBytes) {
-        await reader.cancel();
+        try {
+          await reader.cancel();
+        } catch {
+          // The stream may already be closed by the underlying request implementation.
+        }
         throw new Error("REQUEST_TOO_LARGE");
       }
       chunks.push(value);

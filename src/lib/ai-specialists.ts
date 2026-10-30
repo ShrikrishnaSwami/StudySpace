@@ -134,6 +134,24 @@ export function providerEnvKeyForTask(task: AITask): string {
   return "AI_PROVIDER_" + specialistForTask(task).id.toUpperCase();
 }
 
+export type AIProviderName = "gemini" | "groq" | "openrouter";
+export type ProviderEnvironment = Record<string, string | undefined>;
+
+export function resolveProviderForTask(
+  task: AITask,
+  environment: ProviderEnvironment = process.env,
+): AIProviderName {
+  const specialistKey = providerEnvKeyForTask(task);
+  const groupKey = task === "tutor"
+    ? "AI_PROVIDER_TUTOR"
+    : task === "flashcards" || task === "recommendations"
+      ? "AI_PROVIDER_FAST"
+      : "AI_PROVIDER_REASONING";
+  const configured = (environment[specialistKey] || environment[groupKey])?.trim().toLowerCase();
+  if (configured === "gemini" || configured === "groq" || configured === "openrouter") return configured;
+  return task === "tutor" ? "gemini" : "groq";
+}
+
 export function buildSpecialistInstructions(task: AITask): string {
   const profile = specialistForTask(task);
   return [

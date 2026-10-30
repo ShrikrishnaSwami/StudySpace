@@ -11,6 +11,7 @@ import {
 import {
   buildSpecialistInstructions,
   providerEnvKeyForTask,
+  resolveProviderForTask,
   specialistForTask,
 } from "./ai-specialists.ts";
 
@@ -143,4 +144,29 @@ test("five specialist workflows have distinct task ownership and provider settin
   }
   const workflows = cases.map(([task]) => buildSpecialistInstructions(task));
   assert.equal(new Set(workflows).size, 5);
+});
+
+test("each specialist honors its own provider environment setting", () => {
+  const cases = [
+    ["tutor", "AI_PROVIDER_TUTOR", "gemini"],
+    ["notes", "AI_PROVIDER_RESEARCH", "groq"],
+    ["quiz", "AI_PROVIDER_ASSESSMENT", "openrouter"],
+    ["flashcards", "AI_PROVIDER_MEMORY", "gemini"],
+    ["recommendations", "AI_PROVIDER_PLANNER", "groq"],
+  ] as const;
+  for (const [task, envKey, provider] of cases) {
+    assert.equal(resolveProviderForTask(task, { [envKey]: provider }), provider);
+  }
+});
+
+test("specialist provider settings override legacy grouped settings", () => {
+  assert.equal(resolveProviderForTask("quiz", {
+    AI_PROVIDER_ASSESSMENT: "gemini",
+    AI_PROVIDER_REASONING: "groq",
+  }), "gemini");
+});
+
+test("unknown provider values fall back to the specialist default", () => {
+  assert.equal(resolveProviderForTask("tutor", { AI_PROVIDER_TUTOR: "unknown" }), "gemini");
+  assert.equal(resolveProviderForTask("notes", { AI_PROVIDER_RESEARCH: "unknown" }), "groq");
 });
