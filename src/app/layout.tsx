@@ -5,6 +5,7 @@ import "./globals.css";
 import "./polish.css";
 import "./atelier.css";
 import "./cinematic.css";
+import "./workspace-editorial.css";
 import CinematicExperience from "@/components/CinematicExperience";
 
 const geistSans = Geist({
