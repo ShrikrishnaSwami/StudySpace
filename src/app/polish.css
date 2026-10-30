@@ -1118,3 +1118,40 @@ main:has(form) form > div:nth-child(5) { animation-delay: .16s; }
   .ss-shell main,.fr-home .fr-hero-copy>* ,.fr-product-stage { animation:none!important; }
   .ss-sidebar a:hover svg,.ss-shell main :is(.rounded-2xl.border,.rounded-xl.border):hover { transform:none; }
 }
+
+
+/* Distinctive color signatures for the product's own navigation and feature glyphs. */
+.fr-feature-card { transform:translateY(0); transition:transform .38s var(--ss-motion-ease),border-color .3s ease,box-shadow .38s ease; }
+.fr-feature-card:nth-child(1) { animation:ss-page-arrive .7s .08s var(--ss-motion-ease) both; }
+.fr-feature-card:nth-child(2) { animation:ss-page-arrive .7s .16s var(--ss-motion-ease) both; }
+.fr-feature-card:nth-child(3) { animation:ss-page-arrive .7s .24s var(--ss-motion-ease) both; }
+.fr-feature-card:nth-child(4) { animation:ss-page-arrive .7s .32s var(--ss-motion-ease) both; }
+.fr-feature-card:hover { transform:translateY(-7px); box-shadow:0 24px 58px rgba(0,0,0,.28),0 0 32px rgba(137,112,255,.11); }
+.fr-feature-icon { display:grid; place-items:center; width:42px; height:42px; border:1px solid rgba(255,255,255,.12); border-radius:14px; transition:transform .35s var(--ss-motion-ease),box-shadow .35s ease; }
+.fr-feature-card:hover .fr-feature-icon { transform:rotate(-8deg) scale(1.1); }
+.fr-feature-violet .fr-feature-icon { color:#c4b5fd; background:linear-gradient(145deg,rgba(139,92,246,.23),rgba(139,92,246,.06)); box-shadow:inset 0 1px rgba(255,255,255,.08),0 0 22px rgba(139,92,246,.08); }
+.fr-feature-blue .fr-feature-icon { color:#93c5fd; background:linear-gradient(145deg,rgba(59,130,246,.22),rgba(59,130,246,.05)); }
+.fr-feature-pink .fr-feature-icon { color:#f0abfc; background:linear-gradient(145deg,rgba(217,70,239,.2),rgba(217,70,239,.05)); }
+.fr-feature-orange .fr-feature-icon { color:#fdba74; background:linear-gradient(145deg,rgba(249,115,22,.2),rgba(249,115,22,.05)); }
+.fr-step-icon { transition:transform .35s var(--ss-motion-ease),box-shadow .35s ease; }
+.fr-steps article:hover .fr-step-icon { transform:translateY(-4px) rotate(-7deg); box-shadow:0 12px 30px rgba(139,92,246,.18); }
+.ss-sidebar a[href="/dashboard"] svg { color:#c4b5fd; }
+.ss-sidebar a[href="/ai-tutor"] svg { color:#d8b4fe; }
+.ss-sidebar a[href="/search"] svg { color:#a5b4fc; }
+.ss-sidebar a[href="/courses"] svg { color:#93c5fd; }
+.ss-sidebar a[href="/assignments"] svg { color:#fcd34d; }
+.ss-sidebar a[href="/quizzes"] svg { color:#86efac; }
+.ss-sidebar a[href="/homework-uploader"] svg { color:#fdba74; }
+.ss-sidebar a[href="/notes"] svg { color:#f9a8d4; }
+.ss-sidebar a[href="/flashcards"] svg { color:#c4b5fd; }
+.ss-sidebar a[href="/study-groups"] svg { color:#67e8f9; }
+.ss-sidebar a[href="/calendar"] svg { color:#fda4af; }
+.ss-sidebar a[href="/planner"] svg { color:#a5b4fc; }
+.ss-sidebar a[href="/grades"] svg { color:#86efac; }
+.ss-sidebar a[href="/focus"] svg { color:#fcd34d; }
+.ss-sidebar a[href="/analytics"] svg { color:#c4b5fd; }
+.ss-sidebar a[href="/settings"] svg { color:#cbd5e1; }
+@media (prefers-reduced-motion:reduce) {
+  .fr-feature-card:nth-child(n) { animation:none!important; }
+  .fr-feature-card:hover,.fr-steps article:hover .fr-step-icon { transform:none; }
+}
