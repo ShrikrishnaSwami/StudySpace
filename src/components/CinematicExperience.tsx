@@ -78,6 +78,23 @@ export default function CinematicExperience() {
     let cleanup: (() => void) | undefined;
     let bootTimer: number | undefined;
 
+    // Route changes get a real full-screen editorial wipe. This node is
+    // created only after hydration, so it cannot alter server-rendered markup.
+    const routeCurtain = document.createElement("div");
+    routeCurtain.className = "ss-route-curtain";
+    document.body.appendChild(routeCurtain);
+    const curtainTween = gsap.fromTo(
+      routeCurtain,
+      { clipPath: "inset(0 0 0 0)" },
+      {
+        clipPath: "inset(0 0 100% 0)",
+        duration: 1.15,
+        delay: 0.08,
+        ease: "power4.inOut",
+        onComplete: () => routeCurtain.remove(),
+      },
+    );
+
     async function boot() {
       try {
         if (disposed) return;
@@ -375,6 +392,8 @@ export default function CinematicExperience() {
     return () => {
       disposed = true;
       if (bootTimer !== undefined) window.clearTimeout(bootTimer);
+      curtainTween.kill();
+      routeCurtain.remove();
       cleanup?.();
     };
   }, [pathname]);
