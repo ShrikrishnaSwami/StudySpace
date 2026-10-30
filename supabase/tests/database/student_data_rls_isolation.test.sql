@@ -106,6 +106,7 @@ SELECT extensions.ok(
 
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', (SELECT owner_a::text FROM pg_temp.rls_test_ids), true);
+SELECT set_config('request.jwt.claim.role', 'authenticated', true);
 SELECT set_config('request.jwt.claims', json_build_object(
   'sub', (SELECT owner_a::text FROM pg_temp.rls_test_ids),
   'role', 'authenticated',
@@ -150,6 +151,7 @@ SELECT extensions.is(
 );
 
 SELECT set_config('request.jwt.claim.sub', (SELECT owner_b::text FROM pg_temp.rls_test_ids), true);
+SELECT set_config('request.jwt.claim.role', 'authenticated', true);
 SELECT set_config('request.jwt.claims', json_build_object(
   'sub', (SELECT owner_b::text FROM pg_temp.rls_test_ids),
   'role', 'authenticated',
