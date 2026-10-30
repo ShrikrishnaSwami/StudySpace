@@ -131,16 +131,16 @@ export function specialistForTask(task: AITask): SpecialistProfile {
 }
 
 export function providerEnvKeyForTask(task: AITask): string {
-  return \`AI_PROVIDER_\${specialistForTask(task).id.toUpperCase()}\`;
+  return "AI_PROVIDER_" + specialistForTask(task).id.toUpperCase();
 }
 
 export function buildSpecialistInstructions(task: AITask): string {
   const profile = specialistForTask(task);
   return [
-    \`STUDYSPACE SPECIALIST: \${profile.name}\`,
-    \`MISSION\\n\${profile.mission}\`,
-    \`CAPABILITIES\\n\${profile.capabilities.map((item) => \`- \${item}\`).join("\\n")}\`,
-    \`DEDICATED WORKFLOW\\n\${profile.workflow.map((item, index) => \`\${index + 1}. \${item}\`).join("\\n")}\`,
-    \`QUALITY GATES\\n\${profile.qualityGates.map((item) => \`- \${item}\`).join("\\n")}\`,
-  ].join("\\n\\n");
+    "STUDYSPACE SPECIALIST: " + profile.name,
+    "MISSION\n" + profile.mission,
+    "CAPABILITIES\n" + profile.capabilities.map((item) => "- " + item).join("\n"),
+    "DEDICATED WORKFLOW\n" + profile.workflow.map((item, index) => (index + 1) + ". " + item).join("\n"),
+    "QUALITY GATES\n" + profile.qualityGates.map((item) => "- " + item).join("\n"),
+  ].join("\n\n");
 }
