@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
+import StudySpaceMark from "@/components/StudySpaceMark";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -89,9 +90,7 @@ export default function SignupPage() {
         <div className="hidden flex-col justify-between border-r border-white/10 bg-gradient-to-br from-purple-950/40 via-transparent to-transparent p-10 md:flex">
           <div>
             <div className="mb-8 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-600 shadow-lg shadow-purple-600/30">
-                <BookOpen size={23} />
-              </div>
+              <StudySpaceMark size={48} />
 
               <span className="text-xl font-bold tracking-tight">
                 StudySpace
