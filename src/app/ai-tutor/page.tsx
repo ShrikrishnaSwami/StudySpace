@@ -239,8 +239,6 @@ export default function AITutorPage() {
   const [feedbackSaving, setFeedbackSaving] = useState<Record<string, boolean>>({});
   const [feedbackStatus, setFeedbackStatus] = useState<Record<string, string>>({});
 
-  const messagesEndRef =
-    useRef<HTMLDivElement>(null);
   const chatLogRef =
     useRef<HTMLDivElement>(null);
 
@@ -598,7 +596,7 @@ export default function AITutorPage() {
 
       setShowHistory(false);
 
-      textareaRef.current?.focus();
+      window.setTimeout(() => textareaRef.current?.focus(), 80);
 
       return conversation;
     } catch (err) {
@@ -1697,7 +1695,7 @@ export default function AITutorPage() {
                   </div>
                 )}
 
-                <div ref={messagesEndRef} />
+                
               </div>
             )}
           </div>
