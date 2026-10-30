@@ -927,7 +927,7 @@ export default function AITutorPage() {
   }
 
   function closeWorkspace(id: string) {
-    setWorkspaceWindows(current => current.filter(item => item.id !== id).map(item => item.parentId === id ? { ...item, parentId: undefined } : item));
+    setWorkspaceWindows(current => current.filter(item => item.id !== id));
     setFocusedWindowId(current => current === id ? null : current);
   }
 
