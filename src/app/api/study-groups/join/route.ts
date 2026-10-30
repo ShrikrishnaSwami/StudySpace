@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { consumeApiRateLimit } from "@/lib/api-security";
+import { consumeApiRateLimit, readBoundedJson } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
@@ -33,16 +33,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many join attempts. Please wait and try again." }, { status: 429 });
     }
 
-    const declaredLength = Number(request.headers.get("content-length") || 0);
-    if (declaredLength > 1024) {
-      return NextResponse.json({ error: "Invite request is too large." }, { status: 413 });
-    }
-
     let body: unknown;
     try {
-      body = await request.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid invite request." }, { status: 400 });
+      body = await readBoundedJson(request, 1024);
+    } catch (error) {
+      const tooLarge = error instanceof Error && error.message === "REQUEST_TOO_LARGE";
+      return NextResponse.json({ error: tooLarge ? "Invite request is too large." : "Invalid invite request." }, { status: tooLarge ? 413 : 400 });
     }
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json({ error: "Invalid invite request." }, { status: 400 });
