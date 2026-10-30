@@ -65,7 +65,21 @@ export function formatStudentAIContext(
     calendarEvents: AnyRecord[];
   }
 ) {
-  const sections: string[] = [];
+  const sections: string[] = [
+    `
+========================
+CONTEXT COVERAGE
+========================
+
+This is a bounded recent snapshot, not a complete export of every student record.
+Maximum records loaded for this request: 30 courses, 40 notes, 30 resources,
+50 assignments, 30 quizzes, 50 quiz attempts, 30 homework records, and 80 calendar events.
+Long text fields are clipped before transfer. Older records or text beyond those
+limits may still exist. Do not claim a record does not exist merely because it
+is absent from this context window; explain that it was not included in the current
+snapshot and ask for a narrower course, topic, or date when needed.
+`,
+  ];
 
   /*
    * COURSES
