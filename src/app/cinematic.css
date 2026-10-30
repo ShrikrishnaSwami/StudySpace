@@ -1278,3 +1278,29 @@ body:has(.ss-landing)::-webkit-scrollbar,body:has(.ss-neural-tutor)::-webkit-scr
   .ss-editorial .ss-landing-signup { transition: none !important; }
   .ss-editorial-preview::after { animation: none !important; }
 }
+
+
+/* Connected study nodes grow directly from the J.A.R.V.I.S. brain canvas. */
+.ss-brain-study-node{
+  border-radius:3px;
+  cursor:grab;
+  user-select:none;
+  -webkit-user-select:none;
+  transition:border-color .18s ease,background .18s ease,box-shadow .18s ease;
+}
+.ss-brain-study-node:active{cursor:grabbing}
+.ss-brain-study-node:hover{
+  border-color:rgba(220,198,157,.72);
+  background:rgba(48,44,35,.98);
+  box-shadow:0 12px 38px rgba(0,0,0,.48),0 0 24px rgba(185,167,131,.12);
+}
+.ss-brain-study-node a:focus-visible,.ss-brain-study-node button:focus-visible{
+  outline:2px solid rgba(220,198,157,.8);
+  outline-offset:2px;
+}
+@media(max-width:700px){
+  .ss-brain-study-node{min-width:118px;max-width:142px;padding:7px 8px;gap:6px}
+  .ss-brain-study-node>span{height:27px;width:27px}
+  .ss-brain-study-node button{height:23px;width:23px}
+}
+@media(prefers-reduced-motion:reduce){.ss-brain-study-node{transition:none}}
