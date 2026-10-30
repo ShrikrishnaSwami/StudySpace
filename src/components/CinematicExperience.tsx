@@ -408,6 +408,62 @@ export default function CinematicExperience() {
               gsap.set(item, { clearProps: "willChange" });
             });
 
+            // Editorial landing page: restore a layered cinematic entrance,
+            // staggered chapter reveals, and lively floating feature artwork.
+            const editorial = document.querySelector(".ss-editorial");
+            if (editorial) {
+              const intro = gsap.timeline({ defaults: { ease: premiumEase } });
+              intro
+                .fromTo(".ss-landing-nav", { y: -34, autoAlpha: 0, filter: "blur(8px)" }, { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: .9 })
+                .fromTo(".ss-editorial-opening-copy .ss-editorial-kicker", { x: -35, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: .75 }, "-=.45")
+                .fromTo(".ss-editorial-opening h1", { y: 90, rotateX: -12, transformPerspective: 1000, autoAlpha: 0, filter: "blur(12px)" }, { y: 0, rotateX: 0, autoAlpha: 1, filter: "blur(0px)", duration: 1.35 }, "-=.35")
+                .fromTo(".ss-editorial-deck", { y: 30, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: .85 }, "-=.7")
+                .fromTo(".ss-editorial-actions > *", { y: 22, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: .7, stagger: .12 }, "-=.55")
+                .fromTo(".ss-editorial-specimen", { x: 100, y: 65, rotate: 8, scale: .82, autoAlpha: 0, filter: "blur(10px)" }, { x: 0, y: 0, rotate: -2.2, scale: 1, autoAlpha: 1, filter: "blur(0px)", duration: 1.35 }, "-=1.05")
+                .fromTo(".ss-editorial-bottomline", { y: 18, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: .65 }, "-=.55");
+
+              gsap.to(".ss-editorial-specimen", {
+                y: -13, rotate: -1, duration: 3.8, repeat: -1, yoyo: true,
+                ease: "sine.inOut",
+              });
+              gsap.to(".ss-editorial-specimen .ss-specimen-marker", {
+                scale: 1.8, boxShadow: "0 0 0 7px rgba(155,134,99,.12)",
+                duration: 1.7, repeat: -1, yoyo: true, stagger: .35, ease: "sine.inOut",
+              });
+
+              gsap.utils.toArray(".ss-editorial-manifesto, .ss-editorial-workspace, .ss-editorial-method, .ss-editorial-closing").forEach((section: any) => {
+                const targets = section.querySelectorAll(".ss-editorial-kicker, h2, .ss-editorial-manifesto-grid > div, .ss-editorial-chapters button, .ss-editorial-preview, .ss-method-aside > div, .ss-editorial-closing > p, .ss-editorial-closing > a");
+                if (!targets.length) return;
+                gsap.fromTo(targets,
+                  { y: 48, autoAlpha: 0, filter: "blur(7px)" },
+                  {
+                    y: 0, autoAlpha: 1, filter: "blur(0px)", duration: 1.05,
+                    stagger: .085, ease: premiumEase, immediateRender: false,
+                    scrollTrigger: { trigger: section, start: "top 78%", once: true },
+                  },
+                );
+              });
+
+              gsap.utils.toArray(".ss-editorial-preview, .ss-method-aside > div").forEach((panel: any, index: number) => {
+                gsap.fromTo(panel,
+                  { y: 55, rotateY: index % 2 ? 7 : -7, scale: .94, transformPerspective: 1000 },
+                  { y: 0, rotateY: 0, scale: 1, duration: 1.1, ease: premiumEase,
+                    scrollTrigger: { trigger: panel, start: "top 90%", once: true } },
+                );
+              });
+
+              gsap.utils.toArray(".ss-editorial-chapters button").forEach((tab: any) => {
+                const hoverIn = () => gsap.to(tab, { x: 8, duration: .28, ease: "power3.out", overwrite: "auto" });
+                const hoverOut = () => gsap.to(tab, { x: 0, duration: .42, ease: "elastic.out(1,.6)", overwrite: "auto" });
+                tab.addEventListener("mouseenter", hoverIn);
+                tab.addEventListener("mouseleave", hoverOut);
+                interactionCleanups.push(() => {
+                  tab.removeEventListener("mouseenter", hoverIn);
+                  tab.removeEventListener("mouseleave", hoverOut);
+                });
+              });
+            }
+
             // A subtle continuous drift gives the opening artwork life even
             // when the visitor is not scrolling.
             gsap.to(".atelier-orbit-a", { rotation: 360, duration: 42, repeat: -1, ease: "none" });
