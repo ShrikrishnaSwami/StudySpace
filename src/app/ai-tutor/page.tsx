@@ -12,7 +12,6 @@ import {
 import {
   ArrowUp,
   BookOpen,
-  Bot,
   Check,
   ChevronDown,
   Clock3,
@@ -21,7 +20,6 @@ import {
   Volume2,
   VolumeX,
   MessageSquare,
-  MoreHorizontal,
   Plus,
   Sparkles,
   Trash2,
@@ -243,13 +241,6 @@ export default function AITutorPage() {
   /* =======================================================
      DERIVED STATE
   ======================================================= */
-
-  const selectedConversation =
-    conversations.find(
-      (conversation) =>
-        conversation.id ===
-        selectedConversationId
-    ) || null;
 
   const selectedCourse =
     courses.find(
