@@ -67,11 +67,11 @@ export default function Home() {
 
       <section className="ss-editorial-manifesto" id="about">
         <p className="ss-editorial-kicker">SCHOOL ALREADY HAS ENOUGH MOVING PARTS</p>
-        <div className="ss-editorial-manifesto-grid"><h2>Your coursework is already spread around.<br/><em>Your notes don't need to be too.</em></h2><div><p>Slides in one folder. The syllabus in your email. Assignment instructions in the course portal. A deadline you wrote down somewhere. It adds up fast.</p><p>StudySpace keeps the course material, deadlines and study tools together. You still have to do the assignment. At least you can find it.</p></div></div>
+        <div className="ss-editorial-manifesto-grid"><h2>Your coursework is already spread around.<br/><em>Your notes don&apos;t need to be too.</em></h2><div><p>Slides in one folder. The syllabus in your email. Assignment instructions in the course portal. A deadline you wrote down somewhere. It adds up fast.</p><p>StudySpace keeps the course material, deadlines and study tools together. You still have to do the assignment. At least you can find it.</p></div></div>
       </section>
 
       <section className="ss-editorial-workspace" id="workspace">
-        <div className="ss-editorial-section-head"><p className="ss-editorial-kicker">WHAT'S ACTUALLY IN THE APP</p><span>01 — 04 / EXPLORE THE DESK</span></div>
+        <div className="ss-editorial-section-head"><p className="ss-editorial-kicker">WHAT&apos;S ACTUALLY IN THE APP</p><span>01 — 04 / EXPLORE THE DESK</span></div>
         <div className="ss-editorial-workspace-layout">
           <div className="ss-editorial-chapters" role="group" aria-label="Explore StudySpace features" onPointerEnter={() => setChapterPaused(true)} onPointerLeave={() => setChapterPaused(false)} onFocusCapture={() => setChapterPaused(true)} onBlurCapture={() => setChapterPaused(false)}>
             {chapters.map((chapter) => { const Icon = chapter.icon; const selected = activeChapter === chapter.id; return <button key={chapter.id} type="button" aria-pressed={selected} aria-controls="ss-feature-preview" onMouseEnter={() => setActiveChapter(chapter.id)} onFocus={() => setActiveChapter(chapter.id)} onClick={() => setActiveChapter(chapter.id)} className={selected ? "is-active" : ""}><span className="ss-chapter-number">{chapter.number}</span><span className="ss-chapter-copy"><b>{chapter.title}</b><small>{chapter.copy}</small></span><Icon className="ss-chapter-icon" size={18}/><ArrowUpRight className="ss-chapter-arrow" size={16}/></button>; })}
@@ -88,7 +88,7 @@ export default function Home() {
 
       <section className="ss-editorial-method" id="method">
         <div className="ss-method-number">02</div>
-        <div className="ss-method-main"><p className="ss-editorial-kicker">SET UP THE COURSES YOU'RE TAKING</p><h2>Add your courses.<br/><em>Bring in the syllabus.</em></h2><p>Add a course, upload its syllabus, and save the notes and files you already have. StudySpace can pull dates out of a PDF so you don't have to enter every deadline by hand.</p><Link href="/signup" className="ss-inline-link">Get started <ArrowUpRight size={15}/></Link></div>
+        <div className="ss-method-main"><p className="ss-editorial-kicker">SET UP THE COURSES YOU&apos;RE TAKING</p><h2>Add your courses.<br/><em>Bring in the syllabus.</em></h2><p>Add a course, upload its syllabus, and save the notes and files you already have. StudySpace can pull dates out of a PDF so you don&apos;t have to enter every deadline by hand.</p><Link href="/signup" className="ss-inline-link">Get started <ArrowUpRight size={15}/></Link></div>
         <div className="ss-method-aside"><div><Layers3 size={17}/><span>COURSES</span><b>Keep slides, notes and readings together</b></div><div><BrainCircuit size={17}/><span>STUDY</span><b>Make flashcards and ask questions</b></div><div><CalendarDays size={17}/><span>PLAN</span><b>See classes and due dates</b></div></div>
       </section>
 
