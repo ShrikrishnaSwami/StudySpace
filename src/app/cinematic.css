@@ -138,3 +138,44 @@ body > :not(.studyspace-atmosphere):not(.studyspace-atmosphere-vignette) { posit
   .atelier-shell .ss-sidebar { backdrop-filter: blur(22px); }
   .atelier-shell .atelier-main { overflow-x: hidden; }
 }
+
+
+/* Public authentication and recovery screens use the same house palette. */
+body > main[class~="items-center"][class~="justify-center"] {
+  color: #e8e1d4 !important;
+  background: transparent !important;
+}
+body > main[class~="items-center"][class~="justify-center"] > div[class*="rounded-3xl"] {
+  color: #e8e1d4 !important;
+  background: linear-gradient(145deg, rgba(38,35,28,.92), rgba(18,17,13,.94)) !important;
+  border-color: rgba(232,225,212,.17) !important;
+  box-shadow: 0 35px 110px rgba(0,0,0,.42), inset 0 1px rgba(232,225,212,.045) !important;
+  backdrop-filter: blur(26px) saturate(120%);
+}
+body > main[class~="items-center"][class~="justify-center"] [class*="bg-gradient-to-br"] {
+  background: linear-gradient(135deg, rgba(185,162,122,.13), transparent 70%) !important;
+}
+body > main[class~="items-center"][class~="justify-center"] [class*="text-purple-300"],
+body > main[class~="items-center"][class~="justify-center"] [class*="text-violet-300"],
+body > main[class~="items-center"][class~="justify-center"] [class*="text-purple-400"] {
+  color: #c4ad80 !important;
+}
+body > main[class~="items-center"][class~="justify-center"] button[class*="bg-purple-600"],
+body > main[class~="items-center"][class~="justify-center"] a[class*="bg-purple-600"] {
+  color: #171612 !important;
+  background: linear-gradient(135deg,#d1bd91,#a98d5e) !important;
+  border: 1px solid rgba(209,189,145,.55) !important;
+}
+body > main[class~="items-center"][class~="justify-center"] input {
+  color: #eee7d9 !important;
+  background: rgba(10,10,8,.7) !important;
+  border-color: rgba(232,225,212,.2) !important;
+}
+body > main[class~="items-center"][class~="justify-center"] input::placeholder {
+  color: #8e8677 !important;
+}
+body > main[class~="items-center"][class~="justify-center"] label { color: #c8bead !important; }
+body > div[class~="min-h-screen"][class~="items-center"][class~="justify-center"][class*="bg-[#"] {
+  background: rgba(16,15,12,.92) !important;
+  color: #e8e1d4 !important;
+}
