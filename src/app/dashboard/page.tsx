@@ -928,13 +928,7 @@ export default function DashboardPage() {
             HERO
         ================================================= */}
 
-        <section className="relative overflow-hidden rounded-[28px] border border-violet-300/[0.13] bg-[linear-gradient(125deg,rgba(111,72,211,0.15),rgba(20,17,31,0.92)_48%,rgba(13,12,20,0.98))] px-5 py-7 shadow-[0_24px_80px_rgba(0,0,0,0.2)] sm:px-8 sm:py-9">
-          <div className="pointer-events-none absolute -left-24 -top-32 h-80 w-80 rounded-full bg-violet-600/[0.13] blur-3xl" />
-
-          <div className="pointer-events-none absolute -right-10 -top-20 h-72 w-72 rounded-full bg-indigo-500/[0.13] blur-3xl" />
-          <div className="pointer-events-none absolute right-[12%] top-8 hidden h-44 w-44 rounded-full border border-violet-300/[0.07] lg:block" />
-          <div className="pointer-events-none absolute right-[14.5%] top-12 hidden h-36 w-36 rounded-full border border-violet-300/[0.08] lg:block" />
-
+        <section className="ss-dashboard-hero relative px-1 py-7 sm:px-2 sm:py-10">
           <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="mb-3 inline-flex items-center gap-2 text-xs font-medium text-violet-300/80">
@@ -942,7 +936,7 @@ export default function DashboardPage() {
                   <Sparkles className="h-3.5 w-3.5" />
                 </span>
 
-                Your academic workspace
+                YOUR DAY, WITHOUT THE GUESSWORK
               </div>
 
               <h1 className="text-3xl font-semibold tracking-[-0.055em] text-white sm:text-4xl lg:text-[46px]">
@@ -953,10 +947,7 @@ export default function DashboardPage() {
               </h1>
 
               <p className="mt-3 max-w-xl text-sm leading-7 text-white/55">
-                Here&apos;s what deserves your
-                attention today. Your courses,
-                deadlines, schedule, and AI study
-                plan are all in one place.
+                Here’s what’s on your plate. Start with the deadline you can’t move.
               </p>
             </div>
 
@@ -1003,7 +994,7 @@ export default function DashboardPage() {
             STATS
         ================================================= */}
 
-        <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="ss-dashboard-stats grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <Stat
             icon={
               <BookOpen className="h-4 w-4 text-violet-300" />
@@ -1048,7 +1039,7 @@ export default function DashboardPage() {
         {/* =================================================
             QUICK ACTIONS
         ================================================= */}
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Quick actions">
+        <section className="ss-dashboard-quick grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Quick actions">
           <Link href="/ai-tutor" className="group flex items-center gap-3 rounded-2xl border border-violet-300/[0.17] bg-[linear-gradient(120deg,rgba(112,74,218,0.13),rgba(20,17,31,0.94))] p-4 shadow-[0_12px_32px_rgba(74,45,139,0.1)] transition duration-300 hover:-translate-y-1 hover:border-violet-300/30 hover:bg-violet-500/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300"><Brain className="h-4 w-4" /></span>
             <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Ask AI Tutor</span><span className="mt-1 block text-xs text-white/35">Get help with a concept</span></span>
@@ -1090,7 +1081,7 @@ export default function DashboardPage() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl font-semibold tracking-[-0.025em] text-white">
-                      Your focus for today
+                      What needs your attention
                     </h2>
 
                     <span className="rounded-full border border-violet-400/15 bg-violet-500/[0.08] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-violet-300">
@@ -1099,10 +1090,7 @@ export default function DashboardPage() {
                   </div>
 
                   <p className="mt-1 max-w-2xl text-sm leading-6 text-white/40">
-                    StudySpace looks at your workload,
-                    deadlines, courses, quizzes, homework,
-                    and schedule to figure out what deserves
-                    your attention next.
+                    A short list based on the work and deadlines you have added.
                   </p>
                 </div>
               </div>
@@ -1125,7 +1113,7 @@ export default function DashboardPage() {
                 ) : (
                   <>
                     <Sparkles className="h-3.5 w-3.5" />
-                    Generate study plan
+                    Build my study list
                   </>
                 )}
               </button>
@@ -1140,13 +1128,11 @@ export default function DashboardPage() {
               </div>
 
               <h3 className="mt-5 text-base font-semibold text-white">
-                Your study plan is waiting
+                Nothing on the list yet
               </h3>
 
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-white/35">
-                Let StudySpace analyze your current
-                academic workload and turn it into
-                a focused list of things to work on.
+                Add your assignments and deadlines, then build a list of what to tackle first.
               </p>
 
               <button
@@ -1160,7 +1146,7 @@ export default function DashboardPage() {
                 className="mt-6 inline-flex items-center gap-2 rounded-xl border border-violet-400/15 bg-violet-500/[0.07] px-4 py-2.5 text-xs font-medium text-violet-200 transition hover:bg-violet-500/[0.12] disabled:opacity-50"
               >
                 <Zap className="h-3.5 w-3.5" />
-                Analyze my workload
+                Build my study list
               </button>
             </div>
           ) : (
@@ -1770,94 +1756,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <style jsx global>{`
-        /* Dashboard-only polish to bring the workspace in line with StudySpace's
-           premium violet landing page, without changing any data or interactions. */
-        .ss-dashboard {
-          animation: ss-dashboard-enter 420ms cubic-bezier(.2,.75,.25,1) both;
-        }
-        .ss-dashboard > section:first-child {
-          isolation: isolate;
-          border-color: rgba(196,181,253,.2);
-          background:
-            radial-gradient(ellipse at 88% 0%, rgba(139,92,246,.17), transparent 38%),
-            radial-gradient(ellipse at 0% 100%, rgba(109,66,216,.12), transparent 42%),
-            linear-gradient(125deg, rgba(35,25,57,.96), rgba(17,14,27,.97) 58%, rgba(11,10,17,.99));
-          box-shadow: 0 24px 75px rgba(0,0,0,.2), inset 0 1px rgba(139,92,246,.07);
-        }
-        .ss-dashboard > section:first-child h1 {
-          line-height: 1.08;
-          text-wrap: balance;
-        }
-        .ss-dashboard > section:first-child p {
-          color: #b5aec9;
-        }
-        .ss-dashboard > section:first-child button {
-          border-color: rgba(196,181,253,.2);
-          background: rgba(139,92,246,.07);
-          backdrop-filter: blur(12px);
-        }
-        .ss-dashboard > section:first-child button:hover {
-          background: rgba(139,92,246,.12);
-          box-shadow: 0 8px 28px rgba(76,29,149,.16);
-        }
-        .ss-dashboard > section:nth-of-type(2) > div {
-          position: relative;
-          isolation: isolate;
-        }
-        .ss-dashboard > section:nth-of-type(2) > div:after {
-          content: "";
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          border-radius: inherit;
-          background: radial-gradient(circle at 100% 0%, rgba(167,139,250,.075), transparent 58%);
-          opacity: 0;
-          transition: opacity .22s ease;
-        }
-        .ss-dashboard > section:nth-of-type(2) > div:hover:after { opacity: 1; }
-        .ss-dashboard > section:nth-of-type(2) > div > div:first-child {
-          box-shadow: inset 0 1px rgba(139,92,246,.045);
-        }
-        .ss-dashboard section.overflow-hidden.rounded-2xl,
-        .ss-dashboard section.relative.overflow-hidden.rounded-2xl {
-          border-color: rgba(196,181,253,.13);
-          box-shadow: 0 16px 46px rgba(0,0,0,.13), inset 0 1px rgba(139,92,246,.025);
-        }
-        .ss-dashboard section > div:first-child h2 {
-          letter-spacing: -.025em;
-        }
-        .ss-dashboard a.group,
-        .ss-dashboard section button,
-        .ss-dashboard section a {
-          -webkit-tap-highlight-color: transparent;
-        }
-        .ss-dashboard a.group:focus-visible,
-        .ss-dashboard section button:focus-visible {
-          outline: 2px solid rgba(196,181,253,.85);
-          outline-offset: 3px;
-        }
-        .ss-dashboard .rounded-xl.border,
-        .ss-dashboard .rounded-2xl.border {
-          transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease, background-color .2s ease;
-        }
-        .ss-dashboard .rounded-xl.border:hover {
-          border-color: rgba(196,181,253,.2);
-        }
-        @keyframes ss-dashboard-enter {
-          from { opacity: 0; transform: translateY(7px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .ss-dashboard { animation: none; }
-          .ss-dashboard * { transition-duration: .01ms !important; }
-        }
-        @media (max-width: 640px) {
-          .ss-dashboard { padding-top: 16px; }
-          .ss-dashboard > section:first-child { border-radius: 22px; }
-          .ss-dashboard > section:first-child h1 { font-size: clamp(27px, 8vw, 36px); overflow-wrap: anywhere; }
-        }
-      `}</style>
+
     </AppShell>
   );
 }
