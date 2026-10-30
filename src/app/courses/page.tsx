@@ -27,6 +27,13 @@ type Course = {
   color: string | null;
   progress: number;
   created_at: string;
+  start_date: string | null;
+  end_date: string | null;
+  class_start_time: string | null;
+  class_end_time: string | null;
+  class_days: number[];
+  timezone: string;
+  archived: boolean;
 };
 
 const courseThemes = [
@@ -95,6 +102,17 @@ export default function CoursesPage() {
   const [name, setName] = useState("");
   const [room, setRoom] = useState("");
   const [schedule, setSchedule] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [classStartTime, setClassStartTime] = useState("09:00");
+  const [classEndTime, setClassEndTime] = useState("10:00");
+  const [classDays, setClassDays] = useState<number[]>([]);
+  const [timezone, setTimezone] = useState("UTC");
+  const [courseFilter, setCourseFilter] = useState<"active" | "future" | "closed">("active");
+
+  useEffect(() => {
+    try { setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"); } catch { setTimezone("UTC"); }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -149,6 +167,14 @@ export default function CoursesPage() {
       setError("Course code and course name are required.");
       return;
     }
+    if (!startDate || !endDate || endDate < startDate) {
+      setError("Choose a valid course start and end date.");
+      return;
+    }
+    if (classDays.length > 0 && (!classStartTime || !classEndTime || classEndTime <= classStartTime)) {
+      setError("Choose a class end time that is after its start time.");
+      return;
+    }
 
     setSaving(true);
     setError("");
@@ -171,6 +197,12 @@ export default function CoursesPage() {
         name: name.trim(),
         room: room.trim() || null,
         schedule: schedule.trim() || null,
+        start_date: startDate,
+        end_date: endDate,
+        class_start_time: classDays.length ? classStartTime : null,
+        class_end_time: classDays.length ? classEndTime : null,
+        class_days: classDays,
+        timezone,
         color: courseThemes[courses.length % courseThemes.length].name,
         progress: 0,
       })
@@ -222,6 +254,11 @@ export default function CoursesPage() {
     setName("");
     setRoom("");
     setSchedule("");
+    setStartDate("");
+    setEndDate("");
+    setClassStartTime("09:00");
+    setClassEndTime("10:00");
+    setClassDays([]);
   }
 
   const averageProgress = useMemo(() => {
@@ -236,9 +273,19 @@ export default function CoursesPage() {
     );
   }, [courses]);
 
-  const activeCourses = courses.filter(
-    (course) => (course.progress || 0) < 100
-  ).length;
+  const localToday = (() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+  })();
+  const getStatus = (course: Course): "active" | "future" | "closed" => {
+    if (course.archived || (course.end_date && course.end_date < localToday)) return "closed";
+    if (course.start_date && course.start_date > localToday) return "future";
+    return "active";
+  };
+  const activeCourses = courses.filter(course => getStatus(course) === "active").length;
+  const futureCourses = courses.filter(course => getStatus(course) === "future").length;
+  const closedCourses = courses.filter(course => getStatus(course) === "closed").length;
+  const visibleCourses = courses.filter(course => getStatus(course) === courseFilter);
 
   return (
     <AppShell
@@ -356,34 +403,37 @@ export default function CoursesPage() {
           </section>
         )}
 
-        {/* Course grid */}
+        {/* Course status navigation */}
         {!loading && courses.length > 0 && (
           <section>
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-white">
-                  All courses
-                </h2>
-                <p className="mt-1 text-sm text-white/35">
-                  Select a course to open its workspace.
-                </p>
-              </div>
-
-              <span className="hidden text-xs text-white/25 sm:block">
-                {courses.length} {courses.length === 1 ? "course" : "courses"}
-              </span>
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-2">
-              {courses.map((course, index) => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  index={index}
-                  onDelete={() => setDeleteCourse(course)}
-                />
+            <div className="mb-5 flex flex-wrap items-center gap-2 border-b border-white/[0.08] pb-3">
+              {([
+                ["active", "Active courses", activeCourses],
+                ["future", "Future courses", futureCourses],
+                ["closed", "Closed courses", closedCourses],
+              ] as const).map(([value, label, count]) => (
+                <button key={value} type="button" onClick={() => setCourseFilter(value)} className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm transition ${courseFilter === value ? "border-violet-400/30 bg-violet-500/10 text-violet-200" : "border-white/[0.07] bg-white/[0.02] text-white/40 hover:bg-white/[0.05] hover:text-white/75"}`}>
+                  {label}<span className="text-[10px] opacity-60">{count}</span>
+                </button>
               ))}
             </div>
+            {visibleCourses.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.015] px-5 py-14 text-center">
+                <p className="text-sm text-white/55">No {courseFilter} courses yet.</p>
+                <p className="mt-2 text-xs text-white/30">Courses remain available in their status section and can always be opened.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 lg:grid-cols-2">
+                {visibleCourses.map((course, index) => (
+                  <CourseCard key={course.id} course={course} index={index} status={getStatus(course)} onDelete={() => setDeleteCourse(course)} onToggleArchive={async () => {
+                    const nextArchived = !course.archived;
+                    const { error: updateError } = await supabase.from("courses").update({ archived: nextArchived }).eq("id", course.id);
+                    if (updateError) setError(updateError.message);
+                    else setCourses(current => current.map(item => item.id === course.id ? { ...item, archived: nextArchived } : item));
+                  }} />
+                ))}
+              </div>
+            )}
           </section>
         )}
       </div>
@@ -437,19 +487,27 @@ export default function CoursesPage() {
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">
-                <InputField
-                  label="Room"
-                  placeholder="e.g. CB 302"
-                  value={room}
-                  onChange={setRoom}
-                />
+                <InputField label="Room" placeholder="e.g. CB 302" value={room} onChange={setRoom}/>
+                <InputField label="Schedule (optional)" placeholder="e.g. Mon/Wed lecture" value={schedule} onChange={setSchedule}/>
+              </div>
 
-                <InputField
-                  label="Schedule"
-                  placeholder="e.g. Mon/Wed 10:00 AM"
-                  value={schedule}
-                  onChange={setSchedule}
-                />
+              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
+                <div className="mb-3"><p className="text-sm font-medium text-white/80">Course dates</p><p className="mt-1 text-xs text-white/35">These dates determine whether the course is active, future, or closed.</p></div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div><label className="mb-2 block text-xs text-white/55">Start date</label><input type="date" required value={startDate} onChange={event=>setStartDate(event.target.value)} className="w-full rounded-xl border border-white/[0.08] bg-white/[0.035] px-3 py-3 text-sm text-white outline-none focus:border-violet-500/50"/></div>
+                  <div><label className="mb-2 block text-xs text-white/55">End date</label><input type="date" required min={startDate || undefined} value={endDate} onChange={event=>setEndDate(event.target.value)} className="w-full rounded-xl border border-white/[0.08] bg-white/[0.035] px-3 py-3 text-sm text-white outline-none focus:border-violet-500/50"/></div>
+                </div>
+                <div className="mt-5 border-t border-white/[0.07] pt-4">
+                  <p className="text-xs font-medium text-white/65">Weekly class schedule <span className="text-white/30">(optional)</span></p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((day,index)=><button key={day} type="button" aria-pressed={classDays.includes(index)} onClick={()=>setClassDays(current=>current.includes(index)?current.filter(value=>value!==index):[...current,index].sort((a,b)=>a-b))} className={`rounded-lg border px-3 py-2 text-xs transition ${classDays.includes(index)?"border-violet-400/40 bg-violet-500/15 text-violet-200":"border-white/10 bg-white/[0.025] text-white/40 hover:text-white"}`}>{day}</button>)}
+                  </div>
+                  {classDays.length > 0 && <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <div><label className="mb-2 block text-xs text-white/55">Class starts</label><input type="time" required value={classStartTime} onChange={event=>setClassStartTime(event.target.value)} className="w-full rounded-xl border border-white/[0.08] bg-white/[0.035] px-3 py-3 text-sm text-white outline-none focus:border-violet-500/50"/></div>
+                    <div><label className="mb-2 block text-xs text-white/55">Class ends</label><input type="time" required value={classEndTime} onChange={event=>setClassEndTime(event.target.value)} className="w-full rounded-xl border border-white/[0.08] bg-white/[0.035] px-3 py-3 text-sm text-white outline-none focus:border-violet-500/50"/></div>
+                  </div>}
+                  <p className="mt-3 text-[10px] leading-5 text-white/30">Scheduled classes are added to your calendar automatically in {timezone}. You can skip an individual class date from the calendar.</p>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-violet-500/10 bg-violet-500/[0.05] p-4">
@@ -613,10 +671,14 @@ function CourseCard({
   course,
   index,
   onDelete,
+  status,
+  onToggleArchive,
 }: {
   course: Course;
   index: number;
   onDelete: () => void;
+  status: "active" | "future" | "closed";
+  onToggleArchive: () => void;
 }) {
   const theme =
     courseThemes.find((item) => item.name === course.color) ||
@@ -645,11 +707,10 @@ function CourseCard({
               </div>
 
               <div className="min-w-0 pt-0.5">
-                <p
-                  className={`text-xs font-semibold uppercase tracking-[0.14em] ${theme.text}`}
-                >
-                  {course.code}
-                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className={`text-xs font-semibold uppercase tracking-[0.14em] ${theme.text}`}>{course.code}</p>
+                  <span className={`rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-wider ${status === "active" ? "border-emerald-400/20 bg-emerald-400/5 text-emerald-200" : status === "future" ? "border-sky-400/20 bg-sky-400/5 text-sky-200" : "border-white/10 bg-white/[0.04] text-white/45"}`}>{status}</span>
+                </div>
 
                 <h3 className="mt-1 truncate text-lg font-semibold tracking-tight text-white transition group-hover:text-violet-100">
                   {course.name}
@@ -675,27 +736,11 @@ function CourseCard({
 
         {/* Course information */}
         <div className="mt-7 grid gap-3 sm:grid-cols-2">
-          {course.room && (
-            <InfoItem
-              icon={<MapPin size={15} />}
-              label="Room"
-              value={course.room}
-            />
-          )}
-
-          {course.schedule && (
-            <InfoItem
-              icon={<CalendarDays size={15} />}
-              label="Schedule"
-              value={course.schedule}
-            />
-          )}
-
-          {!course.room && !course.schedule && (
-            <div className="sm:col-span-2 rounded-2xl border border-dashed border-white/[0.07] px-4 py-4 text-xs text-white/25">
-              No class details added yet.
-            </div>
-          )}
+          {course.room && <InfoItem icon={<MapPin size={15}/>} label="Room" value={course.room}/>}
+          {course.schedule && <InfoItem icon={<CalendarDays size={15}/>} label="Schedule" value={course.schedule}/>}
+          {course.start_date && <InfoItem icon={<CalendarDays size={15}/>} label="Course dates" value={`${course.start_date} – ${course.end_date || "No end date"}`}/>}
+          {course.class_days?.length > 0 && course.class_start_time && course.class_end_time && <InfoItem icon={<Clock3 size={15}/>} label="Weekly classes" value={`${course.class_days.map(day=>["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][day]).join(", ")} · ${course.class_start_time.slice(0,5)}–${course.class_end_time.slice(0,5)}`}/>}
+          {!course.room && !course.schedule && !course.start_date && <div className="sm:col-span-2 rounded-2xl border border-dashed border-white/[0.07] px-4 py-4 text-xs text-white/25">No class details added yet.</div>}
         </div>
 
         {/* Progress */}
@@ -718,14 +763,13 @@ function CourseCard({
           </div>
         </div>
 
-        {/* Bottom action */}
-        <Link
-          href={`/courses/${course.id}`}
-          className="mt-5 flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs font-medium text-white/40 transition hover:border-white/[0.1] hover:bg-white/[0.045] hover:text-white/70"
-        >
-          <span>View course workspace</span>
-          <ChevronRight size={15} />
-        </Link>
+        {/* Bottom actions */}
+        <div className="mt-5 flex items-center gap-2">
+          <Link href={`/courses/${course.id}`} className="flex flex-1 items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs font-medium text-white/55 transition hover:border-white/[0.1] hover:bg-white/[0.045] hover:text-white/80">
+            <span>Open course workspace</span><ChevronRight size={15}/>
+          </Link>
+          <button type="button" onClick={onToggleArchive} className="rounded-xl border border-white/[0.06] px-3 py-3 text-[10px] text-white/35 transition hover:border-white/15 hover:text-white/75">{course.archived ? "Reopen" : "Close course"}</button>
+        </div>
       </div>
     </article>
   );
