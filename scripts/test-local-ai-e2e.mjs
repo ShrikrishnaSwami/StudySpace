@@ -138,6 +138,7 @@ async function cleanup() {
     await remove("assignment attachment rows", admin.from("assignment_attachments").delete().eq("assignment_id", created.assignmentId));
   }
   if (created.conversationId) {
+    await remove("tutor messages", admin.from("ai_tutor_messages").delete().eq("conversation_id", created.conversationId));
     await remove("tutor conversation", admin.from("ai_tutor_conversations").delete().eq("id", created.conversationId));
   }
   if (created.submissionId) {
