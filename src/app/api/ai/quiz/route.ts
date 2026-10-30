@@ -235,9 +235,20 @@ Required format:
 
 Rules:
 
-- Generate exactly ${safeQuestionCount} questions.    const response = await withTimeout(
+- Generate exactly ${safeQuestionCount} questions.
+- Prefer multiple choice.
+- Multiple choice questions must have exactly 4 options.
+- correct_answer must exactly match the correct option.
+- Use true_false when appropriate.
+- Use short_answer sparingly.
+- Questions should test understanding and application.
+- Do not invent course-specific information unsupported by the notes.
+- Make the quiz appropriate for a university student.
+`;
+
+    const response = await withTimeout(
       generateAIResponse({
-      systemInstruction: `
+        systemInstruction: `
 You are StudySpace's educational assessment engine.
 
 Generate accurate university-level questions.
@@ -250,25 +261,11 @@ Never fabricate course-specific facts.
 
 Return JSON only.
 `,
-      prompt,
-      task: "quiz",
+        prompt,
+        task: "quiz",
       }),
       45_000,
-    ); information and student notes supplied in
-the prompt are authoritative for course-specific
-content.
-
-Never fabricate course-specific facts.
-
-Return JSON only.
-`,
-      prompt,
-      task: "quiz",
-      }),
-      new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error("Quiz generation timed out. Please try again with fewer questions.")), 45_000);
-      }),
-    ]);
+    );
 
     const parsed = extractJson(response);
 
