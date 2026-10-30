@@ -29,7 +29,7 @@ export async function cleanUserStoragePrefix(bucket: StorageBucketLike, userId: 
     const path = name.startsWith(userId + "/") ? name : prefix + "/" + name;
     if (
       !path.startsWith(userId + "/") ||
-      path.split("/").some((segment) => !segment || segment === "." || segment === ".." || segment.includes("\\\\"))
+      path.split("/").some((segment) => !segment || segment === "." || segment === ".." || segment.includes(String.fromCharCode(92)))
     ) {
       throw new Error("Storage returned a path outside the account prefix.");
     }
