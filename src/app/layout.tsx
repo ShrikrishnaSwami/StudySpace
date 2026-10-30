@@ -44,6 +44,7 @@ export const metadata: Metadata = {
     description:
       "A calmer home for courses, assignments, deadlines and study sessions.",
   },
+  icons: { icon: "/icon.svg", shortcut: "/icon.svg", apple: "/icon.svg" },
   robots: {
     index: true,
     follow: true,
