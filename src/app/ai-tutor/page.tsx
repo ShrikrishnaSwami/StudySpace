@@ -241,7 +241,7 @@ export default function AITutorPage() {
 
   const messagesEndRef =
     useRef<HTMLDivElement>(null);
-  const messagesContainerRef =
+  const chatLogRef =
     useRef<HTMLDivElement>(null);
 
   const textareaRef =
@@ -338,10 +338,10 @@ export default function AITutorPage() {
   ======================================================= */
 
   useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-    container.scrollTo({
-      top: container.scrollHeight,
+    const chatLog = chatLogRef.current;
+    if (!chatLog) return;
+    chatLog.scrollTo({
+      top: chatLog.scrollHeight,
       behavior: "smooth",
     });
   }, [conversationMessages.length, sending]);
@@ -1490,7 +1490,7 @@ export default function AITutorPage() {
               MESSAGES
           ================================================= */}
 
-          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto">
 
             {conversationMessages.length ===
             0 ? (
@@ -1554,7 +1554,7 @@ export default function AITutorPage() {
                  CHAT
               ============================================= */
 
-              <div style={{ transform: `translate3d(${chatPosition.x}px, ${chatPosition.y}px, 0)` }} className="ss-neural-chatlog mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
+              <div ref={chatLogRef} style={{ transform: `translate3d(${chatPosition.x}px, ${chatPosition.y}px, 0)` }} className="ss-neural-chatlog mx-auto w-full max-w-4xl px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
 
                 {conversationMessages.map(
                   (message, index) => {
