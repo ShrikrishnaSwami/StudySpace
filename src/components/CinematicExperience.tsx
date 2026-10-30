@@ -352,7 +352,12 @@ export default function CinematicExperience() {
 
               const workspaceCards = gsap.utils.toArray(
                 ".atelier-shell main [class*='rounded-2xl'], .atelier-shell main [class*='rounded-xl'], .atelier-shell main article, .atelier-shell main tr",
-              ).filter((node: any) => !node.closest("[role='dialog']"));
+              ).filter((node: any) =>
+                  !node.closest("[role='dialog']") &&
+                  !node.parentElement?.closest(
+                    ".atelier-shell main [class*='rounded-2xl'], .atelier-shell main [class*='rounded-xl'], .atelier-shell main article",
+                  ),
+                );
               workspaceCards.forEach((card: any, index: number) => {
                 gsap.fromTo(card,
                   { y: 68, scale: 0.94, rotateX: 7, transformPerspective: 1100, autoAlpha: 0, filter: "blur(7px)" },
