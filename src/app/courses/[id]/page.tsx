@@ -1770,7 +1770,12 @@ function EditCourseModal({
   const [classStartTime, setClassStartTime] = useState(course.class_start_time?.slice(0,5) || "09:00");
   const [classEndTime, setClassEndTime] = useState(course.class_end_time?.slice(0,5) || "10:00");
   const [classDays, setClassDays] = useState<number[]>(course.class_days || []);
-  const [timezone, setTimezone] = useState(course.timezone || "UTC");
+  const [timezone, setTimezone] = useState(course.timezone && course.timezone !== "UTC" ? course.timezone : "UTC");
+  useEffect(() => {
+    if (!course.timezone || course.timezone === "UTC") {
+      try { setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"); } catch { setTimezone("UTC"); }
+    }
+  }, [course.timezone]);
   const [progress, setProgress] = useState(
     String(course.progress ?? 0)
   );
