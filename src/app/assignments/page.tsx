@@ -718,7 +718,7 @@ export default function AssignmentsPage() {
       {showCreate && (
         <ViewportPortal>
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/70 px-4 pt-20 pb-8 backdrop-blur-sm sm:pt-24"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget && !creating) {
               setShowCreate(false);
