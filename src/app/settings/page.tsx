@@ -12,8 +12,9 @@ type Preferences = {
   emailNotifications: boolean;
   assignmentReminders: boolean;
   quizReminders: boolean;
+  classReminders: boolean;
 };
-const DEFAULTS: Preferences = { emailNotifications: true, assignmentReminders: true, quizReminders: true };
+const DEFAULTS: Preferences = { emailNotifications: true, assignmentReminders: true, quizReminders: true, classReminders: true };
 
 function Section({ icon: Icon, title, description, children }: {
   icon: typeof User; title: string; description: string; children: ReactNode;
@@ -101,6 +102,7 @@ export default function SettingsPage() {
           emailNotifications: typeof saved?.emailNotifications === "boolean" ? saved.emailNotifications : DEFAULTS.emailNotifications,
           assignmentReminders: typeof saved?.assignmentReminders === "boolean" ? saved.assignmentReminders : DEFAULTS.assignmentReminders,
           quizReminders: typeof saved?.quizReminders === "boolean" ? saved.quizReminders : DEFAULTS.quizReminders,
+          classReminders: typeof saved?.classReminders === "boolean" ? saved.classReminders : DEFAULTS.classReminders,
         };
         setPreferences(next);
       } catch (error) {
@@ -322,6 +324,7 @@ export default function SettingsPage() {
           <Toggle title="Email notifications" description="Your preference for future email updates. Automated email reminders are not currently sent." value={preferences.emailNotifications} onChange={v=>setPreferences(p=>({...p,emailNotifications:v}))}/>
           <div className="border-t border-white/[0.06] pt-5"><Toggle title="Assignment reminders" description="Show in-app reminders for due-soon and overdue assignments. Checks run when you open or refresh the dashboard." value={preferences.assignmentReminders} onChange={v=>setPreferences(p=>({...p,assignmentReminders:v}))}/></div>
           <div className="border-t border-white/[0.06] pt-5"><Toggle title="Quiz reminders" description="Show in-app reminders for quiz events on your calendar starting within 24 hours." value={preferences.quizReminders} onChange={v=>setPreferences(p=>({...p,quizReminders:v}))}/></div>
+          <div className="border-t border-white/[0.06] pt-5"><Toggle title="Class reminders" description="Show in-app reminders before automatically scheduled course classes begin." value={preferences.classReminders} onChange={v=>setPreferences(p=>({...p,classReminders:v}))}/></div>
         </Section>
 
         <Section icon={Gauge} title="AI usage" description="View your rolling 24-hour generation limits.">
