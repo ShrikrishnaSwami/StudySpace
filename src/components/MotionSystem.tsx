@@ -11,6 +11,14 @@ export default function MotionSystem() {
     root.classList.add("motion-ready");
 
     const revealSelectors = [
+      ".atelier-opening-center",
+      ".atelier-manifesto",
+      ".atelier-chapter-copy",
+      ".atelier-index-art",
+      ".atelier-ritual-art",
+      ".atelier-record-art",
+      ".atelier-closing",
+      ".atelier-footer",
       ".fr-hero-copy",
       ".fr-product-stage",
       ".fr-hero-footnote",
