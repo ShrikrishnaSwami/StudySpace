@@ -1369,6 +1369,7 @@ function EventDetails({
   onDelete: () => void;
   onToggle: () => void;
 }) {
+  const isCourseClass = event.source === "course" && event.event_type === "class";
   const color = getEventColor(
     event.event_type,
     event.color
@@ -1481,12 +1482,12 @@ function EventDetails({
 
             <button
               type="button"
-              aria-label="Delete calendar event"
+              aria-label={isCourseClass ? "Skip this class" : "Delete calendar event"}
               onClick={onDelete}
               className="flex items-center justify-center gap-1.5 rounded-xl border border-red-500/15 bg-red-500/[0.07] py-3 text-xs font-medium text-red-300 transition hover:bg-red-500/10"
             >
               <Trash2 size={14} />
-              Delete
+              {isCourseClass ? "Skip class" : "Delete"}
             </button>
           </div>
         </div>
