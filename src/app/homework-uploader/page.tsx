@@ -14,7 +14,6 @@ import {
   ArrowUpRight,
   Brain,
   BookOpen,
-  Check,
   CheckCircle2,
   Clock3,
   Download,
