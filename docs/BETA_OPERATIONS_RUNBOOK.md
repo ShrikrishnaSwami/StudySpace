@@ -4,7 +4,7 @@
 - GitHub Actions checks production liveness and database readiness every 15 minutes.
 - /api/health is a dependency-free liveness check; /api/health/ready verifies database connectivity without exposing credentials or user data.
 - AI Tutor logs request duration, time-to-first-token, context-load duration, retrieval wait, and streaming failures.
-- AI note extraction emits structured success/failure and duration events without prompts, completions, user IDs, or filenames.
+- The shared Gemini generation path records task, provider, model, attempt duration, success/failure, and provider-reported input/output/total token counts. Note extraction and grading also emit request-level outcome and duration events. Logs omit prompts, completions, user IDs, and filenames.
 - Existing AI quota and global budget limits are usage guardrails. Request counts are not dollar-cost measurements.
 
 ## Where to look
@@ -30,7 +30,7 @@
 
 ## AI quality and cost monitoring
 - Review request counts, quota use, provider errors, duration, and Tutor time-to-first-token daily during beta.
-- Do not infer spend from request count. Actual dollar cost requires provider/model attribution, token or image/PDF billing units, and current provider pricing.
+- Do not infer spend from request count. Token counts and provider/model attribution are logged for Gemini text/multimodal generation; dollar-cost reporting still requires applying Google's current per-model token and media pricing, and other provider-specific billing units.
 - Investigate repeated failures, unusually long requests, quota spikes, and low-confidence grading feedback.
 - Current structured metrics intentionally omit prompts, completions, student identifiers, and filenames.
 
