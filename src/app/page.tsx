@@ -18,9 +18,10 @@ const chapters = [
 export default function Home() {
   const [menu, setMenu] = useState(false);
   const [activeChapter, setActiveChapter] = useState("courses");
+  const [chapterPaused, setChapterPaused] = useState(false);
   const active = chapters.find((item) => item.id === activeChapter) ?? chapters[0];
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (chapterPaused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const chapterIds = chapters.map((chapter) => chapter.id);
     const cycle = window.setInterval(() => {
       setActiveChapter((current) => {
@@ -29,7 +30,7 @@ export default function Home() {
       });
     }, 3600);
     return () => window.clearInterval(cycle);
-  }, []);
+  }, [chapterPaused]);
   const PreviewIcon = active.icon;
 
   return (
@@ -72,8 +73,8 @@ export default function Home() {
       <section className="ss-editorial-workspace" id="workspace">
         <div className="ss-editorial-section-head"><p className="ss-editorial-kicker">A PLACE FOR EACH PART OF THE WORK</p><span>01 — 04 / EXPLORE THE DESK</span></div>
         <div className="ss-editorial-workspace-layout">
-          <div className="ss-editorial-chapters" role="tablist" aria-label="StudySpace features">
-            {chapters.map((chapter) => { const Icon = chapter.icon; const selected = activeChapter === chapter.id; return <button key={chapter.id} type="button" role="tab" aria-selected={selected} aria-controls="ss-feature-preview" onMouseEnter={() => setActiveChapter(chapter.id)} onFocus={() => setActiveChapter(chapter.id)} onClick={() => setActiveChapter(chapter.id)} className={selected ? "is-active" : ""}><span className="ss-chapter-number">{chapter.number}</span><span className="ss-chapter-copy"><b>{chapter.title}</b><small>{chapter.copy}</small></span><Icon className="ss-chapter-icon" size={18}/><ArrowUpRight className="ss-chapter-arrow" size={16}/></button>; })}
+          <div className="ss-editorial-chapters" role="group" aria-label="Explore StudySpace features" onPointerEnter={() => setChapterPaused(true)} onPointerLeave={() => setChapterPaused(false)} onFocusCapture={() => setChapterPaused(true)} onBlurCapture={() => setChapterPaused(false)}>
+            {chapters.map((chapter) => { const Icon = chapter.icon; const selected = activeChapter === chapter.id; return <button key={chapter.id} type="button" aria-pressed={selected} aria-controls="ss-feature-preview" onMouseEnter={() => setActiveChapter(chapter.id)} onFocus={() => setActiveChapter(chapter.id)} onClick={() => setActiveChapter(chapter.id)} className={selected ? "is-active" : ""}><span className="ss-chapter-number">{chapter.number}</span><span className="ss-chapter-copy"><b>{chapter.title}</b><small>{chapter.copy}</small></span><Icon className="ss-chapter-icon" size={18}/><ArrowUpRight className="ss-chapter-arrow" size={16}/></button>; })}
           </div>
           <div className="ss-editorial-preview-wrap">
             <div className="ss-editorial-preview" id="ss-feature-preview" role="tabpanel" aria-label={active.title}>
