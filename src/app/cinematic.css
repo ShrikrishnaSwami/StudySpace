@@ -322,3 +322,29 @@ body > div[class~="min-h-screen"][class~="items-center"][class~="justify-center"
     transition-duration: .01ms !important;
   }
 }
+
+
+/* Full-screen editorial route transition, created after React hydration. */
+.ss-route-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(185,162,122,.2), transparent 42%),
+    linear-gradient(145deg, #242117 0%, #100f0c 58%, #0b0b09 100%);
+  will-change: clip-path;
+}
+.ss-route-curtain::after {
+  position: absolute;
+  top: 0;
+  right: clamp(24px, 5vw, 76px);
+  width: 1px;
+  height: 100%;
+  content: "";
+  background: linear-gradient(transparent, rgba(185,162,122,.62), transparent);
+  opacity: .65;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ss-route-curtain { display: none !important; }
+}
