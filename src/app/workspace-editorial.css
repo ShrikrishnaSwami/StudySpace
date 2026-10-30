@@ -653,3 +653,75 @@ html[data-theme="light"] .landing-page .hero-badge,
 html[data-theme="light"] .landing-page .section-eyebrow {
   color: #91681f !important;
 }
+
+
+/* Extend the warmer balance to the full-page canvases and feature surfaces. */
+.ss-home,
+.ss-landing,
+.ss-editorial,
+.fr-home,
+.landing-page {
+  background:
+    radial-gradient(ellipse at 16% 8%, rgba(229,189,89,.16), transparent 34%),
+    radial-gradient(ellipse at 86% 18%, rgba(132,98,205,.075), transparent 30%),
+    #100f0c !important;
+}
+.ss-home .ss-logo-shape,
+.ss-home .ss-join,
+.ss-home .ss-cta,
+.ss-landing .ss-brand-mark,
+.ss-editorial .ss-brand-mark {
+  background: linear-gradient(112deg, #f0ca68 0%, #dfb34e 70%, #9874d4 100%) !important;
+  color: #241b0a !important;
+  border-color: rgba(245,215,126,.55) !important;
+}
+.ss-home .ss-tool-card,
+.ss-home .ss-feature-strip,
+.ss-landing .ss-feature-card,
+.ss-editorial .ss-editorial-preview,
+.fr-home .fr-feature-card {
+  border-color: rgba(229,189,89,.2) !important;
+}
+.ss-home .ss-tool-card:hover,
+.ss-home .ss-feature-item:hover,
+.ss-landing .ss-feature-card:hover,
+.ss-editorial .ss-editorial-preview:hover,
+.fr-home .fr-feature-card:hover {
+  border-color: rgba(229,189,89,.48) !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.2), 0 0 28px rgba(229,189,89,.08) !important;
+}
+.ss-home .ss-tool-icon,
+.ss-home .ss-feature-icon,
+.ss-landing .ss-feature-icon,
+.ss-editorial .ss-chapter-icon,
+.fr-home .fr-feature-icon {
+  color: #f0ce79 !important;
+  background: linear-gradient(135deg, rgba(229,189,89,.2), rgba(132,98,205,.08)) !important;
+  border-color: rgba(229,189,89,.22) !important;
+}
+html[data-theme="light"] .ss-home,
+html[data-theme="light"] .ss-landing,
+html[data-theme="light"] .ss-editorial,
+html[data-theme="light"] .fr-home,
+html[data-theme="light"] .landing-page {
+  background:
+    radial-gradient(ellipse at 14% 0%, rgba(229,189,89,.2), transparent 36%),
+    radial-gradient(ellipse at 90% 12%, rgba(141,107,212,.06), transparent 28%),
+    #fbf8ef !important;
+}
+html[data-theme="light"] .ss-home .ss-tool-card,
+html[data-theme="light"] .ss-home .ss-feature-strip,
+html[data-theme="light"] .ss-landing .ss-feature-card,
+html[data-theme="light"] .ss-editorial .ss-editorial-preview,
+html[data-theme="light"] .fr-home .fr-feature-card {
+  border-color: rgba(164,120,35,.2) !important;
+  background: linear-gradient(135deg, #fffdf7, #f8f1dc 76%, #f5f0fb) !important;
+}
+html[data-theme="light"] .ss-home .ss-tool-icon,
+html[data-theme="light"] .ss-home .ss-feature-icon,
+html[data-theme="light"] .ss-landing .ss-feature-icon,
+html[data-theme="light"] .ss-editorial .ss-chapter-icon,
+html[data-theme="light"] .fr-home .fr-feature-icon {
+  color: #8f671d !important;
+  background: linear-gradient(135deg, rgba(229,189,89,.28), rgba(141,107,212,.07)) !important;
+}
