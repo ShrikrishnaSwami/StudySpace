@@ -1281,6 +1281,7 @@ export default function HomeworkUploaderPage() {
               </form>
             </div>
           </div>
+          </ViewportPortal>
         )}
 
         {/* DETAILS MODAL */}
@@ -1664,6 +1665,7 @@ export default function HomeworkUploaderPage() {
               </div>
             </div>
           </div>
+          </ViewportPortal>
         )}
 
         {/* DELETE CONFIRMATION */}
@@ -1707,6 +1709,7 @@ export default function HomeworkUploaderPage() {
               </div>
             </div>
           </div>
+          </ViewportPortal>
         )}
       </div>
     </AppShell>
