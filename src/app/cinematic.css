@@ -530,3 +530,24 @@ body > main[class~="items-center"][class~="justify-center"] > div[class*="rounde
 .ss-calendar-event-month { animation-duration: .38s; }
 @keyframes ss-calendar-event-in { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .ss-focus-orb-core, .ss-calendar-event { animation: none !important; transition: none !important; } }
+
+
+/* NEURAL INTELLIGENCE ENVIRONMENT — deep-space blue, living network, luminous brain. */
+.ss-neural-scene { isolation:isolate; perspective:1000px; }
+.ss-neural-scene::before { content:""; position:absolute; inset:8% 0; background:radial-gradient(ellipse at 50% 48%,rgba(19,104,190,.22),transparent 58%),radial-gradient(ellipse at 50% 50%,rgba(40,68,190,.13),transparent 76%); filter:blur(18px); }
+.ss-neural-web { overflow:visible; opacity:.92; animation:ss-neural-drift 22s ease-in-out infinite alternate; }
+.ss-neural-web path { stroke-dasharray:3 7; animation:ss-neural-flow 13s linear infinite; }
+.ss-brain-aura { border-radius:50%; background:radial-gradient(ellipse,rgba(62,172,255,.34) 0%,rgba(50,104,240,.13) 43%,transparent 72%); filter:blur(18px); animation:ss-brain-aura 4.8s ease-in-out infinite; }
+.ss-digital-brain { overflow:visible; filter:drop-shadow(0 0 16px rgba(68,177,255,.7)); transform-origin:50% 50%; animation:ss-brain-float 7s ease-in-out infinite; }
+.ss-neural-scene.is-thinking .ss-digital-brain { animation-duration:2.2s; filter:drop-shadow(0 0 24px rgba(89,197,255,.95)); }
+.ss-neural-scene.is-thinking .ss-neural-web { animation-duration:5s; }
+.ss-neural-scene.is-listening .ss-brain-aura { animation-duration:1.5s; }
+.ss-neural-caption { color:rgba(133,198,255,.55); text-shadow:0 0 16px rgba(49,147,255,.45); }
+.ss-neural-mini { background:radial-gradient(circle,rgba(42,137,235,.22),rgba(8,24,48,.7)); border:1px solid rgba(100,181,255,.22); box-shadow:0 0 22px rgba(40,132,240,.16),inset 0 0 16px rgba(50,150,255,.13); }
+.ss-neural-mini-core { width:12px;height:15px;border-radius:55% 45% 55% 45%;background:linear-gradient(135deg,#b9efff,#318ee8 65%,#7a79ff);box-shadow:0 0 12px #45aaff;transform:rotate(25deg); }
+.ss-neural-mini-node { position:absolute;width:5px;height:5px;border-radius:50%;background:#c2f0ff;box-shadow:0 0 8px #58baff;top:7px;right:7px; }
+@keyframes ss-neural-drift { from { transform:translate3d(-5px,3px,0) scale(1); } to { transform:translate3d(7px,-5px,0) scale(1.025); } }
+@keyframes ss-neural-flow { to { stroke-dashoffset:-100; } }
+@keyframes ss-brain-float { 0%,100% { transform:translate(-50%,-50%) translateY(0) rotate(-1deg) scale(1); } 50% { transform:translate(-50%,-50%) translateY(-11px) rotate(1.5deg) scale(1.025); } }
+@keyframes ss-brain-aura { 0%,100% { opacity:.58; transform:translate(-50%,-50%) scale(.9); } 50% { opacity:1; transform:translate(-50%,-50%) scale(1.12); } }
+@media (prefers-reduced-motion:reduce) { .ss-neural-web,.ss-digital-brain,.ss-brain-aura,.ss-neural-mini-core { animation:none!important; } }
