@@ -1256,7 +1256,7 @@ export default function AITutorPage() {
               <label className="min-w-0 flex-1 text-[9px] tracking-[.12em] text-stone-500">NUMBER OF NODES
                 <input type="number" min="1" max="12" value={nodeCount} onChange={event => setNodeCount(event.target.value)} className="mt-2 block w-full border border-[#b9a783]/25 bg-black/25 px-3 py-2 text-sm text-stone-100 outline-none focus:border-[#b9a783]/60"/>
               </label>
-              <button type="button" onClick={createStudyNodes} disabled={workspaceWindows.length >= 18} className="flex h-[39px] items-center gap-2 bg-[#b9a783] px-4 text-[10px] font-semibold tracking-wide text-[#211e18] transition hover:bg-[#d0bd98] disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5"/> Create nodes</button>
+              <button type="button" onClick={createStudyNodes} disabled={studyNodes.length >= 24} className="flex h-[39px] items-center gap-2 bg-[#b9a783] px-4 text-[10px] font-semibold tracking-wide text-[#211e18] transition hover:bg-[#d0bd98] disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5"/> Create nodes</button>
             </div>
             <div className="mt-3">
               <label className="text-[9px] tracking-[.12em] text-stone-500">CHILD NODE TYPE
