@@ -110,7 +110,9 @@ test("file-based image/document parts remain on Gemini with JSON response mode",
     maxOutputTokens: 1024,
     temperature: 0.2,
   });
-  assert.equal(request.contents[0].parts[0].inlineData.mimeType, "image/png");
+  const filePart = request.contents[0].parts[0];
+  assert.ok("inlineData" in filePart);
+  if ("inlineData" in filePart) assert.equal(filePart.inlineData.mimeType, "image/png");
   assert.deepEqual(request.config.responseMimeType, "application/json");
 });
 
