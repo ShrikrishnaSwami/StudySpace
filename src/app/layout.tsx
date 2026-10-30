@@ -20,11 +20,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "StudySpace — Make room for what matters",
+    default: "StudySpace — Courses, notes, deadlines and study tools",
     template: "%s | StudySpace",
   },
   description:
-    "A calmer home for student life. Organize courses, assignments, deadlines, notes, quizzes and study sessions in one workspace.",
+    "StudySpace keeps courses, lecture notes, assignments, deadlines, quizzes and an AI study partner together in one student workspace.",
   applicationName: "StudySpace",
   keywords: [
     "student planner",
@@ -36,17 +36,17 @@ export const metadata: Metadata = {
     "flashcards",
   ],
   openGraph: {
-    title: "StudySpace — Make room for what matters",
+    title: "StudySpace — Courses, notes, deadlines and study tools",
     description:
-      "Your courses, deadlines, notes and study tools — organized in one calm workspace.",
+      "Courses, notes, assignments and study tools in one place.",
     siteName: "StudySpace",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "StudySpace — Make room for what matters",
+    title: "StudySpace — Courses, notes, deadlines and study tools",
     description:
-      "A calmer home for courses, assignments, deadlines and study sessions.",
+      "Keep your courses, notes, deadlines and study tools together.",
   },
   icons: { icon: "/icon.svg", shortcut: "/icon.svg", apple: "/icon.svg" },
   robots: {
