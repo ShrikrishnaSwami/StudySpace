@@ -230,7 +230,13 @@ The student's submitted work is the student submission note and files. Reference
       }).filter(Boolean).join("\n")] : []),
     ].join("\n\n");
 
-    const confidenceValue = Number(result.confidence);\n    const confidence = Number.isFinite(confidenceValue) ? Math.max(0, Math.min(1, confidenceValue)) : 0.5;\n    const uncertainty = typeof result.uncertainty === "string" && result.uncertainty.trim() ? result.uncertainty.trim().slice(0, 1200) : "Review the original submission for unreadable or incomplete evidence.";\n    const aiGradedAt = new Date().toISOString();
+    const confidenceValue = Number(result.confidence);
+    const confidence = Number.isFinite(confidenceValue) ? Math.max(0, Math.min(1, confidenceValue)) : 0.5;
+    const uncertainty = typeof result.uncertainty === "string" && result.uncertainty.trim()
+      ? result.uncertainty.trim().slice(0, 1200)
+      : "Review the original submission for unreadable or incomplete evidence.";
+    details += `\n\nConfidence: ${Math.round(confidence * 100)}% (qualitative estimate, not a calibrated probability).\nUncertainty / limitations: ${uncertainty}`;
+    const aiGradedAt = new Date().toISOString();
     const { data: saved, error: saveError } = await admin.from("assignment_submissions")
       .update({ ai_grade: score, ai_feedback: details, ai_graded_at: aiGradedAt, updated_at: aiGradedAt })
       .eq("id", submissionId)
