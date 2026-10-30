@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { consumeAiQuota } from "@/lib/api-security";
+import { consumeAiQuota, readBoundedJson } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 
 import { streamStudySpaceAnswer } from "@/lib/studyspace-ai";
@@ -37,34 +37,6 @@ function createSupabaseServerClient(token: string) {
   });
 }
 
-
-async function readBoundedJson(request: Request, maxBytes: number): Promise<unknown> {
-  const declaredLength = Number(request.headers.get("content-length") || 0);
-  if (declaredLength > maxBytes) throw new Error("REQUEST_TOO_LARGE");
-  if (!request.body) throw new Error("INVALID_JSON");
-  const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      total += value.byteLength;
-      if (total > maxBytes) {
-        await reader.cancel();
-        throw new Error("REQUEST_TOO_LARGE");
-      }
-      chunks.push(value);
-    }
-  } finally {
-    reader.releaseLock();
-  }
-  try {
-    return JSON.parse(Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)), total).toString("utf8")) as unknown;
-  } catch {
-    throw new Error("INVALID_JSON");
-  }
-}
 
 type RequestBody = {
   message?: string;
