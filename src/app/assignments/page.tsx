@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import ViewportPortal from "@/components/ViewportPortal";
 import { createClient } from "@/lib/supabase/client";
 
 type Course = {
@@ -715,6 +716,7 @@ export default function AssignmentsPage() {
       </div>
 
       {showCreate && (
+        <ViewportPortal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm"
           onMouseDown={(event) => {
@@ -895,6 +897,7 @@ export default function AssignmentsPage() {
             )}
           </div>
         </div>
+        </ViewportPortal>
       )}
       </main>
     </AppShell>
