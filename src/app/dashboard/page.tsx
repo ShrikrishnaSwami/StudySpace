@@ -936,7 +936,7 @@ export default function DashboardPage() {
                   <Sparkles className="h-3.5 w-3.5" />
                 </span>
 
-                WHAT'S ON YOUR LIST TODAY
+                WHAT&apos;S ON YOUR LIST TODAY
               </div>
 
               <h1 className="text-3xl font-semibold tracking-[-0.055em] text-white sm:text-4xl lg:text-[46px]">
@@ -1090,7 +1090,7 @@ export default function DashboardPage() {
                   </div>
 
                   <p className="mt-1 max-w-2xl text-sm leading-6 text-white/40">
-                    A short list based on the assignments and deadlines you've added.
+                    A short list based on the assignments and deadlines you&apos;ve added.
                   </p>
                 </div>
               </div>
