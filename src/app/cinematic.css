@@ -515,3 +515,18 @@ body > main[class~="items-center"][class~="justify-center"] > div[class*="rounde
   50% { box-shadow: 0 0 0 9px rgba(218,188,132,0), 0 0 25px rgba(218,188,132,.25); transform: scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) { .ss-voice-listening { animation: none; } }
+
+
+/* Focus timer: a live instrument panel that responds to session state. */
+.ss-focus-orb { filter: drop-shadow(0 0 28px rgba(139,92,246,.12)); }
+.ss-focus-orb svg circle:last-child { transition: stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1); }
+.ss-focus-orb-core { border: 1px solid rgba(196,181,253,.12); background: radial-gradient(circle at 50% 42%, rgba(139,92,246,.17), rgba(20,15,35,.08) 58%, transparent 76%); box-shadow: inset 0 0 55px rgba(139,92,246,.08), 0 0 70px rgba(139,92,246,.08); transition: transform .8s ease, box-shadow .8s ease; }
+.ss-focus-orb.is-running .ss-focus-orb-core { transform: scale(1.045); box-shadow: inset 0 0 70px rgba(167,139,250,.16), 0 0 90px rgba(139,92,246,.18); animation: ss-focus-breathe 4.5s ease-in-out infinite; }
+@keyframes ss-focus-breathe { 0%,100% { opacity: .72; transform: scale(1.015); } 50% { opacity: 1; transform: scale(1.065); } }
+
+/* Calendar entries arrive with a restrained stagger-like lift. */
+.ss-calendar-event { animation: ss-calendar-event-in .48s cubic-bezier(.2,.8,.2,1) both; transform-origin: center; }
+.ss-calendar-event:hover { transform: translateY(-2px) scale(1.015); }
+.ss-calendar-event-month { animation-duration: .38s; }
+@keyframes ss-calendar-event-in { from { opacity: 0; transform: translateY(8px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .ss-focus-orb-core, .ss-calendar-event { animation: none !important; transition: none !important; } }
