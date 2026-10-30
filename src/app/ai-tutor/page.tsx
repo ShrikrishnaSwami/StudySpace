@@ -976,12 +976,10 @@ export default function AITutorPage() {
   }
 
   async function handleStarterPrompt(prompt: string) {
-    if (!selectedConversationId) {
-      const conversation = await createConversation();
-      if (!conversation) return;
-    }
-    setInput(prompt);
     setActivePanel("new-chat");
+    const conversation = await createConversation();
+    if (!conversation) return;
+    setInput(prompt);
     window.setTimeout(() => textareaRef.current?.focus(), 100);
   }
 
@@ -990,12 +988,14 @@ export default function AITutorPage() {
       setActivePanel(null);
       return;
     }
-    if (action === "new-chat" && (!selectedConversationId || conversationMessages.length > 0)) {
+    if (action === "new-chat") {
+      setActivePanel("new-chat");
       const conversation = await createConversation();
       if (!conversation) return;
+      window.setTimeout(() => textareaRef.current?.focus(), 100);
+      return;
     }
     setActivePanel(action);
-    if (action === "new-chat") window.setTimeout(() => textareaRef.current?.focus(), 100);
   }
 
   /* =======================================================
