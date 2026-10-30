@@ -9,6 +9,7 @@ const required = [
   "E2E_STUDENT_EMAIL",
   "E2E_STUDENT_PASSWORD",
   "E2E_PROJECT_REF",
+  "E2E_CONFIRM_ISOLATED_PROJECT",
   "E2E_BASE_URL",
 ];
 for (const name of required) {
@@ -29,13 +30,14 @@ assert(
   "This suite only runs against a local StudySpace server (localhost / 127.0.0.1).",
 );
 assert.notEqual(projectRef, PRODUCTION_PROJECT_REF, "The production StudySpace Supabase project is blocked.");
+assert.equal(process.env.E2E_CONFIRM_ISOLATED_PROJECT.trim(), projectRef, "Explicitly confirm the isolated Supabase project by setting E2E_CONFIRM_ISOLATED_PROJECT to the exact project reference.");
 assert(!supabaseUrl.includes(PRODUCTION_PROJECT_REF), "Production Supabase URL is blocked.");
 if (parsedSupabaseUrl.hostname.endsWith(".supabase.co")) {
   assert.equal(parsedSupabaseUrl.hostname.split(".")[0], projectRef, "E2E_PROJECT_REF must match the isolated Supabase project URL.");
 }
 assert(
-  projectRef === "local" || projectRef.startsWith("e2e-") || projectRef.startsWith("test-") || projectRef !== PRODUCTION_PROJECT_REF,
-  "Use an explicitly isolated Supabase project reference.",
+  ["localhost", "127.0.0.1", "::1"].includes(parsedSupabaseUrl.hostname) || parsedSupabaseUrl.hostname.endsWith(".supabase.co"),
+  "Use a local Supabase instance or a dedicated Supabase test project.",
 );
 
 const admin = createClient(supabaseUrl, process.env.E2E_SUPABASE_SERVICE_ROLE_KEY, {
