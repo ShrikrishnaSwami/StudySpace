@@ -73,7 +73,7 @@ jobs:
       - name: Decrypt using the separately stored age identity
         shell: bash
         env:
-          AGE_IDENTITY: ${{ secrets.BACKUP_AGE_IDENTITY }}
+          AGE_IDENTITY: ${{ secrets.BACKUP_AGE_IDENTITY_RESTORE }}
         run: |
           set -euo pipefail
           if [[ -z "${AGE_IDENTITY:-}" ]]; then
