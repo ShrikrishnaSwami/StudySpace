@@ -90,12 +90,13 @@ export async function POST(request: NextRequest) {
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
     }
+    const input = body as Record<string, unknown>;
     const {
       courseId,
       topic: rawTopic,
       difficulty: rawDifficulty = "medium",
       questionCount = 10,
-    } = body;
+    } = input;
 
     if (typeof courseId !== "string" || !courseId.trim()) {
       return NextResponse.json(
