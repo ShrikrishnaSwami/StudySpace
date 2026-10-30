@@ -4,71 +4,205 @@ import Link from "next/link";
 import StudySpaceMark from "@/components/StudySpaceMark";
 import MotionSystem from "@/components/MotionSystem";
 import { useState } from "react";
-import { ArrowRight, ArrowUpRight, BookOpen, Brain, CalendarDays, Check, CheckCircle2, ChevronRight, Clock3, FileText, GraduationCap, Layers3, Menu, Sparkles, Target, X, Zap } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUpRight,
+  BookOpen,
+  Brain,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  Clock3,
+  FileText,
+  GraduationCap,
+  Menu,
+  Sparkles,
+  X,
+} from "lucide-react";
 
-const navItems=[{label:"Workspace",href:"#workspace"},{label:"Features",href:"#features"},{label:"How it works",href:"#how-it-works"}];
-const features=[
- {icon:CalendarDays,title:"Everything on the calendar",text:"See deadlines, classes and study blocks before they sneak up on you.",href:"/calendar",tone:"violet"},
- {icon:BookOpen,title:"Your courses, together",text:"Keep notes, assignments and useful resources connected to each class.",href:"/courses",tone:"blue"},
- {icon:Brain,title:"An AI study partner",text:"Get unstuck, practise a concept or break a big topic into smaller steps.",href:"/ai-tutor",tone:"pink"},
- {icon:Target,title:"AI grading that teaches",text:"Submit your work and get a score, clear feedback, and practical next steps.",href:"/assignments",tone:"orange"},
+const navigation = [
+  { label: "The index", href: "#index" },
+  { label: "The ritual", href: "#ritual" },
+  { label: "The record", href: "#record" },
 ];
 
-export default function Home(){
- const [menuOpen,setMenuOpen]=useState(false);
- return <main id="main-content" className="fr-home">
-  <MotionSystem />
-  <div className="fr-ambient" aria-hidden="true"/>
-  <header className="fr-nav-wrap"><nav className="fr-nav" aria-label="Main navigation">
-   <Link href="/" className="fr-brand"><StudySpaceMark size={36} className="fr-brand-mark" /><span>studyspace<span className="fr-brand-period">.</span></span></Link>
-   <div className="fr-nav-links">{navItems.map(item=><a key={item.href} href={item.href}>{item.label}</a>)}</div>
-   <div className="fr-nav-actions"><Link href="/login" className="fr-login">Log in</Link><Link href="/signup" className="fr-button fr-button-small">Get started <ArrowUpRight size={15}/></Link></div>
-   <button className="fr-menu-toggle" type="button" aria-label={menuOpen?"Close menu":"Open menu"} aria-expanded={menuOpen} onClick={()=>setMenuOpen(v=>!v)}>{menuOpen?<X size={20}/>:<Menu size={20}/>}</button>
-  </nav>{menuOpen&&<div className="fr-mobile-menu">{navItems.map(item=><a key={item.href} href={item.href} onClick={()=>setMenuOpen(false)}>{item.label}<ArrowUpRight size={15}/></a>)}<Link href="/login" onClick={()=>setMenuOpen(false)}>Log in</Link><Link href="/signup" className="fr-mobile-cta" onClick={()=>setMenuOpen(false)}>Get started <ArrowRight size={16}/></Link></div>}</header>
+export default function Home() {
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  <section className="fr-hero">
-   <div className="fr-hero-copy"><a href="#workspace" className="fr-announcement"><span className="fr-live-dot"/><span>A calmer way to do student life</span><span className="fr-announcement-arrow"><ArrowUpRight size={13}/></span></a>
-    <h1>Your semester,<br/>finally <span>in sync.</span></h1>
-    <p className="fr-hero-description">One workspace for classes, assignments, notes, and AI-powered grading. Get clear feedback on your work and spend less time keeping track of everything.</p>
-    <div className="fr-hero-actions"><Link href="/signup" className="fr-button">Build your workspace <ArrowRight size={17}/></Link><Link href="/login" className="fr-secondary-link">I already have an account <ChevronRight size={16}/></Link></div>
-    <div className="fr-trust-row"><div className="fr-avatar-stack"><span>S</span><span>✳</span><span>↗</span></div><div><strong>Made for real student days.</strong><small>Start free. Make it yours as you go.</small></div></div>
-   </div>
+  return (
+    <main id="main-content" className="atelier-home">
+      <MotionSystem />
+      <div className="atelier-grain" aria-hidden="true" />
+      <header className="atelier-header">
+        <Link href="/" className="atelier-wordmark" aria-label="StudySpace home">
+          <StudySpaceMark size={30} animated={false} />
+          <span>STUDYSPACE</span>
+          <i>®</i>
+        </Link>
+        <nav className="atelier-nav" aria-label="Main navigation">
+          {navigation.map((item) => (
+            <a href={item.href} key={item.href}>{item.label}</a>
+          ))}
+        </nav>
+        <div className="atelier-header-actions">
+          <Link href="/login" className="atelier-login">Sign in</Link>
+          <Link href="/signup" className="atelier-enter">Enter <ArrowUpRight size={14} /></Link>
+        </div>
+        <button className="atelier-menu-button" type="button" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}>
+          {menuOpen ? <X size={19} /> : <Menu size={19} />}
+        </button>
+      </header>
 
-   <div className="fr-product-stage" id="workspace" aria-label="Preview of the StudySpace student dashboard"><div className="fr-stage-orbit fr-stage-orbit-one"/><div className="fr-stage-orbit fr-stage-orbit-two"/>
-    <div className="fr-product-window"><div className="fr-window-top"><div className="fr-window-dots"><i/><i/><i/></div><div className="fr-window-address"><span/> app.studyspace</div><div className="fr-window-top-right"><span/><span/><span/></div></div>
-     <div className="fr-app-preview"><aside className="fr-preview-sidebar">
-      <div className="fr-preview-logo"><StudySpaceMark size={24} animated={false} /> StudySpace</div><div className="fr-preview-label">WORKSPACE</div>
-      <div className="fr-preview-nav active"><Layers3 size={13}/> Overview</div><div className="fr-preview-nav"><BookOpen size={13}/> My courses</div><div className="fr-preview-nav"><CheckCircle2 size={13}/> Assignments</div><div className="fr-preview-nav"><CalendarDays size={13}/> Calendar</div><div className="fr-preview-nav"><Brain size={13}/> AI study room</div>
-      <div className="fr-preview-sidebar-bottom"><span className="fr-preview-avatar">S</span><span>My workspace<small>Personal space</small></span><ChevronRight size={12}/></div>
-     </aside>
-     <div className="fr-preview-main"><div className="fr-preview-topline"><span>MONDAY, OCTOBER 26</span><div className="fr-preview-top-actions"><span className="fr-preview-search">⌕ <small>Search anything</small></span><span className="fr-preview-bell">♧</span></div></div>
-      <div className="fr-preview-heading"><div><p>YOUR OVERVIEW</p><h2>Hey there, you’ve got this.</h2><span>Here’s your day, at a glance.</span></div><div className="fr-preview-day">MON <b>26</b></div></div>
-      <div className="fr-preview-stats"><div><span>UP NEXT</span><b>03 <small>tasks</small></b><i className="fr-stat-violet"><Check size={12}/></i></div><div><span>THIS WEEK</span><b>72<small>%</small></b><div className="fr-mini-progress"><i/></div></div><div><span>STUDY TIME</span><b>2.5<small> hrs</small></b><i className="fr-stat-blue"><Clock3 size={12}/></i></div></div>
-      <div className="fr-preview-lower"><div className="fr-preview-tasks"><div className="fr-preview-section-head"><b>On your plate</b><span>View all ↗</span></div>
-       <div className="fr-preview-task"><span className="fr-task-check checked"><Check size={10}/></span><span><b>Read chapter 4</b><small>Psychology · 20 min</small></span><em>DONE</em></div>
-       <div className="fr-preview-task"><span className="fr-task-check"/><span><b>Calculus problem set</b><small>Math 101 · Due tomorrow</small></span><em className="task-soon">SOON</em></div>
-       <div className="fr-preview-task"><span className="fr-task-check"/><span><b>Review lecture notes</b><small>Biology · 30 min</small></span></div>
-      </div><div className="fr-preview-ai"><div className="fr-ai-icon"><Sparkles size={14}/></div><span className="fr-ai-label">YOUR AI INSTRUCTOR</span><b>Learn from every result.</b><p>Get a score, useful feedback, and clear next steps on submitted work.</p><div className="fr-ai-prompt">Review my feedback <ArrowRight size={11}/></div></div></div>
-     </div></div>
-    </div>
-    <div className="fr-float-card fr-float-top"><span className="fr-float-check"><Check size={13}/></span><span><b>One less thing to remember</b><small>Assignment marked complete</small></span></div>
-    <div className="fr-float-card fr-float-bottom"><span className="fr-float-spark"><Sparkles size={15}/></span><span><b>A little momentum</b><small>3 tasks moved forward today</small></span><span className="fr-float-up">↗</span></div>
-   </div>
-   <div className="fr-hero-footnote"><span>01 / A LITTLE MORE CLARITY</span><span>MADE FOR THE WAY STUDENTS ACTUALLY WORK <ArrowUpRight size={13}/></span></div>
-  </section>
+      {menuOpen && (
+        <nav className="atelier-mobile-nav" aria-label="Mobile navigation">
+          {navigation.map((item) => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>{item.label}<ArrowUpRight size={14} /></a>)}
+          <Link href="/login" onClick={() => setMenuOpen(false)}>Sign in</Link>
+          <Link href="/signup" onClick={() => setMenuOpen(false)}>Enter StudySpace <ArrowRight size={15} /></Link>
+        </nav>
+      )}
 
-  <section className="fr-logo-strip" aria-label="StudySpace tools"><span>ONE HOME FOR YOUR</span><b><CalendarDays size={16}/> Deadlines</b><i/><b><BookOpen size={16}/> Courses</b><i/><b><Brain size={16}/> AI study tools</b><i/><b><FileText size={16}/> Notes</b><i/><b><Zap size={16}/> Practice</b></section>
-  <section className="fr-features" id="features"><div className="fr-section-intro"><div><span className="fr-eyebrow"><span/> EVERYTHING CONNECTED</span><h2>All the moving parts.<br/><span>One clear picture.</span></h2></div><p>Not another productivity system to maintain. Just the tools you need, connected in a way that makes the next step easier to see.</p></div>
-   <div className="fr-feature-grid">{features.map(({icon:Icon,title,text,href,tone},index)=><Link href={href} key={title} className={`fr-feature-card fr-feature-${tone}`}>
-    <div className="fr-feature-card-top"><span>0{index+1} / STUDYSPACE</span><span className="fr-feature-icon"><Icon size={20}/></span></div>
-    <div className="fr-feature-illustration" aria-hidden="true">{index===0?<div className="fr-illustration-calendar"><span>MON</span><b>26</b><i/><i/><i/></div>:index===1?<div className="fr-illustration-books"><span><BookOpen size={22}/></span><span><FileText size={22}/></span><span><Layers3 size={22}/></span></div>:index===2?<div className="fr-illustration-ai"><Sparkles size={25}/><span>Explain it another way...</span><ArrowRight size={14}/></div>:<div className="fr-illustration-progress"><span>THIS WEEK</span><b>72%</b><i><em/></i><small>You’re finding your rhythm.</small></div>}</div>
-    <h3>{title}</h3><p>{text}</p><span className="fr-feature-link">Explore feature <ArrowUpRight size={15}/></span>
-   </Link>)}</div>
-  </section>
-  <section className="fr-how" id="how-it-works"><div className="fr-how-heading"><span className="fr-eyebrow"><span/> A BETTER WAY TO GET STARTED</span><h2>Less setup.<br/><span>More getting somewhere.</span></h2><p>Start with what you have. Build the rest as your semester unfolds.</p></div>
-   <div className="fr-steps"><article><span className="fr-step-number">01</span><div className="fr-step-icon"><GraduationCap size={20}/></div><h3>Bring your classes in</h3><p>Set up your courses and gather the work that usually ends up scattered across tabs.</p></article><article><span className="fr-step-number">02</span><div className="fr-step-icon"><CalendarDays size={20}/></div><h3>See what’s coming</h3><p>Assignments and plans become easier to manage when they live in the same place.</p></article><article><span className="fr-step-number">03</span><div className="fr-step-icon"><Sparkles size={20}/></div><h3>Keep moving forward</h3><p>Use study tools when you need them, notice your progress and adjust as you go.</p></article></div>
-  </section>
-  <section className="fr-bottom-cta"><div className="fr-cta-glow" aria-hidden="true"/><span className="fr-eyebrow"><span/> YOUR SPACE IS WAITING</span><h2>Make room for<br/><span>what matters.</span></h2><p>Give your student life one less thing to fight with.</p><Link href="/signup" className="fr-button fr-button-light">Get started for free <ArrowRight size={17}/></Link><small>No perfect routine required.</small></section>
-  <footer className="fr-footer"><Link href="/" className="fr-brand"><span className="fr-brand-mark"><GraduationCap size={19}/></span><span>studyspace<span className="fr-brand-period">.</span></span></Link><span>YOUR SEMESTER, A LITTLE MORE IN SYNC.</span><div><Link href="/login">Log in</Link><Link href="/signup">Create account <ArrowUpRight size={14}/></Link></div><small>© {new Date().getFullYear()} StudySpace. Built for the in-between moments.</small></footer>
- </main>;
+      <section className="atelier-opening" aria-labelledby="atelier-title">
+        <div className="atelier-opening-meta"><span>AN OPEN SPACE FOR STUDENT LIFE</span><span>EST. MMXXVI · EVERY DAY, IN ORDER</span></div>
+        <div className="atelier-opening-center">
+          <div className="atelier-orbit atelier-orbit-a" aria-hidden="true" />
+          <div className="atelier-orbit atelier-orbit-b" aria-hidden="true" />
+          <p className="atelier-overline"><span /> A PLACE TO THINK, MAKE, AND MOVE FORWARD</p>
+          <h1 id="atelier-title">The art of a<br /><em>considered</em> semester.</h1>
+          <p className="atelier-opening-copy">A quieter place for everything your education asks of you. Your courses, your work, your notes, your time — gathered under one roof.</p>
+          <Link href="/signup" className="atelier-primary">Enter StudySpace <ArrowUpRight size={16} /></Link>
+          <span className="atelier-opening-note">Made for the work of becoming.</span>
+        </div>
+        <div className="atelier-opening-bottom"><span>01 — THE HOUSE</span><a href="#index">Discover the rooms <ArrowDown size={13} /></a><span>SCROLL TO EXPLORE</span></div>
+      </section>
+
+      <section className="atelier-manifesto">
+        <p className="atelier-overline"><span /> THE HOUSE · EVERY PART OF IT · JOINED</p>
+        <h2>A place for the work.<br /><em>And room for the rest.</em></h2>
+        <p>Student life rarely happens in one place. The lecture, the reading, the deadline, the late-night question. StudySpace brings the pieces together, so your attention can return to what matters.</p>
+      </section>
+
+      <section className="atelier-chapter atelier-index" id="index">
+        <div className="atelier-chapter-heading">
+          <span className="atelier-chapter-number">I · THE INDEX</span>
+          <span className="atelier-chapter-rule" />
+          <span className="atelier-chapter-caption">COLLECT · CONNECT · KEEP</span>
+        </div>
+        <div className="atelier-chapter-layout">
+          <div className="atelier-chapter-copy">
+            <p className="atelier-overline"><span /> A PLACE FOR EVERYTHING</p>
+            <h2>Carry nothing<br /><em>twice.</em></h2>
+            <p className="atelier-body-copy">A thought belongs somewhere. A reading belongs with its course. An assignment belongs beside the brief that explains it. Keep the materials of your education connected, and find them when you need them.</p>
+            <ul className="atelier-feature-list">
+              <li><BookOpen size={16} /><span>Courses, notes, and resources</span><ArrowUpRight size={13} /></li>
+              <li><FileText size={16} /><span>Assignments and homework uploads</span><ArrowUpRight size={13} /></li>
+              <li><Brain size={16} /><span>AI tutor and generated flashcards</span><ArrowUpRight size={13} /></li>
+              <li><GraduationCap size={16} /><span>Quizzes, grades, and GPA</span><ArrowUpRight size={13} /></li>
+            </ul>
+            <Link href="/signup" className="atelier-text-link">Make it yours <ArrowRight size={15} /></Link>
+          </div>
+          <div className="atelier-index-art" aria-label="Illustration of an organized student library">
+            <div className="atelier-art-label">THE LIBRARY <span>VOL. 01 — ∞</span></div>
+            <div className="atelier-library-shelf">
+              <div className="atelier-book book-one"><small>01</small><b>THE<br />COURSE</b></div>
+              <div className="atelier-book book-two"><small>02</small><b>FIELD<br />NOTES</b></div>
+              <div className="atelier-book book-three"><small>03</small><b>THE<br />READING</b></div>
+              <div className="atelier-book book-four"><small>04</small><b>OPEN<br />QUESTIONS</b></div>
+              <div className="atelier-paper"><span>YOUR INDEX</span><strong>Everything<br />in its place.</strong><i>Gathered, not scattered.</i></div>
+            </div>
+            <div className="atelier-art-foot"><span>AN ORDER OF YOUR OWN</span><span>FIG. 01</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="atelier-chapter atelier-ritual" id="ritual">
+        <div className="atelier-chapter-heading">
+          <span className="atelier-chapter-number">II · THE RITUAL</span>
+          <span className="atelier-chapter-rule" />
+          <span className="atelier-chapter-caption">PLAN · PRACTISE · PROGRESS</span>
+        </div>
+        <div className="atelier-chapter-layout reverse">
+          <div className="atelier-ritual-art">
+            <div className="atelier-art-label">THE DAY, COMPOSED <span>YOUR TIME</span></div>
+            <div className="atelier-day-card">
+              <div className="atelier-day-top"><span>YOUR STUDY DAY</span><span>01 / 04</span></div>
+              <div className="atelier-day-date">A little more<br /><em>intention.</em></div>
+              <div className="atelier-timeline">
+                <div><time>08:30</time><i className="timeline-dot" /><span><b>Find your focus</b><small>Focus session · 45 min</small></span></div>
+                <div><time>10:00</time><i className="timeline-dot" /><span><b>Make sense of the material</b><small>Biology · Course notes</small></span></div>
+                <div><time>13:15</time><i className="timeline-dot" /><span><b>Put knowledge to work</b><small>Practice quiz · 20 min</small></span></div>
+                <div><time>15:00</time><i className="timeline-dot" /><span><b>Close the open loops</b><small>Assignments · Review</small></span></div>
+              </div>
+              <div className="atelier-day-footer"><span>THE PLAN IS A GUIDE, NOT A RULE.</span><Check size={15} /></div>
+            </div>
+            <div className="atelier-art-foot"><span>MAKE A DAY THAT MAKES SENSE</span><span>FIG. 02</span></div>
+          </div>
+          <div className="atelier-chapter-copy">
+            <p className="atelier-overline"><span /> A RHYTHM THAT IS YOURS</p>
+            <h2>The day,<br /><em>composed.</em></h2>
+            <p className="atelier-body-copy">A good plan makes space for deep work and the small things that keep a semester moving. See what is coming, decide what matters next, and give each task a place in the day.</p>
+            <ul className="atelier-feature-list">
+              <li><CalendarDays size={16} /><span>Calendar and deadline tracking</span><ArrowUpRight size={13} /></li>
+              <li><Clock3 size={16} /><span>Focus timer and study sessions</span><ArrowUpRight size={13} /></li>
+              <li><Sparkles size={16} /><span>Smart study planner and AI guidance</span><ArrowUpRight size={13} /></li>
+              <li><GraduationCap size={16} /><span>Study groups and shared momentum</span><ArrowUpRight size={13} /></li>
+            </ul>
+            <Link href="/signup" className="atelier-text-link">Find your rhythm <ArrowRight size={15} /></Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="atelier-chapter atelier-record" id="record">
+        <div className="atelier-chapter-heading">
+          <span className="atelier-chapter-number">III · THE RECORD</span>
+          <span className="atelier-chapter-rule" />
+          <span className="atelier-chapter-caption">NOTICE · LEARN · ADJUST</span>
+        </div>
+        <div className="atelier-chapter-layout">
+          <div className="atelier-chapter-copy">
+            <p className="atelier-overline"><span /> SEE THE SHAPE OF YOUR WORK</p>
+            <h2>What the record<br /><em>reveals.</em></h2>
+            <p className="atelier-body-copy">Progress is more than a number. See the work you have completed, the subjects that need attention, and the patterns that help you learn. Let feedback become a next step, not a full stop.</p>
+            <ul className="atelier-feature-list">
+              <li><Brain size={16} /><span>AI assignment grading and feedback</span><ArrowUpRight size={13} /></li>
+              <li><Check size={16} /><span>Quiz results and learning progress</span><ArrowUpRight size={13} /></li>
+              <li><GraduationCap size={16} /><span>Grades and GPA tracking</span><ArrowUpRight size={13} /></li>
+              <li><Sparkles size={16} /><span>Insights to guide your next session</span><ArrowUpRight size={13} /></li>
+            </ul>
+            <Link href="/signup" className="atelier-text-link">See your progress <ArrowRight size={15} /></Link>
+          </div>
+          <div className="atelier-record-art">
+            <div className="atelier-art-label">A RECORD OF THE WORK <span>THIS TERM</span></div>
+            <div className="atelier-record-paper">
+              <div className="atelier-record-head"><span>STUDYSPACE · PRIVATE RECORD</span><span>NO. 001</span></div>
+              <h3>Progress,<br /><em>in perspective.</em></h3>
+              <div className="atelier-record-metrics">
+                <div><span>WORK SESSIONS</span><b>—</b><small>Built as you go</small></div>
+                <div><span>COURSES</span><b>—</b><small>All in one place</small></div>
+                <div><span>YOUR NEXT STEP</span><b>→</b><small>Always within reach</small></div>
+              </div>
+              <div className="atelier-record-line"><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /><i /></div>
+              <p>Your record begins with the work you choose to do.</p>
+            </div>
+            <div className="atelier-art-foot"><span>THE RECORD IS YOURS</span><span>FIG. 03</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="atelier-closing">
+        <p className="atelier-overline"><span /> THE DOOR IS OPEN</p>
+        <h2>Make room for<br /><em>what matters.</em></h2>
+        <p>One place for the whole of your student life. Begin with today; the rest can follow.</p>
+        <Link href="/signup" className="atelier-primary">Enter StudySpace <ArrowUpRight size={16} /></Link>
+        <span className="atelier-closing-note">A workspace for students. Yours to shape.</span>
+      </section>
+
+      <footer className="atelier-footer">
+        <Link href="/" className="atelier-wordmark"><StudySpaceMark size={25} animated={false} /><span>STUDYSPACE</span><i>®</i></Link>
+        <span>YOUR SEMESTER, IN ITS PLACE.</span>
+        <div><Link href="/login">Sign in</Link><Link href="/signup">Create your space <ChevronRight size={13} /></Link></div>
+        <small>© {new Date().getFullYear()} StudySpace. Made for the work of becoming.</small>
+      </footer>
+    </main>
+  );
 }
