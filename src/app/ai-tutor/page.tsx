@@ -1137,7 +1137,7 @@ export default function AITutorPage() {
 
   return (
     <AppShell>
-      <div className={`ss-neural-tutor relative flex h-[calc(100vh-68px)] min-h-[650px] overflow-hidden bg-[#171612] ${conversationMessages.length ? "has-messages" : ""} ${showChatPanel || conversationMessages.length ? "is-chat-open" : ""}`}>
+      <div className={`ss-neural-tutor relative flex h-[calc(100vh-68px)] min-h-[650px] overflow-hidden bg-[#171612] ${conversationMessages.length ? "has-messages" : ""} ${showChatPanel ? "is-chat-open" : ""}`}>
 
         {/* =================================================
             DESKTOP CONVERSATION SIDEBAR
