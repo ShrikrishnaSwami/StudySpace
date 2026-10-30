@@ -949,7 +949,7 @@ function QuizGenerator({
   return (
     <ViewportPortal>
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/70 px-4 pt-20 pb-8 backdrop-blur-sm sm:pt-24"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !generating) {
@@ -1614,7 +1614,7 @@ function DeleteQuizModal({
 }) {
   return (
     <ViewportPortal>
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
+    <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/75 px-4 pt-20 pb-8 backdrop-blur-md sm:pt-24">
       <div className="w-full max-w-md rounded-3xl border border-white/[0.09] bg-[#100b1c] p-6 shadow-2xl shadow-black/50">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
           <Trash2 size={19} />
