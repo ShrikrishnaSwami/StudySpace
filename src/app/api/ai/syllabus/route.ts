@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { generateAIResponse, generateAIResponseFromPdf } from "@/lib/gemini";
-import { consumeAiQuota } from "@/lib/api-security";
+import { consumeAiQuota, readBoundedJson } from "@/lib/api-security";
 import { isValidIsoDate, parseSyllabusAiJson } from "@/lib/syllabus-parser";
 
 export const maxDuration = 60;
@@ -22,8 +22,14 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await client.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Session expired." }, { status: 401 });
 
-    if (Number(request.headers.get("content-length") || 0) > 4300000) return NextResponse.json({ error: "Upload is too large. PDFs must be 3 MB or smaller and text must be under 30,000 characters." }, { status: 413 });
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await readBoundedJson(request, 4300000);
+    } catch (error) {
+      const tooLarge = error instanceof Error && error.message === "REQUEST_TOO_LARGE";
+      return NextResponse.json({ error: tooLarge ? "Upload is too large. PDFs must be 3 MB or smaller and text must be under 30,000 characters." : "Invalid syllabus request." }, { status: tooLarge ? 413 : 400 });
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Invalid syllabus request." }, { status: 400 });
     const title = typeof body.title === "string" ? body.title.trim().slice(0, 160) : "";
     const text = typeof body.text === "string" ? body.text.trim() : "";
     const pdfBase64 = typeof body.pdfBase64 === "string" ? body.pdfBase64 : "";
