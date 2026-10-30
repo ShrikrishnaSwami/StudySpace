@@ -1,0 +1,11 @@
+create index if not exists assignment_submission_files_submission_user_idx on public.assignment_submission_files(submission_id, user_id);
+create index if not exists assignment_submission_files_user_id_idx on public.assignment_submission_files(user_id);
+create index if not exists assignment_submissions_graded_by_idx on public.assignment_submissions(graded_by);
+create index if not exists assignment_submissions_user_id_idx on public.assignment_submissions(user_id);
+create index if not exists assignments_assigned_by_idx on public.assignments(assigned_by);
+create index if not exists assignments_assigned_to_idx on public.assignments(assigned_to);
+create index if not exists calendar_events_related_to_idx on public.calendar_events(related_to);
+create index if not exists courses_user_id_idx on public.courses(user_id);
+create index if not exists study_plan_items_course_id_idx on public.study_plan_items(course_id);
+create index if not exists study_recommendations_course_id_idx on public.study_recommendations(course_id);
+create index if not exists syllabus_imports_course_id_idx on public.syllabus_imports(course_id);

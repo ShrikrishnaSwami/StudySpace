@@ -1,0 +1,570 @@
+type AnyRecord = Record<string, unknown>;
+
+function clean(value: unknown, maxChars = Number.POSITIVE_INFINITY) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value.trim().slice(0, maxChars);
+  }
+
+  return String(value).slice(0, maxChars);
+}
+
+function pickText(
+  record: AnyRecord,
+  keys: string[],
+  maxChars = Number.POSITIVE_INFINITY,
+) {
+  for (const key of keys) {
+    const value = clean(record[key], maxChars);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return "";
+}
+
+function formatDate(value: unknown) {
+  const text = clean(value);
+
+  if (!text) {
+    return "Not provided";
+  }
+
+  const date = new Date(text);
+
+  if (Number.isNaN(date.getTime())) {
+    return text;
+  }
+
+  return date.toLocaleString(
+    "en-CA",
+    {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }
+  );
+}
+
+export function formatStudentAIContext(
+  context: {
+    courses: AnyRecord[];
+    notes: AnyRecord[];
+    resources: AnyRecord[];
+    assignments: AnyRecord[];
+    quizzes: AnyRecord[];
+    quizAttempts: AnyRecord[];
+    homework: AnyRecord[];
+    calendarEvents: AnyRecord[];
+  }
+) {
+  const sections: string[] = [
+    `
+========================
+CONTEXT COVERAGE
+========================
+
+This is a bounded recent snapshot, not a complete export of every student record.
+Maximum records loaded for this request: 30 courses, 40 notes, 30 resources,
+50 assignments, 30 quizzes, 50 quiz attempts, 30 homework records, and 80 calendar events.
+Long text fields are clipped before transfer. Older records or text beyond those
+limits may still exist. Do not claim a record does not exist merely because it
+is absent from this context window; explain that it was not included in the current
+snapshot and ask for a narrower course, topic, or date when needed.
+`,
+  ];
+
+  /*
+   * COURSES
+   */
+
+  sections.push(`
+========================
+STUDENT COURSES
+========================
+
+${
+  context.courses.length
+    ? context.courses
+        .map(
+          (course, index) => `
+COURSE ${index + 1}
+
+Record ID:
+${clean(course.id)}
+
+Code:
+${clean(course.code)}
+
+Name:
+${clean(course.name)}
+
+Professor:
+${clean(course.professor) || "Not provided"}
+
+Room:
+${clean(course.room) || "Not provided"}
+
+Schedule:
+${clean(course.schedule) || "Not provided"}
+
+Progress:
+${clean(course.progress) || "Not provided"}
+
+Target grade:
+${clean(course.target_grade) || "Not provided"}
+
+Credits:
+${clean(course.credits) || "Not provided"}
+
+Semester:
+${clean(course.semester) || "Not provided"}
+
+Description:
+${clean(course.description, 1000) || "Not provided"}
+`
+        )
+        .join("\n")
+    : "No active courses found."
+}
+`);
+
+  /*
+   * NOTES
+   */
+
+  sections.push(`
+========================
+COURSE NOTES
+========================
+
+${
+  context.notes.length
+    ? context.notes
+        .map(
+          (note, index) => `
+NOTE ${index + 1}
+
+Record ID:
+${clean(note.id)}
+
+Course ID:
+${clean(note.course_id)}
+
+Title:
+${
+  pickText(note, [
+    "title",
+    "name",
+    "heading",
+    "subject",
+  ]) || `Note ${index + 1}`
+}
+
+Content:
+${
+  pickText(note, [
+    "content",
+    "body",
+    "text",
+    "note",
+    "description",
+  ], 2200) || "(No text available.)"
+}
+`
+        )
+        .join("\n")
+    : "No course notes found."
+}
+`);
+
+  /*
+   * MATERIALS
+   */
+
+  sections.push(`
+========================
+COURSE MATERIALS
+========================
+
+${
+  context.resources.length
+    ? context.resources
+        .map(
+          (resource, index) => `
+RESOURCE ${index + 1}
+
+Record ID:
+${clean(resource.id)}
+
+Course ID:
+${clean(resource.course_id)}
+
+Title:
+${
+  pickText(resource, [
+    "title",
+    "name",
+    "heading",
+  ]) || `Resource ${index + 1}`
+}
+
+Description:
+${
+  pickText(resource, [
+    "description",
+    "content",
+    "body",
+    "text",
+  ], 1000) || "Not provided"
+}
+
+URL:
+${
+  pickText(resource, [
+    "url",
+    "file_url",
+    "resource_url",
+  ]) || "Not provided"
+}
+`
+        )
+        .join("\n")
+    : "No course materials found."
+}
+`);
+
+  /*
+   * ASSIGNMENTS
+   */
+
+  sections.push(`
+========================
+ASSIGNMENTS
+========================
+
+${
+  context.assignments.length
+    ? context.assignments
+        .map(
+          (assignment, index) => `
+ASSIGNMENT ${index + 1}
+
+Record ID:
+${clean(assignment.id)}
+
+Course ID:
+${clean(assignment.course_id)}
+
+Title:
+${clean(assignment.title)}
+
+Description:
+${clean(assignment.description, 1600) || "Not provided"}
+
+Due:
+${formatDate(assignment.due_date)}
+
+Priority:
+${clean(assignment.priority) || "Not provided"}
+
+Status:
+${clean(assignment.status) || "Not provided"}
+
+Progress:
+${clean(assignment.progress) || "Not provided"}
+
+Points:
+${clean(assignment.points) || "Not provided"} / ${
+            clean(assignment.max_points) ||
+            "Not provided"
+          }
+`
+        )
+        .join("\n")
+    : "No assignments found."
+}
+`);
+
+  /*
+   * QUIZZES
+   */
+
+  sections.push(`
+========================
+QUIZZES
+========================
+
+${
+  context.quizzes.length
+    ? context.quizzes
+        .map(
+          (quiz, index) => `
+QUIZ ${index + 1}
+
+Record ID:
+${clean(quiz.id)}
+
+Quiz ID:
+${clean(quiz.id)}
+
+Course ID:
+${clean(quiz.course_id)}
+
+Title:
+${clean(quiz.title)}
+
+Difficulty:
+${clean(quiz.difficulty) || "Not provided"}
+
+Created:
+${formatDate(quiz.created_at)}
+`
+        )
+        .join("\n")
+    : "No quizzes found."
+}
+`);
+
+  /*
+   * QUIZ ATTEMPTS
+   */
+
+  sections.push(`
+========================
+QUIZ ATTEMPTS / PERFORMANCE
+========================
+
+${
+  context.quizAttempts.length
+    ? context.quizAttempts
+        .map(
+          (attempt, index) => `
+ATTEMPT ${index + 1}
+
+Record ID:
+${clean(attempt.id)}
+
+Quiz ID:
+${clean(attempt.quiz_id)}
+
+Score:
+${
+  pickText(attempt, [
+    "score",
+    "percentage",
+    "percent",
+  ]) || "Not provided"
+}
+
+Correct:
+${
+  pickText(attempt, [
+    "correct_count",
+    "correct_answers",
+    "correct",
+  ]) || "Not provided"
+}
+
+Total:
+${
+  pickText(attempt, [
+    "total_questions",
+    "total",
+  ]) || "Not provided"
+}
+
+Completed:
+${formatDate(
+  pickText(attempt, [
+    "completed_at",
+    "created_at",
+  ])
+)}
+`
+        )
+        .join("\n")
+    : "No quiz attempts found."
+}
+`);
+
+  /*
+   * HOMEWORK
+   */
+
+  sections.push(`
+========================
+HOMEWORK
+========================
+
+${
+  context.homework.length
+    ? context.homework
+        .map(
+          (item, index) => `
+HOMEWORK ${index + 1}
+
+Record ID:
+${clean(item.id)}
+
+Homework ID:
+${clean(item.id)}
+
+Course ID:
+${clean(item.course_id)}
+
+Assignment ID:
+${clean(item.assignment_id)}
+
+Title:
+${clean(item.title, 200)}
+
+Description:
+${clean(item.description, 1200) || "Not provided"}
+
+File:
+${clean(item.file_name, 200) || "Not provided"}
+
+Status:
+${clean(item.status)}
+
+AI Summary:
+${clean(item.ai_summary, 900) || "No AI summary available."}
+
+AI Explanation:
+${
+  clean(item.ai_explanation, 900) ||
+  "No AI explanation available."
+}
+
+AI Solution:
+${
+  clean(item.ai_solution, 900) ||
+  "No AI solution available."
+}
+
+AI Hints:
+${
+  Array.isArray(item.ai_hints)
+    ? item.ai_hints.join("\n- ")
+    : clean(item.ai_hints) ||
+      "No hints available."
+}
+`
+        )
+        .join("\n")
+    : "No homework records found."
+}
+`);
+
+  /*
+   * CALENDAR
+   */
+
+  sections.push(`
+========================
+CALENDAR / SCHEDULE
+========================
+
+${
+  context.calendarEvents.length
+    ? context.calendarEvents
+        .map(
+          (event, index) => `
+EVENT ${index + 1}
+
+Record ID:
+${clean(event.id)}
+
+Title:
+${clean(event.title, 200)}
+
+Subtitle:
+${clean(event.subtitle, 300)}
+
+Type:
+${clean(event.event_type)}
+
+Start:
+${formatDate(event.start_at)}
+
+End:
+${formatDate(event.end_at)}
+
+Location:
+${clean(event.location, 200) || "Not provided"}
+
+Course ID:
+${clean(event.course_id) || "Not provided"}
+
+Description:
+${clean(event.description, 700) || "Not provided"}
+
+Notes:
+${clean(event.notes, 500) || "Not provided"}
+
+Multitask:
+${clean(event.multitask) || "false"}
+`
+        )
+        .join("\n")
+    : "No calendar events found."
+}
+`);
+
+  // Reserve space for every category so a large notes section cannot push
+  // assignments, quiz performance, homework, or calendar data out entirely.
+  const sectionBudgets = [1200, 4000, 16000, 6000, 8000, 3000, 5000, 9000, 7000];
+  const boundedSections = sections.map((section, index) => {
+    const budget = sectionBudgets[index] ?? 4000;
+    if (section.length <= budget) return section;
+    const excerpt = section.slice(0, budget);
+    const boundary = excerpt.lastIndexOf("\n\n");
+    return (boundary > 0 ? excerpt.slice(0, boundary) : excerpt)
+      + "\n[This section was shortened to fit the AI context budget.]";
+  });
+  return boundedSections.join("\n\n");
+}
+
+
+/*
+ * ---------------------------------------------------------
+ * BACKWARD COMPATIBILITY
+ * ---------------------------------------------------------
+ */
+
+export function formatCourseAIContext(
+  context: {
+    course: AnyRecord;
+    notes: AnyRecord[];
+    resources: AnyRecord[];
+    assignments?: AnyRecord[];
+    quizzes?: AnyRecord[];
+    quizAttempts?: AnyRecord[];
+    homework?: AnyRecord[];
+    calendarEvents?: AnyRecord[];
+  }
+) {
+  return formatStudentAIContext({
+    courses: [context.course],
+    notes: context.notes,
+    resources: context.resources,
+    assignments:
+      context.assignments || [],
+    quizzes:
+      context.quizzes || [],
+    quizAttempts:
+      context.quizAttempts || [],
+    homework:
+      context.homework || [],
+    calendarEvents:
+      context.calendarEvents || [],
+  });
+}
