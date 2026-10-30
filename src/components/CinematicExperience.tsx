@@ -177,62 +177,79 @@ export default function CinematicExperience() {
 
         const context = gsap.context(() => {
           if (!reduceMotion) {
-            const revealTargets = gsap.utils.toArray(
-              ".atelier-home section, .atelier-home .atelier-opening-center, .atelier-shell main > *, .atelier-shell main section, .atelier-shell main article, .atelier-shell main .rounded-2xl, .atelier-shell main .rounded-xl",
-            ) as Element[];
-            revealTargets.forEach((element, index) => {
-              if ((element as HTMLElement).dataset.cinematicRevealed === "true") return;
-              (element as HTMLElement).dataset.cinematicRevealed = "true";
-              gsap.fromTo(element,
-                { autoAlpha: 0, y: 34, filter: "blur(7px)" },
+            // The first viewport gets a deliberate entrance sequence. It is
+            // not dependent on ScrollTrigger, so it always plays on page load.
+            const intro = gsap.timeline({ defaults: { ease: premiumEase } });
+            intro
+              .fromTo(".atelier-header", { y: -18, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.75 })
+              .fromTo(".atelier-opening-meta", { y: 14, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.65 }, "-=0.35")
+              .fromTo(".atelier-opening-center .atelier-overline", { y: 18, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.65 }, "-=0.25")
+              .fromTo(".atelier-opening-center h1", { y: 48, autoAlpha: 0, filter: "blur(9px)" }, { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: 1.15 }, "-=0.3")
+              .fromTo(".atelier-opening-copy", { y: 22, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.8 }, "-=0.55")
+              .fromTo(".atelier-opening-center .atelier-primary", { y: 16, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.7 }, "-=0.45")
+              .fromTo(".atelier-opening-note, .atelier-opening-bottom", { y: 12, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.65 }, "-=0.35");
+
+            // Reveal each chapter's content independently. Avoid animating a
+            // parent section and its children simultaneously; that can leave
+            // nested elements hidden or make the reveal imperceptible.
+            gsap.utils.toArray(".atelier-manifesto, .atelier-chapter, .atelier-closing").forEach((section: any) => {
+              const pieces = section.querySelectorAll(
+                ".atelier-overline, h2, .atelier-body-copy, .atelier-feature-list li, .atelier-text-link, .atelier-chapter-heading, .atelier-index-art, .atelier-ritual-art, .atelier-record-art, .atelier-closing-note, .atelier-primary",
+              );
+              if (!pieces.length) return;
+              gsap.fromTo(pieces,
+                { y: 30, autoAlpha: 0, filter: "blur(5px)" },
                 {
-                  autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 1.05,
-                  ease: premiumEase, delay: Math.min(index % 4, 3) * 0.055,
-                  scrollTrigger: { trigger: element, start: "top 91%", once: true },
+                  y: 0, autoAlpha: 1, filter: "blur(0px)", duration: 0.9,
+                  stagger: 0.075, ease: premiumEase, immediateRender: false,
+                  scrollTrigger: {
+                    trigger: section,
+                    start: "top 78%",
+                    once: true,
+                  },
                 },
               );
             });
 
-            gsap.utils.toArray(".atelier-home h1, .atelier-home h2, .atelier-shell main h1, .atelier-shell main h2").forEach((heading: any) => {
-              gsap.fromTo(heading, { y: 22, autoAlpha: 0, letterSpacing: "-0.025em" }, {
-                y: 0, autoAlpha: 1, letterSpacing: "normal", duration: 1.15, ease: premiumEase,
-                scrollTrigger: { trigger: heading, start: "top 92%", once: true },
-              });
-            });
-
             gsap.utils.toArray(".atelier-home .atelier-index-art, .atelier-home .atelier-ritual-art, .atelier-home .atelier-record-art").forEach((art: any) => {
               gsap.to(art, {
-                yPercent: -7,
+                yPercent: -6,
                 ease: "none",
                 scrollTrigger: { trigger: art, start: "top bottom", end: "bottom top", scrub: 1.2 },
               });
             });
 
-            gsap.utils.toArray(".atelier-shell main button, .atelier-shell main a, .atelier-home .atelier-primary, .atelier-home .atelier-enter").forEach((item: any) => {
-              item.addEventListener("mouseenter", () => gsap.to(item, { y: -2, duration: 0.24, ease: "power2.out" }));
-              item.addEventListener("mouseleave", () => gsap.to(item, { y: 0, duration: 0.4, ease: "power3.out" }));
+            gsap.utils.toArray(".atelier-shell main > *").forEach((section: any) => {
+              gsap.fromTo(section,
+                { y: 24, autoAlpha: 0 },
+                {
+                  y: 0, autoAlpha: 1, duration: 0.8, ease: premiumEase,
+                  immediateRender: false,
+                  scrollTrigger: { trigger: section, start: "top 88%", once: true },
+                },
+              );
             });
+
+            gsap.utils.toArray(".atelier-shell main button, .atelier-shell main a, .atelier-home .atelier-primary, .atelier-home .atelier-enter").forEach((item: any) => {
+              const lift = () => gsap.to(item, { y: -3, duration: 0.22, ease: "power2.out", overwrite: "auto" });
+              const settle = () => gsap.to(item, { y: 0, duration: 0.35, ease: "power3.out", overwrite: "auto" });
+              item.addEventListener("mouseenter", lift);
+              item.addEventListener("mouseleave", settle);
+              gsap.set(item, { clearProps: "willChange" });
+            });
+
+            // A subtle continuous drift gives the opening artwork life even
+            // when the visitor is not scrolling.
+            gsap.to(".atelier-orbit-a", { rotation: 360, duration: 42, repeat: -1, ease: "none" });
+            gsap.to(".atelier-orbit-b", { rotation: -360, duration: 58, repeat: -1, ease: "none" });
           }
 
-          gsap.fromTo(document.body, { opacity: 0.94 }, { opacity: 1, duration: 0.65, ease: "power2.out" });
+          gsap.fromTo(document.body, { opacity: 0.96 }, { opacity: 1, duration: 0.55, ease: "power2.out" });
         });
 
         const routeRefresh = window.setTimeout(() => {
-          const page = document.querySelector(".atelier-shell main");
-          if (page && !reduceMotion) {
-            page.querySelectorAll(":scope > *, section, article, [class*='rounded-2xl'], [class*='rounded-xl']").forEach((element, index) => {
-              const node = element as HTMLElement;
-              if (node.dataset.cinematicRevealed === "true") return;
-              node.dataset.cinematicRevealed = "true";
-              gsap.fromTo(node, { autoAlpha: 0, y: 26, filter: "blur(6px)" }, {
-                autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 0.9,
-                ease: premiumEase, delay: Math.min(index % 5, 4) * 0.045,
-                scrollTrigger: { trigger: node, start: "top 92%", once: true },
-              });
-            });
-          }
           ScrollTrigger.refresh();
-        }, 180);
+        }, 250);
         ScrollTrigger.refresh();
         cleanup = (() => {
           const previous = cleanup;
