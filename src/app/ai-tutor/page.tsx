@@ -1044,8 +1044,18 @@ export default function AITutorPage() {
     <main className="ss-neural-tutor ss-jarvis-screen relative isolate flex h-[calc(100dvh-68px)] min-h-[560px] items-center justify-center overflow-hidden bg-[#171612] text-stone-200">
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_50%_48%,rgba(185,167,131,.13),transparent_38%),linear-gradient(180deg,#171612,#14130f)]"/>
       <div className="ss-jarvis-stage absolute inset-0 z-[1]">
-        <div className="ss-jarvis-orbit ss-jarvis-orbit-one"/><div className="ss-jarvis-orbit ss-jarvis-orbit-two"/><div className="ss-jarvis-orbit ss-jarvis-orbit-three"/>
-        <NeuralIntelligence active={sending} listening={voiceListening} showControls onAction={handleNeuralAction}/>
+        <div className="ss-jarvis-core-wrap">
+          <div className={["ss-jarvis-core",sending||voiceListening?"is-thinking":""].join(" ")}>
+            <div className="ss-jarvis-orbit ss-jarvis-orbit-one"/>
+            <div className="ss-jarvis-orbit ss-jarvis-orbit-two"/>
+            <div className="ss-jarvis-orbit ss-jarvis-orbit-three"/>
+            <div className="ss-jarvis-core-glow"/>
+            <div className="ss-jarvis-scan"/>
+            <div className="ss-jarvis-core-center"><Sparkles className="h-10 w-10"/></div>
+            <span className="ss-jarvis-core-label">STUDYSPACE</span>
+          </div>
+        </div>
+        <NeuralIntelligence active={sending} listening={voiceListening} controlsOnly showControls onAction={handleNeuralAction}/>
       </div>
       <div className="pointer-events-none absolute bottom-6 z-[3] text-center"><p className="text-[9px] tracking-[.35em] text-[#b9a783]/55">STUDYSPACE INTELLIGENCE</p><h1 className="mt-2 text-xl font-light tracking-[.18em] text-stone-200/80 sm:text-2xl">J.A.R.V.I.S.</h1><p className="mt-2 text-[9px] tracking-[.18em] text-stone-500">SELECT A NODE TO BEGIN</p><p className="mt-1 text-[8px] tracking-[.12em] text-stone-600">{voiceListening?"VOICE INPUT ACTIVE":sending?"PROCESSING REQUEST":"SYSTEM STANDBY"}</p></div>
 
