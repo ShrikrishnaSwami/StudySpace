@@ -61,7 +61,7 @@ type Conversation = {
 };
 
 type WorkspaceKind = "chat" | "history" | "tools" | "courses" | "course" | "notes" | "assignments" | "quizzes" | "flashcards" | "calendar";
-type WorkspaceWindow = { id: string; kind: WorkspaceKind; title: string; x: number; y: number; width: number; height: number; courseId?: string };
+type WorkspaceWindow = { id: string; kind: WorkspaceKind; title: string; x: number; y: number; width: number; height: number; courseId?: string; parentId?: string };
 
 type SpeechRecognitionAlternativeLike = { transcript: string };
 type SpeechRecognitionResultLike = ArrayLike<SpeechRecognitionAlternativeLike>;
@@ -190,6 +190,10 @@ export default function AITutorPage() {
 
   const [workspaceWindows, setWorkspaceWindows] = useState<WorkspaceWindow[]>([]);
   const [focusedWindowId, setFocusedWindowId] = useState<string | null>(null);
+  const [nodesHydrated, setNodesHydrated] = useState(false);
+  const [nodeCount, setNodeCount] = useState("3");
+  const [selectedToolKinds, setSelectedToolKinds] = useState<WorkspaceKind[]>(["notes", "quizzes", "flashcards"]);
+  const [childNodeKind, setChildNodeKind] = useState<WorkspaceKind>("notes");
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const dragState = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
 
@@ -958,24 +962,43 @@ export default function AITutorPage() {
     }
   }
 
-  function openWorkspace(kind: WorkspaceKind, title: string, courseId?: string) {
+  function openWorkspace(kind: WorkspaceKind, title: string, courseId?: string, parentId?: string) {
     const id = crypto.randomUUID();
-    const offset = workspaceWindows.length % 6;
+    const parent = parentId ? workspaceWindows.find(item => item.id === parentId) : undefined;
+    const offset = workspaceWindows.length % 7;
     const next: WorkspaceWindow = {
-      id, kind, title, courseId,
-      x: Math.max(18, Math.min(window.innerWidth - 540, 90 + offset * 34)),
-      y: Math.max(82, Math.min(window.innerHeight - 520, 100 + offset * 28)),
+      id, kind, title, courseId, parentId,
+      x: Math.max(18, Math.min(window.innerWidth - 540, (parent?.x ?? 90) + 46 + offset * 13)),
+      y: Math.max(82, Math.min(window.innerHeight - 520, (parent?.y ?? 100) + 54 + offset * 13)),
       width: kind === "chat" ? 500 : kind === "history" ? 390 : 420,
       height: kind === "chat" ? 560 : 480,
     };
-    setWorkspaceWindows(current => [...current, next]);
+    setWorkspaceWindows(current => current.length >= 18 ? current : [...current, next]);
     setFocusedWindowId(id);
     return id;
   }
 
   function closeWorkspace(id: string) {
-    setWorkspaceWindows(current => current.filter(item => item.id !== id));
+    setWorkspaceWindows(current => current.filter(item => item.id !== id).map(item => item.parentId === id ? { ...item, parentId: undefined } : item));
     setFocusedWindowId(current => current === id ? null : current);
+  }
+
+  function createChildNode(parent: WorkspaceWindow) {
+    const item = studyWorkspaceItems.find(entry => entry.kind === childNodeKind);
+    const title = item?.title || "New study node";
+    openWorkspace(childNodeKind, title, parent.courseId, parent.id);
+  }
+
+  function createStudyNodes() {
+    const amount = Math.max(1, Math.min(12, Number.parseInt(nodeCount, 10) || 1));
+    const kinds = selectedToolKinds.length ? selectedToolKinds : ["notes" as WorkspaceKind];
+    const capacity = Math.max(0, 18 - workspaceWindows.length);
+    const total = Math.min(amount, capacity);
+    for (let i = 0; i < total; i++) {
+      const kind = kinds[i % kinds.length];
+      const item = studyWorkspaceItems.find(entry => entry.kind === kind);
+      openWorkspace(kind, item?.title || "Study node");
+    }
   }
 
   function startWindowDrag(event: ReactPointerEvent, id: string) {
@@ -1002,6 +1025,29 @@ export default function AITutorPage() {
     window.addEventListener("pointerup", end);
     return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end); };
   }, []);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("studyspace-ai-workspace-nodes-v1");
+      if (saved) {
+        const parsed = JSON.parse(saved) as WorkspaceWindow[];
+        if (Array.isArray(parsed)) {
+          setWorkspaceWindows(parsed.filter(item =>
+            item && typeof item.id === "string" && typeof item.kind === "string" &&
+            typeof item.title === "string" && Number.isFinite(item.x) && Number.isFinite(item.y)
+          ).slice(0, 18));
+        }
+      }
+    } catch { /* A malformed or unavailable local workspace is safely ignored. */ }
+    setNodesHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!nodesHydrated) return;
+    try {
+      localStorage.setItem("studyspace-ai-workspace-nodes-v1", JSON.stringify(workspaceWindows));
+    } catch { /* The workspace remains usable if browser storage is unavailable. */ }
+  }, [workspaceWindows, nodesHydrated]);
 
   useEffect(() => {
     setNoteDrafts(current => {
@@ -1078,6 +1124,13 @@ export default function AITutorPage() {
         </div>
         <NeuralIntelligence active={sending} listening={voiceListening} controlsOnly showControls activeAction={workspaceWindows.some(item=>item.kind==="chat")?"new-chat":workspaceWindows.some(item=>item.kind==="history")?"history":workspaceWindows.some(item=>item.kind==="tools")?"tools":undefined} onAction={handleNeuralAction}/>
       </div>
+      <svg aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 h-full w-full overflow-visible">
+        {workspaceWindows.filter(node => node.parentId).map(node => {
+          const parent = workspaceWindows.find(item => item.id === node.parentId);
+          if (!parent) return null;
+          return <line key={node.id} x1={parent.x + parent.width / 2} y1={parent.y + 42} x2={node.x + node.width / 2} y2={node.y + 42} stroke="rgba(185,167,131,.42)" strokeWidth="1.4" strokeDasharray="5 7" />;
+        })}
+      </svg>
       <div className="pointer-events-none absolute bottom-6 z-[3] text-center"><p className="text-[9px] tracking-[.35em] text-[#b9a783]/55">STUDYSPACE INTELLIGENCE</p><h1 className="mt-2 text-xl font-light tracking-[.18em] text-stone-200/80 sm:text-2xl">J.A.R.V.I.S.</h1><p className="mt-2 text-[9px] tracking-[.18em] text-stone-500">SELECT A NODE TO BEGIN</p><p className="mt-1 text-[8px] tracking-[.12em] text-stone-600">{voiceListening?"VOICE INPUT ACTIVE":sending?"PROCESSING REQUEST":"SYSTEM STANDBY"}</p></div>
 
       {workspaceWindows.map((workspace, index) => <section
@@ -1090,11 +1143,42 @@ export default function AITutorPage() {
       >
         <header onPointerDown={event => startWindowDrag(event, workspace.id)} className="ss-jarvis-window-head flex shrink-0 cursor-grab touch-none items-center justify-between border-b border-[#b9a783]/20 px-4 py-3 active:cursor-grabbing">
           <div className="flex min-w-0 items-center gap-2"><Grip className="h-3.5 w-3.5 shrink-0 text-[#b9a783]/65"/><div className="min-w-0"><p className="text-[8px] tracking-[.2em] text-[#b9a783]/65">STUDYSPACE / WORKSPACE</p><h2 className="truncate text-sm font-light text-stone-100">{workspace.title}</h2></div></div>
-          <button type="button" onClick={() => closeWorkspace(workspace.id)} aria-label={`Close ${workspace.title}`} className="ml-3 grid h-8 w-8 shrink-0 place-items-center text-stone-400 transition hover:bg-white/10 hover:text-white"><X className="h-4 w-4"/></button>
+          <div className="ml-2 flex shrink-0 items-center gap-1">
+            <select aria-label={`New node type from ${workspace.title}`} value={childNodeKind} onChange={event => setChildNodeKind(event.target.value as WorkspaceKind)} className="max-w-[94px] border border-[#b9a783]/20 bg-[#171612] px-1.5 py-1.5 text-[9px] text-stone-300 outline-none">
+              <option value="chat">Chat</option><option value="notes">Notes</option><option value="courses">Courses</option><option value="assignments">Assignments</option><option value="quizzes">Quizzes</option><option value="flashcards">Flashcards</option><option value="calendar">Calendar</option>
+            </select>
+            <button type="button" onClick={() => createChildNode(workspace)} aria-label={`Create a node from ${workspace.title}`} title="Create connected node" className="grid h-8 w-8 shrink-0 place-items-center border border-[#b9a783]/25 text-[#c7b58f] transition hover:bg-[#b9a783]/10"><Plus className="h-4 w-4"/></button>
+            <button type="button" onClick={() => closeWorkspace(workspace.id)} aria-label={`Delete ${workspace.title} node`} title="Delete node" className="grid h-8 w-8 shrink-0 place-items-center text-stone-500 transition hover:bg-red-400/10 hover:text-red-300"><Trash2 className="h-3.5 w-3.5"/></button>
+            <button type="button" onClick={() => closeWorkspace(workspace.id)} aria-label={`Close ${workspace.title}`} className="grid h-8 w-8 shrink-0 place-items-center text-stone-400 transition hover:bg-white/10 hover:text-white"><X className="h-4 w-4"/></button>
+          </div>
         </header>
 
         {workspace.kind === "history" && historyPanel}
-        {workspace.kind === "tools" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="mb-4 text-xs text-stone-400">Open the spaces you need. Every branch is its own movable window.</p><div className="grid grid-cols-2 gap-2">{studyWorkspaceItems.map(({kind,title,description,icon:Icon})=><button key={kind} type="button" onClick={() => openWorkspace(kind,title)} className="min-h-28 border border-white/[0.08] bg-white/[0.025] p-3 text-left transition hover:border-[#b9a783]/45 hover:bg-[#b9a783]/[0.06]"><Icon className="h-4 w-4 text-[#b9a783]"/><span className="mt-3 block text-xs text-stone-200">{title}</span><span className="mt-1 block text-[10px] leading-4 text-stone-500">{description}</span></button>)}</div></div>}
+        {workspace.kind === "tools" && <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          <div className="mb-5 border-b border-[#b9a783]/15 pb-4">
+            <p className="text-[9px] tracking-[.2em] text-[#b9a783]/70">YOUR WORKSPACE</p>
+            <h3 className="mt-1 text-lg font-light text-stone-100">Build your study setup</h3>
+            <p className="mt-2 text-[11px] leading-5 text-stone-500">Choose the tools you want, then decide how many nodes to open. You can rearrange and connect them anytime.</p>
+            <div className="mt-4 flex items-end gap-3">
+              <label className="min-w-0 flex-1 text-[9px] tracking-[.12em] text-stone-500">NUMBER OF NODES
+                <input type="number" min="1" max="12" value={nodeCount} onChange={event => setNodeCount(event.target.value)} className="mt-2 block w-full border border-[#b9a783]/25 bg-black/25 px-3 py-2 text-sm text-stone-100 outline-none focus:border-[#b9a783]/60"/>
+              </label>
+              <button type="button" onClick={createStudyNodes} disabled={workspaceWindows.length >= 18} className="flex h-[39px] items-center gap-2 bg-[#b9a783] px-4 text-[10px] font-semibold tracking-wide text-[#211e18] transition hover:bg-[#d0bd98] disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5"/> Create nodes</button>
+            </div>
+            <p className="mt-2 text-[9px] text-stone-600">Up to 12 at a time · 18 open nodes maximum</p>
+          </div>
+          <div className="mb-3 flex items-center justify-between"><p className="text-[9px] tracking-[.18em] text-[#b9a783]/70">CHOOSE YOUR TOOLS</p><span className="text-[9px] text-stone-600">{selectedToolKinds.length} selected</span></div>
+          <div className="grid grid-cols-2 gap-2">
+            {studyWorkspaceItems.filter(item => item.kind !== "courses").map(({kind,title,description,icon:Icon})=><label key={kind} className={["min-h-[104px] cursor-pointer border p-3 transition",selectedToolKinds.includes(kind)?"border-[#b9a783]/50 bg-[#b9a783]/[0.08]":"border-white/[0.08] bg-white/[0.025] hover:border-[#b9a783]/30"].join(" ")}>
+              <span className="flex items-center justify-between"><Icon className="h-4 w-4 text-[#b9a783]"/><input type="checkbox" checked={selectedToolKinds.includes(kind)} onChange={event => setSelectedToolKinds(current => event.target.checked ? [...current,kind] : current.filter(item => item !== kind))} className="accent-[#b9a783]"/></span>
+              <span className="mt-3 block text-xs text-stone-200">{title}</span><span className="mt-1 block text-[10px] leading-4 text-stone-500">{description}</span>
+            </label>)}
+          </div>
+          <div className="mt-5 border-t border-[#b9a783]/15 pt-4">
+            <div className="flex items-center justify-between"><p className="text-[9px] tracking-[.18em] text-[#b9a783]/70">OPEN NODES</p><span className="text-[10px] text-stone-500">{workspaceWindows.length} / 18</span></div>
+            {workspaceWindows.length === 0 ? <p className="mt-3 text-[10px] text-stone-600">Your canvas is clear. Create your first study nodes above.</p> : <div className="mt-2 space-y-1">{workspaceWindows.map(node => <div key={node.id} className="flex items-center justify-between border-b border-white/[0.05] py-2"><span className="min-w-0 truncate text-[10px] text-stone-300">{node.title}</span><button type="button" onClick={() => closeWorkspace(node.id)} aria-label={`Delete ${node.title}`} className="ml-2 p-1 text-stone-600 hover:text-red-300"><Trash2 className="h-3 w-3"/></button></div>)}</div>}
+          </div>
+        </div>}
         {workspace.kind === "courses" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="mb-3 text-xs text-stone-400">Choose one of your courses to create a dedicated branch.</p>{courses.length === 0 ? <p className="py-10 text-center text-xs text-stone-500">Your courses will appear here once you add them.</p> : <div className="space-y-2">{courses.map(course=><button key={course.id} type="button" onClick={() => openWorkspace("course",course.code ? `${course.code} · Study space` : course.name,course.id)} className="flex w-full items-center justify-between border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><span><span className="block text-xs text-stone-200">{course.code || course.name}</span><span className="mt-1 block text-[10px] text-stone-500">{course.code ? course.name : course.professor || "Course workspace"}</span></span><Plus className="h-4 w-4 text-[#b9a783]"/></button>)}</div>}</div>}
         {workspace.kind === "course" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="text-xs text-stone-400">Your course branch keeps its related study spaces together.</p><div className="mt-4 grid grid-cols-2 gap-2">{[{kind:"notes" as const,title:"Course notes",icon:NotebookPen},{kind:"assignments" as const,title:"Assignments",icon:ClipboardList},{kind:"quizzes" as const,title:"Quizzes",icon:BrainCircuit},{kind:"flashcards" as const,title:"Flashcards",icon:Layers},{kind:"calendar" as const,title:"Calendar",icon:CalendarDays},{kind:"chat" as const,title:"Ask AI Tutor",icon:Sparkles}].map(({kind,title,icon:Icon})=><button key={kind} type="button" onClick={()=>{if(kind==="chat"){setSelectedCourseId(workspace.courseId||"");void createConversation(workspace.courseId||"");}openWorkspace(kind,title,workspace.courseId);}} className="border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><Icon className="h-4 w-4 text-[#b9a783]"/><span className="mt-2 block text-xs text-stone-200">{title}</span></button>)}</div><Link href="/courses" className="mt-5 inline-flex items-center gap-2 text-[10px] text-[#c7b58f] hover:text-stone-100">Open full course manager <ExternalLink className="h-3 w-3"/></Link></div>}
         {workspace.kind === "notes" && <div className="flex min-h-0 flex-1 flex-col p-4"><p className="mb-3 text-[10px] text-stone-500">A scratchpad branch for ideas, lecture notes, and revision points. This draft stays in this open workspace.</p><textarea value={noteDrafts[workspace.id] || ""} onChange={event=>{const value=event.target.value;setNoteDrafts(current=>({...current,[workspace.id]:value}));try{localStorage.setItem(`studyspace-ai-note-${workspace.courseId || "general"}`,value);}catch{}}} placeholder="Start writing your notes…" className="min-h-0 flex-1 resize-none border border-[#b9a783]/20 bg-black/20 p-3 text-xs leading-6 text-stone-200 outline-none placeholder:text-stone-600 focus:border-[#b9a783]/50"/></div>}
