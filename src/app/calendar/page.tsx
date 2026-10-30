@@ -674,7 +674,7 @@ export default function CalendarPage() {
   return (
     <AppShell
       title="Calendar"
-      description="Your academic schedule, organized around you."
+      description="Classes, assignment due dates and study sessions in one calendar."
     >
       <div className="mx-auto max-w-[1500px] space-y-5 pb-8">
         {/* Header */}
@@ -693,8 +693,7 @@ export default function CalendarPage() {
               </h1>
 
               <p className="mt-2 max-w-xl text-sm leading-6 text-white/35 sm:text-base">
-                Keep classes, study sessions, deadlines and exams
-                visible without letting your schedule become clutter.
+                See your class times, due dates and study sessions together. Add an event when something isn't already on the calendar.
               </p>
             </div>
 
@@ -783,7 +782,7 @@ export default function CalendarPage() {
                 <input type="search" aria-label="Search calendar events" value={search} onChange={(event) =>
                     setSearch(event.target.value)
                   }
-                  placeholder="Search events..."
+                  placeholder="Search for a class, deadline or study session…"
                   className="h-10 w-full rounded-xl border border-white/[0.07] bg-black/20 pl-9 pr-3 text-sm text-white outline-none placeholder:text-white/20 focus:border-[#b9a783]/40 sm:w-44"
                 />
               </div>
@@ -1206,13 +1205,13 @@ function WeekCalendar({
               size={15}
               className="animate-spin"
             />
-            Loading calendar...
+            Loading your calendar…
           </div>
         </div>
       )}
 
       <div className="border-t border-white/[0.06] px-4 py-2 text-center text-[10px] text-white/20">
-        Click an empty time slot to create an event
+        Click an empty time slot to add a class, deadline or study session
       </div>
     </div>
   );
@@ -1348,7 +1347,7 @@ function MonthCalendar({
               size={15}
               className="animate-spin"
             />
-            Loading calendar...
+            Loading your calendar…
           </div>
         </div>
       )}
@@ -1624,7 +1623,7 @@ function EventModal({
             <input maxLength={180} value={form.title} onChange={(event) =>
                 update("title", event.target.value)
               }
-              placeholder="e.g. Physics Lecture"
+              placeholder="e.g. MATH 1350 assignment due"
               className="calendar-input"
               autoFocus
             />
@@ -1734,7 +1733,7 @@ function EventModal({
                     event.target.value
                   )
                 }
-                placeholder="Room, building, online..."
+                placeholder="e.g. CRX 120, library, or Zoom"
                 className="calendar-input pl-9"
               />
             </div>
@@ -1749,7 +1748,7 @@ function EventModal({
                   event.target.value
                 )
               }
-              placeholder="Anything you want to remember..."
+              placeholder="What do you need to bring or remember?"
               rows={3}
               className="calendar-input resize-none"
             />
@@ -1761,7 +1760,7 @@ function EventModal({
             <textarea maxLength={5000} value={form.notes} onChange={(event) =>
                 update("notes", event.target.value)
               }
-              placeholder="Optional notes"
+              placeholder="Anything else to remember (optional)"
               rows={2}
               className="calendar-input resize-none"
             />
