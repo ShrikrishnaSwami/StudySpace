@@ -120,11 +120,11 @@ export default function LoginPage() {
               </p>
 
               <h1 className="max-w-md text-4xl font-bold leading-tight">
-                Your course stuff,
+                Your courses,
                 <br />
-                Stay organized.
+                notes and deadlines.
                 <br />
-                <span className="text-purple-400">all together.</span>
+                <span className="text-purple-400">all in one place.</span>
               </h1>
 
               <p className="mt-6 max-w-md leading-7 text-zinc-400">
