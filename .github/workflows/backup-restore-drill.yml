@@ -210,7 +210,7 @@ jobs:
 
           CREATE OR REPLACE FUNCTION auth.role()
           RETURNS text LANGUAGE sql STABLE
-          AS 'SELECT COALESCE(current_setting(''request.jwt.claim.role'', true), ''anon'')::text';
+          AS 'SELECT COALESCE(NULLIF(current_setting(''request.jwt.claim.role'', true), ''''), NULLIF(current_setting(''request.jwt.claims'', true)::jsonb ->> ''role'', ''''), ''anon'')';
 
           CREATE OR REPLACE FUNCTION auth.jwt()
           RETURNS jsonb LANGUAGE sql STABLE
@@ -264,6 +264,22 @@ jobs:
         run: |
           set -euo pipefail
           docker exec --user postgres "$PG_CONTAINER" pg_restore --section=post-data --use-list=/tmp/restore.list --dbname=postgres --no-owner --no-privileges --exit-on-error /tmp/public-database.dump
+
+      - name: Run student data RLS isolation tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker exec --user root "$PG_CONTAINER" bash -lc "apt-get update -qq && apt-get install -y -qq postgresql-17-pgtap"
+          docker cp supabase/tests/database/student_data_rls_isolation.test.sql "$PG_CONTAINER:/tmp/student_data_rls_isolation.test.sql"
+          docker exec --user root "$PG_CONTAINER" chmod 0644 /tmp/student_data_rls_isolation.test.sql
+          output="$(docker exec --user postgres "$PG_CONTAINER" psql -X -q -A -t -v ON_ERROR_STOP=1 -U postgres -d postgres -f /tmp/student_data_rls_isolation.test.sql)"
+          printf '%s\n' "$output"
+          if grep -q '^not ok ' <<< "$output"; then
+            echo "::error::One or more student data RLS isolation assertions failed."
+            exit 1
+          fi
+          ok_count="$(grep -c '^ok [0-9]' <<< "$output" || true)"
+          test "$ok_count" -eq 19
 
       - name: Verify the restored database, Auth metadata, and Storage payloads
         shell: bash
