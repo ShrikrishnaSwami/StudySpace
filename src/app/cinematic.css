@@ -779,3 +779,14 @@ body:has(.ss-landing)::-webkit-scrollbar,body:has(.ss-neural-tutor)::-webkit-scr
  .ss-jarvis-orbit-one{inset:22% 16%!important}.ss-jarvis-orbit-two{inset:27% 20%!important}.ss-jarvis-orbit-three{inset:31% 13%!important}
 }
 @media(prefers-reduced-motion:reduce){.ss-jarvis-panel{animation:none!important}.ss-jarvis-stage .brain-action{transition:none!important}}
+
+/* The JARVIS core is a single physical orb; only its three orbiting nodes accept input. */
+.ss-jarvis-core-wrap{position:absolute;inset:0;z-index:2;display:grid;place-items:center;pointer-events:none}
+.ss-jarvis-core{position:relative;width:min(38vw,430px);min-width:270px;aspect-ratio:1;display:grid;place-items:center}
+.ss-jarvis-core-glow{inset:29%;border-color:rgba(214,190,142,.7);background:radial-gradient(circle at 36% 30%,rgba(239,220,178,.28),rgba(185,162,122,.1) 38%,rgba(9,9,7,.96) 78%)}
+.ss-jarvis-core-center{width:24%;color:#e5d1a8}
+.ss-jarvis-core-center svg{width:42%;height:42%}
+.ss-jarvis-core-label{bottom:17%;left:50%;transform:translateX(-50%);white-space:nowrap;letter-spacing:.3em}
+.ss-jarvis-stage>.ss-neural-universe{z-index:3!important}
+.ss-jarvis-stage .ss-neural-hotspots{z-index:12!important}
+@media(max-width:700px){.ss-jarvis-core{width:min(66vw,360px);min-width:230px}.ss-jarvis-core-label{bottom:16%}}
