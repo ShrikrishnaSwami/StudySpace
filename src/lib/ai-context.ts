@@ -105,19 +105,19 @@ export async function getStudentAIContext(
   // Fetch independent student data concurrently; serial queries added latency
   // to every AI Tutor request even when the model was ready.
   const notesQuery = courseIds.length
-    ? supabase.from("course_notes").select("*").in("course_id", courseIds).order("created_at", { ascending: false }).limit(40)
+    ? supabase.from("ai_context_course_notes").select("*").in("course_id", courseIds).order("created_at", { ascending: false }).limit(40)
     : Promise.resolve({ data: [], error: null });
   const resourcesQuery = courseIds.length
-    ? supabase.from("course_resources").select("*").in("course_id", courseIds).order("created_at", { ascending: false }).limit(30)
+    ? supabase.from("ai_context_course_resources").select("*").in("course_id", courseIds).order("created_at", { ascending: false }).limit(30)
     : Promise.resolve({ data: [], error: null });
 
-  let assignmentsQuery = supabase.from("assignments").select("*").eq("user_id", user.id).order("due_date", { ascending: true }).limit(50);
+  let assignmentsQuery = supabase.from("ai_context_assignments").select("*").eq("user_id", user.id).order("due_date", { ascending: true }).limit(50);
   if (courseId) assignmentsQuery = assignmentsQuery.eq("course_id", courseId);
 
-  let quizzesQuery = supabase.from("quizzes").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30);
+  let quizzesQuery = supabase.from("ai_context_quizzes").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30);
   if (courseId) quizzesQuery = quizzesQuery.eq("course_id", courseId);
 
-  let homeworkQuery = supabase.from("homework").select(`
+  let homeworkQuery = supabase.from("ai_context_homework").select(`
       id, course_id, assignment_id, title, description, file_name, file_type,
       status, ai_summary, ai_solution, ai_explanation, ai_hints, created_at, updated_at
     `).eq("user_id", user.id).order("created_at", { ascending: false }).limit(30);
@@ -128,9 +128,9 @@ export async function getStudentAIContext(
     resourcesQuery,
     assignmentsQuery,
     quizzesQuery,
-    supabase.from("quiz_attempts").select("*").eq("user_id", user.id).order("completed_at", { ascending: false, nullsFirst: false }).limit(50),
+    supabase.from("ai_context_quiz_attempts").select("*").eq("user_id", user.id).order("completed_at", { ascending: false, nullsFirst: false }).limit(50),
     homeworkQuery,
-    supabase.from("calendar_events").select("*").eq("user_id", user.id).eq("enabled", true).order("start_at", { ascending: true }).limit(80),
+    supabase.from("ai_context_calendar_events").select("*").eq("user_id", user.id).eq("enabled", true).order("start_at", { ascending: true }).limit(80),
   ]);
 
   if (notesResult.error) console.error("Could not load course notes:", notesResult.error.message);
