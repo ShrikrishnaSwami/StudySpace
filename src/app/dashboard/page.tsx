@@ -908,7 +908,7 @@ export default function DashboardPage() {
             </p>
 
             <p className="mt-1 text-xs text-white/25">
-              Preparing your workspace...
+              Loading your courses and deadlines…
             </p>
           </div>
         </div>
@@ -936,7 +936,7 @@ export default function DashboardPage() {
                   <Sparkles className="h-3.5 w-3.5" />
                 </span>
 
-                YOUR DAY, WITHOUT THE GUESSWORK
+                WHAT'S ON YOUR LIST TODAY
               </div>
 
               <h1 className="text-3xl font-semibold tracking-[-0.055em] text-white sm:text-4xl lg:text-[46px]">
@@ -947,7 +947,7 @@ export default function DashboardPage() {
               </h1>
 
               <p className="mt-3 max-w-xl text-sm leading-7 text-white/55">
-                Here’s what’s on your plate. Start with the deadline you can’t move.
+                Here’s what is coming up. Start with the thing due first.
               </p>
             </div>
 
@@ -1042,28 +1042,28 @@ export default function DashboardPage() {
         <section className="ss-dashboard-quick grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Quick actions">
           <Link href="/ai-tutor" className="group flex items-center gap-3 rounded-2xl border border-violet-300/[0.17] bg-[linear-gradient(120deg,rgba(112,74,218,0.13),rgba(20,17,31,0.94))] p-4 shadow-[0_12px_32px_rgba(74,45,139,0.1)] transition duration-300 hover:-translate-y-1 hover:border-violet-300/30 hover:bg-violet-500/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300"><Brain className="h-4 w-4" /></span>
-            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Ask AI Tutor</span><span className="mt-1 block text-xs text-white/35">Get help with a concept</span></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Ask the AI tutor</span><span className="mt-1 block text-xs text-white/35">Ask about a lecture, a tricky concept, or that error message</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-violet-300" />
           </Link>
           <Link href="/assignments" className="group flex items-center gap-3 rounded-2xl border border-violet-300/[0.075] bg-[linear-gradient(145deg,rgba(24,22,34,0.92),rgba(13,12,19,0.96))] p-4 shadow-[0_10px_30px_rgba(0,0,0,0.12)] transition duration-300 hover:-translate-y-1 hover:border-violet-300/25 hover:bg-violet-500/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-300/10 bg-violet-500/10 text-violet-200"><ListChecks className="h-4 w-4" /></span>
-            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Assignments & grades</span><span className="mt-1 block text-xs text-white/35">Submit work and review AI feedback</span></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Assignments</span><span className="mt-1 block text-xs text-white/35">Upload your work and read the AI feedback</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
           </Link>
           <Link href="/calendar" className="group flex items-center gap-3 rounded-2xl border border-violet-300/[0.07] bg-violet-500/[0.02] p-4 transition hover:border-violet-300/[0.14] hover:bg-violet-500/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-300/10 bg-violet-500/10 text-violet-200"><CalendarDays className="h-4 w-4" /></span>
-            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Open calendar</span><span className="mt-1 block text-xs text-white/35">See your schedule</span></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Check your calendar</span><span className="mt-1 block text-xs text-white/35">Classes, deadlines and study sessions</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
           </Link>
           <Link href="/flashcards" className="group flex items-center gap-3 rounded-2xl border border-violet-300/[0.07] bg-violet-500/[0.02] p-4 transition hover:border-violet-300/[0.14] hover:bg-violet-500/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-violet-300/10 bg-violet-500/10 text-violet-200"><Zap className="h-4 w-4" /></span>
-            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Study flashcards</span><span className="mt-1 block text-xs text-white/35">Practice active recall</span></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-white/85">Review flashcards</span><span className="mt-1 block text-xs text-white/35">Make quick cards from your lecture notes</span></span>
             <ArrowRight className="h-4 w-4 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/70" />
           </Link>
         </section>
 
         {/* =================================================
-            AI STUDY PLAN
+            STUDY PLAN
         ================================================= */}
 
         <section className="relative overflow-hidden rounded-[26px] border border-violet-300/[0.15] bg-[linear-gradient(135deg,rgba(31,23,49,0.92),rgba(13,11,19,0.98)_58%)] shadow-[0_22px_65px_rgba(0,0,0,0.18)]">
@@ -1081,7 +1081,7 @@ export default function DashboardPage() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl font-semibold tracking-[-0.025em] text-white">
-                      What needs your attention
+                      What should I work on next?
                     </h2>
 
                     <span className="rounded-full border border-violet-400/15 bg-violet-500/[0.08] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-violet-300">
@@ -1090,7 +1090,7 @@ export default function DashboardPage() {
                   </div>
 
                   <p className="mt-1 max-w-2xl text-sm leading-6 text-white/40">
-                    A short list based on the work and deadlines you have added.
+                    A short list based on the assignments and deadlines you've added.
                   </p>
                 </div>
               </div>
@@ -1113,7 +1113,7 @@ export default function DashboardPage() {
                 ) : (
                   <>
                     <Sparkles className="h-3.5 w-3.5" />
-                    Build my study list
+                    Make me a study list
                   </>
                 )}
               </button>
@@ -1132,7 +1132,7 @@ export default function DashboardPage() {
               </h3>
 
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-white/35">
-                Add your assignments and deadlines, then build a list of what to tackle first.
+                Add your assignments and due dates, then get a suggested order to work through them.
               </p>
 
               <button
@@ -1146,7 +1146,7 @@ export default function DashboardPage() {
                 className="mt-6 inline-flex items-center gap-2 rounded-xl border border-violet-400/15 bg-violet-500/[0.07] px-4 py-2.5 text-xs font-medium text-violet-200 transition hover:bg-violet-500/[0.12] disabled:opacity-50"
               >
                 <Zap className="h-3.5 w-3.5" />
-                Build my study list
+                Make me a study list
               </button>
             </div>
           ) : (
@@ -1325,8 +1325,8 @@ export default function DashboardPage() {
                 icon={
                   <CalendarDays className="h-5 w-5" />
                 }
-                title="Your calendar is clear"
-                description="Nothing is scheduled for today. Enjoy the breathing room or use it to get ahead."
+                title="Nothing on the calendar today"
+                description="No classes or study sessions today. Add one if you need it, or take the free time."
               />
             ) : (
               <div className="divide-y divide-violet-300/[0.05]">
@@ -1398,8 +1398,8 @@ export default function DashboardPage() {
                 icon={
                   <CheckCircle2 className="h-5 w-5" />
                 }
-                title="Nothing urgent"
-                description="You don't have any upcoming assignments in the next seven days."
+                title="No deadlines in the next week"
+                description="Nothing is due in the next seven days. Check back when you add more work."
               />
             ) : (
               <div className="divide-y divide-violet-300/[0.05]">
