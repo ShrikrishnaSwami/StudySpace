@@ -75,6 +75,7 @@ export default function QuizzesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
+  const [courseLoadError, setCourseLoadError] = useState("");
 
   const [generating, setGenerating] = useState(false);
   const [showGenerator, setShowGenerator] = useState(false);
@@ -132,18 +133,26 @@ export default function QuizzesPage() {
             }),
         ]);
 
+      // Keep course loading independent from the quiz library. A quiz-list
+      // query/RLS error must never leave the generator without its courses.
       if (coursesResponse.error) {
-        throw new Error(coursesResponse.error.message);
+        console.error("Could not load courses for quiz generation:", coursesResponse.error);
+        setCourseLoadError("Your courses could not be loaded. Refresh the page and try again.");
+        setCourses([]);
+      } else {
+        setCourseLoadError("");
+        setCourses((coursesResponse.data || []) as Course[]);
       }
 
       if (quizzesResponse.error) {
-        throw new Error(quizzesResponse.error.message);
+        console.error("Could not load saved quizzes:", quizzesResponse.error);
+        setQuizzes([]);
+      } else {
+        setQuizzes((quizzesResponse.data || []) as Quiz[]);
       }
-
-      setCourses((coursesResponse.data || []) as Course[]);
-      setQuizzes((quizzesResponse.data || []) as Quiz[]);
     } catch (error) {
-      console.error(error);
+      console.error("Could not load quiz data:", error);
+      setCourseLoadError("We couldn't load your courses. Please refresh and try again.");
     } finally {
       setLoading(false);
     }
@@ -662,6 +671,7 @@ export default function QuizzesPage() {
         {showGenerator && (
           <QuizGenerator
             courses={courses}
+            courseLoadError={courseLoadError}
             selectedCourse={selectedCourse}
             setSelectedCourse={setSelectedCourse}
             topic={topic}
@@ -904,6 +914,7 @@ function EmptyQuizState({
 
 function QuizGenerator({
   courses,
+  courseLoadError,
   selectedCourse,
   setSelectedCourse,
   topic,
@@ -917,6 +928,7 @@ function QuizGenerator({
   onGenerate,
 }: {
   courses: Course[];
+  courseLoadError: string;
   selectedCourse: string;
   setSelectedCourse: (value: string) => void;
   topic: string;
@@ -990,11 +1002,13 @@ function QuizGenerator({
               ))}
             </select>
 
-            {courses.length === 0 && (
+            {courseLoadError ? (
+              <p className="mt-2 text-xs text-red-400/90">{courseLoadError}</p>
+            ) : courses.length === 0 ? (
               <p className="mt-2 text-xs text-amber-400/80">
                 Add a course first before generating a quiz.
               </p>
-            )}
+            ) : null}
           </div>
 
           <div>
@@ -1098,7 +1112,8 @@ function QuizGenerator({
           </div>
 
           <button
-            disabled={!canGenerate || generating}
+            type="button"
+            disabled={!canGenerate || generating || Boolean(courseLoadError)}
             onClick={onGenerate}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3.5 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
