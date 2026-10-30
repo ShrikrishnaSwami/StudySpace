@@ -14,7 +14,7 @@ WITH assignment_owner AS (
   LIMIT 1
 ),
 owner_courses AS (
-  SELECT c.user_id, min(c.id) AS course_id
+  SELECT c.user_id, (array_agg(c.id ORDER BY c.id))[1] AS course_id
   FROM public.courses c
   GROUP BY c.user_id
 ),
