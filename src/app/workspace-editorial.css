@@ -159,3 +159,244 @@ body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-command-p
     padding: 18px 14px 28px;
   }
 }
+
+
+/* Violet workspace refresh: keep the dark editorial base, bring back StudySpace purple. */
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell {
+  --workspace-paper: #100d18;
+  --workspace-deep: #0b0911;
+  --workspace-ink: #f1edfa;
+  --workspace-muted: #aaa2b7;
+  --workspace-dim: #797187;
+  --workspace-purple: #a78bfa;
+  --workspace-purple-bright: #b9a5ff;
+  --workspace-line: rgba(167, 139, 250, .15);
+  background: #0d0a13 !important;
+  color: var(--workspace-ink) !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-sidebar {
+  background: linear-gradient(180deg, rgba(20, 15, 31, .98), rgba(12, 10, 18, .98)) !important;
+  border-color: rgba(167, 139, 250, .13) !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-topbar {
+  background: rgba(14, 11, 21, .88) !important;
+  border-color: rgba(167, 139, 250, .13) !important;
+  box-shadow: 0 12px 38px rgba(0, 0, 0, .16), 0 1px rgba(167, 139, 250, .035);
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-sidebar a[aria-current="page"],
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-sidebar a[class~="bg-white/[0.07]"] {
+  background: linear-gradient(100deg, rgba(139, 92, 246, .19), rgba(139, 92, 246, .045)) !important;
+  color: #eee8ff !important;
+  box-shadow: inset 2px 0 0 rgba(167, 139, 250, .9);
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-sidebar [class*="text-violet"],
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-topbar [class*="text-violet"],
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-sidebar svg {
+  color: #b9a5ff !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-sidebar [class*="bg-violet"],
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-topbar [class*="bg-violet"] {
+  background-color: rgba(139, 92, 246, .16) !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .atelier-main {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 84% 0%, rgba(124, 58, 237, .13), transparent 34%),
+    radial-gradient(ellipse at 7% 34%, rgba(139, 92, 246, .065), transparent 32%),
+    linear-gradient(180deg, rgba(16, 12, 24, .92), rgba(11, 9, 16, .96)) !important;
+  color: var(--workspace-ink) !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .atelier-main::before {
+  opacity: .22;
+  background-image:
+    radial-gradient(circle at 18% 14%, rgba(167, 139, 250, .42) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 78% 23%, rgba(139, 92, 246, .3) 0 1px, transparent 1.8px),
+    linear-gradient(rgba(167, 139, 250, .025) 1px, transparent 1px);
+  background-size: 170px 150px, 220px 190px, 100% 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main h1,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main h2,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main h3 {
+  color: #f2edff !important;
+  font-family: var(--font-geist-sans), Arial, sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: -.04em !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-topbar h1 {
+  color: #f2edff !important;
+  font-family: var(--font-geist-sans), Arial, sans-serif !important;
+  font-weight: 600 !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main [class*="rounded-2xl"][class*="border"]:not(button):not(a),
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main [class*="rounded-xl"][class*="border"]:not(button):not(a),
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main [class*="rounded-lg"][class*="border"]:not(button):not(a) {
+  border: 1px solid rgba(167, 139, 250, .14) !important;
+  border-radius: 16px !important;
+  background: linear-gradient(145deg, rgba(29, 22, 43, .68), rgba(16, 13, 23, .78)) !important;
+  box-shadow: 0 14px 42px rgba(0, 0, 0, .16), inset 0 1px rgba(255, 255, 255, .025) !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main [class*="rounded-2xl"][class*="border"]:not(button):not(a):hover,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main [class*="rounded-xl"][class*="border"]:not(button):not(a):hover,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main [class*="rounded-lg"][class*="border"]:not(button):not(a):hover {
+  border-color: rgba(167, 139, 250, .28) !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .2), 0 0 24px rgba(139, 92, 246, .055) !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main [class*="bg-white/"] {
+  background-color: rgba(190, 170, 255, .035) !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main [class*="text-violet-"],
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main [class*="text-purple-"] {
+  color: #b9a5ff !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main [class*="border-violet-"],
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main [class*="border-purple-"] {
+  border-color: rgba(167, 139, 250, .24) !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main button[class~="bg-violet-600"],
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main button[class~="bg-violet-500"],
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main button[class~="bg-purple-500"],
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main button[class~="bg-purple-600"] {
+  border: 1px solid rgba(196, 181, 253, .3) !important;
+  border-radius: 12px !important;
+  background: linear-gradient(135deg, #8054df, #6940bf) !important;
+  color: #fff !important;
+  box-shadow: 0 9px 24px rgba(91, 45, 170, .2);
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main button[class~="bg-violet-600"]:hover,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main button[class~="bg-violet-500"]:hover,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main button[class~="bg-purple-500"]:hover,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main button[class~="bg-purple-600"]:hover {
+  background: linear-gradient(135deg, #936cf0, #7850cf) !important;
+  box-shadow: 0 12px 30px rgba(91, 45, 170, .28);
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main button[class*="rounded-xl"],
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main button[class*="rounded-lg"] {
+  border-radius: 11px !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main textarea,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main select {
+  border-color: rgba(167, 139, 250, .2) !important;
+  border-radius: 11px !important;
+  background-color: rgba(13, 10, 20, .88) !important;
+  color: #f2edff !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main input::placeholder,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main textarea::placeholder {
+  color: #827993 !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main input:focus,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main textarea:focus,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main select:focus {
+  border-color: rgba(167, 139, 250, .72) !important;
+  outline-color: rgba(167, 139, 250, .32) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, .12) !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main button:focus-visible,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main a:focus-visible,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main input:focus-visible,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main select:focus-visible,
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main textarea:focus-visible {
+  outline: 2px solid rgba(167, 139, 250, .78) !important;
+  outline-offset: 3px;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell main table th {
+  color: #b9a5ff !important;
+}
+
+body:has(.atelier-main):not(:has(.ss-neural-tutor)) .atelier-shell .ss-command-panel {
+  border-color: rgba(167, 139, 250, .22) !important;
+  border-radius: 16px !important;
+  background: rgba(17, 13, 27, .98) !important;
+}
+
+/* The AI Tutor's central neural core gets a few violet signals, not a full recolour. */
+.ss-jarvis-screen {
+  background: radial-gradient(ellipse at 50% 48%, rgba(91, 53, 164, .18), transparent 40%), #17131f !important;
+}
+
+.ss-jarvis-screen > div:first-child {
+  background:
+    radial-gradient(ellipse at 50% 48%, rgba(139, 92, 246, .2), transparent 38%),
+    radial-gradient(ellipse at 50% 100%, rgba(91, 53, 164, .1), transparent 48%),
+    linear-gradient(180deg, #17131f, #12101a) !important;
+}
+
+.ss-jarvis-core {
+  filter: drop-shadow(0 0 36px rgba(139, 92, 246, .22)) !important;
+}
+
+.ss-jarvis-core::before {
+  content: "";
+  position: absolute;
+  inset: -19%;
+  z-index: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: .78;
+  background:
+    radial-gradient(circle at 19% 31%, rgba(196, 181, 253, .95) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 77% 24%, rgba(167, 139, 250, .9) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 88% 62%, rgba(139, 92, 246, .8) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 26% 78%, rgba(196, 181, 253, .78) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 52% 9%, rgba(167, 139, 250, .75) 0 1px, transparent 2.5px),
+    radial-gradient(circle at 55% 92%, rgba(139, 92, 246, .75) 0 1px, transparent 2.5px),
+    radial-gradient(circle at 50% 50%, rgba(139, 92, 246, .16), transparent 65%);
+  filter: drop-shadow(0 0 10px rgba(139, 92, 246, .38));
+}
+
+.ss-jarvis-core-glow {
+  border-color: rgba(167, 139, 250, .55) !important;
+  background: radial-gradient(circle at 36% 30%, rgba(196, 181, 253, .2), rgba(139, 92, 246, .12) 38%, rgba(9, 9, 17, .94) 76%) !important;
+  box-shadow: 0 0 36px rgba(139, 92, 246, .22), inset 0 0 34px rgba(139, 92, 246, .2) !important;
+}
+
+.ss-jarvis-orbit,
+.ss-jarvis-orbit-two,
+.ss-jarvis-orbit-three {
+  border-color: rgba(167, 139, 250, .3) !important;
+}
+
+.ss-jarvis-orbit-one::before,
+.ss-jarvis-orbit-two::before,
+.ss-jarvis-orbit-three::before {
+  background: #c4b5fd !important;
+  box-shadow: 0 0 14px 3px rgba(167, 139, 250, .72) !important;
+}
+
+.ss-jarvis-core-center {
+  color: #ddd2ff !important;
+  filter: drop-shadow(0 0 13px rgba(167, 139, 250, .72)) !important;
+}
+
+.ss-jarvis-core-label {
+  color: rgba(196, 181, 253, .7) !important;
+}
+
+.ss-jarvis-scan {
+  background: conic-gradient(from 0deg, transparent 0 68%, rgba(167, 139, 250, .3) 78%, transparent 88% 100%) !important;
+}
