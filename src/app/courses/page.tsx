@@ -446,7 +446,7 @@ export default function CoursesPage() {
             onClick={() => !saving && setShowAddCourse(false)}
           />
 
-          <div className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-white/10 bg-[#100b1b] shadow-2xl shadow-black/60">
+          <div className="relative max-h-[calc(100dvh-7rem)] w-full max-w-xl overflow-y-auto overscroll-contain rounded-3xl border border-white/10 bg-[#100b1b] shadow-2xl shadow-black/60">
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.07] bg-[#100b1b]/95 px-6 py-5 backdrop-blur-xl">
               <div>
                 <h2 className="text-lg font-semibold text-white">
