@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -930,9 +931,17 @@ function QuizGenerator({
 }) {
   const canGenerate = Boolean(selectedCourse);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
-      <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl border border-white/[0.09] bg-[#100b1c] shadow-2xl shadow-black/50">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-md"
+      role="presentation"
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quiz-generator-title"
+        className="my-auto max-h-[min(90dvh,900px)] w-full max-w-xl overflow-y-auto overscroll-contain rounded-3xl border border-white/[0.09] bg-[#100b1c] shadow-2xl shadow-black/50"
+      >
         <div className="sticky top-0 z-10 flex items-start justify-between border-b border-white/[0.07] bg-[#100b1c]/95 p-5 backdrop-blur-xl sm:p-6">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-violet-400">
@@ -940,7 +949,7 @@ function QuizGenerator({
               AI quiz generator
             </div>
 
-            <h2 className="mt-2 text-xl font-semibold text-white">
+            <h2 id="quiz-generator-title" className="mt-2 text-xl font-semibold text-white">
               Build a practice session
             </h2>
 
@@ -1110,10 +1119,10 @@ function QuizGenerator({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
-
 function QuizRunner({
   activeQuiz,
   answers,
