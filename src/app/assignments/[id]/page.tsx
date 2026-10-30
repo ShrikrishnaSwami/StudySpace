@@ -1539,6 +1539,7 @@ export default function AssignmentWorkspacePage() {
       </div>
 
       {confirmSubmit && activeSubmission && (
+        <ViewportPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#17151d] p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-3">
@@ -1583,6 +1584,7 @@ export default function AssignmentWorkspacePage() {
             </div>
           </div>
         </div>
+        </ViewportPortal>
       )}
 
       {busy && (
