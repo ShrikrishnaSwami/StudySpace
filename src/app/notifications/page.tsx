@@ -298,7 +298,7 @@ export default function NotificationsPage() {
                 </h1>
 
                 <p className="mt-2 max-w-xl text-sm leading-6 text-white/45">
-                  Keep track of assignments, quizzes, study reminders,
+                  See updates about assignments, quizzes, class times and study reminders.
                   calendar conflicts, and recommendations.
                 </p>
               </div>
@@ -360,7 +360,7 @@ export default function NotificationsPage() {
             />
 
             <input type="search" aria-label="Search notifications" value={search} onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search notifications..."
+              placeholder="Search for an assignment, quiz or reminder…"
               className="h-11 w-full rounded-xl border border-white/[0.08] bg-white/[0.025] pl-10 pr-4 text-sm text-white outline-none placeholder:text-white/25 transition focus:border-violet-400/30 focus:bg-white/[0.04] focus:ring-2 focus:ring-violet-500/10"
             />
 
@@ -441,14 +441,14 @@ export default function NotificationsPage() {
 
               <h2 className="mt-5 text-lg font-semibold text-white">
                 {search || filter !== "all"
-                  ? "No notifications found"
-                  : "You're all caught up"}
+                  ? "Nothing matches that search"
+                  : "You're up to date"}
               </h2>
 
               <p className="mt-2 max-w-md text-sm leading-6 text-white/40">
                 {search || filter !== "all"
-                  ? "Try changing your search or notification filter."
-                  : "New activity from assignments, quizzes, your calendar, and StudySpace recommendations will appear here."}
+                  ? "Try another search or switch the filter."
+                  : "Updates about due dates, quiz results, calendar events and study reminders will show up here."}
               </p>
 
               {(search || filter !== "all") && (
