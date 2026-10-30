@@ -7,7 +7,8 @@ type Props = { active?: boolean; listening?: boolean; showControls?: boolean; co
 
 export default function NeuralIntelligence({active=false,listening=false,showControls=true,controlsOnly=false,activeAction,onPrompt,onAction}:Props) {
  const host=useRef<HTMLDivElement>(null);
- const mode=useRef({active,listening}); mode.current={active,listening};
+ const mode=useRef({active,listening});
+ useEffect(()=>{mode.current={active,listening};},[active,listening]);
  useEffect(()=>{
   const root=host.current;if(!root||controlsOnly)return;
   const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
