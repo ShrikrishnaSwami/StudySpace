@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -10,9 +10,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock3,
-  Filter,
   Loader2,
-  Plus,
   Search,
   Sparkles,
   Target,
