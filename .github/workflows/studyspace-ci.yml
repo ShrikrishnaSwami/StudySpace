@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: studyspace-ci-${{ github.ref }}
+  group: studyspace-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -29,11 +29,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Audit locked dependencies
+        run: npm audit --audit-level=high
+      - name: Lint application code
+        run: npm run lint
       - name: Unit and security regression tests
         run: |
           npm run test:retrieval
           npm run test:syllabus
           npm run test:security
+          npm run test:hardening
       - name: Production build and type checks
         run: npm run build
       - name: Install Playwright for browser smoke tests
