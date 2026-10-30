@@ -56,7 +56,7 @@ export async function getStudentAIContext(
    */
 
   let coursesQuery = supabase
-    .from("courses")
+    .from("ai_context_courses")
     .select(
       `
       id,
