@@ -1,5 +1,4 @@
 import "server-only";
-import { logAiMetric } from "@/lib/ai-observability";
 
 import { GoogleGenAI } from "@google/genai";
 import { buildGeminiPartsRequest, buildGeminiPdfRequest, isFreeOpenRouterModel, requestChatCompletion, withProviderFallback } from "./ai-provider-core";
