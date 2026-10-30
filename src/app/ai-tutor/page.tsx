@@ -12,7 +12,6 @@ import {
 
 import {
   ArrowUp,
-  BookOpen,
   Mic,
   Volume2,
   VolumeX,
@@ -22,18 +21,9 @@ import {
   ThumbsUp,
   User,
   X,
-  Plus,
-  BookMarked,
-  NotebookPen,
-  ClipboardList,
-  BrainCircuit,
-  CalendarDays,
-  Layers,
   Grip,
-  ExternalLink,
 } from "lucide-react";
 
-import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import ViewportPortal from "@/components/ViewportPortal";
 import NeuralIntelligence from "@/components/NeuralIntelligence";
@@ -42,13 +32,6 @@ import { supabase } from "@/lib/supabase";
 /* =========================================================
    TYPES
 ========================================================= */
-
-type Course = {
-  id: string;
-  code: string | null;
-  name: string;
-  professor: string | null;
-};
 
 type Conversation = {
   id: string;
@@ -59,9 +42,8 @@ type Conversation = {
   updated_at: string;
 };
 
-type WorkspaceKind = "chat" | "history" | "tools" | "courses" | "course" | "notes" | "assignments" | "quizzes" | "flashcards" | "calendar";
-type WorkspaceWindow = { id: string; kind: WorkspaceKind; title: string; x: number; y: number; width: number; height: number; courseId?: string; parentId?: string };
-type StudyNode = { id: string; kind: Exclude<WorkspaceKind, "history" | "tools" | "course">; title: string; x: number; y: number; parentId: string | null; courseId?: string };
+type WorkspaceKind = "chat" | "history";
+type WorkspaceWindow = { id: string; kind: WorkspaceKind; title: string; x: number; y: number; width: number; height: number };
 
 type SpeechRecognitionAlternativeLike = { transcript: string };
 type SpeechRecognitionResultLike = ArrayLike<SpeechRecognitionAlternativeLike>;
@@ -132,20 +114,6 @@ function formatConversationDate(
   );
 }
 
-function isStudyNode(value: unknown): value is StudyNode {
-  if (!value || typeof value !== "object") return false;
-  const node = value as Record<string, unknown>;
-  const validKinds = ["chat", "notes", "courses", "assignments", "quizzes", "flashcards", "calendar"];
-  return typeof node.id === "string"
-    && typeof node.title === "string"
-    && typeof node.kind === "string"
-    && validKinds.includes(node.kind)
-    && typeof node.x === "number" && Number.isFinite(node.x) && node.x >= 0 && node.x <= 100
-    && typeof node.y === "number" && Number.isFinite(node.y) && node.y >= 0 && node.y <= 100
-    && (node.parentId === null || typeof node.parentId === "string")
-    && (node.courseId === undefined || typeof node.courseId === "string");
-}
-
 function formatMessageTime(
   dateString: string
 ) {
@@ -169,9 +137,6 @@ function formatMessageTime(
 ========================================================= */
 
 export default function AITutorPage() {
-  const [courses, setCourses] =
-    useState<Course[]>([]);
-
   const [conversations, setConversations] =
     useState<Conversation[]>([]);
 
@@ -205,13 +170,6 @@ export default function AITutorPage() {
   const [workspaceWindows, setWorkspaceWindows] = useState<WorkspaceWindow[]>([]);
   const [focusedWindowId, setFocusedWindowId] = useState<string | null>(null);
   const [nodesHydrated, setNodesHydrated] = useState(false);
-  const [selectedNodeKind, setSelectedNodeKind] = useState<StudyNode["kind"]>("notes");
-  const [workspaceScale, setWorkspaceScale] = useState(100);
-  const [studyNodes, setStudyNodes] = useState<StudyNode[]>([]);
-  const [studyNodesHydrated, setStudyNodesHydrated] = useState(false);
-  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
-  const canvasRef = useRef<HTMLElement>(null);
-  const nodeDragState = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
   const dragState = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
   const windowResizeState = useRef<{ id: string; startX: number; startY: number; width: number; height: number } | null>(null);
 
@@ -378,52 +336,18 @@ export default function AITutorPage() {
           return;
         }
 
-        const [
-          coursesResult,
-          conversationsResult,
-        ] = await Promise.all([
-          supabase
-            .from("courses")
-            .select(
-              "id, code, name, professor"
-            )
-            .eq("user_id", user.id)
-            .eq("archived", false)
-            .order("name"),
+        const { data: conversationsData, error: conversationsError } = await supabase
+          .from("ai_tutor_conversations")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("updated_at", { ascending: false });
 
-          supabase
-            .from(
-              "ai_tutor_conversations"
-            )
-            .select("*")
-            .eq("user_id", user.id)
-            .order("updated_at", {
-              ascending: false,
-            }),
-        ]);
-
-        if (coursesResult.error) {
-          throw new Error(
-            coursesResult.error.message
-          );
+        if (conversationsError) {
+          throw new Error(conversationsError.message);
         }
-
-        if (
-          conversationsResult.error
-        ) {
-          throw new Error(
-            conversationsResult.error.message
-          );
-        }
-
-        setCourses(
-          (coursesResult.data ||
-            []) as Course[]
-        );
 
         const loadedConversations =
-          (conversationsResult.data ||
-            []) as Conversation[];
+          (conversationsData || []) as Conversation[];
 
         setConversations(
           loadedConversations
@@ -984,16 +908,18 @@ export default function AITutorPage() {
     }
   }
 
-  function openWorkspace(kind: WorkspaceKind, title: string, courseId?: string, parentId?: string, placementIndex = 0) {
+  function openWorkspace(kind: WorkspaceKind, title: string) {
     const id = crypto.randomUUID();
-    const parent = parentId ? workspaceWindows.find(item => item.id === parentId) : undefined;
-    const offset = (workspaceWindows.length + placementIndex) % 7;
+    const offset = workspaceWindows.length % 5;
+    const baseWidth = kind === "chat" ? 560 : 420;
+    const baseHeight = kind === "chat" ? 600 : 520;
+    const width = Math.min(baseWidth, Math.max(280, window.innerWidth - 24));
+    const height = Math.min(baseHeight, Math.max(220, window.innerHeight - 92));
     const next: WorkspaceWindow = {
-      id, kind, title, courseId, parentId,
-      x: Math.max(18, Math.min(window.innerWidth - 540, (parent?.x ?? 90) + 46 + offset * 42)),
-      y: Math.max(82, Math.min(window.innerHeight - 520, (parent?.y ?? 100) + 54 + offset * 34)),
-      width: Math.round((kind === "chat" ? 500 : kind === "history" ? 390 : 420) * workspaceScale / 100),
-      height: Math.round((kind === "chat" ? 560 : 480) * workspaceScale / 100),
+      id, kind, title,
+      x: Math.max(12, Math.min(window.innerWidth - width - 12, 72 + offset * 34)),
+      y: Math.max(76, Math.min(window.innerHeight - height - 16, 88 + offset * 28)),
+      width, height,
     };
     setWorkspaceWindows(current => current.length >= 18 ? current : [...current, next]);
     setFocusedWindowId(id);
@@ -1005,117 +931,21 @@ export default function AITutorPage() {
     setFocusedWindowId(current => current === id ? null : current);
   }
 
-  function addRootStudyNode(kind: StudyNode["kind"], title: string, courseId?: string) {
-    if (studyNodes.length >= 24) return;
-    const roots = studyNodes.filter(node => !node.parentId).length;
-    const angle = roots * 2.399963229728653 - Math.PI / 2;
-    const minX = typeof window !== "undefined" && window.innerWidth <= 700 ? 20 : 8;
-    const node: StudyNode = {
-      id: crypto.randomUUID(),
-      kind,
-      title,
-      courseId,
-      x: Math.max(minX, Math.min(100 - minX, 50 + Math.cos(angle) * 32)),
-      y: Math.max(15, Math.min(78, 48 + Math.sin(angle) * 22)),
-      parentId: null,
-    };
-    setStudyNodes(current => [...current, node]);
-  }
-
-  function addBrainNode() {
-    const item = studyWorkspaceItems.find(entry => entry.kind === selectedNodeKind);
-    addRootStudyNode(selectedNodeKind, item?.title || "Study node");
-  }
-
-  function openStudyNode(node: StudyNode) {
-    if (node.kind === "chat") {
-      setSelectedCourseId(node.courseId || "");
-      void createConversation(node.courseId || "").then(conversation => {
-        if (conversation) {
-          const id = openWorkspace("chat", node.title, node.courseId, node.parentId || undefined);
-          setFocusedWindowId(id);
-        }
-      });
-      return;
-    }
-    if (node.kind === "courses" && node.courseId) {
-      const course = courses.find(item => item.id === node.courseId);
-      openWorkspace("course", course?.code ? `${course.code} · ${course.name}` : node.title, node.courseId, node.parentId || undefined);
-      return;
-    }
-    openWorkspace(node.kind, node.title, node.courseId, node.parentId || undefined);
-  }
-
-  function startNodeDrag(event: ReactPointerEvent, id: string) {
-    if ((event.target as HTMLElement).closest("button, a, select")) return;
-    const canvas = canvasRef.current;
-    const node = studyNodes.find(item => item.id === id);
-    if (!canvas || !node) return;
-    const rect = canvas.getBoundingClientRect();
-    nodeDragState.current = {
-      id,
-      offsetX: event.clientX - rect.left - (node.x / 100) * rect.width,
-      offsetY: event.clientY - rect.top - (node.y / 100) * rect.height,
-    };
-    (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
-  }
-
-  function deleteStudyNode(id: string) {
-    setStudyNodes(current => {
-      const removed = new Set([id]);
-      let changed = true;
-      while (changed) {
-        changed = false;
-        for (const node of current) {
-          if (node.parentId && removed.has(node.parentId) && !removed.has(node.id)) {
-            removed.add(node.id);
-            changed = true;
-          }
-        }
-      }
-      return current.filter(node => !removed.has(node.id));
-    });
-  }
-
   function startWindowDrag(event: ReactPointerEvent, id: string) {
     if ((event.target as HTMLElement).closest("button")) return;
     const item = workspaceWindows.find(entry => entry.id === id);
     if (!item) return;
     dragState.current = { id, offsetX: event.clientX - item.x, offsetY: event.clientY - item.y };
     setFocusedWindowId(id);
-    (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
   }
-
-  useEffect(() => {
-    const resize = (event: PointerEvent) => {
-      const active = windowResizeState.current;
-      if (!active) return;
-      const maxWidth = Math.max(280, window.innerWidth - 24);
-      const maxHeight = Math.max(220, window.innerHeight - 92);
-      const width = Math.max(280, Math.min(maxWidth, active.width + event.clientX - active.startX));
-      const height = Math.max(220, Math.min(maxHeight, active.height + event.clientY - active.startY));
-      setWorkspaceWindows(current => current.map(item => item.id === active.id ? { ...item, width, height } : item));
-    };
-    const end = () => { windowResizeState.current = null; };
-    window.addEventListener("pointermove", resize);
-    window.addEventListener("pointerup", end);
-    window.addEventListener("pointercancel", end);
-    return () => {
-      window.removeEventListener("pointermove", resize);
-      window.removeEventListener("pointerup", end);
-      window.removeEventListener("pointercancel", end);
-    };
-  }, []);
 
   function startWindowResize(event: ReactPointerEvent<HTMLButtonElement>, workspace: WorkspaceWindow) {
     event.preventDefault();
     event.stopPropagation();
     windowResizeState.current = {
-      id: workspace.id,
-      startX: event.clientX,
-      startY: event.clientY,
-      width: workspace.width,
-      height: workspace.height,
+      id: workspace.id, startX: event.clientX, startY: event.clientY,
+      width: workspace.width, height: workspace.height,
     };
     setFocusedWindowId(workspace.id);
     event.currentTarget.setPointerCapture?.(event.pointerId);
@@ -1123,33 +953,26 @@ export default function AITutorPage() {
 
   useEffect(() => {
     const move = (event: PointerEvent) => {
-      const windowDrag = dragState.current;
-      if (windowDrag) {
+      const resizing = windowResizeState.current;
+      if (resizing) {
+        const maxWidth = Math.max(280, window.innerWidth - 24);
+        const maxHeight = Math.max(220, window.innerHeight - 92);
+        const width = Math.max(280, Math.min(maxWidth, resizing.width + event.clientX - resizing.startX));
+        const height = Math.max(220, Math.min(maxHeight, resizing.height + event.clientY - resizing.startY));
+        setWorkspaceWindows(current => current.map(item => item.id === resizing.id ? { ...item, width, height } : item));
+      }
+      const dragging = dragState.current;
+      if (dragging) {
         const maxX = Math.max(0, window.innerWidth - 280);
         const maxY = Math.max(0, window.innerHeight - 140);
-        setWorkspaceWindows(current => current.map(item => item.id === windowDrag.id ? {
+        setWorkspaceWindows(current => current.map(item => item.id === dragging.id ? {
           ...item,
-          x: Math.max(0, Math.min(maxX, event.clientX - windowDrag.offsetX)),
-          y: Math.max(0, Math.min(maxY, event.clientY - windowDrag.offsetY)),
+          x: Math.max(0, Math.min(maxX, event.clientX - dragging.offsetX)),
+          y: Math.max(0, Math.min(maxY, event.clientY - dragging.offsetY)),
         } : item));
       }
-
-      const nodeDrag = nodeDragState.current;
-      const canvas = canvasRef.current;
-      if (nodeDrag && canvas) {
-        const rect = canvas.getBoundingClientRect();
-        setStudyNodes(current => current.map(node => node.id === nodeDrag.id ? {
-          ...node,
-          x: Math.max(5, Math.min(95, ((event.clientX - rect.left - nodeDrag.offsetX) / rect.width) * 100)),
-          y: Math.max(8, Math.min(92, ((event.clientY - rect.top - nodeDrag.offsetY) / rect.height) * 100)),
-        } : node));
-      }
     };
-    const end = () => {
-      dragState.current = null;
-      nodeDragState.current = null;
-      windowResizeState.current = null;
-    };
+    const end = () => { dragState.current = null; windowResizeState.current = null; };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", end);
     window.addEventListener("pointercancel", end);
@@ -1161,82 +984,6 @@ export default function AITutorPage() {
   }, []);
 
   useEffect(() => {
-    let active = true;
-    const loadStudyWorkspace = async () => {
-      let localNodes: StudyNode[] = [];
-      try {
-        const saved = localStorage.getItem("studyspace-ai-brain-nodes-v1");
-        if (saved) {
-          const parsed: unknown = JSON.parse(saved);
-          if (Array.isArray(parsed)) localNodes = parsed.filter(isStudyNode).slice(0, 24);
-        }
-      } catch { /* Ignore malformed local canvas data and try the account copy. */ }
-
-      try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        if (authError) throw authError;
-        if (!user) {
-          if (active) setStudyNodes(localNodes);
-          return;
-        }
-
-        const { data, error } = await supabase
-          .from("ai_study_workspaces")
-          .select("nodes")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        if (error) throw error;
-
-        if (data && Array.isArray(data.nodes)) {
-          if (active) setStudyNodes(data.nodes.filter(isStudyNode).slice(0, 24));
-        } else {
-          if (active) setStudyNodes(localNodes);
-          if (localNodes.length) {
-            const { error: migrationError } = await supabase.from("ai_study_workspaces").upsert({
-              user_id: user.id,
-              nodes: localNodes,
-              updated_at: new Date().toISOString(),
-            }, { onConflict: "user_id" });
-            if (migrationError) throw migrationError;
-          }
-        }
-      } catch (loadError) {
-        console.error("Could not load the account AI canvas; using this browser's saved copy.", loadError);
-        if (active) setStudyNodes(localNodes);
-      } finally {
-        if (active) setStudyNodesHydrated(true);
-      }
-    };
-    void loadStudyWorkspace();
-    return () => { active = false; };
-  }, []);
-
-  useEffect(() => {
-    if (!studyNodesHydrated) return;
-    try { localStorage.setItem("studyspace-ai-brain-nodes-v1", JSON.stringify(studyNodes)); }
-    catch { /* The canvas remains usable when storage is unavailable. */ }
-
-    let active = true;
-    const saveTimer = window.setTimeout(() => {
-      void (async () => {
-        try {
-          const { data: { user }, error: authError } = await supabase.auth.getUser();
-          if (authError || !user || !active) return;
-          const { error } = await supabase.from("ai_study_workspaces").upsert({
-            user_id: user.id,
-            nodes: studyNodes,
-            updated_at: new Date().toISOString(),
-          }, { onConflict: "user_id" });
-          if (error) console.error("Could not sync the AI study canvas:", error.message);
-        } catch (saveError) {
-          console.error("Could not sync the AI study canvas.", saveError);
-        }
-      })();
-    }, 650);
-    return () => { active = false; window.clearTimeout(saveTimer); };
-  }, [studyNodes, studyNodesHydrated]);
-
-  useEffect(() => {
     try {
       const saved = localStorage.getItem("studyspace-ai-workspace-nodes-v1");
       if (saved) {
@@ -1244,8 +991,11 @@ export default function AITutorPage() {
         if (Array.isArray(parsed)) {
           setWorkspaceWindows(parsed.filter(item =>
             item && typeof item.id === "string" &&
-            ["chat", "history", "tools", "courses"].includes(item.kind) &&
-            typeof item.title === "string" && Number.isFinite(item.x) && Number.isFinite(item.y)
+            ["chat", "history"].includes(item.kind) &&
+            typeof item.title === "string" &&
+            Number.isFinite(item.x) && Number.isFinite(item.y) &&
+            Number.isFinite(item.width) && item.width >= 280 &&
+            Number.isFinite(item.height) && item.height >= 220
           ).slice(0, 18));
         }
       }
@@ -1260,43 +1010,18 @@ export default function AITutorPage() {
     } catch { /* The workspace remains usable if browser storage is unavailable. */ }
   }, [workspaceWindows, nodesHydrated]);
 
-  useEffect(() => {
-    setNoteDrafts(current => {
-      const restored = { ...current };
-      for (const workspace of workspaceWindows) {
-        if (workspace.kind !== "notes" || restored[workspace.id] !== undefined) continue;
-        try {
-          const saved = localStorage.getItem(`studyspace-ai-note-${workspace.courseId || "general"}`);
-          if (saved !== null) restored[workspace.id] = saved;
-        } catch { /* Local storage may be unavailable in private browsing. */ }
-      }
-      return restored;
-    });
-  }, [workspaceWindows]);
-
   async function handleNeuralAction(action: "new-chat" | "history") {
-    if (action === "new-chat") {
-      openWorkspace("chat", "New chat");
-      const conversation = await createConversation();
-      if (!conversation) return;
-      window.setTimeout(() => textareaRef.current?.focus(), 100);
+    if (action === "history") {
+      const existing = workspaceWindows.find(item => item.kind === "history");
+      if (existing) { setFocusedWindowId(existing.id); return; }
+      openWorkspace("history", "Conversation history");
       return;
     }
-    if (workspaceWindows.some(item => item.kind === action)) {
-      const existing = workspaceWindows.find(item => item.kind === action);
-      if (existing) { setFocusedWindowId(existing.id); return; }
-    }
-    openWorkspace(action, "Conversation history");
+    const conversation = await createConversation();
+    if (!conversation) return;
+    openWorkspace("chat", "New chat");
+    window.setTimeout(() => textareaRef.current?.focus(), 100);
   }
-
-  const studyWorkspaceItems: { kind: StudyNode["kind"]; title: string; description: string; icon: typeof BookOpen; href?: string }[] = [
-    { kind: "courses", title: "My courses", description: "Open a course branch and its study spaces.", icon: BookMarked },
-    { kind: "notes", title: "Notes", description: "Create a personal notes workspace.", icon: NotebookPen },
-    { kind: "assignments", title: "Assignments", description: "Review and work through your assignments.", icon: ClipboardList, href: "/assignments" },
-    { kind: "quizzes", title: "Quizzes", description: "Practise and review your quizzes.", icon: BrainCircuit, href: "/quizzes" },
-    { kind: "flashcards", title: "Flashcards", description: "Build active-recall study sessions.", icon: Layers, href: "/flashcards" },
-    { kind: "calendar", title: "Calendar", description: "Keep deadlines and study sessions in view.", icon: CalendarDays, href: "/calendar" },
-  ];
 
   /* =======================================================
      STARTER PROMPT
@@ -1319,51 +1044,23 @@ export default function AITutorPage() {
   </div>;
 
   return <AppShell>
-    <main ref={canvasRef} className="ss-neural-tutor ss-jarvis-screen relative isolate flex h-[calc(100dvh-68px)] min-h-[560px] items-center justify-center overflow-hidden bg-[#171612] text-stone-200">
-      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_50%_48%,rgba(185,167,131,.13),transparent_38%),linear-gradient(180deg,#171612,#14130f)]"/>
-      <div className="ss-jarvis-stage absolute inset-0 z-[1]">
-        <div className="ss-jarvis-core-wrap">
-          <button type="button" onClick={addBrainNode} disabled={studyNodes.length >= 24} aria-label={`Add a ${selectedNodeKind} node to the brain`} title="Click to add the selected node" className={["ss-jarvis-core group pointer-events-auto cursor-pointer border-0 bg-transparent p-0",sending||voiceListening?"is-thinking":"",studyNodes.length >= 24 ? "cursor-not-allowed opacity-70" : ""].join(" ")}>
-            <div className="ss-jarvis-orbit ss-jarvis-orbit-one"/>
-            <div className="ss-jarvis-orbit ss-jarvis-orbit-two"/>
-            <div className="ss-jarvis-orbit ss-jarvis-orbit-three"/>
-            <div className="ss-jarvis-core-glow"/>
-            <div className="ss-jarvis-scan"/>
-            <div className="ss-jarvis-core-center"><Sparkles className="h-10 w-10"/></div>
-            <span className="ss-jarvis-core-label">STUDYSPACE</span>
-            <span className="pointer-events-none absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] tracking-[.16em] text-[#b9a783]/70 opacity-0 transition group-hover:opacity-100">CLICK TO ADD NODE</span>
-          </button>
-        </div>
-        <NeuralIntelligence active={sending} listening={voiceListening} controlsOnly showControls activeAction={workspaceWindows.some(item=>item.kind==="chat")?"new-chat":workspaceWindows.some(item=>item.kind==="history")?"history":undefined} onAction={handleNeuralAction}/>
+    <main className="ss-neural-tutor ss-jarvis-screen relative isolate flex h-[calc(100dvh-68px)] min-h-[560px] items-center justify-center overflow-hidden bg-[#171612] text-stone-200">
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_50%_48%,rgba(185,167,131,.13),transparent_38%),linear-gradient(180deg,#171612,#14130f)]" />
+      <div className="absolute inset-0 z-[1] flex items-center justify-center">
+        <NeuralIntelligence
+          active={sending}
+          listening={voiceListening}
+          controlsOnly
+          showControls
+          activeAction={workspaceWindows.some(item => item.kind === "chat") ? "new-chat" : workspaceWindows.some(item => item.kind === "history") ? "history" : undefined}
+          onAction={handleNeuralAction}
+        />
       </div>
-      <div className="absolute left-4 top-4 z-[90] flex flex-wrap items-center gap-3 border border-[#b9a783]/20 bg-[#1b1914]/85 px-3 py-2.5 shadow-xl backdrop-blur-xl sm:left-7 sm:top-6">
-        <label className="flex items-center gap-2 text-[9px] tracking-[.14em] text-[#b9a783]/70">ADD NODE
-          <select value={selectedNodeKind} onChange={event=>setSelectedNodeKind(event.target.value as StudyNode["kind"])} className="max-w-[130px] border border-[#b9a783]/25 bg-[#171612] px-2 py-1.5 text-[10px] tracking-normal text-stone-200 outline-none">
-            <option value="notes">Notes</option><option value="courses">Courses</option><option value="assignments">Assignments</option><option value="quizzes">Quizzes</option><option value="flashcards">Flashcards</option><option value="calendar">Calendar</option><option value="chat">AI chat</option>
-          </select>
-        </label>
-
+      <div className="pointer-events-none absolute bottom-7 left-1/2 z-[3] -translate-x-1/2 text-center">
+        <p className="text-[9px] tracking-[.18em] text-stone-500">
+          {voiceListening ? "VOICE INPUT ACTIVE" : sending ? "PROCESSING REQUEST" : "OPEN A NEW CHAT OR YOUR HISTORY"}
+        </p>
       </div>
-      <svg aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 h-full w-full overflow-visible">
-        {studyNodes.map(node => {
-          const parent = node.parentId ? studyNodes.find(item => item.id === node.parentId) : null;
-          return <line key={node.id} x1={parent ? `${parent.x}%` : "50%"} y1={parent ? `${parent.y}%` : "48%"} x2={`${node.x}%`} y2={`${node.y}%`} stroke="rgba(185,167,131,.56)" strokeWidth="1.5" strokeDasharray="4 7" />;
-        })}
-        {studyNodes.map(node => <circle key={node.id} cx={`${node.x}%`} cy={`${node.y}%`} r="3" fill="#c7b58f" />)}
-      </svg>
-      <div className="pointer-events-none absolute inset-0 z-[25]">
-        {studyNodes.map(node => {
-          const item = studyWorkspaceItems.find(entry => entry.kind === node.kind);
-          const Icon = item?.icon || Sparkles;
-          return <div key={node.id} onPointerDown={event => startNodeDrag(event, node.id)} style={{ left: `${node.x}%`, top: `${node.y}%`, transform: "translate(-50%,-50%)" }} className="ss-brain-study-node pointer-events-auto absolute flex min-w-[148px] max-w-[190px] touch-none items-center gap-2 border border-[#b9a783]/35 bg-[#211f19]/95 px-3 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,.4)] backdrop-blur-xl">
-            <span className="grid h-8 w-8 shrink-0 place-items-center border border-[#b9a783]/25 bg-[#b9a783]/[0.08] text-[#d4c3a0]"><Icon className="h-4 w-4"/></span>
-            <div className="min-w-0 flex-1"><button type="button" onClick={() => openStudyNode(node)} className="block w-full truncate text-left text-[10px] font-medium text-stone-100 hover:text-[#e4d3b0]">{node.title}</button><span className="block text-[8px] tracking-[.12em] text-[#b9a783]/55">{node.parentId ? "CONNECTED BRANCH" : "BRAIN NODE"}</span></div>
-            <button type="button" onClick={() => openStudyNode(node)} title={`Open ${node.title}`} aria-label={`Open the connected ${node.title} tab`} className="grid h-7 w-7 shrink-0 place-items-center text-[#c7b58f]/70 hover:bg-[#b9a783]/10 hover:text-[#e5d3ad]"><Plus className="h-3.5 w-3.5"/></button>
-            <button type="button" onClick={() => deleteStudyNode(node.id)} title="Delete node" aria-label={`Delete ${node.title} node`} className="grid h-7 w-7 shrink-0 place-items-center text-stone-600 hover:bg-red-400/10 hover:text-red-300"><X className="h-3.5 w-3.5"/></button>
-          </div>;
-        })}
-      </div>
-      <div className="pointer-events-none absolute bottom-7 left-1/2 z-[3] -translate-x-1/2 text-center"><p className="text-[9px] tracking-[.18em] text-stone-500">{voiceListening?"VOICE INPUT ACTIVE":sending?"PROCESSING REQUEST":"SELECT A NODE OR CLICK THE BRAIN"}</p></div>
 
       {workspaceWindows.map((workspace, index) => <section
         key={workspace.id}
@@ -1381,10 +1078,6 @@ export default function AITutorPage() {
         </header>
 
         {workspace.kind === "history" && historyPanel}
-        {workspace.kind === "courses" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="mb-3 text-xs text-stone-400">Choose one of your courses to create a dedicated branch.</p>{courses.length === 0 ? <p className="py-10 text-center text-xs text-stone-500">Your courses will appear here once you add them.</p> : <div className="space-y-2">{courses.map(course=><button key={course.id} type="button" onClick={() => { addRootStudyNode("courses", course.code ? `${course.code} · Study space` : course.name, course.id); closeWorkspace(workspace.id); }} className="flex w-full items-center justify-between border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><span><span className="block text-xs text-stone-200">{course.code || course.name}</span><span className="mt-1 block text-[10px] text-stone-500">{course.code ? course.name : course.professor || "Course workspace"}</span></span><Plus className="h-4 w-4 text-[#b9a783]"/></button>)}</div>}</div>}
-        {workspace.kind === "course" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="text-xs text-stone-400">Your course branch keeps its related study spaces together.</p><div className="mt-4 grid grid-cols-2 gap-2">{[{kind:"notes" as const,title:"Course notes",icon:NotebookPen},{kind:"assignments" as const,title:"Assignments",icon:ClipboardList},{kind:"quizzes" as const,title:"Quizzes",icon:BrainCircuit},{kind:"flashcards" as const,title:"Flashcards",icon:Layers},{kind:"calendar" as const,title:"Calendar",icon:CalendarDays},{kind:"chat" as const,title:"Ask AI Tutor",icon:Sparkles}].map(({kind,title,icon:Icon})=><button key={kind} type="button" onClick={()=>{if(kind==="chat"){setSelectedCourseId(workspace.courseId||"");void createConversation(workspace.courseId||"");}openWorkspace(kind,title,workspace.courseId);}} className="border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><Icon className="h-4 w-4 text-[#b9a783]"/><span className="mt-2 block text-xs text-stone-200">{title}</span></button>)}</div><Link href="/courses" className="mt-5 inline-flex items-center gap-2 text-[10px] text-[#c7b58f] hover:text-stone-100">Open full course manager <ExternalLink className="h-3 w-3"/></Link></div>}
-        {workspace.kind === "notes" && <div className="flex min-h-0 flex-1 flex-col p-4"><p className="mb-3 text-[10px] text-stone-500">A scratchpad branch for ideas, lecture notes, and revision points. This draft stays in this open workspace.</p><textarea value={noteDrafts[workspace.id] || ""} onChange={event=>{const value=event.target.value;setNoteDrafts(current=>({...current,[workspace.id]:value}));try{localStorage.setItem(`studyspace-ai-note-${workspace.courseId || "general"}`,value);}catch{}}} placeholder="Start writing your notes…" className="min-h-0 flex-1 resize-none border border-[#b9a783]/20 bg-black/20 p-3 text-xs leading-6 text-stone-200 outline-none placeholder:text-stone-600 focus:border-[#b9a783]/50"/></div>}
-        {["assignments","quizzes","flashcards","calendar"].includes(workspace.kind) && <iframe title={workspace.title} src={workspace.kind === "assignments" ? "/assignments" : workspace.kind === "quizzes" ? "/quizzes" : workspace.kind === "flashcards" ? "/flashcards" : "/calendar"} className="min-h-0 w-full flex-1 border-0 bg-[#171612]" loading="lazy" />}
         {workspace.kind === "chat" && <>
           {error&&<div role="alert" className="mx-4 mt-3 border border-red-400/20 bg-red-400/[0.06] px-3 py-2 text-xs text-red-200">{error}</div>}
           <div ref={chatLogRef} className="ss-jarvis-chatlog min-h-0 flex-1 overflow-y-auto px-4 py-5">
