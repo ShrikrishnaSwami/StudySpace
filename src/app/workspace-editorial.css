@@ -907,3 +907,160 @@ html[data-theme="light"] .fr-home .fr-feature-icon {
     }
   }
 }
+
+
+/* ==========================================================================
+   COMPLETE TEXT MOTION — landing, every workspace tab, loading and errors.
+   CSS-only: no pre-hydration DOM changes and no JavaScript observer mutations.
+   ========================================================================== */
+@keyframes ss-word-reveal {
+  from { opacity: 0; transform: translate3d(0, .48em, 0); filter: blur(7px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+@keyframes ss-section-text-reveal {
+  from { opacity: .12; transform: translate3d(0, 22px, 0); filter: blur(2px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+@keyframes ss-screen-enter {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); filter: blur(4px); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+
+/* The real landing-page markup uses .ss-editorial-opening, not .ss-editorial-title. */
+.ss-editorial-opening .ss-editorial-kicker {
+  animation: ss-text-soft-in 650ms cubic-bezier(.2,.75,.25,1) both;
+}
+.ss-editorial-opening h1 .ss-word {
+  display: inline-block;
+  opacity: 0;
+  animation: ss-word-reveal 720ms cubic-bezier(.2,.75,.25,1) forwards;
+}
+.ss-editorial-opening h1 .ss-word:nth-of-type(1) { animation-delay: 120ms; }
+.ss-editorial-opening h1 .ss-word:nth-of-type(2) { animation-delay: 230ms; }
+.ss-editorial-opening h1 .ss-word:nth-of-type(3) { animation-delay: 340ms; }
+.ss-editorial-opening h1 .ss-word:nth-of-type(4) { animation-delay: 450ms; }
+.ss-editorial-opening h1 .ss-word:nth-of-type(5) { animation-delay: 560ms; }
+.ss-editorial-opening h1 .ss-word:nth-of-type(6) { animation-delay: 670ms; }
+.ss-editorial-opening h1 .ss-word:nth-of-type(7) { animation-delay: 780ms; }
+.ss-editorial-opening .ss-editorial-deck {
+  animation: ss-text-soft-in 760ms cubic-bezier(.2,.75,.25,1) 620ms both;
+}
+.ss-editorial-opening .ss-editorial-actions {
+  animation: ss-text-soft-in 760ms cubic-bezier(.2,.75,.25,1) 760ms both;
+}
+.ss-editorial-opening .ss-editorial-specimen {
+  animation: ss-text-rise-in 900ms cubic-bezier(.2,.75,.25,1) 260ms both;
+}
+
+/* All landing-page story sections reveal their copy as they enter the viewport. */
+.ss-editorial-manifesto,
+.ss-editorial-workspace,
+.ss-editorial-method,
+.ss-editorial-closing {
+  animation: ss-text-soft-in 760ms cubic-bezier(.2,.75,.25,1) both;
+}
+.ss-editorial-manifesto-grid h2,
+.ss-editorial-manifesto-grid > div > p,
+.ss-editorial-section-head,
+.ss-editorial-chapters button,
+.ss-editorial-preview-wrap,
+.ss-method-main > *,
+.ss-method-aside > div,
+.ss-editorial-closing > * {
+  animation: ss-text-soft-in 680ms cubic-bezier(.2,.75,.25,1) both;
+}
+.ss-editorial-chapters button:nth-child(2),
+.ss-method-aside > div:nth-child(2) { animation-delay: 90ms; }
+.ss-editorial-chapters button:nth-child(3),
+.ss-method-aside > div:nth-child(3) { animation-delay: 180ms; }
+.ss-editorial-chapters button:nth-child(4) { animation-delay: 270ms; }
+
+/* Initial entrance on utility screens, with readable content from first paint. */
+.atelier-loading-header,
+.atelier-loading-center > *,
+.atelier-loading-footer,
+.ss-error-brand,
+.ss-error-card > *,
+.ss-error-footnote,
+.ss-404 > header,
+.ss-404 > section > *,
+.ss-404 > footer {
+  animation: ss-screen-enter 680ms cubic-bezier(.2,.75,.25,1) both;
+}
+.atelier-loading-center > *:nth-child(2),
+.ss-error-card > *:nth-child(2) { animation-delay: 80ms; }
+.atelier-loading-center > *:nth-child(3),
+.ss-error-card > *:nth-child(3) { animation-delay: 150ms; }
+.atelier-loading-center > *:nth-child(4),
+.ss-error-card > *:nth-child(4) { animation-delay: 220ms; }
+.atelier-loading-center > *:nth-child(5),
+.ss-error-card > *:nth-child(5) { animation-delay: 290ms; }
+
+/* Scroll reveal: every page section and every authenticated workspace tab. */
+@supports (animation-timeline: view()) {
+  main :is(section h2, section h3, section h4, section p, section li, section blockquote, section figcaption),
+  .atelier-shell .atelier-main :is(h2, h3, h4, p, li, blockquote, figcaption),
+  .atelier-shell .atelier-main [data-scroll-reveal="text"] {
+    animation-name: ss-section-text-reveal;
+    animation-duration: 1ms;
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 48%;
+  }
+
+  /* Keep live/generated content and controls out of scroll animation. */
+  main :is([aria-live], [contenteditable="true"], textarea, input, select, button, a) {
+    animation-timeline: auto;
+  }
+  .atelier-shell .atelier-main :is([aria-live], [contenteditable="true"], textarea, input, select, button, a),
+  .atelier-shell .atelier-main .ss-chat-messages *,
+  .atelier-shell .atelier-main .ss-message-content *,
+  .atelier-shell .atelier-main .ss-streaming-response * {
+    animation-timeline: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-editorial-opening .ss-editorial-kicker,
+  .ss-editorial-opening h1 .ss-word,
+  .ss-editorial-opening .ss-editorial-deck,
+  .ss-editorial-opening .ss-editorial-actions,
+  .ss-editorial-opening .ss-editorial-specimen,
+  .ss-editorial-manifesto,
+  .ss-editorial-workspace,
+  .ss-editorial-method,
+  .ss-editorial-closing,
+  .ss-editorial-manifesto-grid h2,
+  .ss-editorial-manifesto-grid > div > p,
+  .ss-editorial-section-head,
+  .ss-editorial-chapters button,
+  .ss-editorial-preview-wrap,
+  .ss-method-main > *,
+  .ss-method-aside > div,
+  .ss-editorial-closing > *,
+  .atelier-loading-header,
+  .atelier-loading-center > *,
+  .atelier-loading-footer,
+  .ss-error-brand,
+  .ss-error-card > *,
+  .ss-error-footnote,
+  .ss-404 > header,
+  .ss-404 > section > *,
+  .ss-404 > footer {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+  @supports (animation-timeline: view()) {
+    main :is(section h2, section h3, section h4, section p, section li, section blockquote, section figcaption),
+    .atelier-shell .atelier-main :is(h2, h3, h4, p, li, blockquote, figcaption),
+    .atelier-shell .atelier-main [data-scroll-reveal="text"] {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      filter: none !important;
+    }
+  }
+}
