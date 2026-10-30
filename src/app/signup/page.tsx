@@ -133,7 +133,7 @@ export default function SignupPage() {
               </h2>
 
               <p className="mt-3 text-sm leading-6 text-zinc-400">
-                Create an account and add the courses you're taking.
+                Create an account and add the courses you&apos;re taking.
               </p>
             </div>
 
