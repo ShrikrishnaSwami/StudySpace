@@ -707,7 +707,7 @@ function CourseCard({
 
           <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
             <div
-              className={`h-full rounded-full ${theme.accent} transition-all duration-500`}
+              className={`ss-course-progress-fill h-full rounded-full ${theme.accent} transition-all duration-500`}
               style={{ width: `${progress}%` }}
             />
           </div>
