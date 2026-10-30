@@ -116,26 +116,26 @@ export default function LoginPage() {
 
             <div className="mt-20">
               <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-purple-300">
-                Your academic command center
+                Your courses and study tools, in one place
               </p>
 
               <h1 className="max-w-md text-4xl font-bold leading-tight">
-                Study smarter.
+                Your course stuff,
                 <br />
                 Stay organized.
                 <br />
-                <span className="text-purple-400">Go further.</span>
+                <span className="text-purple-400">all together.</span>
               </h1>
 
               <p className="mt-6 max-w-md leading-7 text-zinc-400">
-                Keep your courses, assignments, quizzes, calendar and study
+                Keep your courses, notes, assignments, deadlines and study
                 tools together in one focused workspace.
               </p>
             </div>
           </div>
 
           <p className="text-sm text-zinc-600">
-            Built for students who want more from their study time.
+            Made for students who are tired of hunting through different apps.
           </p>
         </div>
 
@@ -145,15 +145,15 @@ export default function LoginPage() {
 
             <div className="mb-10">
               <p className="mb-2 text-sm font-medium text-purple-400">
-                Welcome back
+                Good to see you again
               </p>
 
               <h2 className="text-3xl font-bold tracking-tight">
-                Sign in to StudySpace
+                Sign in to your account
               </h2>
 
               <p className="mt-3 text-sm leading-6 text-zinc-400">
-                Continue where you left off and get back to studying.
+                Pick up where you left off.
               </p>
               {notice && <p role="status" className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{notice}</p>}
             </div>
@@ -164,7 +164,7 @@ export default function LoginPage() {
                 <UserRound size={18} /> Continue as guest
               </button>
               <div className="flex items-center gap-3 py-1 text-[11px] uppercase tracking-wider text-white/25">
-                <span className="h-px flex-1 bg-white/10" /> or use email <span className="h-px flex-1 bg-white/10" />
+                <span className="h-px flex-1 bg-white/10" /> or sign in with email <span className="h-px flex-1 bg-white/10" />
               </div>
             </div>
 
@@ -228,7 +228,7 @@ export default function LoginPage() {
 
                   <input id="login-password" type={showPassword ? "text" : "password"} autoComplete="current-password" maxLength={128} required value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder="Your password"
                     className="w-full rounded-xl border border-white/10 bg-black/20 py-3.5 pl-11 pr-12 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-purple-500/70 focus:ring-2 focus:ring-purple-500/10"
                   />
 
