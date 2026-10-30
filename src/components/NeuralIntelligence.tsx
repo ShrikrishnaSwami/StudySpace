@@ -19,7 +19,8 @@ export default function NeuralIntelligence({active=false,listening=false,showCon
   const world=new THREE.Group();scene.add(world);
   scene.add(new THREE.AmbientLight(0xe8d9b8,1.75));
   const key=new THREE.PointLight(0x9b7bff,24,22);key.position.set(-3,3,5);scene.add(key);
-  const fill=new THREE.PointLight(0x8174b5,15,20);fill.position.set(4,-2,1);scene.add(fill);\n  const goldLight=new THREE.PointLight(0xffd45c,19,18);goldLight.position.set(2.8,2.1,3.6);scene.add(goldLight);
+  const fill=new THREE.PointLight(0x8174b5,15,20);fill.position.set(4,-2,1);scene.add(fill);
+  const goldLight=new THREE.PointLight(0xffd45c,19,18);goldLight.position.set(2.8,2.1,3.6);scene.add(goldLight);
   const brain=new THREE.Group();world.add(brain);
   const material=new THREE.MeshPhysicalMaterial({color:0xe4ce83,emissive:0x76551b,emissiveIntensity:.3,metalness:.22,roughness:.39,transparent:true,opacity:.96,clearcoat:.8});
   const seamMat=new THREE.MeshStandardMaterial({color:0x78633a,metalness:.28,roughness:.48});
