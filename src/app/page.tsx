@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight, ArrowUpRight, BookOpen, BrainCircuit, CalendarDays,
   Check, FileText, Menu, X, Clock3, Layers3, NotebookPen,
