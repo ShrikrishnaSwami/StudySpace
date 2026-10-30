@@ -98,7 +98,7 @@ jobs:
           # Exclude managed Supabase schemas; public application schema/data and RLS
           # policies are included. Auth user metadata and Storage objects are exported
           # separately by the next step.
-          pg_dump --dbname="$SUPABASE_DB_URL" --schema=public --format=custom --no-owner --no-privileges --file=backup-work/public-database.dump
+          pg_dump --dbname="$SUPABASE_DB_URL" --schema=public --schema=private --format=custom --no-owner --no-privileges --file=backup-work/public-database.dump
           test -s backup-work/public-database.dump
           age --recipient "$AGE_RECIPIENT" --recipient "$AGE_RECIPIENT_RESTORE" --output encrypted/public-database.dump.age backup-work/public-database.dump
           rm -f backup-work/public-database.dump
