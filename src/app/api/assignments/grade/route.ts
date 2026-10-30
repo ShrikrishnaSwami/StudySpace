@@ -218,6 +218,19 @@ The student's submitted work is the student submission note and files. Reference
     if (!Number.isFinite(score) || score < 0 || score > maxPoints || typeof result.feedback !== "string" || !result.feedback.trim()) {
       throw new Error("AI returned an invalid grade. Please retry.");
     }
+    const rubricCriteria = Array.isArray(result.criteria) ? result.criteria : [];
+    const validRubricCriteria = rubricCriteria.every((item) => {
+      if (!item || typeof item !== "object") return false;
+      const criterion = item as { name?: unknown; score?: unknown; maxScore?: unknown; comment?: unknown };
+      return typeof criterion.name === "string" && criterion.name.trim().length > 0 &&
+        Number.isFinite(Number(criterion.score)) && Number(criterion.score) >= 0 &&
+        Number.isFinite(Number(criterion.maxScore)) && Number(criterion.maxScore) > 0 &&
+        Number(criterion.score) <= Number(criterion.maxScore) &&
+        typeof criterion.comment === "string" && criterion.comment.trim().length > 0;
+    });
+    if (!validRubricCriteria) throw new Error("AI returned an incomplete rubric breakdown. Please retry.");
+    const hasExplicitRubric = Boolean(assignment.rubric_text?.trim() || ownerReferences.some((file) => file.attachment_kind === "rubric"));
+    if (hasExplicitRubric && rubricCriteria.length === 0) throw new Error("The AI could not evaluate the supplied rubric criterion by criterion. Please retry.");
     let details = [
       "StudySpace AI grade and feedback.",
       result.feedback.trim(),
