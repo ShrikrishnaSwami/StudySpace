@@ -62,6 +62,7 @@ type Conversation = {
 
 type WorkspaceKind = "chat" | "history" | "tools" | "courses" | "course" | "notes" | "assignments" | "quizzes" | "flashcards" | "calendar";
 type WorkspaceWindow = { id: string; kind: WorkspaceKind; title: string; x: number; y: number; width: number; height: number; courseId?: string; parentId?: string };
+type StudyNode = { id: string; kind: Exclude<WorkspaceKind, "history" | "tools" | "course">; title: string; x: number; y: number; parentId: string | null; courseId?: string };
 
 type SpeechRecognitionAlternativeLike = { transcript: string };
 type SpeechRecognitionResultLike = ArrayLike<SpeechRecognitionAlternativeLike>;
@@ -194,7 +195,11 @@ export default function AITutorPage() {
   const [nodeCount, setNodeCount] = useState("3");
   const [selectedToolKinds, setSelectedToolKinds] = useState<WorkspaceKind[]>(["notes", "quizzes", "flashcards"]);
   const [childNodeKind, setChildNodeKind] = useState<WorkspaceKind>("notes");
+  const [studyNodes, setStudyNodes] = useState<StudyNode[]>([]);
+  const [studyNodesHydrated, setStudyNodesHydrated] = useState(false);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const canvasRef = useRef<HTMLElement>(null);
+  const nodeDragState = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
   const dragState = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
 
   const [error, setError] =
@@ -983,23 +988,64 @@ export default function AITutorPage() {
     setFocusedWindowId(current => current === id ? null : current);
   }
 
-  function createChildNode(parent: WorkspaceWindow) {
-    if (workspaceWindows.length >= 18) return;
-    const item = studyWorkspaceItems.find(entry => entry.kind === childNodeKind);
-    const title = item?.title || "New study node";
-    openWorkspace(childNodeKind, title, parent.courseId, parent.id);
+  function createChildNode(parent: StudyNode) {
+    if (studyNodes.length >= 24) return;
+    const kind = childNodeKind as StudyNode["kind"];
+    const item = studyWorkspaceItems.find(entry => entry.kind === kind);
+    const siblings = studyNodes.filter(node => node.parentId === parent.id).length;
+    const next: StudyNode = {
+      id: crypto.randomUUID(),
+      kind,
+      title: item?.title || "New study node",
+      x: Math.max(8, Math.min(92, parent.x + (siblings % 2 === 0 ? 13 : -13))),
+      y: Math.max(12, Math.min(88, parent.y + 13 + Math.floor(siblings / 2) * 8)),
+      parentId: parent.id,
+      courseId: parent.courseId,
+    };
+    setStudyNodes(current => [...current, next]);
   }
 
   function createStudyNodes() {
     const amount = Math.max(1, Math.min(12, Number.parseInt(nodeCount, 10) || 1));
-    const kinds = selectedToolKinds.length ? selectedToolKinds : ["notes" as WorkspaceKind];
-    const capacity = Math.max(0, 18 - workspaceWindows.length);
+    const kinds = selectedToolKinds.length ? selectedToolKinds : ["notes" as StudyNode["kind"]];
+    const capacity = Math.max(0, 24 - studyNodes.length);
     const total = Math.min(amount, capacity);
-    for (let i = 0; i < total; i++) {
+    const roots = studyNodes.filter(node => !node.parentId).length;
+    const next = Array.from({ length: total }, (_, i) => {
+      const index = roots + i;
+      const angle = (index * 2.399963229728653) - Math.PI / 2;
+      const radiusX = 34 + (Math.floor(index / 8) * 7);
+      const radiusY = 29 + (Math.floor(index / 8) * 6);
       const kind = kinds[i % kinds.length];
       const item = studyWorkspaceItems.find(entry => entry.kind === kind);
-      openWorkspace(kind, item?.title || "Study node", undefined, undefined, i);
-    }
+      return {
+        id: crypto.randomUUID(),
+        kind,
+        title: item?.title || "Study node",
+        x: Math.max(8, Math.min(92, 50 + Math.cos(angle) * radiusX)),
+        y: Math.max(12, Math.min(86, 48 + Math.sin(angle) * radiusY)),
+        parentId: null,
+      } satisfies StudyNode;
+    });
+    setStudyNodes(current => [...current, ...next]);
+  }
+
+  function startNodeDrag(event: ReactPointerEvent, id: string) {
+    if ((event.target as HTMLElement).closest("button, a, select")) return;
+    const canvas = canvasRef.current;
+    const node = studyNodes.find(item => item.id === id);
+    if (!canvas || !node) return;
+    const rect = canvas.getBoundingClientRect();
+    nodeDragState.current = {
+      id,
+      offsetX: event.clientX - rect.left - (node.x / 100) * rect.width,
+      offsetY: event.clientY - rect.top - (node.y / 100) * rect.height,
+    };
+    (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+  }
+
+  function deleteStudyNode(id: string) {
+    setStudyNodes(current => current.filter(node => node.id !== id && node.parentId !== id));
   }
 
   function startWindowDrag(event: ReactPointerEvent, id: string) {
@@ -1013,19 +1059,42 @@ export default function AITutorPage() {
 
   useEffect(() => {
     const move = (event: PointerEvent) => {
-      const drag = dragState.current;
-      if (!drag) return;
-      setWorkspaceWindows(current => current.map(item => item.id === drag.id ? {
-        ...item,
-        x: Math.max(0, Math.min(window.innerWidth - 260, event.clientX - drag.offsetX)),
-        y: Math.max(68, Math.min(window.innerHeight - 110, event.clientY - drag.offsetY)),
-      } : item));
+      const drag = nodeDragState.current;
+      const canvas = canvasRef.current;
+      if (!drag || !canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      setStudyNodes(current => current.map(node => node.id === drag.id ? {
+        ...node,
+        x: Math.max(5, Math.min(95, ((event.clientX - rect.left - drag.offsetX) / rect.width) * 100)),
+        y: Math.max(8, Math.min(92, ((event.clientY - rect.top - drag.offsetY) / rect.height) * 100)),
+      } : node));
     };
-    const end = () => { dragState.current = null; };
+    const end = () => { nodeDragState.current = null; };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", end);
     return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end); };
   }, []);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("studyspace-ai-brain-nodes-v1");
+      if (saved) {
+        const parsed = JSON.parse(saved) as StudyNode[];
+        if (Array.isArray(parsed)) setStudyNodes(parsed.filter(node =>
+          node && typeof node.id === "string" && typeof node.title === "string" &&
+          Number.isFinite(node.x) && Number.isFinite(node.y) &&
+          node.x >= 0 && node.x <= 100 && node.y >= 0 && node.y <= 100
+        ).slice(0, 24));
+      }
+    } catch { /* Ignore malformed saved canvas state. */ }
+    setStudyNodesHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!studyNodesHydrated) return;
+    try { localStorage.setItem("studyspace-ai-brain-nodes-v1", JSON.stringify(studyNodes)); }
+    catch { /* The canvas remains usable when storage is unavailable. */ }
+  }, [studyNodes, studyNodesHydrated]);
 
   useEffect(() => {
     try {
@@ -1109,7 +1178,7 @@ export default function AITutorPage() {
   </div>;
 
   return <AppShell>
-    <main className="ss-neural-tutor ss-jarvis-screen relative isolate flex h-[calc(100dvh-68px)] min-h-[560px] items-center justify-center overflow-hidden bg-[#171612] text-stone-200">
+    <main ref={canvasRef} className="ss-neural-tutor ss-jarvis-screen relative isolate flex h-[calc(100dvh-68px)] min-h-[560px] items-center justify-center overflow-hidden bg-[#171612] text-stone-200">
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_50%_48%,rgba(185,167,131,.13),transparent_38%),linear-gradient(180deg,#171612,#14130f)]"/>
       <div className="ss-jarvis-stage absolute inset-0 z-[1]">
         <div className="ss-jarvis-core-wrap">
@@ -1126,12 +1195,25 @@ export default function AITutorPage() {
         <NeuralIntelligence active={sending} listening={voiceListening} controlsOnly showControls activeAction={workspaceWindows.some(item=>item.kind==="chat")?"new-chat":workspaceWindows.some(item=>item.kind==="history")?"history":workspaceWindows.some(item=>item.kind==="tools")?"tools":undefined} onAction={handleNeuralAction}/>
       </div>
       <svg aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 h-full w-full overflow-visible">
-        {workspaceWindows.filter(node => node.parentId).map(node => {
-          const parent = workspaceWindows.find(item => item.id === node.parentId);
-          if (!parent) return null;
-          return <line key={node.id} x1={parent.x + parent.width / 2} y1={parent.y + 42} x2={node.x + node.width / 2} y2={node.y + 42} stroke="rgba(185,167,131,.42)" strokeWidth="1.4" strokeDasharray="5 7" />;
+        {studyNodes.map(node => {
+          const parent = node.parentId ? studyNodes.find(item => item.id === node.parentId) : null;
+          return <line key={node.id} x1={parent ? `${parent.x}%` : "50%"} y1={parent ? `${parent.y}%` : "48%"} x2={`${node.x}%`} y2={`${node.y}%`} stroke="rgba(185,167,131,.56)" strokeWidth="1.5" strokeDasharray="4 7" />;
         })}
+        {studyNodes.map(node => <circle key={node.id} cx={`${node.x}%`} cy={`${node.y}%`} r="3" fill="#c7b58f" />)}
       </svg>
+      <div className="pointer-events-none absolute inset-0 z-[25]">
+        {studyNodes.map(node => {
+          const item = studyWorkspaceItems.find(entry => entry.kind === node.kind);
+          const Icon = item?.icon || Sparkles;
+          const href = item?.href || (node.kind === "notes" ? "/notes" : node.kind === "courses" ? "/courses" : "/ai-tutor");
+          return <div key={node.id} onPointerDown={event => startNodeDrag(event, node.id)} style={{ left: `${node.x}%`, top: `${node.y}%`, transform: "translate(-50%,-50%)" }} className="ss-brain-study-node pointer-events-auto absolute flex min-w-[148px] max-w-[190px] touch-none items-center gap-2 border border-[#b9a783]/35 bg-[#211f19]/95 px-3 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,.4)] backdrop-blur-xl">
+            <span className="grid h-8 w-8 shrink-0 place-items-center border border-[#b9a783]/25 bg-[#b9a783]/[0.08] text-[#d4c3a0]"><Icon className="h-4 w-4"/></span>
+            <div className="min-w-0 flex-1"><Link href={href} className="block truncate text-[10px] font-medium text-stone-100 hover:text-[#e4d3b0]">{node.title}</Link><span className="block text-[8px] tracking-[.12em] text-[#b9a783]/55">{node.parentId ? "CONNECTED BRANCH" : "BRAIN NODE"}</span></div>
+            <button type="button" onClick={() => { setChildNodeKind(node.kind); createChildNode(node); }} title="Create a connected child node" aria-label={`Create a node from ${node.title}`} className="grid h-7 w-7 shrink-0 place-items-center text-[#c7b58f]/70 hover:bg-[#b9a783]/10 hover:text-[#e5d3ad]"><Plus className="h-3.5 w-3.5"/></button>
+            <button type="button" onClick={() => deleteStudyNode(node.id)} title="Delete node" aria-label={`Delete ${node.title} node`} className="grid h-7 w-7 shrink-0 place-items-center text-stone-600 hover:bg-red-400/10 hover:text-red-300"><X className="h-3.5 w-3.5"/></button>
+          </div>;
+        })}
+      </div>
       <div className="pointer-events-none absolute bottom-6 z-[3] text-center"><p className="text-[9px] tracking-[.35em] text-[#b9a783]/55">STUDYSPACE INTELLIGENCE</p><h1 className="mt-2 text-xl font-light tracking-[.18em] text-stone-200/80 sm:text-2xl">J.A.R.V.I.S.</h1><p className="mt-2 text-[9px] tracking-[.18em] text-stone-500">SELECT A NODE TO BEGIN</p><p className="mt-1 text-[8px] tracking-[.12em] text-stone-600">{voiceListening?"VOICE INPUT ACTIVE":sending?"PROCESSING REQUEST":"SYSTEM STANDBY"}</p></div>
 
       {workspaceWindows.map((workspace, index) => <section
@@ -1176,8 +1258,8 @@ export default function AITutorPage() {
             </label>)}
           </div>
           <div className="mt-5 border-t border-[#b9a783]/15 pt-4">
-            <div className="flex items-center justify-between"><p className="text-[9px] tracking-[.18em] text-[#b9a783]/70">OPEN NODES</p><span className="text-[10px] text-stone-500">{workspaceWindows.length} / 18</span></div>
-            {workspaceWindows.length === 0 ? <p className="mt-3 text-[10px] text-stone-600">Your canvas is clear. Create your first study nodes above.</p> : <div className="mt-2 space-y-1">{workspaceWindows.map(node => <div key={node.id} className="flex items-center justify-between border-b border-white/[0.05] py-2"><button type="button" onClick={() => setFocusedWindowId(node.id)} className="min-w-0 truncate text-left text-[10px] text-stone-300 hover:text-[#d8c7a7]">{node.title}{node.parentId&&<span className="ml-2 text-[8px] text-[#b9a783]/55">CONNECTED</span>}</button><button type="button" onClick={() => closeWorkspace(node.id)} aria-label={`Delete ${node.title}`} className="ml-2 p-1 text-stone-600 hover:text-red-300"><Trash2 className="h-3 w-3"/></button></div>)}</div>}
+            <div className="flex items-center justify-between"><p className="text-[9px] tracking-[.18em] text-[#b9a783]/70">BRAIN NODES</p><span className="text-[10px] text-stone-500">{studyNodes.length} / 24</span></div>
+            {studyNodes.length === 0 ? <p className="mt-3 text-[10px] text-stone-600">The brain canvas is clear. Create your first branches above.</p> : <div className="mt-2 space-y-1">{studyNodes.map(node => <div key={node.id} className="flex items-center justify-between border-b border-white/[0.05] py-2"><button type="button" onClick={() => { const canvas=canvasRef.current; if(canvas) canvas.scrollIntoView({block:"nearest"}); }} className="min-w-0 truncate text-left text-[10px] text-stone-300 hover:text-[#d8c7a7]">{node.title}{node.parentId&&<span className="ml-2 text-[8px] text-[#b9a783]/55">CONNECTED</span>}</button><button type="button" onClick={() => deleteStudyNode(node.id)} aria-label={`Delete ${node.title}`} className="ml-2 p-1 text-stone-600 hover:text-red-300"><Trash2 className="h-3 w-3"/></button></div>)}</div>}
           </div>
         </div>}
         {workspace.kind === "courses" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="mb-3 text-xs text-stone-400">Choose one of your courses to create a dedicated branch.</p>{courses.length === 0 ? <p className="py-10 text-center text-xs text-stone-500">Your courses will appear here once you add them.</p> : <div className="space-y-2">{courses.map(course=><button key={course.id} type="button" onClick={() => openWorkspace("course",course.code ? `${course.code} · Study space` : course.name,course.id)} className="flex w-full items-center justify-between border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><span><span className="block text-xs text-stone-200">{course.code || course.name}</span><span className="mt-1 block text-[10px] text-stone-500">{course.code ? course.name : course.professor || "Course workspace"}</span></span><Plus className="h-4 w-4 text-[#b9a783]"/></button>)}</div>}</div>}
