@@ -17,6 +17,9 @@ import {
   ChevronDown,
   Clock3,
   Menu,
+  Mic,
+  Volume2,
+  VolumeX,
   MessageSquare,
   MoreHorizontal,
   Plus,
@@ -205,6 +208,13 @@ export default function AITutorPage() {
   const [sending, setSending] =
     useState(false);
 
+  const [voiceListening, setVoiceListening] = useState(false);
+  const [voiceReplies, setVoiceReplies] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState("READY");
+  const recognitionRef = useRef<any>(null);
+  const voiceRepliesRef = useRef(false);
+
   const [showCourses, setShowCourses] =
     useState(false);
 
@@ -258,6 +268,82 @@ export default function AITutorPage() {
         selectedConversationId,
       ]
     );
+
+  useEffect(() => {
+    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setVoiceSupported(Boolean(SpeechRecognitionCtor));
+    return () => {
+      recognitionRef.current?.stop?.();
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  useEffect(() => {
+    voiceRepliesRef.current = voiceReplies;
+  }, [voiceReplies]);
+
+  function toggleVoiceInput() {
+    if (voiceListening) {
+      recognitionRef.current?.stop?.();
+      setVoiceListening(false);
+      setVoiceStatus("READY");
+      return;
+    }
+    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) {
+      setError("Voice input is not supported in this browser. Try Chrome or Edge.");
+      return;
+    }
+    try {
+      const recognition = new SpeechRecognitionCtor();
+      recognition.lang = navigator.language || "en-US";
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.onstart = () => { setVoiceListening(true); setVoiceStatus("LISTENING"); setError(""); };
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results as ArrayLike<any>)
+          .map((result: any) => result[0]?.transcript || "")
+          .join(" ");
+        setInput(transcript);
+      };
+      recognition.onerror = (event: any) => {
+        setVoiceListening(false);
+        setVoiceStatus("READY");
+        if (event.error !== "aborted" && event.error !== "no-speech") {
+          setError(event.error === "not-allowed" ? "Microphone access was blocked. Allow microphone access in your browser." : "Voice input stopped. You can try again.");
+        }
+      };
+      recognition.onend = () => { setVoiceListening(false); setVoiceStatus("READY"); };
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setVoiceListening(false);
+      setVoiceStatus("READY");
+      setError("Could not start voice input. Check your microphone permissions.");
+    }
+  }
+
+  function speakLatestAnswer() {
+    if (!("speechSynthesis" in window)) {
+      setError("Spoken replies are not supported in this browser.");
+      return;
+    }
+    const latest = [...conversationMessages].reverse().find((message) => message.role === "assistant" && message.content.trim());
+    if (!latest) return;
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      setVoiceStatus("READY");
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(latest.content);
+    utterance.rate = 1.02;
+    utterance.pitch = 0.92;
+    utterance.onstart = () => setVoiceStatus("SPEAKING");
+    utterance.onend = () => setVoiceStatus("READY");
+    utterance.onerror = () => setVoiceStatus("READY");
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
 
   /* =======================================================
      SCROLL TO BOTTOM
@@ -582,6 +668,7 @@ export default function AITutorPage() {
 
     try {
       setSending(true);
+      setVoiceStatus("THINKING");
       setError("");
 
       const conversationId =
@@ -793,6 +880,17 @@ export default function AITutorPage() {
                 ).getTime()
             )
       );
+
+      if (voiceRepliesRef.current && "speechSynthesis" in window) {
+        const utterance = new SpeechSynthesisUtterance(answer);
+        utterance.rate = 1.02;
+        utterance.pitch = 0.92;
+        utterance.onstart = () => setVoiceStatus("SPEAKING");
+        utterance.onend = () => setVoiceStatus("READY");
+        utterance.onerror = () => setVoiceStatus("READY");
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      }
     } catch (err) {
       // Do not leave a misleading half-answer in the transcript if the stream
       // failed. Keep a completed answer visible if only saving it failed.
@@ -809,6 +907,7 @@ export default function AITutorPage() {
     } finally {
       if (requestTimeout !== undefined) window.clearTimeout(requestTimeout);
       setSending(false);
+      setVoiceStatus("READY");
 
       window.setTimeout(() => {
         textareaRef.current?.focus();
@@ -1466,14 +1565,14 @@ export default function AITutorPage() {
                       <span className="ss-jarvis-scan" />
                       <span className="ss-jarvis-core-glow" />
                       <span className="ss-jarvis-core-center"><Sparkles className="h-7 w-7 sm:h-9 sm:w-9" /></span>
-                      <span className="ss-jarvis-core-label">S / AI</span>
+                      <span className="ss-jarvis-core-label">{voiceListening ? "LISTENING" : sending ? "PROCESSING" : "S / AI"}</span>
                     </div>
 
                     <div className="mt-6 flex items-center justify-center gap-2">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
 
                       <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/25">
-                        STUDYSPACE INTELLIGENCE · ONLINE
+                        {voiceListening ? "LISTENING · SPEAK NOW" : sending ? "PROCESSING YOUR REQUEST" : voiceStatus === "SPEAKING" ? "VOICE RESPONSE ACTIVE" : "STUDYSPACE INTELLIGENCE · ONLINE"}
                       </span>
                     </div>
 
@@ -1750,6 +1849,13 @@ export default function AITutorPage() {
                 <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between">
 
                   <div className="flex items-center gap-2">
+                    <button type="button" onClick={toggleVoiceInput} disabled={!voiceSupported || sending} aria-label={voiceListening ? "Stop voice input" : "Start voice input"} title={voiceSupported ? (voiceListening ? "Stop listening" : "Speak to StudySpace") : "Voice input works in supported browsers"} className={`flex h-8 w-8 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-35 ${voiceListening ? "ss-voice-listening border-amber-300/50 bg-amber-300/15 text-amber-200" : "border-white/[0.06] bg-white/[0.025] text-white/40 hover:border-amber-200/30 hover:text-amber-100"}`}>
+                      <Mic className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={() => setVoiceReplies((value) => !value)} aria-pressed={voiceReplies} aria-label={voiceReplies ? "Turn off spoken replies" : "Turn on spoken replies"} title={voiceReplies ? "Spoken replies on" : "Enable spoken replies"} className={`flex h-8 w-8 items-center justify-center rounded-lg border transition ${voiceReplies ? "border-amber-200/35 bg-amber-200/10 text-amber-100" : "border-white/[0.06] bg-white/[0.025] text-white/35 hover:text-white/70"}`}>
+                      {voiceReplies ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                    </button>
+                    {voiceStatus !== "READY" && <span role="status" className="hidden text-[9px] tracking-[0.16em] text-amber-100/60 sm:inline">{voiceStatus}</span>}
                     {selectedCourse && (
                       <span className="hidden items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.025] px-2 py-1 text-[9px] text-white/25 sm:flex">
                         <BookOpen className="h-2.5 w-2.5 text-violet-300/70" />
