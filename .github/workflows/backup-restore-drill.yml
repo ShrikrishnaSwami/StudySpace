@@ -173,6 +173,9 @@ jobs:
           set -euo pipefail
           docker cp restore-work/public-database.dump "$PG_CONTAINER:/tmp/public-database.dump"
           docker exec --user root "$PG_CONTAINER" chmod 0644 /tmp/public-database.dump
+          docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "CREATE SCHEMA IF NOT EXISTS extensions"
+          docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA extensions"
+          docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "ALTER EXTENSION vector SET SCHEMA extensions"
           docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "SELECT 1 FROM pg_namespace WHERE nspname = 'extensions'"
           docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -c "SELECT 1 FROM pg_extension WHERE extname = 'vector' AND extnamespace = 'extensions'::regnamespace"
           docker exec --user postgres "$PG_CONTAINER" pg_restore --list /tmp/public-database.dump > restore-work/restore.list
