@@ -117,6 +117,7 @@ export default function CinematicExperience() {
         let pointerY = 0;
         let targetX = 0;
         let targetY = 0;
+        const interactionCleanups: Array<() => void> = [];
 
         if (canvas && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
           try {
@@ -395,6 +396,10 @@ export default function CinematicExperience() {
                 });
                 card.addEventListener("pointermove", moveCard, { passive: true });
                 card.addEventListener("pointerleave", resetCard);
+                interactionCleanups.push(() => {
+                  card.removeEventListener("pointermove", moveCard);
+                  card.removeEventListener("pointerleave", resetCard);
+                });
               });
             }
 
@@ -423,6 +428,7 @@ export default function CinematicExperience() {
           const previous = cleanup;
           return () => {
             context.revert();
+            interactionCleanups.forEach((remove) => remove());
             window.clearTimeout(routeRefresh);
             window.removeEventListener("scroll", updateProgress);
             document.documentElement.style.removeProperty("--page-progress");
