@@ -961,7 +961,7 @@ function QuizGenerator({
         role="dialog"
         aria-modal="true"
         aria-labelledby="quiz-generator-title"
-        className="my-auto max-h-[min(90dvh,900px)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#17151d] p-5 shadow-2xl sm:p-6"
+        className="mt-0 mb-auto max-h-[calc(100dvh-7rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl border border-white/10 bg-[#17151d] p-5 shadow-2xl sm:p-6"
       >
         <div className="sticky top-0 z-10 flex items-start justify-between border-b border-white/[0.07] bg-[#100b1c]/95 p-5 backdrop-blur-xl sm:p-6">
           <div>
