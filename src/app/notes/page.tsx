@@ -84,7 +84,7 @@ export default function NotesPage() {
 
   async function saveNote(e: FormEvent) {
     e.preventDefault(); setError(""); setNotice("");
-    if (!courseId || !title.trim() || !content.trim()) { setError("Choose a course and enter a title and note."); return; }
+    if (!courseId || !title.trim() || !content.trim()) { setError("Choose a course, then give your note a title and add the text."); return; }
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -94,14 +94,14 @@ export default function NotesPage() {
         unit_name: unitName.trim() || "General", category,
       });
       if (error) throw error;
-      setTitle(""); setContent(""); setNotice("Note saved to your course library."); await load();
+      setTitle(""); setContent(""); setNotice("Saved to this course."); await load();
     } catch (e) { setError(e instanceof Error ? e.message : "Could not save note."); }
     finally { setSaving(false); }
   }
 
   async function createFromUpload(e: FormEvent) {
     e.preventDefault(); setError(""); setNotice("");
-    if (!courseId || !uploadFile) { setError("Choose a course and a PDF or image."); return; }
+    if (!courseId || !uploadFile) { setError("Choose a course and upload a PDF or lecture photo."); return; }
     if (uploadFile.size > 4 * 1024 * 1024) { setError("Choose a file smaller than 4 MB."); return; }
     setUploading(true);
     try {
@@ -114,8 +114,8 @@ export default function NotesPage() {
       body.set("category", uploadCategory);
       const response = await fetch("/api/ai/notes", { method: "POST", headers: { Authorization: "Bearer " + session.access_token }, body });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Could not convert the file to notes.");
-      setNotice("Converted “" + uploadFile.name + "” into saved notes.");
+      if (!response.ok) throw new Error(payload.error || "Couldn't read that file. Try another PDF or a clearer photo.");
+      setNotice("Turned “" + uploadFile.name + "” into notes and saved them.");
       setUploadFile(null);
       const picker = document.getElementById("notes-source-file") as HTMLInputElement | null;
       if (picker) picker.value = "";
@@ -138,7 +138,7 @@ export default function NotesPage() {
         unit_name: resourceUnit.trim() || "General", category: resourceCategory,
       });
       if (error) throw error;
-      setResourceTitle(""); setUrl(""); setDescription(""); setNotice("Resource saved to your library."); await load();
+      setResourceTitle(""); setUrl(""); setDescription(""); setNotice("Link saved."); await load();
     } catch (e) { setError(e instanceof Error ? e.message : "Enter a valid link."); }
     finally { setSaving(false); }
   }
@@ -150,10 +150,10 @@ export default function NotesPage() {
     else setResources(x => x.filter(r => r.id !== id));
   }
 
-  return <AppShell title="Notes & resources" description="Turn lecture files into revision notes and organize everything by course, unit, and category.">
+  return <AppShell title="Notes & resources" description="Save notes by course and unit. Upload a PDF or lecture photo and turn it into notes you can search later.">
     <div className="mx-auto max-w-7xl space-y-6">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_190px_190px_190px]">
-        <div className="relative"><Search size={17} className="absolute left-3 top-3.5 text-white/35"/><input type="search" aria-label="Search notes and resources" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search your library…" className={inputClass+" pl-10"}/></div>
+        <div className="relative"><Search size={17} className="absolute left-3 top-3.5 text-white/35"/><input type="search" aria-label="Search notes and resources" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search lecture notes, PDFs and saved links…" className={inputClass+" pl-10"}/></div>
         <select value={courseFilter} onChange={e=>setCourseFilter(e.target.value)} className={selectClass}><option value="all">All courses</option>{courses.map(c=><option key={c.id} value={c.id}>{c.code ? c.code+" · " : ""}{c.name}</option>)}</select>
         <select value={unitFilter} onChange={e=>setUnitFilter(e.target.value)} className={selectClass}><option value="all">All units</option>{units.map(u=><option key={u} value={u}>{u}</option>)}</select>
         <select value={categoryFilter} onChange={e=>setCategoryFilter(e.target.value)} className={selectClass}><option value="all">All categories</option>{categories.map(category=><option key={category} value={category}>{category}</option>)}</select>
