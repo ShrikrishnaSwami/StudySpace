@@ -3,13 +3,13 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 
 type Action = "new-chat" | "history" | "tools";
-type Props = { active?: boolean; listening?: boolean; showControls?: boolean; onPrompt?: (prompt: string) => void; onAction?: (action: Action) => void };
+type Props = { active?: boolean; listening?: boolean; showControls?: boolean; controlsOnly?: boolean; onPrompt?: (prompt: string) => void; onAction?: (action: Action) => void };
 
-export default function NeuralIntelligence({active=false,listening=false,showControls=true,onPrompt,onAction}:Props) {
+export default function NeuralIntelligence({active=false,listening=false,showControls=true,controlsOnly=false,onPrompt,onAction}:Props) {
  const host=useRef<HTMLDivElement>(null);
  const mode=useRef({active,listening}); mode.current={active,listening};
  useEffect(()=>{
-  const root=host.current;if(!root)return;
+  const root=host.current;if(!root||controlsOnly)return;
   const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   let renderer:THREE.WebGLRenderer;
   try{renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});}catch{return;}
@@ -42,7 +42,7 @@ export default function NeuralIntelligence({active=false,listening=false,showCon
   let raf=0,px=0,py=0,tx=0,ty=0,focus=0;const pointer=(e:PointerEvent)=>{const r=root.getBoundingClientRect();tx=((e.clientX-r.left)/r.width-.5)*.48;ty=((e.clientY-r.top)/r.height-.5)*.34;};const click=()=>{focus=performance.now()+900;};root.addEventListener("pointermove",pointer);root.addEventListener("click",click);
   const clock=new THREE.Clock();const animate=()=>{raf=requestAnimationFrame(animate);const t=clock.getElapsedTime(),m=mode.current;px+=(tx-px)*.025;py+=(ty-py)*.025;brain.rotation.y=(reduced?0:Math.sin(t*.19)*.13)+px*.3;brain.rotation.x=(reduced?0:Math.sin(t*.13)*.055)+py*.2;brain.position.y=reduced?0:Math.sin(t*.55)*.09;brain.scale.setScalar((m.active?1.14:m.listening?1.08:performance.now()<focus?1.06:1.04)*(1+(m.active&&!reduced?Math.sin(t*3.5)*.014:0)));world.rotation.y=(reduced?0:Math.sin(t*.06)*.045)+px*.08;world.rotation.x=py*.07;net.rotation.y=reduced?0:-t*.009;orbitGroup.rotation.y=reduced?0:t*.025;stars.rotation.y=reduced?0:t*.003;key.intensity=m.active?33:m.listening?30:performance.now()<focus?31:26;renderer.render(scene,camera);};animate();
   return()=>{cancelAnimationFrame(raf);observer.disconnect();root.removeEventListener("pointermove",pointer);root.removeEventListener("click",click);scene.traverse(o=>{if(o instanceof THREE.Mesh||o instanceof THREE.LineSegments||o instanceof THREE.Points){o.geometry.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];mats.forEach(m=>m.dispose());}});renderer.dispose();renderer.domElement.remove();};
- },[]);
+ },[controlsOnly]);
  return <div ref={host} className={["ss-neural-universe","ss-neural-universe-concrete",active?"is-active":"",listening?"is-listening":""].join(" ")}>
   <div className="ss-neural-vignette"/><div className="ss-neural-readout"><span>STUDYSPACE / INTELLIGENCE</span><span>{listening?"LISTENING":active?"THINKING":"NEURAL NETWORK READY"}</span></div>
   {showControls&&<div className="ss-neural-hotspots" aria-label="Neural workspace controls">
