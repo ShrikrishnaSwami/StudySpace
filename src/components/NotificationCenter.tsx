@@ -125,7 +125,7 @@ export default function NotificationCenter() {
 
   useEffect(() => {
     let active = true;
-    let unsubscribe = () => undefined;
+    let unsubscribe: () => void = () => {};
     const initialLoad = window.setTimeout(() => { void loadNotifications(); }, 0);
     const fallback = window.setInterval(() => { void loadNotifications(); }, 60000);
 
