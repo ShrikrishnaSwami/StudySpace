@@ -1,0 +1,46 @@
+name: StudySpace beta bug report
+description: Report a problem encountered while using StudySpace.
+title: "[Beta bug]: "
+labels: ["beta-feedback", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not include passwords, access tokens, private coursework, grades, or other students' personal information. Describe the issue without uploading sensitive student data.
+  - type: input
+    id: area
+    attributes:
+      label: Where did it happen?
+      placeholder: Dashboard, AI Tutor, notes, assignments, mobile layout…
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Use synthetic examples only. Do not include real student submissions or personal data.
+    validations:
+      required: false
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      options:
+        - Desktop
+        - Tablet
+        - Mobile
+        - Other
+    validations:
+      required: true
