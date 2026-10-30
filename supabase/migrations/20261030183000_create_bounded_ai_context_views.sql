@@ -31,7 +31,7 @@ FROM public.quizzes;
 CREATE OR REPLACE VIEW public.ai_context_quiz_attempts
 WITH (security_invoker = true) AS
 SELECT id, user_id, quiz_id, score, correct_count, total_questions,
-       completed_at, created_at
+       completed_at
 FROM public.quiz_attempts;
 
 CREATE OR REPLACE VIEW public.ai_context_homework
