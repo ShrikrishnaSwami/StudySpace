@@ -74,8 +74,8 @@ test("a 429 from Groq falls through to the next configured provider", async () =
     }),
   );
   assert.equal(attempts.length, 2);
-  assert.match(attempts[0], /groq\\.com/);
-  assert.match(attempts[1], /openrouter\\.ai/);
+  assert.match(attempts[0], /groq\.com/);
+  assert.match(attempts[1], /openrouter\.ai/);
   assert.equal(result, '{"recommendations":[]}');
 });
 

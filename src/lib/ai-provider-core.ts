@@ -43,7 +43,7 @@ export async function requestChatCompletion(input: ChatCompletionInput): Promise
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${input.apiKey}`,
+      Authorization: \`Bearer \${input.apiKey}\`,
       ...(input.extraHeaders ?? {}),
     },
     body: JSON.stringify(buildChatCompletionPayload(input)),
@@ -53,14 +53,14 @@ export async function requestChatCompletion(input: ChatCompletionInput): Promise
 
   if (!response.ok) {
     // Never include provider response bodies: they may echo prompts or other student data.
-    throw new Error(`${input.provider} provider returned HTTP ${response.status}`);
+    throw new Error(\`\${input.provider} provider returned HTTP \${response.status}\`);
   }
 
   const payload = await response.json() as {
     choices?: { message?: { content?: string | null } }[];
   };
   const result = payload.choices?.[0]?.message?.content?.trim();
-  if (!result) throw new Error(`${input.provider} provider returned an empty response.`);
+  if (!result) throw new Error(\`\${input.provider} provider returned an empty response.\`);
   return result;
 }
 
