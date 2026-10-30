@@ -9,7 +9,7 @@ const TABLES = [
   "quiz_attempts", "grade_items", "flashcard_decks", "flashcards",
   "calendar_events", "study_sessions", "study_recommendations",
   "notifications", "homework", "course_notes", "course_resources",
-  "course_goals", "course_class_exceptions", "study_groups", "study_group_members", "study_group_posts",
+  "course_goals", "course_class_exceptions", "ai_study_workspaces", "study_groups", "study_group_members", "study_group_posts",
   "syllabus_imports", "study_plan_items",
 ] as const;
 
