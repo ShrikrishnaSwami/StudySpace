@@ -56,3 +56,75 @@ test("Gemini routing catalogs ten models and keeps paid models opt-in", () => {
   assert.match(source, /GEMINI_ALLOW_PAID_MODELS === "true"/);
   assert.match(source, /preferredOrder: Record<AITask, string\[\]>/);
 });
+
+
+test("account deletion recursively paginates, batches, and verifies storage cleanup", () => {
+  const cleanup = read("src/lib/account-storage-cleanup.ts");
+  const route = read("src/app/api/account/delete/route.ts");
+  assert.match(cleanup, /listV2/);
+  assert.match(cleanup, /nextCursor/);
+  assert.match(cleanup, /index \+= 1000/);
+  assert.match(cleanup, /const remaining = await listAllFiles\(\)/);
+  assert.match(route, /cleanUserStoragePrefix/);
+});
+
+test("all request bodies are parsed through streamed size limits", () => {
+  const helper = read("src/lib/request-body.ts");
+  assert.match(helper, /request\.body\.getReader\(\)/);
+  assert.match(helper, /total > maxBytes/);
+  assert.match(helper, /readBoundedFormData/);
+  for (const path of [
+    "src/app/api/account/delete/route.ts",
+    "src/app/api/ai/flashcards/route.ts",
+    "src/app/api/ai/homework/route.ts",
+    "src/app/api/ai/notes/route.ts",
+    "src/app/api/ai/quiz/route.ts",
+    "src/app/api/ai/syllabus/route.ts",
+    "src/app/api/ai/tutor/route.ts",
+    "src/app/api/assignments/grade/route.ts",
+    "src/app/api/quizzes/[id]/submit/route.ts",
+    "src/app/api/study-groups/join/route.ts",
+  ]) {
+    const route = read(path);
+    assert.match(route, /readBoundedJson|readBoundedFormData/, path);
+    assert.doesNotMatch(route, /request\.(?:json|formData)\(\)/, path);
+  }
+});
+
+test("AI context queries use bounded security-invoker views", () => {
+  const context = read("src/lib/ai-context.ts");
+  const views = read("supabase/migrations/20261030173726_create_bounded_ai_context_views.sql");
+  const courses = read("supabase/migrations/20261030173745_bound_ai_context_courses.sql");
+  assert.match(context, /from\("ai_context_course_notes"\)/);
+  assert.match(context, /from\("ai_context_courses"\)/);
+  assert.match(context, /\.limit\(40\)/);
+  assert.match(context, /\.limit\(80\)/);
+  assert.match(views, /security_invoker = true/);
+  assert.match(views, /left\(content, 2200\)/);
+  assert.match(courses, /left\(description, 1000\)/);
+});
+
+test("note extraction and assignment grading have independent quotas", () => {
+  const quotas = read("supabase/migrations/20261030173502_split_ai_notes_and_grading_quotas.sql");
+  const notes = read("src/app/api/ai/notes/route.ts");
+  const grading = read("src/app/api/assignments/grade/route.ts");
+  const security = read("src/lib/api-security.ts");
+  assert.match(quotas, /WHEN 'notes' THEN 15/);
+  assert.match(quotas, /WHEN 'grading' THEN 10/);
+  assert.match(notes, /consumeAiQuota\(token, "notes"\)/);
+  assert.match(grading, /consumeAiQuota\(token, "grading"\)/);
+  assert.match(security, /notes: 15/);
+  assert.match(security, /grading: 10/);
+});
+
+test("admin layout accepts the Supabase publishable key configuration", () => {
+  const layout = read("src/app/admin/layout.tsx");
+  assert.match(layout, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
+});
+
+test("main CI runs dependency auditing and avoids duplicate workflow concurrency", () => {
+  const workflow = read(".github/workflows/studyspace-ci.yml");
+  assert.match(workflow, /npm audit --audit-level=high/);
+  assert.match(workflow, /npm run lint/);
+  assert.match(workflow, /github\.workflow/);
+});
