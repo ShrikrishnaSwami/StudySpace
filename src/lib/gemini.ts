@@ -3,7 +3,7 @@ import "server-only";
 import { GoogleGenAI } from "@google/genai";
 
 type AITask = "tutor" | "quiz" | "flashcards" | "homework" | "syllabus" | "recommendations" | "notes" | "grading";
-type AIProvider = "gemini" | "openai" | "anthropic";
+type AIProvider = "gemini" | "groq" | "openrouter";
 type ModelGroup = "tutor" | "reasoning" | "fast";
 
 let geminiClient: GoogleGenAI | null = null;
@@ -27,7 +27,22 @@ function providerForTask(task: AITask): AIProvider {
     group === "tutor" ? "AI_PROVIDER_TUTOR" :
     group === "reasoning" ? "AI_PROVIDER_REASONING" : "AI_PROVIDER_FAST"
   ]?.trim().toLowerCase();
-  return configured === "openai" || configured === "anthropic" ? configured : "gemini";
+  return configured === "groq" || configured === "openrouter" ? configured : "gemini";
+}
+
+function providerIsConfigured(provider: AIProvider) {
+  if (provider === "gemini") return Boolean(process.env.GEMINI_API_KEY);
+  if (provider === "groq") return Boolean(process.env.GROQ_API_KEY);
+  return Boolean(process.env.OPENROUTER_API_KEY);
+}
+
+function providersForTask(task: AITask): AIProvider[] {
+  const preferred = providerForTask(task);
+  // Only providers with server-side credentials participate. No paid provider
+  // is included, and OpenRouter is restricted to its free-model router/variants.
+  return [preferred, "gemini", "groq", "openrouter"]
+    .filter((provider, index, all): provider is AIProvider =>
+      all.indexOf(provider) === index && providerIsConfigured(provider as AIProvider));
 }
 
 const GEMINI_MODEL_CATALOG = [
@@ -188,18 +203,20 @@ async function generateWithGemini({
   return result;
 }
 
-function externalModel(provider: Exclude<AIProvider, "gemini">, group: ModelGroup) {
-  if (provider === "openai") {
-    const specific = group === "tutor" ? process.env.OPENAI_TUTOR_MODEL :
-      group === "reasoning" ? process.env.OPENAI_REASONING_MODEL : process.env.OPENAI_FAST_MODEL;
-    return specific || process.env.OPENAI_MODEL || "";
+function externalModel(provider: Exclude<AIProvider, "gemini">, task: AITask) {
+  const suffix = task.toUpperCase();
+  if (provider === "groq") {
+    return process.env["GROQ_MODEL_" + suffix]?.trim() ||
+      process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-20b";
   }
-  const specific = group === "tutor" ? process.env.ANTHROPIC_TUTOR_MODEL :
-    group === "reasoning" ? process.env.ANTHROPIC_REASONING_MODEL : process.env.ANTHROPIC_FAST_MODEL;
-  return specific || process.env.ANTHROPIC_MODEL || "";
+  // The free router chooses among currently available free models. Explicit
+  // model overrides must use a :free model ID so this integration cannot
+  // silently spend credits.
+  return process.env["OPENROUTER_MODEL_" + suffix]?.trim() ||
+    process.env.OPENROUTER_MODEL?.trim() || "openrouter/free";
 }
 
-async function generateWithExternalProvider({
+async function generateWithCloudProvider({
   provider,
   task,
   systemInstruction,
@@ -210,58 +227,76 @@ async function generateWithExternalProvider({
   systemInstruction: string;
   prompt: string;
 }) {
-  const group = groupForTask(task);
-  const model = externalModel(provider, group);
-  const apiKey = provider === "openai" ? process.env.OPENAI_API_KEY : process.env.ANTHROPIC_API_KEY;
-  if (!apiKey || !model) throw new Error("The selected AI provider is not fully configured.");
+  const apiKey = provider === "groq"
+    ? process.env.GROQ_API_KEY
+    : process.env.OPENROUTER_API_KEY;
+  const model = externalModel(provider, task);
+  if (!apiKey) throw new Error(provider + " is not configured.");
+  if (provider === "openrouter" && model !== "openrouter/free" && !model.endsWith(":free")) {
+    throw new Error("OpenRouter is restricted to free model IDs in StudySpace.");
+  }
 
-  const system = buildSystemInstruction(systemInstruction, task);
-  const endpoint = provider === "openai"
-    ? "https://api.openai.com/v1/chat/completions"
-    : "https://api.anthropic.com/v1/messages";
+  const endpoint = provider === "groq"
+    ? "https://api.groq.com/openai/v1/chat/completions"
+    : "https://openrouter.ai/api/v1/chat/completions";
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(provider === "openai"
-      ? { Authorization: "Bearer " + apiKey }
-      : { "x-api-key": apiKey, "anthropic-version": "2023-06-01" }),
+    Authorization: "Bearer " + apiKey,
   };
-  const body = provider === "openai"
-    ? {
-        model,
-        messages: [{ role: "system", content: system }, { role: "user", content: prompt }],
-        max_completion_tokens: outputTokenLimit(task),
-      }
-    : {
-        model,
-        system,
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: outputTokenLimit(task),
-        temperature: task === "tutor" ? 0.35 : 0.2,
-      };
+  if (provider === "openrouter") {
+    headers["HTTP-Referer"] = process.env.APP_ORIGIN || "https://studyspace.wiki";
+    headers["X-Title"] = "StudySpace";
+  }
 
   const response = await fetch(endpoint, {
     method: "POST",
     headers,
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(20000),
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: buildSystemInstruction(systemInstruction, task) },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: outputTokenLimit(task),
+      temperature: task === "tutor" ? 0.35 : 0.2,
+      stream: false,
+    }),
+    signal: AbortSignal.timeout(25000),
     cache: "no-store",
   });
-  if (!response.ok) throw new Error(provider + " provider returned HTTP " + response.status);
+
+  if (!response.ok) {
+    // Do not log or return provider response bodies; they can contain request data.
+    throw new Error(provider + " provider returned HTTP " + response.status);
+  }
 
   const payload = await response.json() as {
-    choices?: { message?: { content?: string | { type?: string; text?: string }[] | null } }[];
-    content?: { type?: string; text?: string }[];
+    choices?: { message?: { content?: string | null } }[];
   };
-  const raw = provider === "openai"
-    ? payload.choices?.[0]?.message?.content
-    : payload.content?.map((block) => block.type === "text" ? block.text || "" : "").join("\n");
-  const result = typeof raw === "string"
-    ? raw.trim()
-    : Array.isArray(raw)
-      ? raw.map((block) => typeof block === "string" ? block : block.text || "").join("\n").trim()
-      : "";
+  const result = payload.choices?.[0]?.message?.content?.trim();
   if (!result) throw new Error(provider + " provider returned an empty response.");
+
+  console.info("StudySpace AI generation completed", {
+    task, provider, model, outputCharacters: result.length,
+  });
   return result;
+}
+
+async function generateWithProvider({
+  provider,
+  task,
+  systemInstruction,
+  prompt,
+}: {
+  provider: AIProvider;
+  task: AITask;
+  systemInstruction: string;
+  prompt: string;
+}) {
+  if (provider === "gemini") {
+    return generateWithGeminiFallback({ task, systemInstruction, prompt });
+  }
+  return generateWithCloudProvider({ provider, task, systemInstruction, prompt });
 }
 
 async function generateWithGeminiFallback({
@@ -304,20 +339,22 @@ export async function generateAIResponse({
   prompt: string;
   task?: AITask;
 }) {
-  const provider = providerForTask(task);
-  if (provider !== "gemini") {
+  const providers = providersForTask(task);
+  let lastError: unknown;
+  for (const provider of providers) {
     try {
-      return await generateWithExternalProvider({ provider, task, systemInstruction, prompt });
+      return await generateWithProvider({ provider, task, systemInstruction, prompt });
     } catch (error) {
-      console.warn("Configured AI provider failed; using Gemini fallback", {
-        provider,
-        task,
-        retryable: isRetryableError(error),
+      lastError = error;
+      console.warn("StudySpace AI provider attempt failed", {
+        provider, task, retryable: isRetryableError(error),
+        credentialError: isCredentialError(error),
+        reason: errorSummary(error),
       });
-      return generateWithGeminiFallback({ task, systemInstruction, prompt });
+      if (isCredentialError(error)) continue;
     }
   }
-  return generateWithGeminiFallback({ task, systemInstruction, prompt });
+  throw new Error("StudySpace AI is temporarily unavailable. Please try again shortly.");
 }
 
 
@@ -332,7 +369,7 @@ export async function* streamAIResponse({
   prompt: string;
   task?: AITask;
 }): AsyncGenerator<string> {
-  const provider = providerForTask(task);
+  const provider = providersForTask(task)[0] || "gemini";
   if (provider !== "gemini") {
     yield await generateAIResponse({ systemInstruction, prompt, task });
     return;
