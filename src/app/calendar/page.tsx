@@ -704,7 +704,7 @@ export default function CalendarPage() {
               </button>
               <button
                 onClick={() => openCreateModal()}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#a9946f] px-5 text-sm font-semibold text-white shadow-lg shadow-violet-950/20 transition hover:bg-[#b9a783] active:scale-[0.98]"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#a9946f] px-5 text-sm font-semibold text-white shadow-lg shadow-black/20 transition hover:bg-[#b9a783] active:scale-[0.98]"
               >
                 <Plus size={17} />
                 Add event
