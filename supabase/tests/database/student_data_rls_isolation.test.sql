@@ -1,9 +1,9 @@
 -- Read-only behavioral RLS tests against a populated StudySpace database.
 -- All fixture selection is read-only; role/JWT changes and the temporary table
 -- are scoped to this transaction and rolled back at the end.
-CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 BEGIN;
-SELECT plan(8);
+CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
+SELECT extensions.plan(10);
 
 CREATE TEMP TABLE rls_test_ids ON COMMIT DROP AS
 WITH assignment_owner AS (
@@ -51,7 +51,7 @@ CROSS JOIN owned_assignment ass;
 
 GRANT SELECT ON rls_test_ids TO authenticated;
 
-SELECT ok(
+SELECT extensions.ok(
   (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.courses'::regclass),
   'courses has row-level security enabled'
 );
@@ -64,6 +64,17 @@ SELECT ok(
   'the live database contains two student owners and an owned assignment for isolation tests'
 );
 
+SELECT extensions.ok(
+  (SELECT pg_get_constraintdef(oid) LIKE '%notes%' AND pg_get_constraintdef(oid) LIKE '%grading%'
+   FROM pg_constraint WHERE conrelid = 'public.ai_usage_events'::regclass AND conname = 'ai_usage_events_feature_check'),
+  'AI usage events permit separate note extraction and assignment grading categories'
+);
+SELECT extensions.ok(
+  position('notes' in pg_get_functiondef('public.get_my_ai_usage()'::regprocedure)) > 0
+  AND position('grading' in pg_get_functiondef('public.get_my_ai_usage()'::regprocedure)) > 0,
+  'AI usage reporting exposes separate note extraction and grading quotas'
+);
+
 SET LOCAL ROLE authenticated;
 SELECT set_config('request.jwt.claim.sub', (SELECT owner_a::text FROM pg_temp.rls_test_ids), true);
 SELECT set_config('request.jwt.claims', json_build_object(
@@ -72,7 +83,7 @@ SELECT set_config('request.jwt.claims', json_build_object(
   'aal', 'aal1'
 )::text, true);
 
-SELECT is(
+SELECT extensions.is(
   (SELECT count(*)::integer FROM public.courses WHERE id = (SELECT owner_a_course_id FROM pg_temp.rls_test_ids)),
   1,
   'student A can read their own course'
@@ -105,5 +116,5 @@ SELECT is(
   1,
   'student B can read their own course'
 );
-SELECT * FROM finish();
+SELECT * FROM extensions.finish();
 ROLLBACK;
