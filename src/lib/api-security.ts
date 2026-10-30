@@ -2,13 +2,15 @@ import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
 
-export type AiFeature = "tutor" | "quiz" | "flashcards" | "homework" | "syllabus" | "recommendations";
+export type AiFeature = "tutor" | "quiz" | "flashcards" | "homework" | "notes" | "grading" | "syllabus" | "recommendations";
 
 export const AI_DAILY_LIMITS: Record<AiFeature, number> = {
   tutor: 40,
   quiz: 15,
   flashcards: 15,
   homework: 20,
+  notes: 15,
+  grading: 10,
   syllabus: 10,
   recommendations: 20,
 };
@@ -18,6 +20,8 @@ const AI_BURST_LIMITS: Record<AiFeature, number> = {
   quiz: 4,
   flashcards: 4,
   homework: 4,
+  notes: 3,
+  grading: 2,
   syllabus: 3,
   recommendations: 3,
 };
