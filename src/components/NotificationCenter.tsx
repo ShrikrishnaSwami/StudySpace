@@ -276,7 +276,7 @@ export default function NotificationCenter() {
               </h3>
 
               <p className="mt-0.5 text-xs text-white/40">
-                {unreadCount > 0 ? `${unreadCount} unread · ${notifications.length} total` : "You're all caught up"}
+                {unreadCount > 0 ? `${unreadCount} unread · ${notifications.length} total` : "Nothing waiting on you"}
               </p>
             </div>
 
@@ -312,7 +312,7 @@ export default function NotificationCenter() {
                 <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-white/10 border-t-violet-400" />
 
                 <p className="mt-3 text-xs text-white/40">
-                  Loading notifications...
+                  Loading your updates…
                 </p>
               </div>
             ) : visibleNotifications.length === 0 ? (
@@ -325,11 +325,11 @@ export default function NotificationCenter() {
                 </div>
 
                 <h4 className="mt-4 text-sm font-medium text-white">
-                  No notifications
+                  No new updates
                 </h4>
 
                 <p className="mt-1 text-xs text-white/40">
-                  {filter === "unread" ? "You have no unread notifications." : "Important updates will appear here."}
+                  {filter === "unread" ? "No unread updates right now." : "Assignment, quiz and calendar updates will show up here."}
                 </p>
               </div>
             ) : (
