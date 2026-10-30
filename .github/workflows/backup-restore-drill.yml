@@ -170,7 +170,7 @@ jobs:
           set -euo pipefail
           docker cp restore-work/public-database.dump "$PG_CONTAINER:/tmp/public-database.dump"
           docker exec --user root "$PG_CONTAINER" chmod 0644 /tmp/public-database.dump
-          docker exec --user postgres "$PG_CONTAINER" pg_restore --dbname=postgres --no-owner --no-privileges --exit-on-error /tmp/public-database.dump
+          docker exec --user postgres "$PG_CONTAINER" pg_restore --dbname=postgres --clean --if-exists --no-owner --no-privileges --exit-on-error /tmp/public-database.dump
 
       - name: Load Auth metadata into the isolated validation database
         shell: bash
