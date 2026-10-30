@@ -6,12 +6,10 @@ on:
       backup_run_id:
         description: GitHub Actions run ID that created the encrypted backup
         required: true
-        default: "41060628525"
         type: string
       backup_artifact_name:
         description: Exact encrypted backup artifact name
         required: true
-        default: "studyspace-encrypted-backup-41060628525-1"
         type: string
 
 permissions:
@@ -171,6 +169,7 @@ jobs:
         run: |
           set -euo pipefail
           docker cp restore-work/public-database.dump "$PG_CONTAINER:/tmp/public-database.dump"
+          docker exec "$PG_CONTAINER" chmod 0644 /tmp/public-database.dump
           docker exec --user postgres "$PG_CONTAINER" pg_restore --dbname=postgres --no-owner --no-privileges --exit-on-error /tmp/public-database.dump
 
       - name: Load Auth metadata into the isolated validation database
