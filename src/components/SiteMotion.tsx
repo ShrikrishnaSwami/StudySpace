@@ -28,6 +28,7 @@ function shouldSkip(element: HTMLElement) {
         ".ss-chat-messages",
         ".ss-message-content",
         ".ss-streaming-response",
+        ".ss-jarvis-chatlog",
         "textarea",
         "input",
         "select",
