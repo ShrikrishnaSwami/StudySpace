@@ -673,11 +673,11 @@ export default function CalendarPage() {
       <div className="mx-auto max-w-[1500px] space-y-5 pb-8">
         {/* Header */}
         <section className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.025]">
-          <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-violet-600/10 blur-3xl" />
+          <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-[#b9a783]/[0.06] blur-3xl" />
 
           <div className="relative flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-400/15 bg-violet-500/[0.07] px-3 py-1.5 text-xs font-medium text-violet-300">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#b9a783]/20 bg-[#b9a783]/[0.06] px-3 py-1.5 text-xs font-medium text-[#c7b58f]">
                 <CalendarDays size={14} />
                 Academic planner
               </div>
@@ -704,7 +704,7 @@ export default function CalendarPage() {
               </button>
               <button
                 onClick={() => openCreateModal()}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-950/20 transition hover:bg-violet-500 active:scale-[0.98]"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#a9946f] px-5 text-sm font-semibold text-white shadow-lg shadow-violet-950/20 transition hover:bg-[#b9a783] active:scale-[0.98]"
               >
                 <Plus size={17} />
                 Add event
@@ -778,7 +778,7 @@ export default function CalendarPage() {
                     setSearch(event.target.value)
                   }
                   placeholder="Search events..."
-                  className="h-10 w-full rounded-xl border border-white/[0.07] bg-black/20 pl-9 pr-3 text-sm text-white outline-none placeholder:text-white/20 focus:border-violet-500/40 sm:w-44"
+                  className="h-10 w-full rounded-xl border border-white/[0.07] bg-black/20 pl-9 pr-3 text-sm text-white outline-none placeholder:text-white/20 focus:border-[#b9a783]/40 sm:w-44"
                 />
               </div>
 
@@ -797,7 +797,7 @@ export default function CalendarPage() {
                         | "all"
                     )
                   }
-                  className="h-10 appearance-none rounded-xl border border-white/[0.07] bg-black/20 pl-9 pr-8 text-xs text-white/55 outline-none focus:border-violet-500/40"
+                  className="h-10 appearance-none rounded-xl border border-white/[0.07] bg-black/20 pl-9 pr-8 text-xs text-white/55 outline-none focus:border-[#b9a783]/40"
                 >
                   <option value="all">All types</option>
 
@@ -939,7 +939,7 @@ function MiniStat({
 }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-4 py-3.5">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-300">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#b9a783]/[0.08] text-[#c7b58f]">
         {icon}
       </div>
 
@@ -969,7 +969,7 @@ function ViewButton({
       onClick={onClick}
       className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
         active
-          ? "bg-violet-600 text-white"
+          ? "bg-[#a9946f] text-white"
           : "text-white/30 hover:text-white/70"
       }`}
     >
@@ -996,11 +996,11 @@ function WeekCalendar({
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0b0813]">
+    <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#171612]">
       <div className="overflow-auto">
         <div className="min-w-[900px]">
           {/* Day headers */}
-          <div className="sticky top-0 z-30 grid grid-cols-[70px_repeat(7,minmax(120px,1fr))] border-b border-white/[0.07] bg-[#0e0a18]/95 backdrop-blur-xl">
+          <div className="sticky top-0 z-30 grid grid-cols-[70px_repeat(7,minmax(120px,1fr))] border-b border-white/[0.07] bg-[#1b1a15]/95 backdrop-blur-xl">
             <div className="border-r border-white/[0.07]" />
 
             {days.map((day) => {
@@ -1011,7 +1011,7 @@ function WeekCalendar({
                   key={day.toISOString()}
                   className={`border-r border-white/[0.06] px-2 py-3 text-center last:border-r-0 ${
                     isToday
-                      ? "bg-violet-500/[0.05]"
+                      ? "bg-[#b9a783]/[0.035]"
                       : ""
                   }`}
                 >
@@ -1024,7 +1024,7 @@ function WeekCalendar({
                   <div
                     className={`mx-auto mt-1.5 flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
                       isToday
-                        ? "bg-violet-600 text-white"
+                        ? "bg-[#a9946f] text-white"
                         : "text-white/55"
                     }`}
                   >
@@ -1067,7 +1067,7 @@ function WeekCalendar({
                   key={day.toISOString()}
                   className={`relative border-r border-white/[0.05] last:border-r-0 ${
                     sameDay(day, today)
-                      ? "bg-violet-500/[0.012]"
+                      ? "bg-[#b9a783]/[0.012]"
                       : ""
                   }`}
                 >
@@ -1078,7 +1078,7 @@ function WeekCalendar({
                       onClick={() =>
                         onCreate(day, hour)
                       }
-                      className="absolute left-0 right-0 border-b border-white/[0.045] transition hover:bg-violet-500/[0.035]"
+                      className="absolute left-0 right-0 border-b border-white/[0.045] transition hover:bg-[#b9a783]/[0.035]"
                       style={{
                         top: `${hour * HOUR_HEIGHT}px`,
                         height: `${HOUR_HEIGHT}px`,
@@ -1188,8 +1188,8 @@ function WeekCalendar({
       </div>
 
       {loading && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center bg-[#0b0813]/75 backdrop-blur-sm">
-          <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#151020] px-4 py-3 text-sm text-white/50">
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-[#171612]/75 backdrop-blur-sm">
+          <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#24221b] px-4 py-3 text-sm text-white/50">
             <RefreshCw
               size={15}
               className="animate-spin"
@@ -1234,8 +1234,8 @@ function MonthCalendar({
   ];
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#0b0813]">
-      <div className="grid grid-cols-7 border-b border-white/[0.07] bg-[#0e0a18]">
+    <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-[#171612]">
+      <div className="grid grid-cols-7 border-b border-white/[0.07] bg-[#1b1a15]">
         {weekdays.map((day) => (
           <div
             key={day}
@@ -1270,7 +1270,7 @@ function MonthCalendar({
                 onClick={() => onCreate(day)}
                 className={`mb-2 flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold transition ${
                   isToday
-                    ? "bg-violet-600 text-white"
+                    ? "bg-[#a9946f] text-white"
                     : isCurrentMonth
                       ? "text-white/50 hover:bg-white/10 hover:text-white"
                       : "text-white/15"
@@ -1330,8 +1330,8 @@ function MonthCalendar({
       </div>
 
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#0b0813]/75 backdrop-blur-sm">
-          <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#151020] px-4 py-3 text-sm text-white/50">
+        <div className="absolute inset-0 flex items-center justify-center bg-[#171612]/75 backdrop-blur-sm">
+          <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-[#24221b] px-4 py-3 text-sm text-white/50">
             <RefreshCw
               size={15}
               className="animate-spin"
@@ -1370,7 +1370,7 @@ function EventDetails({
         aria-label="Close"
       />
 
-      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-[#100b1b] shadow-2xl shadow-black/60">
+      <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-[#201e18] shadow-2xl shadow-black/60">
         <div
           className="h-1"
           style={{ backgroundColor: color }}
@@ -1570,10 +1570,10 @@ function EventModal({
         aria-label="Close"
       />
 
-      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-white/10 bg-[#100b1b] shadow-2xl shadow-black/60">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.07] bg-[#100b1b]/95 px-6 py-5 backdrop-blur-xl">
+      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-white/10 bg-[#201e18] shadow-2xl shadow-black/60">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.07] bg-[#201e18]/95 px-6 py-5 backdrop-blur-xl">
           <div>
-            <p className="text-xs font-medium text-violet-300">
+            <p className="text-xs font-medium text-[#c7b58f]">
               {editing ? "Update schedule" : "New schedule item"}
             </p>
 
@@ -1695,7 +1695,7 @@ function EventModal({
                     }
                     className={`rounded-xl border px-3 py-2.5 text-xs transition ${
                       active
-                        ? "border-violet-500/30 bg-violet-500/10 text-violet-300"
+                        ? "border-[#b9a783]/30 bg-[#b9a783]/[0.08] text-[#c7b58f]"
                         : "border-white/[0.07] bg-white/[0.02] text-white/30 hover:bg-white/[0.05] hover:text-white/60"
                     }`}
                   >
@@ -1764,7 +1764,7 @@ function EventModal({
                   event.target.checked
                 )
               }
-              className="h-4 w-4 accent-violet-600"
+              className="h-4 w-4 accent-[#b9a783]"
             />
 
             <div>
@@ -1792,7 +1792,7 @@ function EventModal({
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-xl bg-[#a9946f] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#b9a783] disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -1847,7 +1847,7 @@ function DeleteModal({
         aria-label="Close"
       />
 
-      <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-[#100b1b] p-6 shadow-2xl shadow-black/60">
+      <div className="relative w-full max-w-md rounded-3xl border border-white/10 bg-[#201e18] p-6 shadow-2xl shadow-black/60">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
           <Trash2 size={19} />
         </div>
