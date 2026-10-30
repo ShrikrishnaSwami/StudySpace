@@ -1061,7 +1061,6 @@ export default function AITutorPage() {
         <NeuralIntelligence
           active={sending}
           listening={voiceListening}
-          controlsOnly
           showControls
           activeAction={workspaceWindows.some(item => item.kind === "chat") ? "new-chat" : workspaceWindows.some(item => item.kind === "history") ? "history" : undefined}
           onAction={handleNeuralAction}
