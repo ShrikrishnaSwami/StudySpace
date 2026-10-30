@@ -408,7 +408,7 @@ export default function CoursePage() {
     return (
       <AppShell
         title="Course"
-        description="Loading course workspace..."
+        description="Getting this course ready…"
       >
         <div className="flex min-h-[600px] items-center justify-center">
           <Loader2
@@ -490,7 +490,7 @@ export default function CoursePage() {
   return (
     <AppShell
       title={course.name}
-      description={`${course.code} · Your course workspace`}
+      description={`${course.code} · Your course`}
     >
       <div className="min-h-[700px]">
         {/* Mobile course navigation */}
@@ -980,7 +980,7 @@ function OverviewSection({
 
         {upcomingAssignments.length === 0 ? (
           <div className="p-8 text-center text-sm text-white/30">
-            No upcoming assignments.
+            Nothing due for this course right now.
           </div>
         ) : (
           <div className="divide-y divide-white/[0.06]">
@@ -1079,7 +1079,7 @@ function TopicsSection() {
           value={topicName}
           onChange={(event) => setTopicName(event.target.value)}
           maxLength={120}
-          placeholder="e.g. Newton's laws, cell division, essay structure"
+          placeholder="e.g. Week 4 cell signalling, derivatives, or the essay rubric"
           aria-label="New course topic"
           className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none placeholder:text-white/30 focus:border-violet-400/50"
         />
@@ -1093,7 +1093,7 @@ function TopicsSection() {
           <Brain size={26} className="mx-auto text-violet-400" />
           <h3 className="mt-3 font-semibold text-white">Your topic tracker starts here</h3>
           <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-white/45">
-            No topics or mastery scores have been added. Enter a topic from your syllabus, then rate how confident you feel. StudySpace will not guess your knowledge level.
+            Nothing here yet. Add a topic from your syllabus and rate how confident you feel about it.
           </p>
         </div>
       ) : (
@@ -1121,7 +1121,7 @@ function TopicsSection() {
             </div>
           ))}
           <button type="button" onClick={() => setSaved(true)} className="rounded-xl bg-violet-600 px-4 py-3 text-sm font-semibold text-white">Save self-assessment</button>
-          {saved && <p role="status" className="text-sm text-emerald-300">Self-assessment updated for this session. Persistent topic storage will be added separately.</p>}
+          {saved && <p role="status" className="text-sm text-emerald-300">Your confidence rating has been updated for this session.</p>}
         </div>
       )}
     </div>
@@ -1141,7 +1141,7 @@ function NotesSection({
     <div className="space-y-5">
       <SectionHeader
         title="Notes"
-        description="Your personal knowledge base for this course."
+        description="Your notes for this course. Keep lecture notes, readings and your own explanations here."
         action={
           <button
             onClick={onCreate}
@@ -1157,7 +1157,7 @@ function NotesSection({
         <EmptyPanel
           icon={<FileText size={25} />}
           title="No notes yet"
-          description="Create notes as you work through this course."
+          description="Save notes as you go, or upload a lecture file and turn it into notes."
           action="Create note"
           onClick={onCreate}
         />
