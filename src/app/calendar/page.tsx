@@ -27,12 +27,14 @@ import {
 } from "lucide-react";
 
 import AppShell from "@/components/AppShell";
+import ViewportPortal from "@/components/ViewportPortal";
 import {
   createCalendarEvent,
   deleteCalendarEvent,
   findConflicts,
   getCalendarEvents,
   getEventColor,
+  skipCourseClassOccurrence,
   updateCalendarEvent,
   type CalendarEvent,
   type CalendarEventType,
@@ -536,7 +538,11 @@ export default function CalendarPage() {
     try {
       setDeleting(true);
 
-      await deleteCalendarEvent(deleteTarget.id);
+      if (deleteTarget.source === "course" && deleteTarget.event_type === "class") {
+        await skipCourseClassOccurrence(deleteTarget);
+      } else {
+        await deleteCalendarEvent(deleteTarget.id);
+      }
 
       setEvents((current) =>
         current.filter(
@@ -893,6 +899,7 @@ export default function CalendarPage() {
       </div>
 
       {selectedEvent && (
+        <ViewportPortal>
         <EventDetails
           event={selectedEvent}
           onClose={() => setSelectedEvent(null)}
@@ -900,9 +907,11 @@ export default function CalendarPage() {
           onDelete={() => setDeleteTarget(selectedEvent)}
           onToggle={() => toggleEnabled(selectedEvent)}
         />
+        </ViewportPortal>
       )}
 
       {showModal && (
+        <ViewportPortal>
         <EventModal
           form={form}
           setForm={setForm}
@@ -912,9 +921,11 @@ export default function CalendarPage() {
           onClose={closeModal}
           onSubmit={handleSubmit}
         />
+        </ViewportPortal>
       )}
 
       {deleteTarget && (
+        <ViewportPortal>
         <DeleteModal
           event={deleteTarget}
           deleting={deleting}
@@ -923,6 +934,7 @@ export default function CalendarPage() {
           }
           onConfirm={confirmDelete}
         />
+        </ViewportPortal>
       )}
     </AppShell>
   );
