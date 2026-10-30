@@ -66,15 +66,15 @@ const dashboardNavigation = {
 
 const navigationGroups = [
   {
-    label: "Learning",
+    label: "Courses & work",
     icon: Brain,
     items: [
       { label: "AI Tutor", href: "/ai-tutor", icon: Brain },
-      { label: "Search everything", href: "/search", icon: Search },
+      { label: "Search", href: "/search", icon: Search },
       { label: "Courses", href: "/courses", icon: BookOpen },
       { label: "Assignments", href: "/assignments", icon: ClipboardList },
       { label: "Quizzes", href: "/quizzes", icon: CheckSquare },
-      { label: "Homework", href: "/homework-uploader", icon: Upload },
+      { label: "Homework files", href: "/homework-uploader", icon: Upload },
     ],
   },
   {
@@ -82,20 +82,20 @@ const navigationGroups = [
     icon: BookOpen,
     items: [
       { label: "Notes & resources", href: "/notes", icon: BookOpen },
-      { label: "AI flashcards", href: "/flashcards", icon: Brain },
+      { label: "Flashcards", href: "/flashcards", icon: Brain },
       { label: "Study groups", href: "/study-groups", icon: Users },
-      { label: "Syllabus importer", href: "/syllabus-importer", icon: FileText },
+      { label: "Syllabus dates", href: "/syllabus-importer", icon: FileText },
     ],
   },
   {
-    label: "Planner & progress",
+    label: "Schedule & progress",
     icon: CalendarDays,
     items: [
       { label: "Calendar", href: "/calendar", icon: CalendarDays },
-      { label: "Smart study planner", href: "/planner", icon: CalendarClock },
+      { label: "Study plan", href: "/planner", icon: CalendarClock },
       { label: "Grades & GPA", href: "/grades", icon: GraduationCap },
       { label: "Focus timer", href: "/focus", icon: Clock3 },
-      { label: "Progress analytics", href: "/analytics", icon: Sparkles },
+      { label: "Progress", href: "/analytics", icon: Sparkles },
     ],
   },
 ];
@@ -288,7 +288,7 @@ function NotificationDropdown({
           <p className="mt-0.5 text-[11px] text-white/30">
             {unreadCount > 0
               ? `${unreadCount} unread`
-              : "You're all caught up"}
+              : "Nothing waiting on you"}
           </p>
         </div>
 
@@ -328,11 +328,11 @@ function NotificationDropdown({
             />
 
             <p className="mt-3 text-sm font-medium text-white/60">
-              Nothing new
+              No new notifications
             </p>
 
             <p className="mt-1 text-xs text-white/25">
-              You&apos;re all caught up.
+              You're up to date.
             </p>
           </div>
         ) : (
