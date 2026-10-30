@@ -1,16 +1,40 @@
-type StorageEntry = { name?: unknown; id?: unknown };
+type StorageObjectEntry = { name?: unknown; id?: unknown };
+type StorageFolderEntry = { name?: unknown };
 
 type StorageBucketLike = {
-  list(
-    prefix: string,
-    options: { limit: number; offset: number; sortBy: { column: "name"; order: "asc" } },
-  ): Promise<{ data: unknown[] | null; error: { message: string } | null }>;
+  listV2(options: {
+    prefix: string;
+    limit: number;
+    cursor?: string;
+    with_delimiter: true;
+  }): Promise<{
+    data: {
+      objects?: unknown[];
+      folders?: unknown[];
+      hasNext: boolean;
+      nextCursor?: string | null;
+    } | null;
+    error: { message: string } | null;
+  }>;
   remove(paths: string[]): Promise<{ error: { message: string } | null }>;
 };
 
 /** Delete and verify every object beneath one user's storage prefix. */
 export async function cleanUserStoragePrefix(bucket: StorageBucketLike, userId: string): Promise<number> {
   if (!/^[0-9a-f-]{36}$/i.test(userId)) throw new Error("Invalid storage owner prefix.");
+
+  function resolvePath(prefix: string, rawName: unknown): string {
+    if (typeof rawName !== "string" || !rawName) throw new Error("Storage returned an invalid path.");
+    const name = rawName.replace(/\\/+$/, "");
+    const path = name.startsWith(userId + "/") ? name : prefix + "/" + name;
+    if (
+      !path.startsWith(userId + "/") ||
+      path.split("/").some((segment) => !segment || segment === "." || segment === ".." || segment.includes("\\\\"))
+    ) {
+      throw new Error("Storage returned a path outside the account prefix.");
+    }
+    return path;
+  }
 
   async function listAllFiles(): Promise<string[]> {
     const pendingPrefixes = [userId];
@@ -23,33 +47,35 @@ export async function cleanUserStoragePrefix(bucket: StorageBucketLike, userId: 
       if (visitedPrefixes.has(prefix)) continue;
       visitedPrefixes.add(prefix);
 
-      let offset = 0;
+      let cursor: string | undefined;
       while (true) {
-        const { data, error } = await bucket.list(prefix, {
+        const { data, error } = await bucket.listV2({
+          prefix: prefix + "/",
           limit: pageSize,
-          offset,
-          sortBy: { column: "name", order: "asc" },
+          ...(cursor ? { cursor } : {}),
+          with_delimiter: true,
         });
         if (error) throw new Error(error.message);
+        if (!data) throw new Error("Storage returned an empty listing response.");
 
-        const entries = data || [];
-        for (const rawEntry of entries) {
-          const entry = rawEntry as StorageEntry;
-          const name = entry.name;
-          if (typeof name !== "string" || !name || name === "." || name === ".." || name.includes("/") || name.includes("\\")) {
-            throw new Error("Storage returned an invalid path segment.");
-          }
-          if (entry.id !== null && typeof entry.id !== "string") {
-            throw new Error("Storage returned an invalid object listing entry.");
-          }
-
-          const objectPath = prefix + "/" + name;
-          if (entry.id === null) pendingPrefixes.push(objectPath);
-          else files.push(objectPath);
+        for (const rawObject of data.objects || []) {
+          const object = rawObject as StorageObjectEntry;
+          if (typeof object.id !== "string") throw new Error("Storage returned an invalid object listing entry.");
+          files.push(resolvePath(prefix, object.name));
         }
 
-        offset += entries.length;
-        if (entries.length < pageSize) break;
+        for (const rawFolder of data.folders || []) {
+          const folder = rawFolder as StorageFolderEntry;
+          const folderPath = resolvePath(prefix, folder.name);
+          if (folderPath === prefix) throw new Error("Storage returned a recursive folder path.");
+          pendingPrefixes.push(folderPath);
+        }
+
+        if (!data.hasNext) break;
+        if (!data.nextCursor || data.nextCursor === cursor) {
+          throw new Error("Storage pagination did not return a usable next cursor.");
+        }
+        cursor = data.nextCursor;
       }
     }
 
