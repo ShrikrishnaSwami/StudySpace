@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { generateAIResponseFromParts } from "@/lib/gemini";
 import { consumeAiQuota, consumeApiRateLimit, readBoundedJson } from "@/lib/api-security";
 import { z } from "zod";
+import { logAiMetric } from "@/lib/ai-observability";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -49,6 +50,7 @@ async function readLimitedResponse(response: Response, maxBytes: number): Promis
 }
 
 export async function POST(request: NextRequest) {
+  const aiStartedAt = Date.now();
   try {
     const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
     if (!token) return NextResponse.json({ error: "Sign in to get AI feedback." }, { status: 401 });
@@ -266,8 +268,10 @@ The student's submitted work is the student submission note and files. Reference
       if (latest?.ai_grade !== null && latest?.ai_grade !== undefined) return NextResponse.json({ grade: latest.ai_grade, feedback: latest.ai_feedback, alreadyGraded: true, gradedBy: "studyspace_ai" });
       throw new Error("The AI grade could not be saved. Please try again.");
     }
+    logAiMetric({ task: "grading", outcome: "success", startedAt: aiStartedAt, statusCode: 200 });
     return NextResponse.json({ grade: score, feedback: details, maxPoints, gradedBy: "studyspace_ai" });
   } catch (error) {
+    logAiMetric({ task: "grading", outcome: "failure", startedAt: aiStartedAt, statusCode: 500 });
     console.error("AI assignment grading failed:", error instanceof Error ? error.message : "unknown error");
     return NextResponse.json({ error: error instanceof Error && /try again|configured|cannot read|too large|limit|Submit|submission/i.test(error.message) ? error.message : "AI grading failed. Your submission is safe; try grading again in a moment." }, { status: 500 });
   }
