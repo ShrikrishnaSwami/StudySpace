@@ -74,7 +74,9 @@ export async function getStudentAIContext(
       `
     )
     .eq("user_id", user.id)
-    .eq("archived", false);
+    .eq("archived", false)
+    .order("name", { ascending: true })
+    .limit(30);
 
   if (courseId) {
     coursesQuery = coursesQuery.eq("id", courseId);
@@ -103,22 +105,22 @@ export async function getStudentAIContext(
   // Fetch independent student data concurrently; serial queries added latency
   // to every AI Tutor request even when the model was ready.
   const notesQuery = courseIds.length
-    ? supabase.from("course_notes").select("*").in("course_id", courseIds).order("created_at", { ascending: false })
+    ? supabase.from("course_notes").select("*").in("course_id", courseIds).order("created_at", { ascending: false }).limit(40)
     : Promise.resolve({ data: [], error: null });
   const resourcesQuery = courseIds.length
-    ? supabase.from("course_resources").select("*").in("course_id", courseIds).order("created_at", { ascending: false })
+    ? supabase.from("course_resources").select("*").in("course_id", courseIds).order("created_at", { ascending: false }).limit(30)
     : Promise.resolve({ data: [], error: null });
 
-  let assignmentsQuery = supabase.from("assignments").select("*").eq("user_id", user.id).order("due_date", { ascending: true });
+  let assignmentsQuery = supabase.from("assignments").select("*").eq("user_id", user.id).order("due_date", { ascending: true }).limit(50);
   if (courseId) assignmentsQuery = assignmentsQuery.eq("course_id", courseId);
 
-  let quizzesQuery = supabase.from("quizzes").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+  let quizzesQuery = supabase.from("quizzes").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(30);
   if (courseId) quizzesQuery = quizzesQuery.eq("course_id", courseId);
 
   let homeworkQuery = supabase.from("homework").select(`
       id, course_id, assignment_id, title, description, file_name, file_type,
       status, ai_summary, ai_solution, ai_explanation, ai_hints, created_at, updated_at
-    `).eq("user_id", user.id).order("created_at", { ascending: false });
+    `).eq("user_id", user.id).order("created_at", { ascending: false }).limit(30);
   if (courseId) homeworkQuery = homeworkQuery.eq("course_id", courseId);
 
   const [notesResult, resourcesResult, assignmentsResult, quizzesResult, attemptsResult, homeworkResult, calendarResult] = await Promise.all([
@@ -126,9 +128,9 @@ export async function getStudentAIContext(
     resourcesQuery,
     assignmentsQuery,
     quizzesQuery,
-    supabase.from("quiz_attempts").select("*").eq("user_id", user.id).order("completed_at", { ascending: false, nullsFirst: false }).limit(100),
+    supabase.from("quiz_attempts").select("*").eq("user_id", user.id).order("completed_at", { ascending: false, nullsFirst: false }).limit(50),
     homeworkQuery,
-    supabase.from("calendar_events").select("*").eq("user_id", user.id).eq("enabled", true).order("start_at", { ascending: true }).limit(200),
+    supabase.from("calendar_events").select("*").eq("user_id", user.id).eq("enabled", true).order("start_at", { ascending: true }).limit(80),
   ]);
 
   if (notesResult.error) console.error("Could not load course notes:", notesResult.error.message);
