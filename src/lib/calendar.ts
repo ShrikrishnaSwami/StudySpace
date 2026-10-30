@@ -387,6 +387,37 @@ export async function updateCalendarEvent(
   };
 }
 
+export async function skipCourseClassOccurrence(event: CalendarEvent) {
+  if (event.source !== "course" || !event.course_id || event.event_type !== "class") {
+    throw new Error("This is not an automatically scheduled course class.");
+  }
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) throw new Error(authError.message);
+  if (!user) throw new Error("You must be logged in.");
+
+  const { data: course, error: courseError } = await supabase
+    .from("courses")
+    .select("timezone")
+    .eq("id", event.course_id)
+    .eq("user_id", user.id)
+    .single();
+  if (courseError) throw new Error(courseError.message);
+
+  const occurrenceDate = new Intl.DateTimeFormat("en-CA", {
+    timeZone: course.timezone || "UTC",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(event.start_at));
+
+  const { error } = await supabase.rpc("skip_course_class_occurrence", {
+    p_course_id: event.course_id,
+    p_occurrence_date: occurrenceDate,
+  });
+  if (error) throw new Error(error.message);
+  return true;
+}
+
 export async function deleteCalendarEvent(
   id: string
 ) {
