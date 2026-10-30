@@ -1045,7 +1045,7 @@ export default function HomeworkUploaderPage() {
         {/* UPLOAD MODAL */}
         {showUploadModal && (
           <ViewportPortal>
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
+          <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/75 px-4 pt-20 pb-8 backdrop-blur-md sm:pt-24">
             <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#100b19] shadow-2xl shadow-black/60">
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.06] bg-[#100b19]/95 px-6 py-5 backdrop-blur">
                 <div>
@@ -1286,7 +1286,7 @@ export default function HomeworkUploaderPage() {
         {/* DETAILS MODAL */}
         {selectedHomework && (
           <ViewportPortal>
-          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+          <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-black/80 px-4 pt-20 pb-8 backdrop-blur-md sm:pt-24">
             <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#100b19] shadow-2xl shadow-black/60">
               <div className="flex shrink-0 items-start justify-between border-b border-white/[0.06] px-6 py-5">
                 <div className="min-w-0">
