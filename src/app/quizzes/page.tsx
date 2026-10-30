@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 import AppShell from "@/components/AppShell";
+import ViewportPortal from "@/components/ViewportPortal";
 import { supabase } from "@/lib/supabase";
 
 type Course = {
@@ -948,6 +949,7 @@ function QuizGenerator({
   const canGenerate = Boolean(selectedCourse);
 
   return (
+    <ViewportPortal>
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-sm"
       role="presentation"
@@ -1144,6 +1146,7 @@ function QuizGenerator({
         </div>
       </div>
     </div>
+    </ViewportPortal>
   );
 }
 function QuizRunner({
