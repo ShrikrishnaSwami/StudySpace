@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowDown, ArrowRight, ArrowUpRight, BrainCircuit, CalendarDays, CheckCircle2, FileText, Menu, X, BookOpen, GraduationCap } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUpRight, BrainCircuit, CalendarDays, CheckCircle2, FileText, Menu, X, BookOpen } from "lucide-react";
 import StudySpaceMark from "@/components/StudySpaceMark";
 import LandingUniverse from "@/components/LandingUniverse";
 
