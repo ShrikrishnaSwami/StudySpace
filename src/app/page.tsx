@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import StudySpaceMark from "@/components/StudySpaceMark";
+import MotionSystem from "@/components/MotionSystem";
 import { useState } from "react";
 import { ArrowRight, ArrowUpRight, BookOpen, Brain, CalendarDays, Check, CheckCircle2, ChevronRight, Clock3, FileText, GraduationCap, Layers3, Menu, Sparkles, Target, X, Zap } from "lucide-react";
 
@@ -16,6 +17,7 @@ const features=[
 export default function Home(){
  const [menuOpen,setMenuOpen]=useState(false);
  return <main id="main-content" className="fr-home">
+  <MotionSystem />
   <div className="fr-ambient" aria-hidden="true"/>
   <header className="fr-nav-wrap"><nav className="fr-nav" aria-label="Main navigation">
    <Link href="/" className="fr-brand"><StudySpaceMark size={36} className="fr-brand-mark" /><span>studyspace<span className="fr-brand-period">.</span></span></Link>
