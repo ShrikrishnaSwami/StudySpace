@@ -43,10 +43,10 @@ jobs:
       - name: Download the selected encrypted backup artifact
         uses: actions/download-artifact@v7
         with:
-          name: \${{ inputs.backup_artifact_name }}
-          repository: \${{ github.repository }}
-          run-id: \${{ inputs.backup_run_id }}
-          github-token: \${{ secrets.GITHUB_TOKEN }}
+          name: ${{ inputs.backup_artifact_name }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.backup_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path: encrypted
 
       - name: Install age and verify the encrypted manifest
@@ -73,10 +73,10 @@ jobs:
       - name: Decrypt using the separately stored age identity
         shell: bash
         env:
-          AGE_IDENTITY: \${{ secrets.BACKUP_AGE_IDENTITY }}
+          AGE_IDENTITY: ${{ secrets.BACKUP_AGE_IDENTITY }}
         run: |
           set -euo pipefail
-          if [[ -z "\${AGE_IDENTITY:-}" ]]; then
+          if [[ -z "${AGE_IDENTITY:-}" ]]; then
             echo "::error::The backup decryption identity is not configured."
             exit 1
           fi
