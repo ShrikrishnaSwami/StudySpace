@@ -1,8 +1,34 @@
-# StudySpace AI evaluation — public overview
+# StudySpace AI evaluation and provider architecture
 
-## Purpose
+## Specialist systems
 
-StudySpace evaluates AI-assisted features to improve usefulness, accuracy, reliability, and learning value during beta.
+StudySpace uses task-specialised AI workflows rather than one generic chatbot:
+
+| Specialist | Tasks | Responsibility |
+| --- | --- | --- |
+| Tutor AI | Tutor | Course-aware explanations, guided problem solving, and learning support |
+| Research AI | Notes, syllabus | Document understanding, note extraction, and evidence-grounded summaries |
+| Assessment AI | Quiz, homework, grading | Question generation, assignment feedback, and rubric-based assessment |
+| Memory AI | Flashcards | Active recall, spaced review content, and concise flashcard generation |
+| Planner AI | Recommendations | Study priorities and recommendations grounded in the student's own records |
+
+These are specialised application-level agents. They share the secure provider adapter but retain task-specific instructions, context boundaries, output formats, and evaluation criteria.
+
+## Cloud provider strategy
+
+- **Gemini** is the primary provider and supports the existing multimodal and PDF workflows.
+- **Groq** is an optional fast text-generation provider. Free developer-tier limits depend on the selected model and account.
+- **OpenRouter** is an optional provider for free model variants. StudySpace permits only `openrouter/free` or model IDs ending in `:free` so an ordinary configuration cannot route to paid models.
+
+Provider credentials are server-only. Requests are routed through the server; browser clients never receive provider keys. When a configured provider is unavailable, the server tries another configured provider. Providers without credentials are skipped.
+
+The existing Gemini multimodal paths (PDF and inline file parts) remain Gemini-only; text workflows can use the cloud provider fallback chain. Streaming tutor responses continue to use Gemini streaming when Gemini is the selected provider; other providers currently use a non-streaming response through the same API contract.
+
+## Free-tier limitations
+
+"Free" means no per-token charge under the provider's free allowance, not unlimited or guaranteed service. Providers can change model availability, quotas, and terms. Free-tier exhaustion should result in a temporary availability response rather than a paid-model fallback. OpenRouter free-model limits are particularly restrictive, so it should be treated as a fallback and development option rather than guaranteed production capacity.
+
+No provider is enabled merely by adding this code. An administrator must add the relevant server-side API key in the deployment environment and select the provider. Never commit real keys or expose them through `NEXT_PUBLIC_*` variables.
 
 ## Evaluation areas
 
@@ -13,13 +39,10 @@ StudySpace evaluates AI-assisted features to improve usefulness, accuracy, relia
 - Robust handling of empty, ambiguous, unsupported, or malformed input.
 - Clear communication when the AI cannot complete a request.
 - Response time and resilience during provider interruptions.
+- Consistent behaviour across providers for the same specialist task.
 
 ## Testing principles
 
 Use representative test cases, review outputs rather than relying only on automated scores, and record issues without exposing private student content. AI-generated grades or feedback should be reviewed carefully and must follow the product's intended academic workflow.
 
-## Limitations
-
-Passing a test set does not guarantee that every response will be correct. Model capabilities and provider behavior may change, so evaluation is ongoing.
-
-This public document intentionally omits internal model inventories, routing rules, prompt details, operational thresholds, and provider-specific configuration.
+Passing a test set does not guarantee that every response will be correct. Model capabilities and provider behaviour may change, so evaluation is ongoing.
