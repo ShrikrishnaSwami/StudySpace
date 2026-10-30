@@ -22,6 +22,16 @@ import {
   ThumbsDown,
   ThumbsUp,
   User,
+  X,
+  Plus,
+  BookMarked,
+  NotebookPen,
+  ClipboardList,
+  BrainCircuit,
+  CalendarDays,
+  Layers,
+  Grip,
+  ExternalLink,
 } from "lucide-react";
 
 import AppShell from "@/components/AppShell";
@@ -47,6 +57,9 @@ type Conversation = {
   created_at: string;
   updated_at: string;
 };
+
+type WorkspaceKind = "chat" | "history" | "tools" | "courses" | "course" | "notes" | "assignments" | "quizzes" | "flashcards" | "calendar";
+type WorkspaceWindow = { id: string; kind: WorkspaceKind; title: string; x: number; y: number; width: number; height: number; courseId?: string };
 
 type Message = {
   id: string;
@@ -209,7 +222,10 @@ export default function AITutorPage() {
   const recognitionRef = useRef<any>(null);
   const voiceRepliesRef = useRef(false);
 
-  const [activePanel, setActivePanel] = useState<"new-chat" | "history" | "tools" | null>(null);
+  const [workspaceWindows, setWorkspaceWindows] = useState<WorkspaceWindow[]>([]);
+  const [focusedWindowId, setFocusedWindowId] = useState<string | null>(null);
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const dragState = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
 
   const [error, setError] =
     useState("");
@@ -975,8 +991,53 @@ export default function AITutorPage() {
     }
   }
 
+  function openWorkspace(kind: WorkspaceKind, title: string, courseId?: string) {
+    const id = crypto.randomUUID();
+    const offset = workspaceWindows.length % 6;
+    const next: WorkspaceWindow = {
+      id, kind, title, courseId,
+      x: Math.max(18, Math.min(window.innerWidth - 540, 90 + offset * 34)),
+      y: Math.max(82, Math.min(window.innerHeight - 520, 100 + offset * 28)),
+      width: kind === "chat" ? 500 : kind === "history" ? 390 : 420,
+      height: kind === "chat" ? 560 : 480,
+    };
+    setWorkspaceWindows(current => [...current, next]);
+    setFocusedWindowId(id);
+    return id;
+  }
+
+  function closeWorkspace(id: string) {
+    setWorkspaceWindows(current => current.filter(item => item.id !== id));
+    setFocusedWindowId(current => current === id ? null : current);
+  }
+
+  function startWindowDrag(event: React.PointerEvent, id: string) {
+    if ((event.target as HTMLElement).closest("button")) return;
+    const item = workspaceWindows.find(entry => entry.id === id);
+    if (!item) return;
+    dragState.current = { id, offsetX: event.clientX - item.x, offsetY: event.clientY - item.y };
+    setFocusedWindowId(id);
+    (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+  }
+
+  useEffect(() => {
+    const move = (event: PointerEvent) => {
+      const drag = dragState.current;
+      if (!drag) return;
+      setWorkspaceWindows(current => current.map(item => item.id === drag.id ? {
+        ...item,
+        x: Math.max(0, Math.min(window.innerWidth - 260, event.clientX - drag.offsetX)),
+        y: Math.max(68, Math.min(window.innerHeight - 110, event.clientY - drag.offsetY)),
+      } : item));
+    };
+    const end = () => { dragState.current = null; };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end); };
+  }, []);
+
   async function handleStarterPrompt(prompt: string) {
-    setActivePanel("new-chat");
+    openWorkspace("chat", "AI Tutor");
     const conversation = await createConversation();
     if (!conversation) return;
     setInput(prompt);
@@ -984,19 +1045,28 @@ export default function AITutorPage() {
   }
 
   async function handleNeuralAction(action: "new-chat" | "history" | "tools") {
-    if (activePanel === action) {
-      setActivePanel(null);
-      return;
-    }
     if (action === "new-chat") {
-      setActivePanel("new-chat");
+      openWorkspace("chat", "New chat");
       const conversation = await createConversation();
       if (!conversation) return;
       window.setTimeout(() => textareaRef.current?.focus(), 100);
       return;
     }
-    setActivePanel(action);
+    if (workspaceWindows.some(item => item.kind === action)) {
+      const existing = workspaceWindows.find(item => item.kind === action);
+      if (existing) { setFocusedWindowId(existing.id); return; }
+    }
+    openWorkspace(action, action === "history" ? "Conversation history" : "Study tools");
   }
+
+  const studyWorkspaceItems: { kind: WorkspaceKind; title: string; description: string; icon: typeof BookOpen; href?: string }[] = [
+    { kind: "courses", title: "My courses", description: "Open a course branch and its study spaces.", icon: BookMarked },
+    { kind: "notes", title: "Notes", description: "Create a personal notes workspace.", icon: NotebookPen },
+    { kind: "assignments", title: "Assignments", description: "Review and work through your assignments.", icon: ClipboardList, href: "/assignments" },
+    { kind: "quizzes", title: "Quizzes", description: "Practise and review your quizzes.", icon: BrainCircuit, href: "/quizzes" },
+    { kind: "flashcards", title: "Flashcards", description: "Build active-recall study sessions.", icon: Layers, href: "/flashcards" },
+    { kind: "calendar", title: "Calendar", description: "Keep deadlines and study sessions in view.", icon: CalendarDays, href: "/calendar" },
+  ];
 
   /* =======================================================
      STARTER PROMPT
@@ -1037,18 +1107,33 @@ export default function AITutorPage() {
       </div>
       <div className="pointer-events-none absolute bottom-6 z-[3] text-center"><p className="text-[9px] tracking-[.35em] text-[#b9a783]/55">STUDYSPACE INTELLIGENCE</p><h1 className="mt-2 text-xl font-light tracking-[.18em] text-stone-200/80 sm:text-2xl">J.A.R.V.I.S.</h1><p className="mt-2 text-[9px] tracking-[.18em] text-stone-500">SELECT A NODE TO BEGIN</p><p className="mt-1 text-[8px] tracking-[.12em] text-stone-600">{voiceListening?"VOICE INPUT ACTIVE":sending?"PROCESSING REQUEST":"SYSTEM STANDBY"}</p></div>
 
-      {activePanel&&<section className="ss-jarvis-panel absolute right-4 top-1/2 z-20 flex max-h-[min(78dvh,760px)] w-[min(500px,calc(100%-32px))] -translate-y-1/2 flex-col overflow-hidden border border-[#b9a783]/25 bg-[#201e18]/95 shadow-[0_30px_100px_rgba(0,0,0,.58)] backdrop-blur-2xl sm:right-8">
-        <header className="shrink-0 border-b border-[#b9a783]/15 px-5 py-4"><p className="text-[8px] tracking-[.24em] text-[#b9a783]/65">STUDYSPACE / INTELLIGENCE</p><h2 className="mt-1 text-base font-light tracking-wide text-stone-100">{activePanel==="new-chat"?(conversations.find(x=>x.id===selectedConversationId)?.title||"New conversation"):activePanel==="history"?"Conversation history":"Study tools"}</h2></header>
-        {activePanel==="history"&&historyPanel}
-        {activePanel==="tools"&&<div className="min-h-0 flex-1 overflow-y-auto p-5"><p className="mb-4 text-xs text-stone-400">Choose a way to work with your tutor.</p><div className="grid grid-cols-1 gap-2 sm:grid-cols-2">{starterPrompts.map(({icon:Icon,title,description,prompt})=><button key={title} type="button" onClick={()=>void handleStarterPrompt(prompt)} className="border border-white/[0.08] bg-white/[0.025] p-4 text-left transition hover:border-[#b9a783]/40 hover:bg-[#b9a783]/[0.06]"><Icon className="h-4 w-4 text-[#b9a783]"/><span className="mt-3 block text-xs text-stone-200">{title}</span><span className="mt-1 block text-[10px] leading-4 text-stone-500">{description}</span></button>)}</div></div>}
-        {activePanel==="new-chat"&&<>
+      {workspaceWindows.map((workspace, index) => <section
+        key={workspace.id}
+        role="dialog"
+        aria-label={workspace.title}
+        onPointerDown={() => setFocusedWindowId(workspace.id)}
+        className="ss-jarvis-window absolute z-30 flex flex-col overflow-hidden border border-[#b9a783]/30 bg-[#201e18]/96 shadow-[0_30px_100px_rgba(0,0,0,.62)] backdrop-blur-2xl"
+        style={{ left: workspace.x, top: workspace.y, width: `min(${workspace.width}px,calc(100vw - 24px))`, height: `min(${workspace.height}px,calc(100dvh - 92px))`, zIndex: focusedWindowId === workspace.id ? 80 : 30 + index }}
+      >
+        <header onPointerDown={event => startWindowDrag(event, workspace.id)} className="ss-jarvis-window-head flex shrink-0 cursor-grab touch-none items-center justify-between border-b border-[#b9a783]/20 px-4 py-3 active:cursor-grabbing">
+          <div className="flex min-w-0 items-center gap-2"><Grip className="h-3.5 w-3.5 shrink-0 text-[#b9a783]/65"/><div className="min-w-0"><p className="text-[8px] tracking-[.2em] text-[#b9a783]/65">STUDYSPACE / WORKSPACE</p><h2 className="truncate text-sm font-light text-stone-100">{workspace.title}</h2></div></div>
+          <button type="button" onClick={() => closeWorkspace(workspace.id)} aria-label={`Close ${workspace.title}`} className="ml-3 grid h-8 w-8 shrink-0 place-items-center text-stone-400 transition hover:bg-white/10 hover:text-white"><X className="h-4 w-4"/></button>
+        </header>
+
+        {workspace.kind === "history" && historyPanel}
+        {workspace.kind === "tools" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="mb-4 text-xs text-stone-400">Open the spaces you need. Every branch is its own movable window.</p><div className="grid grid-cols-2 gap-2">{studyWorkspaceItems.map(({kind,title,description,icon:Icon})=><button key={kind} type="button" onClick={() => openWorkspace(kind,title)} className="min-h-28 border border-white/[0.08] bg-white/[0.025] p-3 text-left transition hover:border-[#b9a783]/45 hover:bg-[#b9a783]/[0.06]"><Icon className="h-4 w-4 text-[#b9a783]"/><span className="mt-3 block text-xs text-stone-200">{title}</span><span className="mt-1 block text-[10px] leading-4 text-stone-500">{description}</span></button>)}</div></div>}
+        {workspace.kind === "courses" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="mb-3 text-xs text-stone-400">Choose one of your courses to create a dedicated branch.</p>{courses.length === 0 ? <p className="py-10 text-center text-xs text-stone-500">Your courses will appear here once you add them.</p> : <div className="space-y-2">{courses.map(course=><button key={course.id} type="button" onClick={() => openWorkspace("course",course.code ? `${course.code} · Study space` : course.name,course.id)} className="flex w-full items-center justify-between border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><span><span className="block text-xs text-stone-200">{course.code || course.name}</span><span className="mt-1 block text-[10px] text-stone-500">{course.code ? course.name : course.professor || "Course workspace"}</span></span><Plus className="h-4 w-4 text-[#b9a783]"/></button>)}</div>}</div>}
+        {workspace.kind === "course" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="text-xs text-stone-400">Your course branch keeps its related study spaces together.</p><div className="mt-4 grid grid-cols-2 gap-2">{[{kind:"notes" as const,title:"Course notes",icon:NotebookPen},{kind:"assignments" as const,title:"Assignments",icon:ClipboardList},{kind:"quizzes" as const,title:"Quizzes",icon:BrainCircuit},{kind:"flashcards" as const,title:"Flashcards",icon:Layers},{kind:"calendar" as const,title:"Calendar",icon:CalendarDays},{kind:"chat" as const,title:"Ask AI Tutor",icon:Sparkles}].map(({kind,title,icon:Icon})=><button key={kind} type="button" onClick={()=>{if(kind==="chat"){setSelectedCourseId(workspace.courseId||"");void createConversation(workspace.courseId||"");}openWorkspace(kind,title,workspace.courseId);}} className="border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><Icon className="h-4 w-4 text-[#b9a783]"/><span className="mt-2 block text-xs text-stone-200">{title}</span></button>)}</div><a href="/courses" className="mt-5 inline-flex items-center gap-2 text-[10px] text-[#c7b58f] hover:text-stone-100">Open full course manager <ExternalLink className="h-3 w-3"/></a></div>}
+        {workspace.kind === "notes" && <div className="flex min-h-0 flex-1 flex-col p-4"><p className="mb-3 text-[10px] text-stone-500">A scratchpad branch for ideas, lecture notes, and revision points. This draft stays in this open workspace.</p><textarea value={noteDrafts[workspace.id] || ""} onChange={event=>setNoteDrafts(current=>({...current,[workspace.id]:event.target.value}))} placeholder="Start writing your notes…" className="min-h-0 flex-1 resize-none border border-[#b9a783]/20 bg-black/20 p-3 text-xs leading-6 text-stone-200 outline-none placeholder:text-stone-600 focus:border-[#b9a783]/50"/></div>}
+        {["assignments","quizzes","flashcards","calendar"].includes(workspace.kind) && <div className="min-h-0 flex-1 overflow-y-auto p-5"><p className="text-xs leading-6 text-stone-400">{workspace.kind === "assignments" ? "Your assignment workspace." : workspace.kind === "quizzes" ? "Your quiz and practice workspace." : workspace.kind === "flashcards" ? "Your active-recall workspace." : "Your schedule and deadlines workspace."}</p><a href={workspace.kind === "assignments" ? "/assignments" : workspace.kind === "quizzes" ? "/quizzes" : workspace.kind === "flashcards" ? "/flashcards" : "/calendar"} className="mt-5 inline-flex items-center gap-2 border border-[#b9a783]/30 px-4 py-3 text-xs text-[#d8c7a7] transition hover:bg-[#b9a783]/10">Open {workspace.title} <ExternalLink className="h-3.5 w-3.5"/></a><p className="mt-4 text-[10px] leading-5 text-stone-600">You can keep this branch open beside your other StudySpace windows while you work.</p></div>}
+        {workspace.kind === "chat" && <>
           {error&&<div role="alert" className="mx-4 mt-3 border border-red-400/20 bg-red-400/[0.06] px-3 py-2 text-xs text-red-200">{error}</div>}
           <div ref={chatLogRef} className="ss-jarvis-chatlog min-h-0 flex-1 overflow-y-auto px-4 py-5">
             {conversationMessages.length===0?<div className="flex min-h-full flex-col items-center justify-center py-8 text-center"><div className="mb-4 grid h-14 w-14 place-items-center rounded-full border border-[#b9a783]/25 bg-[#b9a783]/[0.06] text-[#c7b58f]"><Sparkles className="h-5 w-5"/></div><h3 className="text-lg font-light text-stone-100">Ready when you are.</h3><p className="mt-2 max-w-xs text-xs leading-5 text-stone-500">Ask a question, unpack a difficult idea, or practise until it clicks.</p></div>:<div className="space-y-5">{conversationMessages.map(message=>{const mine=message.role==="user";return <article key={message.id} className={["flex gap-3",mine?"justify-end":"justify-start"].join(" ")}>{!mine&&<div className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full border border-[#b9a783]/20 text-[#c7b58f]"><Sparkles className="h-3.5 w-3.5"/></div>}<div className={["min-w-0 max-w-[88%]",mine?"text-right":""].join(" ")}><div className={["whitespace-pre-wrap break-words border text-xs leading-6",mine?"border-[#b9a783]/25 bg-[#b9a783]/10 px-3 py-2.5 text-[#e7dcc8]":"border-white/[0.07] bg-black/20 px-3 py-2.5 text-stone-200"].join(" ")}>{message.content}</div><div className="mt-1 flex items-center gap-2 text-[9px] text-stone-600"><span>{mine?"You":"StudySpace AI"}</span><span>·</span><span>{formatMessageTime(message.created_at)}</span>{!mine&&<span className="ml-1 inline-flex gap-1"><button type="button" aria-label="Helpful answer" disabled={Boolean(feedbackSaving[message.id])} onClick={()=>void rateAnswer(message,1)} className="p-1 text-stone-600 hover:text-emerald-300"><ThumbsUp className="h-3 w-3"/></button><button type="button" aria-label="Unhelpful answer" disabled={Boolean(feedbackSaving[message.id])} onClick={()=>void rateAnswer(message,-1)} className="p-1 text-stone-600 hover:text-rose-300"><ThumbsDown className="h-3 w-3"/></button>{feedbackStatus[message.id]&&<span>{feedbackStatus[message.id]}</span>}</span>}</div></div>{mine&&<div className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full border border-white/10 text-stone-400"><User className="h-3 w-3"/></div>}</article>})}{sending&&<p className="pl-10 text-[10px] text-[#b9a783]/70">Processing your request…</p>}</div>}
           </div>
           <div className="shrink-0 border-t border-[#b9a783]/15 bg-black/15 p-3"><form onSubmit={sendMessage} className="border border-[#b9a783]/20 bg-[#14130f]/75 p-2"><textarea ref={textareaRef} aria-label="Message your AI tutor" maxLength={12000} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();void sendMessage();}}} placeholder="Ask your tutor anything…" rows={2} className="max-h-36 min-h-[54px] w-full resize-y bg-transparent px-2 py-2 text-xs leading-6 text-stone-100 outline-none placeholder:text-stone-600"/><div className="flex items-center justify-between px-1 pt-1"><div className="flex items-center gap-1"><button type="button" onClick={toggleVoiceInput} disabled={!voiceSupported||sending} aria-label="Voice input" className="p-2 text-stone-500 hover:text-stone-200"><Mic className="h-4 w-4"/></button><button type="button" onClick={()=>setVoiceReplies(v=>!v)} aria-label="Toggle spoken replies" className="p-2 text-stone-500 hover:text-stone-200">{voiceReplies?<Volume2 className="h-4 w-4"/>:<VolumeX className="h-4 w-4"/>}</button>{voiceStatus!=="READY"&&<span className="text-[8px] text-[#b9a783]/65">{voiceStatus}</span>}</div><button type="submit" disabled={!input.trim()||sending} aria-label="Send message" className="grid h-9 w-9 place-items-center bg-[#b9a783] text-[#211e18] hover:bg-[#d0bd98] disabled:opacity-35"><ArrowUp className="h-4 w-4"/></button></div></form><p className="mt-2 text-center text-[8px] text-stone-600">Enter to send · Shift + Enter for a new line</p></div>
         </>}
-      </section>}
+      </section>)}
       {deleteTarget&&<div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"><div role="dialog" aria-modal="true" aria-labelledby="jarvis-delete-title" className="w-full max-w-sm border border-white/10 bg-[#24221b] p-5 shadow-2xl"><h3 id="jarvis-delete-title" className="text-sm font-semibold text-stone-100">Delete conversation?</h3><p className="mt-2 text-xs text-stone-400">This permanently removes the conversation and its messages.</p><div className="mt-5 flex gap-2"><button type="button" onClick={()=>setDeleteTarget(null)} className="flex-1 border border-white/10 px-4 py-2.5 text-xs text-stone-300">Cancel</button><button type="button" onClick={()=>void deleteConversation(deleteTarget)} className="flex-1 bg-red-400/15 px-4 py-2.5 text-xs text-red-200">Delete</button></div></div></div>}
     </main>
   </AppShell>;
