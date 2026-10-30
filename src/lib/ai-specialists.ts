@@ -162,8 +162,10 @@ export function resolveConfiguredProvidersForTask(
     if (provider === "groq") return Boolean(environment.GROQ_API_KEY) && environment.GROQ_ALLOW_STUDENT_DATA === "true";
     return Boolean(environment.OPENROUTER_API_KEY) && environment.OPENROUTER_ALLOW_STUDENT_DATA === "true";
   };
-  return [preferred, "gemini", "groq", "openrouter"]
-    .filter((provider, index, all) => all.indexOf(provider) === index && configured(provider));
+  const candidates: AIProviderName[] = [preferred, "gemini", "groq", "openrouter"];
+  return candidates.filter((provider, index, all) =>
+    all.indexOf(provider) === index && configured(provider),
+  );
 }
 
 export function resolveExternalModelForTask(
