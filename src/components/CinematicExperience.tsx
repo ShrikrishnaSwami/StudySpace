@@ -2,42 +2,13 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import * as THREE from "three";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { CustomEase } from "gsap/CustomEase";
+import Lenis from "lenis";
 
-type RuntimeWindow = Window & {
-  THREE?: any;
-  gsap?: any;
-  Lenis?: any;
-  ScrollTrigger?: any;
-  CustomEase?: any;
-};
-
-const THREE_URL = "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js";
-const GSAP_URL = "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js";
-const SCROLL_TRIGGER_URL = "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js";
-const CUSTOM_EASE_URL = "https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/CustomEase.min.js";
-const LENIS_URL = "https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js";
-
-function loadScript(src: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(`script[data-cinematic-src="${src}"]`);
-    if (existing?.dataset.loaded === "true") return resolve();
-    if (existing) {
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error(`Unable to load ${src}`)), { once: true });
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    script.dataset.cinematicSrc = src;
-    script.onload = () => {
-      script.dataset.loaded = "true";
-      resolve();
-    };
-    script.onerror = () => reject(new Error(`Unable to load ${src}`));
-    document.head.appendChild(script);
-  });
-}
+gsap.registerPlugin(ScrollTrigger, CustomEase);
 
 const vertexShader = `
   varying vec2 vUv;
@@ -108,22 +79,8 @@ export default function CinematicExperience() {
 
     async function boot() {
       try {
-        await loadScript(THREE_URL);
-        await loadScript(GSAP_URL);
-        await loadScript(SCROLL_TRIGGER_URL);
-        await loadScript(CUSTOM_EASE_URL);
-        await loadScript(LENIS_URL);
         if (disposed) return;
 
-        const runtime = window as RuntimeWindow;
-        const THREE = runtime.THREE;
-        const gsap = runtime.gsap;
-        if (!THREE || !gsap) return;
-
-        const ScrollTrigger = runtime.ScrollTrigger || gsap.plugins?.ScrollTrigger;
-        const CustomEase = runtime.CustomEase || gsap.plugins?.CustomEase;
-        if (ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
-        if (CustomEase) gsap.registerPlugin(CustomEase);
         if (CustomEase) CustomEase.create("atelier-weight", "0.22, 1, 0.36, 1");
         const premiumEase = CustomEase ? "atelier-weight" : "power3.out";
 
@@ -195,8 +152,8 @@ export default function CinematicExperience() {
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         let lenis: any;
         let lenisFrame: ((time: number) => void) | undefined;
-        if (!reduceMotion && runtime.Lenis) {
-          lenis = new runtime.Lenis({
+        if (!reduceMotion) {
+          lenis = new Lenis({
             duration: 1.18,
             smoothWheel: true,
             wheelMultiplier: 0.88,
