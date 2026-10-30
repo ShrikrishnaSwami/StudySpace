@@ -1241,7 +1241,6 @@ html { scroll-behavior: smooth; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .ss-scroll-progress { display: none; }
   .fr-stage-orbit, .fr-stage-orbit-two, .fr-float-top, .fr-float-bottom,
   .fr-product-window, .fr-hero h1, .fr-announcement, .fr-hero-description,
   .fr-hero-actions, .fr-trust-row, .fr-cta-glow { animation: none !important; }
