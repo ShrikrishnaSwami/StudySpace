@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 /** Server-side guard: never render the admin tree for a student session. */
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
   if (!url || !anonKey) redirect("/login");
 
   const cookieStore = await cookies();
