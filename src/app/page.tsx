@@ -9,10 +9,10 @@ import {
 import StudySpaceMark from "@/components/StudySpaceMark";
 
 const chapters = [
-  { id: "courses", number: "01", title: "Keep course files together", copy: "Upload a syllabus, keep lecture notes by class, and find the readings you downloaded at the last minute.", icon: BookOpen, label: "COURSE FILE", preview: ["BIO 213 · Cell Biology", "Lecture 4 — slides to download", "Lab report · due Thursday", "Syllabus · 14 pages"] },
+  { id: "courses", number: "01", title: "Get dates out of a messy syllabus", copy: "Upload the PDF your professor posted. StudySpace finds assignment, quiz and exam dates so you can check them instead of typing every one into your calendar.", icon: BookOpen, label: "SYLLABUS DATES", preview: ["MATH 1350 · SYLLABUS PDF", "Math assignment · due in 3 hours", "Syllabus quiz · tomorrow", "Midterm · November 12"] },
   { id: "tutor", number: "02", title: "Ask the question you're stuck on", copy: "Use a built-in study partner that can answer from your course material. No need to make the question sound clever.", icon: BrainCircuit, label: "TUTOR SESSION", preview: ["AI TUTOR · PYTHON", "Why does this script throw", "KeyError: 'student_id'?", "Explain it without skipping steps."] },
-  { id: "work", number: "03", title: "Keep deadlines in sight", copy: "Track assignments, make practice quizzes, and see what is due before it turns into a midnight surprise.", icon: FileText, label: "WORK QUEUE", preview: ["UP NEXT", "Math assignment · due in 3 hours", "Syllabus quiz · tomorrow", "Group project slides · Friday"] },
-  { id: "time", number: "04", title: "Know what is coming up", copy: "See classes, due dates and study sessions together. Add the dates yourself or pull them from a syllabus.", icon: CalendarDays, label: "THIS WEEK", preview: ["MON · Download lecture 4 slides", "TUE · Group project call", "THU · Math assignment due", "FRI · Syllabus quiz"] },
+  { id: "work", number: "03", title: "Keep deadlines in sight", copy: "Track assignments, make practice quizzes, and see what is due before it turns into a midnight surprise.", icon: FileText, label: "WORK QUEUE", preview: ["UP NEXT", "Math assignment · due in 3 hours", "Syllabus quiz · tomorrow", "Group project chat link · Friday"] },
+  { id: "time", number: "04", title: "Know what is coming up", copy: "See classes, due dates and study sessions together. Add the dates yourself or pull them from a syllabus.", icon: CalendarDays, label: "THIS WEEK", preview: ["MON · Download lecture 4 slides", "TUE · Group project call", "THU · Math assignment due", "FRI · Check coffee budget"] },
 ];
 
 export default function Home() {
