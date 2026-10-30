@@ -348,3 +348,84 @@ body > div[class~="min-h-screen"][class~="items-center"][class~="justify-center"
 @media (prefers-reduced-motion: reduce) {
   .ss-route-curtain { display: none !important; }
 }
+
+
+/* SITE-WIDE MOTION SYSTEM — workspace, auth and every signed-in route. */
+.atelier-shell {
+  perspective: 1600px;
+  transform-style: preserve-3d;
+}
+.atelier-shell::before {
+  position: fixed;
+  z-index: -1;
+  inset: -18%;
+  content: "";
+  pointer-events: none;
+  opacity: .72;
+  background:
+    radial-gradient(ellipse at 12% 18%, rgba(185,162,122,.105), transparent 29%),
+    radial-gradient(ellipse at 88% 64%, rgba(126,105,68,.095), transparent 34%),
+    radial-gradient(ellipse at 52% 100%, rgba(185,162,122,.055), transparent 40%);
+  animation: ss-atmosphere-travel 24s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.atelier-shell main {
+  perspective: 1500px;
+  transform-style: preserve-3d;
+}
+.atelier-shell main [class*="rounded-2xl"],
+.atelier-shell main [class*="rounded-xl"],
+.atelier-shell main article {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+.atelier-shell main [class*="rounded-2xl"] > *,
+.atelier-shell main [class*="rounded-xl"] > * {
+  backface-visibility: hidden;
+}
+.atelier-shell .ss-sidebar,
+.atelier-shell .ss-topbar {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+.atelier-shell main button,
+.atelier-shell main a {
+  transform: translateZ(0);
+  transform-style: preserve-3d;
+}
+.atelier-shell main button:hover:not(:disabled),
+.atelier-shell main a:hover {
+  box-shadow: 0 12px 34px rgba(0,0,0,.2), 0 0 0 1px rgba(185,162,122,.12);
+}
+body > main[class~="items-center"][class~="justify-center"] > div[class*="rounded-3xl"] {
+  animation: ss-auth-arrive 1.1s cubic-bezier(.16,1,.3,1) both;
+  transform-origin: 50% 65%;
+}
+body > main[class~="items-center"][class~="justify-center"] > div[class*="rounded-3xl"] input {
+  transition: transform .35s cubic-bezier(.22,1,.36,1), border-color .35s ease, box-shadow .35s ease;
+}
+body > main[class~="items-center"][class~="justify-center"] > div[class*="rounded-3xl"] input:focus {
+  transform: translateY(-2px);
+  border-color: rgba(185,162,122,.65) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.2), 0 0 0 3px rgba(185,162,122,.08);
+}
+@keyframes ss-atmosphere-travel {
+  0% { transform: translate3d(-2%, -1%, 0) scale(.98) rotate(0deg); }
+  50% { transform: translate3d(2%, 1%, 0) scale(1.035) rotate(1deg); }
+  100% { transform: translate3d(-1%, 2%, 0) scale(1.015) rotate(-1deg); }
+}
+@keyframes ss-auth-arrive {
+  0% { opacity: 0; transform: perspective(1200px) translateY(70px) rotateX(9deg) scale(.94); filter: blur(12px); }
+  65% { opacity: 1; transform: perspective(1200px) translateY(-5px) rotateX(-1deg) scale(1.008); filter: blur(0); }
+  100% { opacity: 1; transform: perspective(1200px) translateY(0) rotateX(0) scale(1); filter: blur(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .atelier-shell::before { animation: none !important; }
+  body > main[class~="items-center"][class~="justify-center"] > div[class*="rounded-3xl"] { animation: none !important; }
+}
+@media (max-width: 700px) {
+  .atelier-shell main [class*="rounded-2xl"],
+  .atelier-shell main [class*="rounded-xl"],
+  .atelier-shell main article { will-change: auto; }
+}
