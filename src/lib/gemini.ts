@@ -27,7 +27,11 @@ function providerForTask(task: AITask): AIProvider {
     group === "tutor" ? "AI_PROVIDER_TUTOR" :
     group === "reasoning" ? "AI_PROVIDER_REASONING" : "AI_PROVIDER_FAST"
   ]?.trim().toLowerCase();
-  return configured === "groq" || configured === "openrouter" ? configured : "gemini";
+  if (configured === "groq" || configured === "openrouter") return configured;
+  // Tutor keeps Gemini as its primary. Research/assessment and quick-study
+  // tasks prefer Groq when a free-tier key is configured, otherwise Gemini
+  // is selected automatically by providersForTask().
+  return group === "tutor" ? "gemini" : "groq";
 }
 
 function providerIsConfigured(provider: AIProvider) {
@@ -216,8 +220,18 @@ async function generateWithGemini({
 function externalModel(provider: Exclude<AIProvider, "gemini">, task: AITask) {
   const suffix = task.toUpperCase();
   if (provider === "groq") {
+    const specialistDefaults: Record<AITask, string> = {
+      tutor: "openai/gpt-oss-120b",
+      quiz: "qwen/qwen3.8-27b",
+      flashcards: "openai/gpt-oss-20b",
+      homework: "qwen/qwen3.8-27b",
+      syllabus: "openai/gpt-oss-20b",
+      recommendations: "openai/gpt-oss-20b",
+      notes: "openai/gpt-oss-20b",
+      grading: "openai/gpt-oss-120b",
+    };
     return process.env["GROQ_MODEL_" + suffix]?.trim() ||
-      process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-20b";
+      process.env.GROQ_MODEL?.trim() || specialistDefaults[task];
   }
   // The free router chooses among currently available free models. Explicit
   // model overrides must use a :free model ID so this integration cannot
