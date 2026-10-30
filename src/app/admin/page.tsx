@@ -169,7 +169,7 @@ export default function AdminPage() {
     return <div className="flex min-h-screen items-center justify-center bg-[#080611] text-white">
       <div className="text-center">
         <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-2 border-violet-500/20 border-t-violet-400" />
-        <p className="text-sm text-white/40">Verifying administrator access…</p>
+        <p className="text-sm text-white/40">Checking admin access…</p>
       </div>
     </div>;
   }
@@ -182,7 +182,7 @@ export default function AdminPage() {
   }[backup.status] || { label: "Not configured yet", icon: Archive, classes: "border-amber-400/20 bg-amber-400/10 text-amber-200" };
   const BackupIcon = backupState.icon;
 
-  return <AppShell title="Admin dashboard" description="Owner-only StudySpace statistics.">
+  return <AppShell title="Admin dashboard" description="Owner tools for account counts and backup status.">
     <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
@@ -190,7 +190,7 @@ export default function AdminPage() {
             <ShieldCheck size={14} /> Owner access
           </div>
           <h1 className="text-3xl font-semibold tracking-tight">Admin dashboard</h1>
-          <p className="mt-2 text-sm text-white/45">A live overview of activity across StudySpace.</p>
+          <p className="mt-2 text-sm text-white/45">Check the total number of registered accounts and the latest backup status.</p>
         </div>
         <button type="button" aria-label="Refresh admin statistics and backup status" onClick={() => { void load(); void loadBackup(); }} disabled={loading || backupLoading}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm hover:bg-white/[0.08] disabled:opacity-50">
@@ -230,9 +230,9 @@ export default function AdminPage() {
       <section className="rounded-2xl border border-violet-400/15 bg-gradient-to-br from-violet-500/10 via-white/[0.035] to-fuchsia-500/[0.06] p-6 sm:p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm text-white/55">Total registered users</p>
+            <p className="text-sm text-white/55">Registered accounts</p>
             <p className="mt-2 text-5xl font-semibold tabular-nums">{loading && !stats.generatedAt ? "…" : stats.totalUsers.toLocaleString()}</p>
-            <p className="mt-3 text-xs text-white/35">All accounts in Supabase Auth</p>
+            <p className="mt-3 text-xs text-white/35">All StudySpace accounts</p>
           </div>
           <div className="rounded-xl border border-violet-400/15 bg-violet-500/10 p-3 text-violet-200"><Users size={24} /></div>
         </div>
