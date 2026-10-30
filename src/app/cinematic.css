@@ -479,15 +479,21 @@ body > main[class~="items-center"][class~="justify-center"] > div[class*="rounde
 
 /* Learning interactions have their own physical motion, not only route reveals. */
 .ss-flashcard {
-  perspective: 1400px;
-  transform-style: preserve-3d;
-  transition: transform .82s cubic-bezier(.2,.78,.18,1), box-shadow .5s ease, border-color .5s ease;
+  position: relative;
+  perspective: none;
+  transform-style: flat;
+  transition: transform .42s cubic-bezier(.2,.78,.18,1), box-shadow .5s ease, border-color .35s ease, background-color .35s ease;
   box-shadow: 0 20px 55px rgba(0,0,0,.24), inset 0 1px rgba(255,255,255,.035);
 }
-.ss-flashcard:hover { box-shadow: 0 28px 75px rgba(0,0,0,.34), 0 0 35px rgba(185,162,122,.09); }
-.ss-flashcard[data-flipped="true"] { transform: rotateY(180deg); border-color: rgba(210,190,151,.5) !important; }
-.ss-flashcard-copy { transition: transform .82s cubic-bezier(.2,.78,.18,1); }
-.ss-flashcard[data-flipped="true"] .ss-flashcard-copy { transform: rotateY(180deg); }
+.ss-flashcard:hover { transform: translateY(-3px); box-shadow: 0 28px 75px rgba(0,0,0,.34), 0 0 35px rgba(185,162,122,.09); }
+.ss-flashcard[data-flipped="true"] { border-color: rgba(210,190,151,.5) !important; background-color: rgba(185,162,122,.09); }
+.ss-flashcard-content { display: block; animation: ss-flashcard-answer-in .42s cubic-bezier(.2,.78,.18,1) both; }
+@keyframes ss-flashcard-answer-in { from { opacity: 0; transform: translateY(15px) scale(.97); filter: blur(5px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+.ss-quiz-progress-fill { transform-origin: left center; transition: width .65s cubic-bezier(.2,.8,.2,1); box-shadow: 0 0 16px rgba(185,162,122,.24); }
+.ss-quiz-option { transition: transform .25s ease, border-color .25s ease, background-color .25s ease, box-shadow .25s ease; }
+.ss-quiz-option[data-selected="true"] { transform: translateX(5px); box-shadow: inset 3px 0 rgba(210,190,151,.8), 0 8px 24px rgba(0,0,0,.16); }
+.ss-quiz-question { animation: ss-quiz-question-in .55s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes ss-quiz-question-in { from { opacity: 0; transform: translateY(22px) scale(.985); filter: blur(5px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
 .ss-course-progress-fill {
   transform-origin: left center;
   animation: ss-course-progress-arrive 1.5s cubic-bezier(.2,.8,.2,1) both;
@@ -496,7 +502,7 @@ body > main[class~="items-center"][class~="justify-center"] > div[class*="rounde
 @keyframes ss-course-progress-arrive { from { transform: scaleX(.02); filter: brightness(1.8); } to { transform: scaleX(1); filter: brightness(1); } }
 @media (prefers-reduced-motion: reduce) {
   .ss-jarvis-core, .ss-jarvis-orbit, .ss-jarvis-core-glow, .ss-jarvis-scan,
-  .ss-course-progress-fill, .ss-flashcard, .ss-flashcard-copy { animation: none !important; transition: none !important; }
+  .ss-course-progress-fill, .ss-flashcard, .ss-flashcard-content, .ss-quiz-question, .ss-quiz-option, .ss-flashcard-copy { animation: none !important; transition: none !important; }
 }
 
 
