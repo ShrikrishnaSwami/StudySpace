@@ -125,6 +125,7 @@ export default function CinematicExperience() {
         if (ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
         if (CustomEase) gsap.registerPlugin(CustomEase);
         if (CustomEase) CustomEase.create("atelier-weight", "0.22, 1, 0.36, 1");
+        const premiumEase = CustomEase ? "atelier-weight" : "power3.out";
 
         const canvas = document.querySelector<HTMLCanvasElement>("#studyspace-atmosphere");
         let renderer: any;
@@ -228,7 +229,7 @@ export default function CinematicExperience() {
                 { autoAlpha: 0, y: 34, filter: "blur(7px)" },
                 {
                   autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 1.05,
-                  ease: "atelier-weight", delay: Math.min(index % 4, 3) * 0.055,
+                  ease: premiumEase, delay: Math.min(index % 4, 3) * 0.055,
                   scrollTrigger: { trigger: element, start: "top 91%", once: true },
                 },
               );
@@ -236,7 +237,7 @@ export default function CinematicExperience() {
 
             gsap.utils.toArray(".atelier-home h1, .atelier-home h2, .atelier-shell main h1, .atelier-shell main h2").forEach((heading: any) => {
               gsap.fromTo(heading, { y: 22, autoAlpha: 0, letterSpacing: "-0.025em" }, {
-                y: 0, autoAlpha: 1, letterSpacing: "normal", duration: 1.15, ease: "atelier-weight",
+                y: 0, autoAlpha: 1, letterSpacing: "normal", duration: 1.15, ease: premiumEase,
                 scrollTrigger: { trigger: heading, start: "top 92%", once: true },
               });
             });
@@ -258,11 +259,28 @@ export default function CinematicExperience() {
           gsap.fromTo(document.body, { opacity: 0.94 }, { opacity: 1, duration: 0.65, ease: "power2.out" });
         });
 
+        const routeRefresh = window.setTimeout(() => {
+          const page = document.querySelector(".atelier-shell main");
+          if (page && !reduceMotion) {
+            page.querySelectorAll(":scope > *, section, article, [class*='rounded-2xl'], [class*='rounded-xl']").forEach((element, index) => {
+              const node = element as HTMLElement;
+              if (node.dataset.cinematicRevealed === "true") return;
+              node.dataset.cinematicRevealed = "true";
+              gsap.fromTo(node, { autoAlpha: 0, y: 26, filter: "blur(6px)" }, {
+                autoAlpha: 1, y: 0, filter: "blur(0px)", duration: 0.9,
+                ease: premiumEase, delay: Math.min(index % 5, 4) * 0.045,
+                scrollTrigger: { trigger: node, start: "top 92%", once: true },
+              });
+            });
+          }
+          if (ScrollTrigger) ScrollTrigger.refresh();
+        }, 180);
         if (ScrollTrigger) ScrollTrigger.refresh();
         cleanup = (() => {
           const previous = cleanup;
           return () => {
             context.revert();
+            window.clearTimeout(routeRefresh);
             window.removeEventListener("scroll", updateProgress);
             document.documentElement.style.removeProperty("--page-progress");
             if (lenisFrame) gsap.ticker.remove(lenisFrame);
