@@ -1851,6 +1851,7 @@ function DeleteModal({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const isCourseClass = event.source === "course" && event.event_type === "class";
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
       <button
@@ -1865,14 +1866,12 @@ function DeleteModal({
         </div>
 
         <h2 className="mt-5 text-lg font-semibold text-white">
-          Delete this event?
+          {isCourseClass ? "Skip this class?" : "Delete this event?"}
         </h2>
 
         <p className="mt-2 text-sm leading-6 text-white/35">
-          <span className="font-medium text-white/70">
-            {event.title}
-          </span>{" "}
-          will be removed from your calendar.
+          <span className="font-medium text-white/70">{event.title}</span>{" "}
+          {isCourseClass ? "will be removed for this date only. Future weekly classes will remain on your calendar." : "will be removed from your calendar."}
         </p>
 
         <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -1896,7 +1895,7 @@ function DeleteModal({
               />
             )}
 
-            {deleting ? "Deleting..." : "Delete event"}
+            {deleting ? "Saving..." : isCourseClass ? "Skip this class" : "Delete event"}
           </button>
         </div>
       </div>
