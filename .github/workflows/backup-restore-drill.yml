@@ -1,0 +1,190 @@
+name: StudySpace encrypted backup restore drill
+
+on:
+  workflow_dispatch:
+    inputs:
+      backup_run_id:
+        description: GitHub Actions run ID that created the encrypted backup
+        required: true
+        default: "41060628525"
+        type: string
+      backup_artifact_name:
+        description: Exact encrypted backup artifact name
+        required: true
+        default: "studyspace-encrypted-backup-41060628525-1"
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: studyspace-backup-restore-drill
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_PASSWORD: restore-only-password
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Download the selected encrypted backup artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: \${{ inputs.backup_artifact_name }}
+          repository: \${{ github.repository }}
+          run-id: \${{ inputs.backup_run_id }}
+          github-token: \${{ secrets.GITHUB_TOKEN }}
+          path: encrypted
+
+      - name: Install age and verify the encrypted manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes age
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          manifest = json.loads(Path("encrypted/manifest.json").read_text())
+          assert manifest.get("product") == "StudySpace"
+          assert manifest.get("format_version") == 1
+          assert manifest.get("encryption") == "age"
+          for name, expected in manifest["files"].items():
+              path = Path("encrypted") / name
+              assert path.is_file(), f"Missing payload: {name}"
+              assert hashlib.sha256(path.read_bytes()).hexdigest() == expected["sha256"], f"Checksum mismatch: {name}"
+              assert path.stat().st_size == expected["bytes"], f"Size mismatch: {name}"
+          print(f"Verified {len(manifest['files'])} encrypted payload checksums.")
+          PY
+
+      - name: Decrypt using the separately stored age identity
+        shell: bash
+        env:
+          AGE_IDENTITY: \${{ secrets.BACKUP_AGE_IDENTITY }}
+        run: |
+          set -euo pipefail
+          if [[ -z "\${AGE_IDENTITY:-}" ]]; then
+            echo "::error::The backup decryption identity is not configured."
+            exit 1
+          fi
+          umask 077
+          identity_file="$RUNNER_TEMP/studyspace-backup.agekey"
+          printf '%s' "$AGE_IDENTITY" > "$identity_file"
+          unset AGE_IDENTITY
+          mkdir -p restore-work
+          age --decrypt --identity "$identity_file" --output restore-work/public-database.dump encrypted/public-database.dump.age
+          age --decrypt --identity "$identity_file" --output restore-work/storage-and-auth.tar.gz encrypted/storage-and-auth.tar.gz.age
+          rm -f "$identity_file"
+          test -s restore-work/public-database.dump
+          test -s restore-work/storage-and-auth.tar.gz
+
+      - name: Extract Storage objects and validate Auth metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p restore-work/extracted
+          tar --extract --gzip --file=restore-work/storage-and-auth.tar.gz --directory=restore-work/extracted --no-same-owner --no-same-permissions
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path("restore-work/extracted")
+          summary = json.loads((root / "export-summary.json").read_text())
+          users = json.loads((root / "auth-users.json").read_text()).get("users")
+          assert isinstance(users, list) and len(users) == summary["auth_users"]
+          total_objects = total_bytes = 0
+          for bucket, expected in summary["buckets"].items():
+              folder = root / "storage" / bucket
+              assert folder.is_dir(), f"Missing Storage bucket: {bucket}"
+              files = [p for p in folder.rglob("*") if p.is_file()]
+              size = sum(p.stat().st_size for p in files)
+              assert len(files) == expected["objects"], f"Object count mismatch: {bucket}"
+              assert size == expected["bytes"], f"Object byte mismatch: {bucket}"
+              total_objects += len(files)
+              total_bytes += size
+          Path("restore-work/auth-users.ndjson").write_text(
+              "".join(json.dumps(user, separators=(",", ":")) + "\n" for user in users)
+          )
+          print(f"Extracted {total_objects} Storage objects ({total_bytes} bytes) across {len(summary['buckets'])} buckets.")
+          print(f"Validated {len(users)} Auth metadata records (passwords and sessions are not in this backup).")
+          PY
+
+      - name: Prepare isolated PostgreSQL restore target
+        shell: bash
+        run: |
+          set -euo pipefail
+          pg_container="$(docker ps --filter 'ancestor=pgvector/pgvector:pg17' --format '{{.ID}}' | head -n1)"
+          test -n "$pg_container"
+          echo "PG_CONTAINER=$pg_container" >> "$GITHUB_ENV"
+          docker exec "$pg_container" psql -U postgres -d postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE anon NOLOGIN;
+          CREATE ROLE authenticated NOLOGIN;
+          CREATE ROLE service_role NOLOGIN BYPASSRLS;
+          CREATE ROLE supabase_admin NOLOGIN;
+          CREATE SCHEMA IF NOT EXISTS auth;
+          CREATE SCHEMA IF NOT EXISTS storage;
+          CREATE SCHEMA IF NOT EXISTS extensions;
+          CREATE SCHEMA IF NOT EXISTS restore_validation;
+          CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA extensions;
+          CREATE TABLE IF NOT EXISTS auth.users (
+            id uuid PRIMARY KEY, aud varchar(255), role varchar(255),
+            email varchar(255), phone text, raw_app_meta_data jsonb,
+            raw_user_meta_data jsonb, created_at timestamptz, updated_at timestamptz,
+            email_confirmed_at timestamptz, phone_confirmed_at timestamptz,
+            last_sign_in_at timestamptz, is_anonymous boolean DEFAULT false
+          );
+          CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT NULL::uuid $$;
+          CREATE OR REPLACE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$ SELECT NULL::text $$;
+          CREATE OR REPLACE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS $$ SELECT '{}'::jsonb $$;
+          CREATE TABLE IF NOT EXISTS storage.buckets (id text PRIMARY KEY, name text, public boolean DEFAULT false);
+          CREATE TABLE IF NOT EXISTS storage.objects (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(), bucket_id text, name text,
+            owner_id text, owner text, metadata jsonb, created_at timestamptz, updated_at timestamptz
+          );
+          CREATE OR REPLACE FUNCTION storage.foldername(name text)
+            RETURNS text[] LANGUAGE sql IMMUTABLE AS $$ SELECT string_to_array(trim(both '/' from name), '/') $$;
+          CREATE TABLE restore_validation.auth_user_metadata (payload jsonb NOT NULL);
+          SQL
+
+      - name: Restore the PostgreSQL application archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker cp restore-work/public-database.dump "$PG_CONTAINER:/tmp/public-database.dump"
+          docker exec "$PG_CONTAINER" pg_restore --dbname=postgres --no-owner --no-privileges --exit-on-error /tmp/public-database.dump
+
+      - name: Load Auth metadata into the isolated validation database
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker cp restore-work/auth-users.ndjson "$PG_CONTAINER:/tmp/auth-users.ndjson"
+          docker exec "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c "COPY restore_validation.auth_user_metadata(payload) FROM '/tmp/auth-users.ndjson'"
+
+      - name: Verify the restored database, Auth metadata, and Storage payloads
+        shell: bash
+        run: |
+          set -euo pipefail
+          relation_count="$(docker exec "$PG_CONTAINER" psql -U postgres -d postgres -Atc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p','v','m')")"
+          auth_count="$(docker exec "$PG_CONTAINER" psql -U postgres -d postgres -Atc 'SELECT count(*) FROM restore_validation.auth_user_metadata')"
+          test "$relation_count" -gt 0
+          expected_auth="$(python3 -c 'import json; print(json.load(open("restore-work/extracted/export-summary.json"))["auth_users"])')"
+          test "$auth_count" -eq "$expected_auth"
+          echo "Restore drill passed: $relation_count public relations restored; $auth_count Auth metadata records loaded; Storage file counts and byte totals verified."
+          echo "This is an isolated PostgreSQL/filesystem recovery test, not a write to production Supabase."
+
+      - name: Remove decrypted backup material
+        if: always()
+        run: rm -rf encrypted restore-work
