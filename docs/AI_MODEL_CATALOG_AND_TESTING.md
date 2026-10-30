@@ -17,8 +17,8 @@ These are specialised application-level agents. They share the secure provider a
 ## Cloud provider strategy
 
 - **Gemini** is the primary provider and supports the existing multimodal and PDF workflows.
-- **Groq** is an optional fast text-generation provider. Free developer-tier limits depend on the selected model and account.
-- **OpenRouter** is an optional provider for free model variants. StudySpace permits only `openrouter/free` or model IDs ending in `:free` so an ordinary configuration cannot route to paid models.
+- **Groq** is an optional fast text-generation provider. Free developer-tier limits depend on the selected model and account. Groq documents that inference inputs/outputs are not retained by default, but reliability/abuse logs may contain request data for up to 30 days. Enable Groq Zero Data Retention in its console before sending real student records.
+- **OpenRouter** is an optional provider for free model variants. StudySpace permits only `openrouter/free` or model IDs ending in `:free` so an ordinary configuration cannot route to paid models. It is disabled for student data unless `OPENROUTER_ALLOW_STUDENT_DATA=true` is explicitly set. Some free model providers may log prompts or use them to improve models; do not enable this for real student coursework or personal data unless the provider's current terms and required student consent have been reviewed.
 
 Provider credentials are server-only. Requests are routed through the server; browser clients never receive provider keys. When a configured provider is unavailable, the server tries another configured provider. Providers without credentials are skipped.
 
@@ -26,7 +26,7 @@ The existing Gemini multimodal paths (PDF and inline file parts) remain Gemini-o
 
 ## Free-tier limitations
 
-"Free" means no per-token charge under the provider's free allowance, not unlimited or guaranteed service. Providers can change model availability, quotas, and terms. Free-tier exhaustion should result in a temporary availability response rather than a paid-model fallback. OpenRouter free-model limits are particularly restrictive, so it should be treated as a fallback and development option rather than guaranteed production capacity.
+"Free" means no per-token charge under the provider's free allowance, not unlimited or guaranteed service. Providers can change model availability, quotas, and terms. Free-tier exhaustion should result in a temporary availability response rather than a paid-model fallback. OpenRouter free-model limits are particularly restrictive, so it should be treated as a fallback and development option rather than guaranteed production capacity. Privacy is a separate requirement from price: never route private student material to a provider until its data handling terms, retention settings, and required notices/consents have been reviewed.
 
 No provider is enabled merely by adding this code. An administrator must add the relevant server-side API key in the deployment environment and select the provider. Never commit real keys or expose them through `NEXT_PUBLIC_*` variables.
 
