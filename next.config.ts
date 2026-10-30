@@ -14,8 +14,8 @@ const csp = [
   "font-src 'self' data: https:",
   "style-src 'self' 'unsafe-inline'",
   isProduction
-    ? "script-src 'self' 'unsafe-inline'"
-    : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    ? "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net"
+    : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://*.googleapis.com",
   ...(isProduction ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
