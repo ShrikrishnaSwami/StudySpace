@@ -1116,7 +1116,8 @@ export default function AITutorPage() {
         const parsed = JSON.parse(saved) as WorkspaceWindow[];
         if (Array.isArray(parsed)) {
           setWorkspaceWindows(parsed.filter(item =>
-            item && typeof item.id === "string" && typeof item.kind === "string" &&
+            item && typeof item.id === "string" &&
+            ["chat", "history", "tools", "courses", "course"].includes(item.kind) &&
             typeof item.title === "string" && Number.isFinite(item.x) && Number.isFinite(item.y)
           ).slice(0, 18));
         }
