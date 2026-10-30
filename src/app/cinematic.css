@@ -801,3 +801,6 @@ body:has(.ss-landing)::-webkit-scrollbar,body:has(.ss-neural-tutor)::-webkit-scr
  .ss-jarvis-stage .ss-neural-hotspots .action-history{right:5%!important;top:36%!important}
  .ss-jarvis-stage .ss-neural-hotspots .action-tools{left:calc(50% - 58px)!important;bottom:24%!important}
 }
+
+.ss-jarvis-stage .ss-neural-hotspots .brain-action.is-selected{border-color:#d2bd98;background:rgba(75,64,47,.94);box-shadow:0 0 0 1px rgba(210,189,152,.12),0 0 28px rgba(185,167,131,.16)}
+.ss-jarvis-stage .ss-neural-hotspots .brain-action.is-selected b{background:rgba(185,167,131,.14);color:#f0dfbb}
