@@ -39,8 +39,8 @@ export default function Home() {
           <div className="ss-editorial-actions"><Link href="/signup" className="ss-landing-primary">Make your space <ArrowUpRight size={17}/></Link><Link href="/login" className="ss-editorial-text-link">Already have an account? Sign in</Link></div>
         </div>
         <aside className="ss-editorial-specimen" aria-label="A glimpse of the StudySpace workspace">
-          <div className="ss-specimen-top"><span>YOUR DESK / MONDAY</span><span>01—04</span></div>
-          <div className="ss-specimen-date"><span>OCT</span><strong>29</strong><small>WEDNESDAY</small></div>
+          <div className="ss-specimen-top"><span>YOUR DESK / THIS WEEK</span><span>01—04</span></div>
+          <div className="ss-specimen-date"><span>YOUR</span><strong>WEEK</strong><small>AT A GLANCE</small></div>
           <div className="ss-specimen-rule"/>
           <p className="ss-specimen-label">ON THE DESK TODAY</p>
           <div className="ss-specimen-task"><span className="ss-specimen-marker"/><div><b>Finish biology notes</b><small>BIO 213 · 25 min</small></div><span>01</span></div>
