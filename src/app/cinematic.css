@@ -790,3 +790,7 @@ body:has(.ss-landing)::-webkit-scrollbar,body:has(.ss-neural-tutor)::-webkit-scr
 .ss-jarvis-stage>.ss-neural-universe{z-index:3!important}
 .ss-jarvis-stage .ss-neural-hotspots{z-index:12!important}
 @media(max-width:700px){.ss-jarvis-core{width:min(66vw,360px);min-width:230px}.ss-jarvis-core-label{bottom:16%}}
+
+.ss-jarvis-screen h1,.ss-jarvis-screen h2,.ss-jarvis-screen h3{color:#e8dfcf!important;font-family:var(--font-geist-sans),sans-serif!important;font-weight:350!important;letter-spacing:-.02em}
+.ss-jarvis-screen .ss-jarvis-panel{color:#e8dfcf}
+.ss-jarvis-screen .ss-jarvis-panel button:focus-visible{outline:2px solid rgba(185,167,131,.8);outline-offset:3px}
