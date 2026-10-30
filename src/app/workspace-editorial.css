@@ -1064,3 +1064,164 @@ html[data-theme="light"] .fr-home .fr-feature-icon {
     }
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   HIGH-VISIBILITY MOTION PASS
+   Stronger movement, longer stagger and clearer scroll-entry transitions.
+   Kept transform/opacity-only for smooth rendering; reduced-motion respected.
+   -------------------------------------------------------------------------- */
+@keyframes ss-bold-word-arrive {
+  0% { opacity: 0; transform: translate3d(0, .8em, 0) scale(.94); filter: blur(10px); }
+  65% { opacity: 1; transform: translate3d(0, -.045em, 0) scale(1.015); filter: blur(0); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+@keyframes ss-bold-copy-arrive {
+  0% { opacity: 0; transform: translate3d(0, 34px, 0); filter: blur(6px); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+@keyframes ss-bold-screen-arrive {
+  0% { opacity: 0; transform: translate3d(0, 30px, 0) scale(.985); filter: blur(7px); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+@keyframes ss-bold-scroll-reveal {
+  0% { opacity: .08; transform: translate3d(0, 46px, 0) scale(.985); filter: blur(7px); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: blur(0); }
+}
+@keyframes ss-gold-glint {
+  0%, 100% { text-shadow: 0 0 0 rgba(229,189,89,0); }
+  50% { text-shadow: 0 0 24px rgba(229,189,89,.28); }
+}
+
+/* Landing headline: visibly separate word-by-word entrance. */
+.ss-editorial-opening h1 .ss-word {
+  opacity: 0;
+  animation: ss-bold-word-arrive 1050ms cubic-bezier(.16,1,.3,1) both;
+  will-change: transform, opacity, filter;
+}
+.ss-editorial-opening h1 .ss-word:nth-of-type(1) { animation-delay: 180ms; }
+.ss-editorial-opening h1 .ss-word:nth-of-type(2) { animation-delay: 360ms; }
+.ss-editorial-opening h1 .ss-word:nth-of-type(3) { animation-delay: 540ms; }
+.ss-editorial-opening h1 .ss-word:nth-of-type(4) { animation-delay: 720ms; }
+.ss-editorial-opening h1 .ss-word:nth-of-type(5) { animation-delay: 900ms; }
+.ss-editorial-opening h1 .ss-word:nth-of-type(6) { animation-delay: 1080ms; }
+.ss-editorial-opening h1 .ss-word:nth-of-type(7) { animation-delay: 1260ms; }
+.ss-editorial-opening .ss-editorial-kicker { animation: ss-bold-copy-arrive 850ms cubic-bezier(.16,1,.3,1) both; }
+.ss-editorial-opening .ss-editorial-deck { animation: ss-bold-copy-arrive 950ms cubic-bezier(.16,1,.3,1) 850ms both; }
+.ss-editorial-opening .ss-editorial-actions { animation: ss-bold-copy-arrive 950ms cubic-bezier(.16,1,.3,1) 1050ms both; }
+.ss-editorial-opening .ss-editorial-specimen { animation: ss-bold-screen-arrive 1150ms cubic-bezier(.16,1,.3,1) 450ms both; }
+
+/* Story sections enter as distinct compositions rather than barely moving. */
+.ss-editorial-manifesto,
+.ss-editorial-workspace,
+.ss-editorial-method,
+.ss-editorial-closing {
+  animation: ss-bold-screen-arrive 1050ms cubic-bezier(.16,1,.3,1) both;
+}
+.ss-editorial-manifesto-grid h2,
+.ss-editorial-manifesto-grid > div > p,
+.ss-editorial-section-head,
+.ss-editorial-chapters button,
+.ss-editorial-preview-wrap,
+.ss-method-main > *,
+.ss-method-aside > div,
+.ss-editorial-closing > * {
+  animation: ss-bold-copy-arrive 900ms cubic-bezier(.16,1,.3,1) both;
+}
+.ss-editorial-chapters button:nth-child(2),
+.ss-method-aside > div:nth-child(2) { animation-delay: 150ms; }
+.ss-editorial-chapters button:nth-child(3),
+.ss-method-aside > div:nth-child(3) { animation-delay: 300ms; }
+.ss-editorial-chapters button:nth-child(4) { animation-delay: 450ms; }
+
+/* Workspace tab titles and explanatory copy get a clear entrance on navigation. */
+.atelier-shell .atelier-main h1,
+.atelier-shell .atelier-main [data-page-title],
+.atelier-shell .atelier-main .page-title {
+  animation: ss-bold-screen-arrive 900ms cubic-bezier(.16,1,.3,1) both !important;
+}
+.atelier-shell .atelier-main h1 + p,
+.atelier-shell .atelier-main [data-page-title] + p,
+.atelier-shell .atelier-main > p:first-of-type {
+  animation: ss-bold-copy-arrive 900ms cubic-bezier(.16,1,.3,1) 140ms both !important;
+}
+.atelier-loading-header,
+.atelier-loading-center > *,
+.atelier-loading-footer,
+.ss-error-brand,
+.ss-error-card > *,
+.ss-error-footnote,
+.ss-404 > header,
+.ss-404 > section > *,
+.ss-404 > footer {
+  animation: ss-bold-screen-arrive 950ms cubic-bezier(.16,1,.3,1) both;
+}
+
+/* Scroll-linked text now travels farther and resolves from a softer blur. */
+@supports (animation-timeline: view()) {
+  main :is(section h2, section h3, section h4, section p, section li, section blockquote, section figcaption),
+  .atelier-shell .atelier-main :is(h2, h3, h4, p, li, blockquote, figcaption),
+  .atelier-shell .atelier-main [data-scroll-reveal="text"] {
+    animation-name: ss-bold-scroll-reveal !important;
+    animation-duration: auto !important;
+    animation-timing-function: cubic-bezier(.16,1,.3,1) !important;
+    animation-fill-mode: both !important;
+    animation-timeline: view() !important;
+    animation-range: entry 0% cover 42% !important;
+  }
+  main :is([aria-live], [contenteditable="true"], textarea, input, select, button, a),
+  .atelier-shell .atelier-main :is([aria-live], [contenteditable="true"], textarea, input, select, button, a),
+  .atelier-shell .atelier-main .ss-chat-messages *,
+  .atelier-shell .atelier-main .ss-message-content *,
+  .atelier-shell .atelier-main .ss-streaming-response * {
+    animation-timeline: auto !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ss-editorial-opening h1 .ss-word,
+  .ss-editorial-opening .ss-editorial-kicker,
+  .ss-editorial-opening .ss-editorial-deck,
+  .ss-editorial-opening .ss-editorial-actions,
+  .ss-editorial-opening .ss-editorial-specimen,
+  .ss-editorial-manifesto,
+  .ss-editorial-workspace,
+  .ss-editorial-method,
+  .ss-editorial-closing,
+  .ss-editorial-manifesto-grid h2,
+  .ss-editorial-manifesto-grid > div > p,
+  .ss-editorial-section-head,
+  .ss-editorial-chapters button,
+  .ss-editorial-preview-wrap,
+  .ss-method-main > *,
+  .ss-method-aside > div,
+  .ss-editorial-closing > *,
+  .atelier-shell .atelier-main h1,
+  .atelier-shell .atelier-main [data-page-title],
+  .atelier-shell .atelier-main .page-title,
+  .atelier-shell .atelier-main h1 + p,
+  .atelier-shell .atelier-main [data-page-title] + p,
+  .atelier-loading-header,
+  .atelier-loading-center > *,
+  .atelier-loading-footer,
+  .ss-error-brand,
+  .ss-error-card > *,
+  .ss-error-footnote,
+  .ss-404 > header,
+  .ss-404 > section > *,
+  .ss-404 > footer {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+  @supports (animation-timeline: view()) {
+    main :is(section h2, section h3, section h4, section p, section li, section blockquote, section figcaption),
+    .atelier-shell .atelier-main :is(h2, h3, h4, p, li, blockquote, figcaption),
+    .atelier-shell .atelier-main [data-scroll-reveal="text"] {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      filter: none !important;
+    }
+  }
+}
