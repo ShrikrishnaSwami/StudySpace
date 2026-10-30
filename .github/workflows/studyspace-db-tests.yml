@@ -1,32 +1,17 @@
-name: StudySpace security policy regression tests
+name: StudySpace database security tests
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "src/**"
-      - "supabase/migrations/**"
-      - "tests/security-migrations.test.mjs"
-      - ".github/workflows/studyspace-db-tests.yml"
-      - "package.json"
-  pull_request:
-    paths:
-      - "src/**"
-      - "supabase/migrations/**"
-      - "tests/security-migrations.test.mjs"
-      - ".github/workflows/studyspace-db-tests.yml"
-      - "package.json"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: studyspace-security-${{ github.ref }}
-  cancel-in-progress: true
+  group: studyspace-database-security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  security-regressions:
+  unit-regressions:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -36,9 +21,37 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Verify RLS, admin MFA, submission integrity, and model-routing invariants
+      - name: Run security source regressions
         run: npm run test:security
+      - name: Run request and account-cleanup hardening tests
+        run: npm run test:hardening
 
-# Full pgTAP integration tests remain in supabase/tests/database. They require a
-# complete baseline migration for the pre-existing production schema; currently
-# the earliest repository migration references public.courses before it exists.
+  database-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run transactional pgTAP tests against configured test database
+        env:
+          SUPABASE_TEST_DB_URL: ${{ secrets.SUPABASE_TEST_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_TEST_DB_URL" ]; then
+            echo "::notice::Set SUPABASE_TEST_DB_URL to a populated, isolated Supabase test database to enable live pgTAP execution."
+            exit 0
+          fi
+
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+          for test_file in \
+            supabase/tests/database/admin_rls_mfa.test.sql \
+            supabase/tests/database/student_data_rls_isolation.test.sql
+          do
+            echo "Running $test_file"
+            output=$(psql "$SUPABASE_TEST_DB_URL" -X -v ON_ERROR_STOP=1 -q -f "$test_file")
+            printf '%s\\n' "$output"
+            if printf '%s\\n' "$output" | grep -Eq 'not ok|Looks like you failed'; then
+              echo "pgTAP reported a failing assertion in $test_file"
+              exit 1
+            fi
+          done
