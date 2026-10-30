@@ -40,6 +40,8 @@ function extractJson(text: string) {
   return JSON.parse(cleaned);
 }
 
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get("authorization");
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
 
     const safeQuestionCount = Math.min(
       Math.max(Number(questionCount) || 10, 1),
-      30
+      20
     );
     const topic = typeof rawTopic === "string" ? rawTopic.trim().slice(0, 300) : "";
     const difficulty = ["easy", "medium", "hard"].includes(String(rawDifficulty).toLowerCase())
@@ -234,7 +236,8 @@ Rules:
 - Make the quiz appropriate for a university student.
 `;
 
-    const response = await generateAIResponse({
+    const response = await Promise.race([
+      generateAIResponse({
       systemInstruction: `
 You are StudySpace's educational assessment engine.
 
@@ -250,7 +253,11 @@ Return JSON only.
 `,
       prompt,
       task: "quiz",
-    });
+      }),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("Quiz generation timed out. Please try again with fewer questions.")), 45_000);
+      }),
+    ]);
 
     const parsed = extractJson(response);
 
@@ -314,13 +321,13 @@ Return JSON only.
       questions,
     });
   } catch (error) {
-    console.error("Quiz generation request failed:", error instanceof Error ? error.message.slice(0, 240) : "Unknown error");
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("Quiz generation request failed:", message.slice(0, 240));
+    const timedOut = /timed out/i.test(message);
 
     return NextResponse.json(
-      {
-        error: "Failed to generate the quiz. Please try again.",
-      },
-      { status: 500 }
+      { error: timedOut ? message : "Failed to generate the quiz. Please try again. If this continues, try fewer questions." },
+      { status: timedOut ? 504 : 500 }
     );
   }
 }
