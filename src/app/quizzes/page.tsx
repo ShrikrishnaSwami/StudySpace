@@ -1615,6 +1615,7 @@ function DeleteQuizModal({
   onConfirm: () => void;
 }) {
   return (
+    <ViewportPortal>
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
       <div className="w-full max-w-md rounded-3xl border border-white/[0.09] bg-[#100b1c] p-6 shadow-2xl shadow-black/50">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
@@ -1659,5 +1660,6 @@ function DeleteQuizModal({
         </div>
       </div>
     </div>
+    </ViewportPortal>
   );
 }
