@@ -213,6 +213,7 @@ export default function AITutorPage() {
   const canvasRef = useRef<HTMLElement>(null);
   const nodeDragState = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
   const dragState = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
+  const windowResizeState = useRef<{ id: string; startX: number; startY: number; width: number; height: number } | null>(null);
 
   const [error, setError] =
     useState("");
@@ -1044,16 +1045,6 @@ export default function AITutorPage() {
     addRootStudyNode(selectedNodeKind, item?.title || "Study node");
   }
 
-  function resizeAllWorkspaces(nextScale: number) {
-    const bounded = Math.max(65, Math.min(130, nextScale));
-    setWorkspaceScale(bounded);
-    setWorkspaceWindows(current => current.map(workspace => {
-      const baseWidth = workspace.kind === "chat" ? 500 : workspace.kind === "history" ? 390 : 420;
-      const baseHeight = workspace.kind === "chat" ? 560 : 480;
-      return { ...workspace, width: Math.round(baseWidth * bounded / 100), height: Math.round(baseHeight * bounded / 100) };
-    }));
-  }
-
   function openStudyNode(node: StudyNode) {
     if (node.kind === "chat") {
       setSelectedCourseId(node.courseId || "");
@@ -1111,6 +1102,41 @@ export default function AITutorPage() {
     dragState.current = { id, offsetX: event.clientX - item.x, offsetY: event.clientY - item.y };
     setFocusedWindowId(id);
     (event.currentTarget as HTMLElement).setPointerCapture?.(event.pointerId);
+  }
+
+  useEffect(() => {
+    const resize = (event: PointerEvent) => {
+      const active = windowResizeState.current;
+      if (!active) return;
+      const maxWidth = Math.max(280, window.innerWidth - 24);
+      const maxHeight = Math.max(220, window.innerHeight - 92);
+      const width = Math.max(280, Math.min(maxWidth, active.width + event.clientX - active.startX));
+      const height = Math.max(220, Math.min(maxHeight, active.height + event.clientY - active.startY));
+      setWorkspaceWindows(current => current.map(item => item.id === active.id ? { ...item, width, height } : item));
+    };
+    const end = () => { windowResizeState.current = null; };
+    window.addEventListener("pointermove", resize);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    return () => {
+      window.removeEventListener("pointermove", resize);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+    };
+  }, []);
+
+  function startWindowResize(event: ReactPointerEvent<HTMLButtonElement>, workspace: WorkspaceWindow) {
+    event.preventDefault();
+    event.stopPropagation();
+    windowResizeState.current = {
+      id: workspace.id,
+      startX: event.clientX,
+      startY: event.clientY,
+      width: workspace.width,
+      height: workspace.height,
+    };
+    setFocusedWindowId(workspace.id);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
   }
 
   useEffect(() => {
@@ -1313,11 +1339,7 @@ export default function AITutorPage() {
             <option value="notes">Notes</option><option value="courses">Courses</option><option value="assignments">Assignments</option><option value="quizzes">Quizzes</option><option value="flashcards">Flashcards</option><option value="calendar">Calendar</option><option value="chat">AI chat</option>
           </select>
         </label>
-        <span className="h-5 w-px bg-white/10"/>
-        <label className="flex items-center gap-2 text-[9px] tracking-[.12em] text-[#b9a783]/70">WINDOW SIZE
-          <input aria-label="Resize all open node windows" type="range" min="65" max="130" step="5" value={workspaceScale} onChange={event=>resizeAllWorkspaces(Number(event.target.value))} className="w-20 accent-[#b9a783]"/>
-          <span className="w-8 text-right text-[9px] text-stone-400">{workspaceScale}%</span>
-        </label>
+
       </div>
       <svg aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 h-full w-full overflow-visible">
         {studyNodes.map(node => {
@@ -1333,7 +1355,7 @@ export default function AITutorPage() {
           return <div key={node.id} onPointerDown={event => startNodeDrag(event, node.id)} style={{ left: `${node.x}%`, top: `${node.y}%`, transform: "translate(-50%,-50%)" }} className="ss-brain-study-node pointer-events-auto absolute flex min-w-[148px] max-w-[190px] touch-none items-center gap-2 border border-[#b9a783]/35 bg-[#211f19]/95 px-3 py-2.5 shadow-[0_12px_35px_rgba(0,0,0,.4)] backdrop-blur-xl">
             <span className="grid h-8 w-8 shrink-0 place-items-center border border-[#b9a783]/25 bg-[#b9a783]/[0.08] text-[#d4c3a0]"><Icon className="h-4 w-4"/></span>
             <div className="min-w-0 flex-1"><button type="button" onClick={() => openStudyNode(node)} className="block w-full truncate text-left text-[10px] font-medium text-stone-100 hover:text-[#e4d3b0]">{node.title}</button><span className="block text-[8px] tracking-[.12em] text-[#b9a783]/55">{node.parentId ? "CONNECTED BRANCH" : "BRAIN NODE"}</span></div>
-            <button type="button" onClick={() => createChildNode(node)} title="Create a connected child node" aria-label={`Create a node from ${node.title}`} className="grid h-7 w-7 shrink-0 place-items-center text-[#c7b58f]/70 hover:bg-[#b9a783]/10 hover:text-[#e5d3ad]"><Plus className="h-3.5 w-3.5"/></button>
+            <button type="button" onClick={() => openStudyNode(node)} title={`Open ${node.title}`} aria-label={`Open the connected ${node.title} tab`} className="grid h-7 w-7 shrink-0 place-items-center text-[#c7b58f]/70 hover:bg-[#b9a783]/10 hover:text-[#e5d3ad]"><Plus className="h-3.5 w-3.5"/></button>
             <button type="button" onClick={() => deleteStudyNode(node.id)} title="Delete node" aria-label={`Delete ${node.title} node`} className="grid h-7 w-7 shrink-0 place-items-center text-stone-600 hover:bg-red-400/10 hover:text-red-300"><X className="h-3.5 w-3.5"/></button>
           </div>;
         })}
@@ -1367,6 +1389,15 @@ export default function AITutorPage() {
           </div>
           <div className="shrink-0 border-t border-[#b9a783]/15 bg-black/15 p-3"><form onSubmit={sendMessage} className="border border-[#b9a783]/20 bg-[#14130f]/75 p-2"><textarea ref={textareaRef} aria-label="Message your AI tutor" maxLength={12000} value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();void sendMessage();}}} placeholder="Ask your tutor anything…" rows={2} className="max-h-36 min-h-[54px] w-full resize-y bg-transparent px-2 py-2 text-xs leading-6 text-stone-100 outline-none placeholder:text-stone-600"/><div className="flex items-center justify-between px-1 pt-1"><div className="flex items-center gap-1"><button type="button" onClick={toggleVoiceInput} disabled={!voiceSupported||sending} aria-label="Voice input" className="p-2 text-stone-500 hover:text-stone-200"><Mic className="h-4 w-4"/></button><button type="button" onClick={()=>setVoiceReplies(v=>!v)} aria-label="Toggle spoken replies" className="p-2 text-stone-500 hover:text-stone-200">{voiceReplies?<Volume2 className="h-4 w-4"/>:<VolumeX className="h-4 w-4"/>}</button>{voiceStatus!=="READY"&&<span className="text-[8px] text-[#b9a783]/65">{voiceStatus}</span>}</div><button type="submit" disabled={!input.trim()||sending} aria-label="Send message" className="grid h-9 w-9 place-items-center bg-[#b9a783] text-[#211e18] hover:bg-[#d0bd98] disabled:opacity-35"><ArrowUp className="h-4 w-4"/></button></div></form><p className="mt-2 text-center text-[8px] text-stone-600">Enter to send · Shift + Enter for a new line</p></div>
         </>}
+        <button
+          type="button"
+          aria-label={`Resize ${workspace.title} window`}
+          title="Drag to resize"
+          onPointerDown={event => startWindowResize(event, workspace)}
+          className="absolute bottom-0 right-0 z-10 grid h-6 w-6 cursor-nwse-resize touch-none place-items-center text-[#c7b58f]/70 hover:text-[#ead9b8]"
+        >
+          <span className="h-3 w-3 border-b-2 border-r-2 border-current opacity-80" />
+        </button>
       </section>)}
       {deleteTarget&&<ViewportPortal><div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm"><div role="dialog" aria-modal="true" aria-labelledby="jarvis-delete-title" className="w-full max-w-sm border border-white/10 bg-[#24221b] p-5 shadow-2xl"><h3 id="jarvis-delete-title" className="text-sm font-semibold text-stone-100">Delete conversation?</h3><p className="mt-2 text-xs text-stone-400">This permanently removes the conversation and its messages.</p><div className="mt-5 flex gap-2"><button type="button" onClick={()=>setDeleteTarget(null)} className="flex-1 border border-white/10 px-4 py-2.5 text-xs text-stone-300">Cancel</button><button type="button" onClick={()=>void deleteConversation(deleteTarget)} className="flex-1 bg-red-400/15 px-4 py-2.5 text-xs text-red-200">Delete</button></div></div></div></ViewportPortal>}
     </main>
