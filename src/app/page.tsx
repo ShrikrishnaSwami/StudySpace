@@ -46,7 +46,7 @@ export default function Home() {
       <section className="ss-editorial-opening">
         <div className="ss-editorial-opening-copy">
           <p className="ss-editorial-kicker"><span/> MADE BY A STUDENT, FOR STUDENT WORK</p>
-          <h1>Courses, notes,<br/>deadlines and an<br/><em>AI study partner.</em></h1>
+          <h1 aria-label="Courses, notes, deadlines and an AI study partner."><span className="ss-word" aria-hidden="true">Courses,</span>{" "}<span className="ss-word" aria-hidden="true">notes,</span><br/><span className="ss-word" aria-hidden="true">deadlines</span>{" "}<span className="ss-word" aria-hidden="true">and</span>{" "}<span className="ss-word" aria-hidden="true">an</span><br/><em><span className="ss-word" aria-hidden="true">AI</span>{" "}<span className="ss-word" aria-hidden="true">study</span>{" "}<span className="ss-word" aria-hidden="true">partner.</span></em></h1>
           <p className="ss-editorial-deck">StudySpace keeps your course files, notes, deadlines and study tools in one place. Add your classes, keep track of what is due, and ask the built-in tutor when something makes no sense.</p>
           <div className="ss-editorial-actions"><Link href="/signup" className="ss-landing-primary">Create your StudySpace <ArrowUpRight size={17}/></Link><Link href="/login" className="ss-editorial-text-link">Already have an account? Sign in</Link></div>
         </div>
