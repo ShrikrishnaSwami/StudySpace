@@ -241,6 +241,8 @@ export default function AITutorPage() {
 
   const messagesEndRef =
     useRef<HTMLDivElement>(null);
+  const messagesContainerRef =
+    useRef<HTMLDivElement>(null);
 
   const textareaRef =
     useRef<HTMLTextAreaElement>(null);
@@ -336,13 +338,13 @@ export default function AITutorPage() {
   ======================================================= */
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    container.scrollTo({
+      top: container.scrollHeight,
       behavior: "smooth",
     });
-  }, [
-    conversationMessages.length,
-    sending,
-  ]);
+  }, [conversationMessages.length, sending]);
 
   /* =======================================================
      LOAD MESSAGES
@@ -453,24 +455,8 @@ export default function AITutorPage() {
           loadedConversations
         );
 
-        if (
-          loadedConversations.length >
-          0
-        ) {
-          setShowChatPanel(true);
-          const first =
-            loadedConversations[0];
-
-          setSelectedConversationId(
-            first.id
-          );
-
-          setSelectedCourseId(
-            first.course_id || ""
-          );
-
-          await loadMessages(first.id);
-        }
+        // Keep the neural workspace unobstructed on entry. Conversations
+        // are opened deliberately from the History control.
       } catch (err) {
         setError(
           err instanceof Error
@@ -509,6 +495,8 @@ export default function AITutorPage() {
 
     setShowChatPanel(true);
     setShowHistory(false);
+    setShowToolsPanel(false);
+    setChatPosition({ x: 0, y: 0 });
     setError("");
 
     try {
@@ -594,6 +582,11 @@ export default function AITutorPage() {
       setSelectedCourseId(
         courseId
       );
+      setShowChatPanel(true);
+      setShowHistory(false);
+      setShowToolsPanel(false);
+      setChatPosition({ x: 0, y: 0 });
+      setInput("");
 
       setMessages((current) =>
         current.filter(
@@ -656,6 +649,8 @@ export default function AITutorPage() {
 
     try {
       setSending(true);
+      setShowChatPanel(true);
+      setShowHistory(false);
       setVoiceStatus("THINKING");
       setError("");
 
@@ -1098,6 +1093,8 @@ export default function AITutorPage() {
     prompt: string
   ) {
     setShowChatPanel(true);
+    setShowHistory(false);
+    setShowToolsPanel(false);
     setInput(prompt);
 
     window.setTimeout(() => {
@@ -1284,7 +1281,7 @@ export default function AITutorPage() {
         ================================================= */}
 
         <main className="ss-neural-main relative flex min-w-0 flex-1 flex-col">
-          <div className="ss-neural-backdrop"><NeuralIntelligence active={sending} listening={voiceListening} showControls onAction={(action) => { if (action === "new-chat") { void (async () => { const conversation = await createConversation(); if (conversation) setShowChatPanel(true); })(); } else if (action === "history") { setShowHistory(true); } else { setShowToolsPanel(true); } }} onPrompt={handleStarterPrompt} /></div>
+          <div className="ss-neural-backdrop"><NeuralIntelligence active={sending} listening={voiceListening} showControls onAction={(action) => { if (action === "new-chat") { void createConversation(); } else if (action === "history") { setShowToolsPanel(false); setShowHistory(true); } else { setShowHistory(false); setShowToolsPanel(true); } }} onPrompt={handleStarterPrompt} /></div>
 
           {showToolsPanel && <DraggablePanel title="Study instruments" onClose={() => setShowToolsPanel(false)} className="ss-neural-tools-panel">
             <p className="mb-4 text-xs leading-6 text-stone-400">Choose a direction and the neural workspace will open a prompt for you.</p>
@@ -1493,7 +1490,7 @@ export default function AITutorPage() {
               MESSAGES
           ================================================= */}
 
-          <div className="flex-1 overflow-y-auto">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto">
 
             {conversationMessages.length ===
             0 ? (
