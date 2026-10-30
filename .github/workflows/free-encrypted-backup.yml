@@ -84,7 +84,7 @@ jobs:
           set -euo pipefail
           tar --create --gzip --file=backup-work/storage-and-auth.tar.gz --directory=backup-work storage auth-users.json export-summary.json
           test -s backup-work/storage-and-auth.tar.gz
-          age --recipient "$AGE_RECIPIENT" --output encrypted/storage-and-auth.tar.gz.age backup-work/storage-and-auth.tar.gz
+          age --recipient "$AGE_RECIPIENT" --recipient "$AGE_RECIPIENT_RESTORE" --output encrypted/storage-and-auth.tar.gz.age backup-work/storage-and-auth.tar.gz
           rm -rf backup-work
 
       - name: Create integrity manifest
