@@ -1,6 +1,6 @@
 type AnyRecord = Record<string, unknown>;
 
-function clean(value: unknown) {
+function clean(value: unknown, maxChars = Number.POSITIVE_INFINITY) {
   if (
     value === null ||
     value === undefined
@@ -9,18 +9,19 @@ function clean(value: unknown) {
   }
 
   if (typeof value === "string") {
-    return value.trim();
+    return value.trim().slice(0, maxChars);
   }
 
-  return String(value);
+  return String(value).slice(0, maxChars);
 }
 
 function pickText(
   record: AnyRecord,
-  keys: string[]
+  keys: string[],
+  maxChars = Number.POSITIVE_INFINITY,
 ) {
   for (const key of keys) {
-    const value = clean(record[key]);
+    const value = clean(record[key], maxChars);
 
     if (value) {
       return value;
@@ -161,7 +162,7 @@ ${
     "text",
     "note",
     "description",
-  ]) || "(No text available.)"
+  ], 2200) || "(No text available.)"
 }
 `
         )
@@ -208,7 +209,7 @@ ${
     "content",
     "body",
     "text",
-  ]) || "Not provided"
+  ], 1000) || "Not provided"
 }
 
 URL:
@@ -424,13 +425,13 @@ ${clean(item.ai_summary) || "No AI summary available."}
 
 AI Explanation:
 ${
-  clean(item.ai_explanation) ||
+  clean(item.ai_explanation, 900) ||
   "No AI explanation available."
 }
 
 AI Solution:
 ${
-  clean(item.ai_solution) ||
+  clean(item.ai_solution, 900) ||
   "No AI solution available."
 }
 
@@ -503,7 +504,11 @@ ${clean(event.multitask) || "false"}
 }
 `);
 
-  return sections.join("\n\n");
+  const formatted = sections.join("\n\n");
+  const maxContextCharacters = 60000;
+  return formatted.length > maxContextCharacters
+    ? formatted.slice(0, maxContextCharacters) + "\n\n[Context window capped at 60,000 characters; use retrieved relevant excerpts for detailed answers.]"
+    : formatted;
 }
 
 
