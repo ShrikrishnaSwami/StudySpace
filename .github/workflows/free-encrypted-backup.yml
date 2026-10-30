@@ -59,6 +59,34 @@ jobs:
           pg_dump --version
           age --version
 
+      - name: Validate independent recovery identity with an encrypted round trip
+        shell: bash
+        env:
+          AGE_IDENTITY_RESTORE: ${{ secrets.BACKUP_AGE_IDENTITY_RESTORE }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${AGE_IDENTITY_RESTORE:-}" ]]; then
+            echo "::error::The independent backup recovery identity is not configured."
+            exit 1
+          fi
+          umask 077
+          identity_file="$RUNNER_TEMP/studyspace-recovery.agekey"
+          test_dir="$RUNNER_TEMP/studyspace-recovery-test"
+          mkdir -p "$test_dir"
+          printf '%s' "$AGE_IDENTITY_RESTORE" > "$identity_file"
+          unset AGE_IDENTITY_RESTORE
+          derived_recipient="$(age-keygen -y "$identity_file")"
+          if [[ "$derived_recipient" != "$AGE_RECIPIENT_RESTORE" ]]; then
+            echo "::error::The recovery identity does not match the configured recovery recipient."
+            exit 1
+          fi
+          printf 'StudySpace encrypted recovery self-test\n' > "$test_dir/plaintext"
+          age --recipient "$AGE_RECIPIENT_RESTORE" --output "$test_dir/payload.age" "$test_dir/plaintext"
+          age --decrypt --identity "$identity_file" --output "$test_dir/restored" "$test_dir/payload.age"
+          cmp "$test_dir/plaintext" "$test_dir/restored"
+          rm -f "$identity_file"
+          rm -rf "$test_dir"
+
       - name: Export PostgreSQL application schema and data
         shell: bash
         env:
