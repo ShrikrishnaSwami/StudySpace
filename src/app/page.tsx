@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import StudySpaceMark from "@/components/StudySpaceMark";
 import { useState } from "react";
 import { ArrowRight, ArrowUpRight, BookOpen, Brain, CalendarDays, Check, CheckCircle2, ChevronRight, Clock3, FileText, GraduationCap, Layers3, Menu, Sparkles, Target, X, Zap } from "lucide-react";
 
@@ -17,7 +18,7 @@ export default function Home(){
  return <main id="main-content" className="fr-home">
   <div className="fr-ambient" aria-hidden="true"/>
   <header className="fr-nav-wrap"><nav className="fr-nav" aria-label="Main navigation">
-   <Link href="/" className="fr-brand"><span className="fr-brand-mark"><GraduationCap size={19}/></span><span>studyspace<span className="fr-brand-period">.</span></span></Link>
+   <Link href="/" className="fr-brand"><StudySpaceMark size={36} className="fr-brand-mark" /><span>studyspace<span className="fr-brand-period">.</span></span></Link>
    <div className="fr-nav-links">{navItems.map(item=><a key={item.href} href={item.href}>{item.label}</a>)}</div>
    <div className="fr-nav-actions"><Link href="/login" className="fr-login">Log in</Link><Link href="/signup" className="fr-button fr-button-small">Get started <ArrowUpRight size={15}/></Link></div>
    <button className="fr-menu-toggle" type="button" aria-label={menuOpen?"Close menu":"Open menu"} aria-expanded={menuOpen} onClick={()=>setMenuOpen(v=>!v)}>{menuOpen?<X size={20}/>:<Menu size={20}/>}</button>
@@ -34,7 +35,7 @@ export default function Home(){
    <div className="fr-product-stage" id="workspace" aria-label="Preview of the StudySpace student dashboard"><div className="fr-stage-orbit fr-stage-orbit-one"/><div className="fr-stage-orbit fr-stage-orbit-two"/>
     <div className="fr-product-window"><div className="fr-window-top"><div className="fr-window-dots"><i/><i/><i/></div><div className="fr-window-address"><span/> app.studyspace</div><div className="fr-window-top-right"><span/><span/><span/></div></div>
      <div className="fr-app-preview"><aside className="fr-preview-sidebar">
-      <div className="fr-preview-logo"><span><GraduationCap size={14}/></span> StudySpace</div><div className="fr-preview-label">WORKSPACE</div>
+      <div className="fr-preview-logo"><StudySpaceMark size={24} animated={false} /> StudySpace</div><div className="fr-preview-label">WORKSPACE</div>
       <div className="fr-preview-nav active"><Layers3 size={13}/> Overview</div><div className="fr-preview-nav"><BookOpen size={13}/> My courses</div><div className="fr-preview-nav"><CheckCircle2 size={13}/> Assignments</div><div className="fr-preview-nav"><CalendarDays size={13}/> Calendar</div><div className="fr-preview-nav"><Brain size={13}/> AI study room</div>
       <div className="fr-preview-sidebar-bottom"><span className="fr-preview-avatar">S</span><span>My workspace<small>Personal space</small></span><ChevronRight size={12}/></div>
      </aside>
