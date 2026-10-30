@@ -63,6 +63,13 @@ export async function POST(request: NextRequest) {
     const bytes = Buffer.from(await file.arrayBuffer());
     const prompt = `Convert this student-uploaded course document into accurate, useful revision notes.
 
+DOCUMENT READING / OCR RULES:
+- PDFs may be digitally generated or scanned images. Inspect each page visually; do not assume a page is blank because it has no selectable text.
+- Read printed and handwritten content only when genuinely legible. Preserve equations, symbols, tables, headings, and diagram labels as accurately as possible.
+- Do not silently skip pages. If a page is missing, rotated, blurred, low-resolution, or unreadable, identify the limitation in the notes.
+- Never reconstruct missing words, numbers, or formulas by guessing. Mark uncertain fragments as [unclear].
+- If most of the document is unreadable, explain that a clearer scan is needed instead of producing fabricated notes.
+
 Course: ${course.code || ""} — ${course.name}
 Course description: ${String(course.description || "Not provided").slice(0, 1000)}
 Unit / chapter: ${unitName}
