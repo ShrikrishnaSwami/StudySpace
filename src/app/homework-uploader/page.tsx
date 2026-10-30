@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 
 import AppShell from "@/components/AppShell";
+import ViewportPortal from "@/components/ViewportPortal";
 import { supabase } from "@/lib/supabase";
 
 import {
@@ -1044,6 +1045,7 @@ export default function HomeworkUploaderPage() {
 
         {/* UPLOAD MODAL */}
         {showUploadModal && (
+          <ViewportPortal>
           <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
             <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/[0.08] bg-[#100b19] shadow-2xl shadow-black/60">
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.06] bg-[#100b19]/95 px-6 py-5 backdrop-blur">
@@ -1283,6 +1285,7 @@ export default function HomeworkUploaderPage() {
 
         {/* DETAILS MODAL */}
         {selectedHomework && (
+          <ViewportPortal>
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
             <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#100b19] shadow-2xl shadow-black/60">
               <div className="flex shrink-0 items-start justify-between border-b border-white/[0.06] px-6 py-5">
@@ -1665,6 +1668,7 @@ export default function HomeworkUploaderPage() {
 
         {/* DELETE CONFIRMATION */}
         {deleteTarget && (
+          <ViewportPortal>
           <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
             <div className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#100b19] p-6 shadow-2xl shadow-black/60">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10">
