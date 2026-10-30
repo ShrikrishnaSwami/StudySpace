@@ -202,7 +202,7 @@ body { background: var(--atelier-deep); color: var(--atelier-paper); }
 .atelier-shell { background: #14130f !important; color: #e8e1d4 !important; }
 .atelier-shell .atelier-sidebar, .atelier-shell .ss-sidebar { background: #191812 !important; border-color: rgba(232,225,212,.13) !important; }
 .atelier-shell .ss-topbar { background: rgba(20,19,15,.94) !important; border-color: rgba(232,225,212,.13) !important; backdrop-filter: blur(18px); }
-.atelier-shell .ss-sidebar [class~="border-white/8"], .atelier-shell .ss-sidebar [class~="border-white/12"] { border-color: rgba(232,225,212,.14) !important; }
+.atelier-shell .ss-sidebar [class~="border-white/[0.08]"], .atelier-shell .ss-sidebar [class~="border-white/[0.12]"] { border-color: rgba(232,225,212,.14) !important; }
 .atelier-shell .ss-sidebar .text-white, .atelier-shell .ss-topbar .text-white, .atelier-shell main .text-white { color: #e8e1d4 !important; }
 .atelier-shell .ss-sidebar [class*="text-white/"], .atelier-shell .ss-topbar [class*="text-white/"] { color: #a59d8e !important; }
 .atelier-shell .ss-sidebar [class*="hover:bg-white"]:hover, .atelier-shell .ss-topbar [class*="hover:bg-white"]:hover { background: rgba(232,225,212,.07) !important; }
@@ -211,12 +211,12 @@ body { background: var(--atelier-deep); color: var(--atelier-paper); }
 .atelier-shell .ss-sidebar [class*="border-violet"], .atelier-shell .ss-topbar [class*="border-violet"], .atelier-shell main [class*="border-violet"] { border-color: rgba(185,162,122,.34) !important; }
 .atelier-shell main h1, .atelier-shell main h2, .atelier-shell main h3 { font-family: var(--atelier-serif); font-weight: 400 !important; letter-spacing: -.035em !important; color: #eee8dc !important; }
 .atelier-shell main .rounded-2xl, .atelier-shell main .rounded-xl { border-radius: 2px !important; }
-.atelier-shell main [class~="border-white/7"], .atelier-shell main [class~="border-white/8"], .atelier-shell main [class~="border-white/10"] { border-color: rgba(232,225,212,.15) !important; }
-.atelier-shell main [class~="bg-white/2"], .atelier-shell main [class~="bg-white/3"], .atelier-shell main [class~="bg-white/4"], .atelier-shell main [class~="bg-white/5"] { background-color: rgba(232,225,212,.035) !important; }
+.atelier-shell main [class~="border-white/[0.07]"], .atelier-shell main [class~="border-white/[0.08]"], .atelier-shell main [class~="border-white/[0.1]"] { border-color: rgba(232,225,212,.15) !important; }
+.atelier-shell main [class~="bg-white/[0.02]"], .atelier-shell main [class~="bg-white/[0.03]"], .atelier-shell main [class~="bg-white/[0.04]"], .atelier-shell main [class~="bg-white/[0.05]"] { background-color: rgba(232,225,212,.035) !important; }
 .atelier-shell .ss-command-panel { background: #1c1a14 !important; border-color: rgba(232,225,212,.18) !important; border-radius: 2px !important; }
 .atelier-shell .ss-command-backdrop { background: rgba(0,0,0,.72) !important; backdrop-filter: blur(8px); }
 .atelier-shell .ss-scroll-progress { background: linear-gradient(90deg,#b9a27a calc(var(--page-progress,0) * 100%),transparent 0) !important; }
-.atelier-shell .ss-sidebar a[aria-current="page"], .atelier-shell .ss-sidebar a[class~="bg-white/7"] { background: rgba(185,162,122,.12) !important; color: #eee8dc !important; }
+.atelier-shell .ss-sidebar a[aria-current="page"], .atelier-shell .ss-sidebar a[class~="bg-white/[0.07]"] { background: rgba(185,162,122,.12) !important; color: #eee8dc !important; }
 @media (max-width: 640px) {
   .atelier-shell .ss-topbar { padding-inline: 12px !important; }
   .atelier-shell main { overflow-wrap: anywhere; }
