@@ -237,14 +237,6 @@ export default function CinematicExperience() {
           gsap.ticker.lagSmoothing(0);
         }
 
-        const updateProgress = () => {
-          const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-          const progress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
-          document.documentElement.style.setProperty("--page-progress", String(progress));
-        };
-        window.addEventListener("scroll", updateProgress, { passive: true });
-        updateProgress();
-
         const context = gsap.context(() => {
           if (!reduceMotion) {
             // The first viewport gets a deliberate entrance sequence. It is
@@ -435,8 +427,6 @@ export default function CinematicExperience() {
             context.revert();
             interactionCleanups.forEach((remove) => remove());
             window.clearTimeout(routeRefresh);
-            window.removeEventListener("scroll", updateProgress);
-            document.documentElement.style.removeProperty("--page-progress");
             if (lenisFrame) gsap.ticker.remove(lenisFrame);
             lenis?.destroy();
             previous?.();
