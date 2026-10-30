@@ -984,6 +984,7 @@ export default function AITutorPage() {
   }
 
   function createChildNode(parent: WorkspaceWindow) {
+    if (workspaceWindows.length >= 18) return;
     const item = studyWorkspaceItems.find(entry => entry.kind === childNodeKind);
     const title = item?.title || "New study node";
     openWorkspace(childNodeKind, title, parent.courseId, parent.id);
@@ -1176,7 +1177,7 @@ export default function AITutorPage() {
           </div>
           <div className="mt-5 border-t border-[#b9a783]/15 pt-4">
             <div className="flex items-center justify-between"><p className="text-[9px] tracking-[.18em] text-[#b9a783]/70">OPEN NODES</p><span className="text-[10px] text-stone-500">{workspaceWindows.length} / 18</span></div>
-            {workspaceWindows.length === 0 ? <p className="mt-3 text-[10px] text-stone-600">Your canvas is clear. Create your first study nodes above.</p> : <div className="mt-2 space-y-1">{workspaceWindows.map(node => <div key={node.id} className="flex items-center justify-between border-b border-white/[0.05] py-2"><span className="min-w-0 truncate text-[10px] text-stone-300">{node.title}</span><button type="button" onClick={() => closeWorkspace(node.id)} aria-label={`Delete ${node.title}`} className="ml-2 p-1 text-stone-600 hover:text-red-300"><Trash2 className="h-3 w-3"/></button></div>)}</div>}
+            {workspaceWindows.length === 0 ? <p className="mt-3 text-[10px] text-stone-600">Your canvas is clear. Create your first study nodes above.</p> : <div className="mt-2 space-y-1">{workspaceWindows.map(node => <div key={node.id} className="flex items-center justify-between border-b border-white/[0.05] py-2"><button type="button" onClick={() => setFocusedWindowId(node.id)} className="min-w-0 truncate text-left text-[10px] text-stone-300 hover:text-[#d8c7a7]">{node.title}{node.parentId&&<span className="ml-2 text-[8px] text-[#b9a783]/55">CONNECTED</span>}</button><button type="button" onClick={() => closeWorkspace(node.id)} aria-label={`Delete ${node.title}`} className="ml-2 p-1 text-stone-600 hover:text-red-300"><Trash2 className="h-3 w-3"/></button></div>)}</div>}
           </div>
         </div>}
         {workspace.kind === "courses" && <div className="min-h-0 flex-1 overflow-y-auto p-4"><p className="mb-3 text-xs text-stone-400">Choose one of your courses to create a dedicated branch.</p>{courses.length === 0 ? <p className="py-10 text-center text-xs text-stone-500">Your courses will appear here once you add them.</p> : <div className="space-y-2">{courses.map(course=><button key={course.id} type="button" onClick={() => openWorkspace("course",course.code ? `${course.code} · Study space` : course.name,course.id)} className="flex w-full items-center justify-between border border-white/[0.08] bg-white/[0.025] p-3 text-left hover:border-[#b9a783]/40"><span><span className="block text-xs text-stone-200">{course.code || course.name}</span><span className="mt-1 block text-[10px] text-stone-500">{course.code ? course.name : course.professor || "Course workspace"}</span></span><Plus className="h-4 w-4 text-[#b9a783]"/></button>)}</div>}</div>}
