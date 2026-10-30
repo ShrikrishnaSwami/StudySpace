@@ -86,7 +86,6 @@ export default function MotionSystem() {
         frame = 0;
         const max = document.documentElement.scrollHeight - window.innerHeight;
         const progress = max > 0 ? window.scrollY / max : 0;
-        root.style.setProperty("--page-progress", String(progress));
 
         const stage = document.querySelector<HTMLElement>(".fr-product-stage");
         if (stage) {
@@ -129,7 +128,6 @@ export default function MotionSystem() {
       if (frame) cancelAnimationFrame(frame);
       if (pointerFrame) cancelAnimationFrame(pointerFrame);
       root.classList.remove("motion-ready");
-      root.style.removeProperty("--page-progress");
     };
   }, []);
 
