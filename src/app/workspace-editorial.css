@@ -725,3 +725,147 @@ html[data-theme="light"] .fr-home .fr-feature-icon {
   color: #8f671d !important;
   background: linear-gradient(135deg, rgba(229,189,89,.28), rgba(141,107,212,.07)) !important;
 }
+
+
+/* --------------------------------------------------------------------------
+   Typography motion: restrained entrance, warm gradient emphasis, crisp hovers.
+   No per-character splitting or delayed reading; content remains immediately
+   available to assistive technology and reduced-motion users.
+   -------------------------------------------------------------------------- */
+@keyframes ss-text-rise-in {
+  from { opacity: 0; transform: translate3d(0, 16px, 0); filter: blur(5px); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); filter: blur(0); }
+}
+@keyframes ss-text-soft-in {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes ss-gradient-drift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+@keyframes ss-heading-glint {
+  0%, 72%, 100% { background-position: 0% 50%; }
+  86% { background-position: 100% 50%; }
+}
+
+/* Public landing hero: eyebrow → headline → supporting copy → actions. */
+.landing-page .hero-copy > .hero-badge,
+.landing-page .hero-copy > .section-eyebrow,
+.ss-home .ss-hero > .ss-kicker,
+.ss-landing .ss-landing-kicker,
+.ss-editorial .ss-editorial-kicker,
+.fr-home .fr-announcement {
+  animation: ss-text-soft-in 650ms cubic-bezier(.2,.75,.25,1) both;
+}
+.landing-page .hero-copy h1,
+.ss-home .ss-hero h1,
+.ss-landing .ss-landing-title,
+.ss-editorial .ss-editorial-title,
+.fr-home .fr-hero h1 {
+  animation: ss-text-rise-in 850ms cubic-bezier(.2,.75,.25,1) 90ms both;
+}
+.landing-page .hero-copy > p,
+.ss-home .ss-hero > p,
+.ss-landing .ss-landing-description,
+.ss-editorial .ss-editorial-description,
+.fr-home .fr-hero > p {
+  animation: ss-text-soft-in 720ms cubic-bezier(.2,.75,.25,1) 220ms both;
+}
+.landing-page .hero-copy .hero-actions,
+.landing-page .hero-copy .hero-trust,
+.ss-home .ss-hero-actions,
+.ss-landing .ss-landing-actions,
+.ss-editorial .ss-editorial-actions,
+.fr-home .fr-hero-actions {
+  animation: ss-text-soft-in 720ms cubic-bezier(.2,.75,.25,1) 340ms both;
+}
+
+/* Authenticated workspace page titles and their first supporting line. */
+.atelier-shell .atelier-main h1,
+.atelier-shell .atelier-main [data-page-title],
+.atelier-shell .atelier-main .page-title {
+  animation: ss-text-rise-in 680ms cubic-bezier(.2,.75,.25,1) both;
+}
+.atelier-shell .atelier-main h1 + p,
+.atelier-shell .atelier-main [data-page-title] + p {
+  animation: ss-text-soft-in 620ms cubic-bezier(.2,.75,.25,1) 110ms both;
+}
+.atelier-shell .atelier-main h2,
+.atelier-shell .atelier-main h3 {
+  animation: ss-text-soft-in 560ms cubic-bezier(.2,.75,.25,1) both;
+}
+
+/* The gold-to-violet accent breathes slowly instead of flashing continuously. */
+.landing-page .hero-copy h1 span,
+.landing-page .section-heading h2 span,
+.landing-page .why-content h2 span,
+.landing-page .landing-cta h2 span,
+.ss-home .ss-hero h1 span,
+.ss-landing .ss-landing-title span,
+.ss-editorial .ss-editorial-title span,
+.fr-home .fr-hero h1 span {
+  background-size: 180% 180% !important;
+  animation: ss-gradient-drift 9s ease-in-out infinite;
+}
+.ss-home a,
+.ss-landing a,
+.ss-editorial a,
+.fr-home a,
+.atelier-shell .ss-sidebar a,
+.atelier-shell .atelier-main a {
+  text-decoration-color: transparent;
+  text-underline-offset: 4px;
+  transition:
+    color 180ms ease,
+    text-decoration-color 180ms ease,
+    opacity 180ms ease;
+}
+.ss-home a:hover,
+.ss-landing a:hover,
+.ss-editorial a:hover,
+.fr-home a:hover,
+.atelier-shell .ss-sidebar a:hover,
+.atelier-shell .atelier-main a:hover {
+  text-decoration-color: rgba(229,189,89,.72);
+}
+
+/* Avoid animating frequently changing tutor output or form contents. */
+.atelier-shell .atelier-main textarea,
+.atelier-shell .atelier-main input,
+.atelier-shell .atelier-main [contenteditable="true"] {
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .hero-copy > *,
+  .ss-home .ss-hero > *,
+  .ss-landing .ss-landing-title,
+  .ss-landing .ss-landing-kicker,
+  .ss-landing .ss-landing-description,
+  .ss-landing .ss-landing-actions,
+  .ss-editorial .ss-editorial-title,
+  .ss-editorial .ss-editorial-kicker,
+  .ss-editorial .ss-editorial-description,
+  .ss-editorial .ss-editorial-actions,
+  .fr-home .fr-hero > *,
+  .atelier-shell .atelier-main h1,
+  .atelier-shell .atelier-main h2,
+  .atelier-shell .atelier-main h3,
+  .atelier-shell .atelier-main [data-page-title],
+  .atelier-shell .atelier-main [data-page-title] + p {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+  .landing-page .hero-copy h1 span,
+  .landing-page .section-heading h2 span,
+  .landing-page .why-content h2 span,
+  .landing-page .landing-cta h2 span,
+  .ss-home .ss-hero h1 span,
+  .ss-landing .ss-landing-title span,
+  .ss-editorial .ss-editorial-title span,
+  .fr-home .fr-hero h1 span {
+    animation: none !important;
+  }
+}
