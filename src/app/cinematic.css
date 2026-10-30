@@ -551,3 +551,19 @@ body > main[class~="items-center"][class~="justify-center"] > div[class*="rounde
 @keyframes ss-brain-float { 0%,100% { transform:translate(-50%,-50%) translateY(0) rotate(-1deg) scale(1); } 50% { transform:translate(-50%,-50%) translateY(-11px) rotate(1.5deg) scale(1.025); } }
 @keyframes ss-brain-aura { 0%,100% { opacity:.58; transform:translate(-50%,-50%) scale(.9); } 50% { opacity:1; transform:translate(-50%,-50%) scale(1.12); } }
 @media (prefers-reduced-motion:reduce) { .ss-neural-web,.ss-digital-brain,.ss-brain-aura,.ss-neural-mini-core { animation:none!important; } }
+
+
+/* AI Tutor: an immersive, deep-space neural environment */
+.ss-neural-tutor{isolation:isolate;color:#dceeff;background:radial-gradient(ellipse at 56% 34%,#0b2a52 0%,#04152e 37%,#020817 78%)!important}
+.ss-neural-tutor:before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.2;background-image:linear-gradient(rgba(83,160,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(83,160,255,.06) 1px,transparent 1px);background-size:54px 54px;mask-image:linear-gradient(to bottom,black,transparent 90%)}
+.ss-neural-history{z-index:3;border-color:rgba(92,181,255,.14)!important;background:rgba(2,10,27,.96)!important;backdrop-filter:blur(22px)}
+.ss-neural-history button{border-radius:3px!important}.ss-neural-main{z-index:1;background:radial-gradient(ellipse at 52% 38%,rgba(13,66,125,.18),transparent 58%)}
+.ss-neural-header{border-bottom:1px solid rgba(115,190,255,.14)!important;background:rgba(2,10,25,.8)!important;backdrop-filter:blur(24px)}
+.ss-neural-tutor .ss-neural-universe{position:relative;width:100%;height:clamp(300px,43vh,470px);margin:0 auto;overflow:hidden;background:radial-gradient(ellipse at center,rgba(20,95,165,.2),transparent 68%)}
+.ss-neural-universe canvas{position:absolute;inset:0;width:100%;height:100%}.ss-neural-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 18%,rgba(2,8,23,.25) 65%,#020817 100%)}
+.ss-neural-readout{position:absolute;top:18px;left:50%;transform:translateX(-50%);display:flex;gap:22px;width:max-content;max-width:90%;color:rgba(137,207,255,.5);font:8px/1.4 var(--font-geist-mono),monospace;letter-spacing:.2em}.ss-neural-readout span+span{color:rgba(98,216,255,.82)}
+.ss-neural-crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:rgba(104,204,255,.22);font-size:36px;text-shadow:0 0 24px #38bdf8;pointer-events:none}.ss-neural-universe.is-active .ss-neural-crosshair{color:rgba(124,224,255,.7);animation:ss-neural-pulse .8s ease-in-out infinite alternate}.ss-neural-tutor .ss-neural-scene{display:none!important}
+.ss-neural-tutor h2{color:#e5f5ff!important;font-family:var(--font-geist-sans),sans-serif!important;font-weight:300!important;letter-spacing:-.055em!important}.ss-neural-tutor .text-violet-300,.ss-neural-tutor .text-violet-200{color:#8cddff!important}.ss-neural-tutor .bg-violet-600{background:#087eae!important}.ss-neural-tutor form>div{border-radius:4px!important;border-color:rgba(100,187,255,.22)!important;background:rgba(3,18,42,.9)!important;box-shadow:0 0 48px rgba(0,113,190,.1)}.ss-neural-tutor .ss-neural-main>div:last-child{border-color:rgba(100,187,255,.14)!important;background:rgba(2,9,24,.95)!important}
+@keyframes ss-neural-pulse{from{opacity:.4;transform:translate(-50%,-50%) scale(.8)}to{opacity:1;transform:translate(-50%,-50%) scale(1.25)}}
+@media(max-width:640px){.ss-neural-tutor .ss-neural-universe{height:300px}.ss-neural-readout{font-size:7px;gap:10px;letter-spacing:.12em}}
+@media(prefers-reduced-motion:reduce){.ss-neural-universe.is-active .ss-neural-crosshair{animation:none}}
