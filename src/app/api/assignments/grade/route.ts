@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
     const declaredReferenceBytes = readableReferences.reduce((sum, file) => sum + (Number(file.file_size) || 0), 0);
     if (declaredReferenceBytes > 15 * 1024 * 1024) return NextResponse.json({ error: "Keep the combined assignment prompt and rubric files under 15 MB for AI grading." }, { status: 413 });
     if (ownerReferences.length && readableReferences.length === 0) return NextResponse.json({ error: "AI grading can read assignment reference files in PDF, TXT, CSV, PNG, JPG, or WEBP format. Upload a supported assignment prompt or rubric." }, { status: 415 });
-    const quota = await consumeAiQuota(token, "homework");
+    const quota = await consumeAiQuota(token, "grading");
     if (!quota.allowed) return NextResponse.json({ error: quota.scope === "rate" ? "Too many AI grading requests. Please wait a few minutes and try again." : quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You've reached today's AI homework limit. Try again later.", usage: quota }, { status: 429 });
 
     const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
