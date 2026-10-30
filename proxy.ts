@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const MAX_API_BODY_BYTES = 16 * 1024 * 1024;
+const MAX_API_BODY_BYTES = 4_400_000;
 
 function allowedOrigin(origin: string, request: NextRequest) {
   if (origin === request.nextUrl.origin) return true;
