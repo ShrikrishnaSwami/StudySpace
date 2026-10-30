@@ -18,7 +18,7 @@ export default function StudySpaceMark({
   const id = useId().replace(/:/g, "");
   return (
     <span
-      className={[\"ss-brand-emblem\", animated ? \"ss-brand-emblem-live\" : \"\", className].filter(Boolean).join(" ")}
+      className={["ss-brand-emblem", animated ? "ss-brand-emblem-live" : "", className].filter(Boolean).join(" ")}
       style={{ width: size, height: size }}
       aria-label={label}
       role="img"
