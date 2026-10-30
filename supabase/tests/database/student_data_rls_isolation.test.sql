@@ -4,6 +4,8 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = extensions, public;
+GRANT USAGE ON SCHEMA extensions TO authenticated;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA extensions TO authenticated;
 SELECT extensions.plan(19);
 
 CREATE TEMP TABLE rls_test_ids ON COMMIT DROP AS
