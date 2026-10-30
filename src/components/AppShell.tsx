@@ -782,7 +782,7 @@ export default function AppShell({
           <section role="dialog" aria-modal="true" aria-label="Quick navigation" className="ss-command-panel w-full max-w-xl overflow-hidden rounded-2xl border border-white/[0.12] shadow-2xl shadow-black/60">
             <div className="flex items-center gap-3 border-b border-white/[0.08] px-4">
               <Search size={18} className="shrink-0 text-violet-300" />
-              <input ref={commandInputRef} value={commandQuery} onChange={(event) => setCommandQuery(event.target.value)} placeholder="Where do you want to go?" aria-label="Search StudySpace pages" className="h-14 min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30" />
+              <input ref={commandInputRef} value={commandQuery} onChange={(event) => setCommandQuery(event.target.value)} placeholder="Search courses, notes or assignments…" aria-label="Search StudySpace pages" className="h-14 min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30" />
               <kbd className="rounded-md border border-white/[0.1] px-2 py-1 text-[10px] text-white/35">ESC</kbd>
             </div>
             <div className="max-h-[min(55vh,420px)] overflow-y-auto p-2">
@@ -864,7 +864,7 @@ export default function AppShell({
                 </div>
 
                 <div className="mt-0.5 truncate text-[10px] text-white/25">
-                  Your student workspace
+                  Your courses and study tools
                 </div>
               </div>
             )}
