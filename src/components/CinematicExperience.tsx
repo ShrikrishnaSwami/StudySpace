@@ -76,7 +76,7 @@ export default function CinematicExperience() {
   useEffect(() => {
     let disposed = false;
     let cleanup: (() => void) | undefined;
-    let bootTimer: number | undefined;
+    
 
     // Route changes get a real full-screen editorial wipe. This node is
     // created only after hydration, so it cannot alter server-rendered markup.
@@ -103,15 +103,15 @@ export default function CinematicExperience() {
         const premiumEase = CustomEase ? "atelier-weight" : "power3.out";
 
         const canvas = document.querySelector<HTMLCanvasElement>("#studyspace-atmosphere");
-        let renderer: any;
-        let scene: any;
-        let camera: any;
-        let material: any;
-        let particleGeometry: any;
-        let particleMaterial: any;
-        let particleScene: any;
-        let particleCamera: any;
-        let particles: any;
+        let renderer: THREE.WebGLRenderer;
+        let scene: THREE.Scene;
+        let camera: THREE.Camera;
+        let material: THREE.ShaderMaterial;
+        let particleGeometry: THREE.BufferGeometry;
+        let particleMaterial: THREE.PointsMaterial;
+        let particleScene: THREE.Scene;
+        let particleCamera: THREE.PerspectiveCamera;
+        let particles: THREE.Points;
         let frame = 0;
         let pointerX = 0;
         let pointerY = 0;
@@ -221,7 +221,7 @@ export default function CinematicExperience() {
         }
 
         const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        let lenis: any;
+        let lenis: Lenis | undefined;
         let lenisFrame: ((time: number) => void) | undefined;
         if (!reduceMotion) {
           lenis = new Lenis({
@@ -254,7 +254,7 @@ export default function CinematicExperience() {
             // Reveal each chapter's content independently. Avoid animating a
             // parent section and its children simultaneously; that can leave
             // nested elements hidden or make the reveal imperceptible.
-            gsap.utils.toArray(".atelier-manifesto, .atelier-chapter, .atelier-closing").forEach((section: any) => {
+            gsap.utils.toArray<HTMLElement>(".atelier-manifesto, .atelier-chapter, .atelier-closing").forEach((section: HTMLElement) => {
               const pieces = section.querySelectorAll(
                 ".atelier-overline, h2, .atelier-body-copy, .atelier-feature-list li, .atelier-text-link, .atelier-chapter-heading, .atelier-index-art, .atelier-ritual-art, .atelier-record-art, .atelier-closing-note, .atelier-primary",
               );
@@ -273,7 +273,7 @@ export default function CinematicExperience() {
               );
             });
 
-            gsap.utils.toArray(".atelier-home .atelier-index-art, .atelier-home .atelier-ritual-art, .atelier-home .atelier-record-art").forEach((art: any, index) => {
+            gsap.utils.toArray<HTMLElement>(".atelier-home .atelier-index-art, .atelier-home .atelier-ritual-art, .atelier-home .atelier-record-art").forEach((art: HTMLElement, index) => {
               const chapter = art.closest(".atelier-chapter");
               const direction = index % 2 === 0 ? -1 : 1;
               gsap.fromTo(art,
@@ -298,7 +298,7 @@ export default function CinematicExperience() {
 
             // Large editorial typography moves through a real scroll timeline,
             // rather than receiving another small opacity-only reveal.
-            gsap.utils.toArray(".atelier-manifesto h2, .atelier-chapter-copy h2, .atelier-closing h2").forEach((heading: any) => {
+            gsap.utils.toArray<HTMLElement>(".atelier-manifesto h2, .atelier-chapter-copy h2, .atelier-closing h2").forEach((heading: HTMLElement) => {
               gsap.fromTo(heading,
                 { scale: 0.82, y: 90, rotateX: -8, transformOrigin: "50% 100%", filter: "blur(8px)" },
                 {
@@ -308,7 +308,7 @@ export default function CinematicExperience() {
               );
             });
 
-            gsap.utils.toArray(".atelier-chapter-heading .atelier-chapter-rule").forEach((rule: any) => {
+            gsap.utils.toArray<HTMLElement>(".atelier-chapter-heading .atelier-chapter-rule").forEach((rule: HTMLElement) => {
               gsap.fromTo(rule, { scaleX: 0, transformOrigin: "left center" }, {
                 scaleX: 1, ease: "none",
                 scrollTrigger: { trigger: rule, start: "top 88%", end: "top 55%", scrub: 0.8 },
@@ -342,9 +342,9 @@ export default function CinematicExperience() {
                 { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: 0.9, ease: premiumEase, delay: 0.2 },
               );
 
-              const workspaceCards = gsap.utils.toArray(
+              const workspaceCards = gsap.utils.toArray<HTMLElement>(
                 ".atelier-shell main [class*='rounded-2xl'], .atelier-shell main [class*='rounded-xl'], .atelier-shell main article, .atelier-shell main tr",
-              ).filter((node: any) =>
+              ).filter((node: HTMLElement) =>
                   !node.closest("[role='dialog']") &&
                   !node.parentElement?.closest(
                     ".atelier-shell main [class*='rounded-2xl'], .atelier-shell main [class*='rounded-xl'], .atelier-shell main article",
@@ -362,7 +362,7 @@ export default function CinematicExperience() {
                 );
               });
 
-              gsap.utils.toArray(".atelier-shell main h1, .atelier-shell main h2").forEach((heading: any) => {
+              gsap.utils.toArray<HTMLElement>(".atelier-shell main h1, .atelier-shell main h2").forEach((heading: HTMLElement) => {
                 gsap.fromTo(heading,
                   { y: 42, letterSpacing: "-.075em", autoAlpha: 0, filter: "blur(8px)" },
                   { y: 0, letterSpacing: "-.035em", autoAlpha: 1, filter: "blur(0px)", duration: 1.1, ease: premiumEase, delay: 0.12 },
@@ -371,7 +371,7 @@ export default function CinematicExperience() {
 
               // Pointer-reactive depth: dashboard cards physically tilt toward
               // the cursor, then settle back when the pointer leaves.
-              workspaceCards.forEach((card: any) => {
+              workspaceCards.forEach((card: HTMLElement) => {
                 if (card.matches("tr")) return;
                 const moveCard = (event: PointerEvent) => {
                   if (event.pointerType === "touch") return;
@@ -400,7 +400,7 @@ export default function CinematicExperience() {
               });
             }
 
-            gsap.utils.toArray(".atelier-shell main button, .atelier-shell main a, .atelier-home .atelier-primary, .atelier-home .atelier-enter").forEach((item: any) => {
+            gsap.utils.toArray<HTMLElement>(".atelier-shell main button, .atelier-shell main a, .atelier-home .atelier-primary, .atelier-home .atelier-enter").forEach((item: HTMLElement) => {
               const lift = () => gsap.to(item, { y: -3, duration: 0.22, ease: "power2.out", overwrite: "auto" });
               const settle = () => gsap.to(item, { y: 0, duration: 0.35, ease: "power3.out", overwrite: "auto" });
               item.addEventListener("mouseenter", lift);
@@ -431,7 +431,7 @@ export default function CinematicExperience() {
                 duration: 1.7, repeat: -1, yoyo: true, stagger: .35, ease: "sine.inOut",
               });
 
-              gsap.utils.toArray(".ss-editorial-manifesto, .ss-editorial-workspace, .ss-editorial-method, .ss-editorial-closing").forEach((section: any) => {
+              gsap.utils.toArray<HTMLElement>(".ss-editorial-manifesto, .ss-editorial-workspace, .ss-editorial-method, .ss-editorial-closing").forEach((section: HTMLElement) => {
                 const targets = section.querySelectorAll(".ss-editorial-kicker, h2, .ss-editorial-manifesto-grid > div, .ss-editorial-chapters button, .ss-editorial-preview, .ss-method-aside > div, .ss-editorial-closing > p, .ss-editorial-closing > a");
                 if (!targets.length) return;
                 gsap.fromTo(targets,
@@ -444,7 +444,7 @@ export default function CinematicExperience() {
                 );
               });
 
-              gsap.utils.toArray(".ss-editorial-preview, .ss-method-aside > div").forEach((panel: any, index: number) => {
+              gsap.utils.toArray<HTMLElement>(".ss-editorial-preview, .ss-method-aside > div").forEach((panel: any, index: number) => {
                 gsap.fromTo(panel,
                   { y: 55, rotateY: index % 2 ? 7 : -7, scale: .94, transformPerspective: 1000 },
                   { y: 0, rotateY: 0, scale: 1, duration: 1.1, ease: premiumEase,
@@ -452,7 +452,7 @@ export default function CinematicExperience() {
                 );
               });
 
-              gsap.utils.toArray(".ss-editorial-chapters button").forEach((tab: any) => {
+              gsap.utils.toArray<HTMLElement>(".ss-editorial-chapters button").forEach((tab: HTMLElement) => {
                 const hoverIn = () => gsap.to(tab, { x: 8, duration: .28, ease: "power3.out", overwrite: "auto" });
                 const hoverOut = () => gsap.to(tab, { x: 0, duration: .42, ease: "elastic.out(1,.6)", overwrite: "auto" });
                 tab.addEventListener("mouseenter", hoverIn);
@@ -496,7 +496,7 @@ export default function CinematicExperience() {
     // Let Next.js finish hydrating the page before GSAP touches React-owned
     // elements. GSAP writes inline styles and data attributes, which otherwise
     // race with hydration and produce attribute-mismatch warnings.
-    bootTimer = window.setTimeout(() => {
+    const bootTimer = window.setTimeout(() => {
       if (!disposed) void boot();
     }, 1200);
 
