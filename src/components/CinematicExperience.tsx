@@ -232,7 +232,8 @@ export default function CinematicExperience() {
             anchors: true,
           });
           lenis.on("scroll", () => ScrollTrigger.update());
-          lenisFrame = (time: number) => lenis.raf(time * 1000);
+          const activeLenis = lenis;
+          lenisFrame = (time: number) => activeLenis.raf(time * 1000);
           gsap.ticker.add(lenisFrame);
           gsap.ticker.lagSmoothing(0);
         }
