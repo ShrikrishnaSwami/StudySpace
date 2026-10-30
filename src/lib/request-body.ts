@@ -53,7 +53,7 @@ export async function readBoundedFormData(request: Request, maxBytes: number): P
     const replay = new Request(request.url, {
       method: "POST",
       headers: { "content-type": contentType },
-      body: new Blob([bytes], { type: contentType }),
+      body: new Blob([bytes.buffer as ArrayBuffer], { type: contentType }),
     });
     return await replay.formData();
   } catch {
