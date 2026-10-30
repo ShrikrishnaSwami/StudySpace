@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { consumeApiRateLimit, readBoundedJson } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
+import { cleanUserStoragePrefix } from "@/lib/account-storage-cleanup";
 
 export const dynamic = "force-dynamic";
 
@@ -56,63 +57,9 @@ export async function DELETE(request: NextRequest) {
     });
 
     // Each private bucket stores user-owned files under <auth-user-id>/...
-    // Paginate every directory without a depth cap. Any listing/removal failure
-    // aborts account deletion so no partially cleaned account is silently removed.
-    async function listAllUserFiles(bucketName: string): Promise<string[]> {
-      const bucket = admin.storage.from(bucketName);
-      const pendingPrefixes = [userId];
-      const visitedPrefixes = new Set<string>();
-      const files: string[] = [];
-      const pageSize = 100;
-
-      while (pendingPrefixes.length > 0) {
-        const prefix = pendingPrefixes.pop()!;
-        if (visitedPrefixes.has(prefix)) continue;
-        visitedPrefixes.add(prefix);
-
-        let offset = 0;
-        while (true) {
-          const { data, error } = await bucket.list(prefix, {
-            limit: pageSize,
-            offset,
-            sortBy: { column: "name", order: "asc" },
-          });
-          if (error) throw new Error(bucketName + ": " + error.message);
-
-          const entries = data || [];
-          for (const item of entries) {
-            const name = item.name;
-            if (!name || name === "." || name === ".." || name.includes("/") || name.includes("\\\\")) {
-              throw new Error(bucketName + ": storage returned an invalid path segment.");
-            }
-            const objectPath = prefix + "/" + name;
-            if (item.id === null) pendingPrefixes.push(objectPath);
-            else files.push(objectPath);
-          }
-
-          offset += entries.length;
-          if (entries.length < pageSize) break;
-        }
-      }
-
-      return files;
-    }
-
+    // The helper fully paginates nested directories and verifies that nothing remains.
     async function cleanBucket(bucketName: string): Promise<void> {
-      const bucket = admin.storage.from(bucketName);
-      const files = await listAllUserFiles(bucketName);
-
-      // Supabase Storage remove accepts at most 1,000 paths per request.
-      for (let i = 0; i < files.length; i += 1000) {
-        const { error } = await bucket.remove(files.slice(i, i + 1000));
-        if (error) throw new Error(bucketName + ": " + error.message);
-      }
-
-      // Verify cleanup with a fresh, fully paginated traversal before deletion.
-      const remaining = await listAllUserFiles(bucketName);
-      if (remaining.length > 0) {
-        throw new Error(bucketName + ": " + remaining.length + " user-owned object(s) remain after cleanup.");
-      }
+      await cleanUserStoragePrefix(admin.storage.from(bucketName), userId);
     }
 
     try {
