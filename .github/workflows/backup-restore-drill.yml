@@ -235,7 +235,7 @@ jobs:
           docker cp restore-work/load-auth.sql "$PG_CONTAINER:/tmp/load-auth.sql"
           docker exec --user root "$PG_CONTAINER" chmod 0644 /tmp/load-auth.sql
           docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 -f /tmp/load-auth.sql
-          auth_ready="$(docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -Atc "SELECT (to_regnamespace('auth') IS NOT NULL AND to_regclass('auth.users') IS NOT NULL)::text")"
+          auth_ready="$(docker exec --user postgres "$PG_CONTAINER" psql -U postgres -d postgres -Atc "SELECT (to_regnamespace('auth') IS NOT NULL AND to_regclass('auth.users') IS NOT NULL)")"
           test "$auth_ready" = "t"
 
       - name: Restore PostgreSQL constraints, indexes, and policies
