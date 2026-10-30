@@ -30,13 +30,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: tooLarge ? "Upload is too large. PDFs must be 3 MB or smaller and text must be under 30,000 characters." : "Invalid syllabus request." }, { status: tooLarge ? 413 : 400 });
     }
     if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Invalid syllabus request." }, { status: 400 });
-    const title = typeof body.title === "string" ? body.title.trim().slice(0, 160) : "";
-    const text = typeof body.text === "string" ? body.text.trim() : "";
-    const pdfBase64 = typeof body.pdfBase64 === "string" ? body.pdfBase64 : "";
+    const input = body as Record<string, unknown>;
+    const title = typeof input.title === "string" ? body.title.trim().slice(0, 160) : "";
+    const text = typeof input.text === "string" ? body.text.trim() : "";
+    const pdfBase64 = typeof input.pdfBase64 === "string" ? body.pdfBase64 : "";
     const isPdf = Boolean(pdfBase64);
     if (isPdf && (!/^[A-Za-z0-9+/]+={0,2}$/.test(pdfBase64) || !pdfBase64.startsWith("JVBERi0") || pdfBase64.length > 4300000)) return NextResponse.json({ error: "Invalid PDF upload. PDFs must be 3 MB or smaller." }, { status: 400 });
-    const sourceName = typeof body.sourceName === "string" ? body.sourceName.trim().slice(0, 200) : null;
-    const courseId = typeof body.courseId === "string" && body.courseId ? body.courseId : null;
+    const sourceName = typeof input.sourceName === "string" ? body.sourceName.trim().slice(0, 200) : null;
+    const courseId = typeof input.courseId === "string" && body.courseId ? body.courseId : null;
     if (!title || (!isPdf && text.length < 80)) return NextResponse.json({ error: "Add a title and at least 80 characters of syllabus text, or upload a PDF." }, { status: 400 });
     if (text.length > 30000) return NextResponse.json({ error: "Syllabus text must be 30,000 characters or fewer." }, { status: 413 });
 
