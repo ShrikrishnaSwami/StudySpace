@@ -35,10 +35,10 @@ export default function ErrorBoundary({
           </div>
           <p className="ss-error-eyebrow">PAGE ERROR</p>
           <h1 id="error-title">This page hit a snag.</h1>
-          <p className="ss-error-copy">Something went wrong while this page was loading. Your saved work should still be there. Try again, or head back to your dashboard.</p>
+          <p className="ss-error-copy">Something went wrong while this page was loading. Your saved work should still be there. Try again, or return to sign in.</p>
           <div className="ss-error-actions">
             <button type="button" onClick={() => reset()} className="ss-error-primary"><RefreshCw size={16} /> Try again</button>
-            <Link href="/dashboard" className="ss-error-secondary"><ArrowLeft size={16} /> Back to dashboard</Link>
+            <Link href="/login" className="ss-error-secondary"><ArrowLeft size={16} /> Back to sign in</Link>
             <a href="https://github.com/ShrikrishnaSwami/StudySpace/issues/new?template=beta-bug-report.yml" target="_blank" rel="noreferrer" className="ss-error-secondary">Report a bug <ArrowRight size={16} /></a>
           </div>
           {error.digest ? <p className="ss-error-reference">Support reference <span>{error.digest}</span></p> : null}
