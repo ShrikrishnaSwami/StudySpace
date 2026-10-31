@@ -10,14 +10,12 @@
 - Guest sign-in reuses the current anonymous session and can restore a saved guest session on the same browser after account sign-in.
 
 ## Required dashboard configuration for full bot protection
-Turnstile is not fully enforced until both Cloudflare and Supabase are configured. The repository cannot activate the Supabase project-level CAPTCHA switch or invent the Cloudflare keys.
+A managed Turnstile widget has been created in the connected Cloudflare account for `studyspace.wiki` and `localhost`. Its public site key is wired into the application. The matching secret is intentionally not stored in GitHub. Turnstile is not fully enforced until Supabase Auth's project-level CAPTCHA switch is enabled and that secret is configured there.
 
-1. In Cloudflare, create a Turnstile widget for `studyspace.wiki` and any required preview/development hostnames.
-2. Add the Turnstile **site key** to Vercel as `NEXT_PUBLIC_TURNSTILE_SITE_KEY` for Production and Preview as appropriate.
-3. In Supabase Dashboard → Authentication → Bot and Abuse Protection, enable CAPTCHA protection, select Cloudflare Turnstile, and enter the Turnstile **secret key**. Never put the secret key in a `NEXT_PUBLIC_` variable or commit it.
-4. Redeploy the application after adding the public site key.
-5. Test sign-up with a valid challenge, an expired challenge, and no token. Confirm Supabase rejects invalid/missing CAPTCHA tokens when protection is enabled.
-6. Review Supabase Auth rate limits, especially anonymous sign-ins, sign-ups, password resets and email OTP requests. Keep the built-in limits enabled.
+1. In Supabase Dashboard → Authentication → Bot and Abuse Protection, enable CAPTCHA protection, select Cloudflare Turnstile, and enter the secret key from the newly created Cloudflare widget. Never put the secret key in a `NEXT_PUBLIC_` variable or commit it.
+2. The public site key is already configured in `src/lib/security-config.ts`; use `NEXT_PUBLIC_TURNSTILE_SITE_KEY` only if you need to override it for a separate preview widget.
+3. Test sign-up and guest sign-in with a valid challenge, an expired challenge, and no token. Confirm Supabase rejects invalid/missing CAPTCHA tokens after the setting is enabled.
+4. Review Supabase Auth rate limits, especially anonymous sign-ins, sign-ups, password resets and email OTP requests. Keep the built-in limits enabled.
 
 ## Important limitations
 - Honeypots and timing checks are supplementary signals, not substitutes for CAPTCHA or server-side rate limits.
