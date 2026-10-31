@@ -29,6 +29,21 @@ export default function ReportBugPage() {
 
   useEffect(() => {
     let alive = true;
+    let refreshTimer: ReturnType<typeof setInterval> | undefined;
+    async function refreshOwnReports(id: string) {
+      const { data: ownReports, error: reportsError } = await supabase
+        .from("bug_reports")
+        .select("id,title,status,admin_response,created_at")
+        .eq("user_id", id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (!alive) return;
+      if (reportsError) {
+        setError("Could not load your private reports. Please refresh the page.");
+        return;
+      }
+      setMyReports((ownReports || []) as MyReport[]);
+    }
     void supabase.auth.getUser().then(async ({ data, error: authError }) => {
       if (!alive) return;
       if (authError || !data.user) {
@@ -37,11 +52,23 @@ export default function ReportBugPage() {
       }
       setUserId(data.user.id);
       setUserEmail(data.user.email || "");
-      const { data: ownReports } = await supabase.from("bug_reports").select("id,title,status,admin_response,created_at").eq("user_id", data.user.id).order("created_at", { ascending: false }).limit(20);
-      if (alive) setMyReports((ownReports || []) as MyReport[]);
-      setLoading(false);
+      await refreshOwnReports(data.user.id);
+      if (alive) {
+        setLoading(false);
+        // Poll only this signed-in student's rows so admin replies appear without
+        // exposing or requesting any other student's reports.
+        refreshTimer = setInterval(() => { void refreshOwnReports(data.user.id); }, 15000);
+      }
+    }).catch(() => {
+      if (alive) {
+        setError("Could not verify your account. Please sign in again.");
+        setLoading(false);
+      }
     });
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+      if (refreshTimer) clearInterval(refreshTimer);
+    };
   }, [router]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
