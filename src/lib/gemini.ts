@@ -172,9 +172,13 @@ async function generateWithGemini({
   });
   const result = response.text?.trim();
   if (!result) throw new Error("The AI provider returned an empty response.");
+  const usage = (response as unknown as { usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number } }).usageMetadata;
   console.info("StudySpace AI generation completed", {
     task, provider: "gemini", model, durationMs: Date.now() - startedAt,
     promptCharacters: prompt.length, outputCharacters: result.length,
+    promptTokens: usage?.promptTokenCount,
+    outputTokens: usage?.candidatesTokenCount,
+    totalTokens: usage?.totalTokenCount,
   });
   return result;
 }
@@ -213,6 +217,8 @@ async function generateWithCloudProvider({
       }
     : undefined;
 
+  const startedAt = Date.now();
+  let usage: { promptTokens?: number; outputTokens?: number; totalTokens?: number } | undefined;
   const result = await requestChatCompletion({
     provider,
     endpoint,
@@ -224,10 +230,15 @@ async function generateWithCloudProvider({
     maxTokens: outputTokenLimit(task),
     temperature: task === "tutor" ? 0.35 : 0.2,
     extraHeaders,
+    onUsage: (value) => { usage = value; },
   });
 
   console.info("StudySpace AI generation completed", {
-    task, provider, model, outputCharacters: result.length,
+    task, provider, model, durationMs: Date.now() - startedAt,
+    outputCharacters: result.length,
+    promptTokens: usage?.promptTokens,
+    outputTokens: usage?.outputTokens,
+    totalTokens: usage?.totalTokens,
   });
   return result;
 }
