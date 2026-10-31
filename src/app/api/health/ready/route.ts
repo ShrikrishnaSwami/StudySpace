@@ -16,7 +16,7 @@ export async function GET() {
 
   if (!url || !serviceKey) {
     return NextResponse.json(
-      { status: "not_ready", checks: { database: "not_configured" } },
+      { status: "not_ready", checks: { database: "not_configured", storage: "not_configured" } },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
@@ -25,17 +25,21 @@ export async function GET() {
     const admin = createClient(url, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
-    const { error } = await admin.from("courses").select("id").limit(1);
-    if (error) throw error;
+    const [{ error: databaseError }, { error: storageError }] = await Promise.all([
+      admin.from("courses").select("id").limit(1),
+      admin.storage.listBuckets(),
+    ]);
+    if (databaseError) throw databaseError;
+    if (storageError) throw storageError;
 
     return NextResponse.json(
-      { status: "ready", checks: { database: "ok" }, durationMs: Date.now() - startedAt },
+      { status: "ready", checks: { database: "ok", storage: "ok" }, durationMs: Date.now() - startedAt },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch {
     console.error("StudySpace readiness check failed", { durationMs: Date.now() - startedAt });
     return NextResponse.json(
-      { status: "not_ready", checks: { database: "unavailable" } },
+      { status: "not_ready", checks: { database: "unavailable", storage: "unavailable" } },
       { status: 503, headers: { "Cache-Control": "no-store" } },
     );
   }
