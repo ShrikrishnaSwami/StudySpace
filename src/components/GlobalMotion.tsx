@@ -35,7 +35,7 @@ function splitHeading(element: HTMLElement): HTMLElement[] {
       mask.className = "ss-motion-char-mask";
       mask.setAttribute("aria-hidden", "true");
       glyph.className = "ss-motion-char";
-      glyph.textContent = character === " " ? "\u00a0" : character;
+      glyph.textContent = character;
       mask.appendChild(glyph);
       fragment.appendChild(mask);
       chars.push(glyph);
