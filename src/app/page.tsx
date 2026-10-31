@@ -45,7 +45,7 @@ export default function Home() {
 
       <section className="ss-editorial-opening">
         <div className="ss-editorial-opening-copy">
-          <p className="ss-editorial-kicker"><span/> MADE BY A STUDENT, FOR STUDENT WORK</p>
+          <p className="ss-editorial-kicker"><span data-live-pulse/> MADE BY A STUDENT, FOR STUDENT WORK</p>
           <h1 aria-label="The second brain for students running 40 open tabs."><span className="ss-word" aria-hidden="true">Your</span>{" "}<span className="ss-word" aria-hidden="true">second</span><br/><span className="ss-word" aria-hidden="true">brain for</span>{" "}<span className="ss-word" aria-hidden="true">student</span><br/><em><span className="ss-word" aria-hidden="true">life.</span></em></h1>
           <p className="ss-editorial-deck">The second brain for students running 40 open tabs. Keep courses, notes, deadlines and study tools together — then get back to cramming, keeping track, and surviving midterms.</p>
           <div className="ss-editorial-actions"><Link href="/signup" className="ss-landing-primary">Create your StudySpace <ArrowUpRight size={17}/></Link><Link href="/login" className="ss-editorial-text-link">Already have an account? Sign in</Link></div>
@@ -55,7 +55,7 @@ export default function Home() {
           <div className="ss-specimen-date"><span>YOUR</span><strong>WEEK</strong><small>AT A GLANCE</small></div>
           <div className="ss-specimen-rule"/>
           <p className="ss-specimen-label">WHAT NEEDS DOING</p>
-          <div className="ss-specimen-task"><span className="ss-specimen-marker" data-live-pulse/><div><b>Organic Chem II flashcards</b><small>CHEM · 24 cards ready to review</small></div><span>01</span></div>
+          <div className="ss-specimen-task"><span className="ss-specimen-marker"/><div><b>Organic Chem II flashcards</b><small>CHEM · 24 cards ready to review</small></div><span>01</span></div>
           <div className="ss-specimen-task"><span className="ss-specimen-marker"/><div><b>Econ 101 midterm cram</b><small>ECON · 3 topics left to review</small></div><span>02</span></div>
           <div className="ss-specimen-task is-muted"><span className="ss-specimen-marker"/><div><b>BIO 213 lab report</b><small>BIO · Due Friday</small></div><span>03</span></div>
           <div className="ss-specimen-foot"><span>A FEW THINGS ON YOUR LIST</span><Clock3 size={13}/></div>
