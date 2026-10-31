@@ -1601,9 +1601,11 @@ button, a, input, textarea, select { accent-color: #a78bfa; }
   z-index: 200;
   top: 10px;
   left: 10px;
+  right: auto;
+  display: inline-flex;
   align-self: flex-start;
-  width: max-content;
-  max-width: calc(100vw - 20px);
+  width: max-content !important;
+  max-width: calc(100vw - 20px) !important;
   transform: translateY(-160%);
   padding: 11px 15px;
   border: 1px solid rgba(196,181,253,.35);
