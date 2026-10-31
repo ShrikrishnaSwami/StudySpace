@@ -20,10 +20,17 @@ for (const viewport of viewports) {
         viewportWidth: window.innerWidth,
         documentWidth: document.documentElement.scrollWidth,
         bodyWidth: document.body.scrollWidth,
+        overflowers: Array.from(document.querySelectorAll("body *"))
+          .map((element) => {
+            const rect = element.getBoundingClientRect();
+            return { tag: element.tagName, id: element.id, className: typeof element.className === "string" ? element.className.slice(0, 100) : "", left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width) };
+          })
+          .filter((element) => element.right > window.innerWidth + 1 || element.left < -1)
+          .slice(0, 12),
       }));
       expect(
         dimensions.documentWidth,
-        `${route} has horizontal overflow at ${viewport.width}px`,
+        `${route} has horizontal overflow at ${viewport.width}px: ${JSON.stringify(dimensions.overflowers)}`,
       ).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
       expect(
         dimensions.bodyWidth,
