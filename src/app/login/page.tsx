@@ -38,6 +38,9 @@ export default function LoginPage() {
     if (params.get("account_deleted") === "1") {
       setNotice("Your StudySpace account has been deleted.");
     }
+    if (params.get("error") === "email_confirmation") {
+      setError("That confirmation link could not be verified. It may have expired or already been used. Request a fresh confirmation email and open the newest link.");
+    }
     setHasGuestBackup(Boolean(window.localStorage.getItem("studyspace_guest_refresh_token")));
   }, []);
 
@@ -221,6 +224,7 @@ export default function LoginPage() {
                 Pick up where you left off.
               </p>
               {notice && <p role="status" className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">{notice}</p>}
+              {error && <p role="alert" className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
             </div>
 
             <div className="mb-6 space-y-3">
