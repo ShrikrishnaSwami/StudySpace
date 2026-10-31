@@ -12,6 +12,7 @@ export default function ReportBugPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [userId, setUserId] = useState("");
+  const [userEmail, setUserEmail] = useState("");
   const [category, setCategory] = useState("bug");
   const [severity, setSeverity] = useState("normal");
   const [title, setTitle] = useState("");
@@ -28,6 +29,7 @@ export default function ReportBugPage() {
         return;
       }
       setUserId(data.user.id);
+      setUserEmail(data.user.email || "");
       setLoading(false);
     });
     return () => { alive = false; };
@@ -45,6 +47,7 @@ export default function ReportBugPage() {
     try {
       const { error: insertError } = await supabase.from("bug_reports").insert({
         user_id: userId,
+        reporter_email: userEmail,
         category,
         severity,
         title: title.trim(),
