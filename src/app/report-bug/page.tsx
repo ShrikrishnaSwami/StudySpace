@@ -25,7 +25,7 @@ export default function ReportBugPage() {
 
   useEffect(() => {
     let alive = true;
-    void supabase.auth.getUser().then(({ data, error: authError }) => {
+    void supabase.auth.getUser().then(async ({ data, error: authError }) => {
       if (!alive) return;
       if (authError || !data.user) {
         router.replace("/login");
