@@ -3,6 +3,7 @@
 import { FormEvent, useRef, useState } from "react";
 import Link from "next/link";
 import StudySpaceMark from "@/components/StudySpaceMark";
+import TurnstileCaptcha from "@/components/TurnstileCaptcha";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -23,6 +24,8 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [website, setWebsite] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
   const signupStartedAt = useRef(Date.now());
 
   const [loading, setLoading] = useState(false);
@@ -35,6 +38,10 @@ export default function SignupPage() {
     setError("");
     setSuccess("");
 
+    if (turnstileEnabled && !captchaToken) {
+      setError("Complete the bot-protection check before creating your account.");
+      return;
+    }
     if (!acceptedTerms) {
       setError("You must agree to the Terms of Service and Privacy Policy before creating an account.");
       return;
@@ -258,7 +265,7 @@ export default function SignupPage() {
                 </span>
               </label>
 
-              {/* Error */}
+              <TurnstileCaptcha onToken={setCaptchaToken} />\n\n              {/* Error */}
               {error && (
                 <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                   {error}
