@@ -25,7 +25,8 @@ export default function ReportBugPage() {
   const [description, setDescription] = useState("");
   const [message, setMessage] = useState("");
   const [myReports, setMyReports] = useState<MyReport[]>([]);
-  const [error, setError] = useState("");\n  const descriptionWords = countWords(description);
+  const [error, setError] = useState("");
+  const descriptionWords = countWords(description);
 
   useEffect(() => {
     let alive = true;
