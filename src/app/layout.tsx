@@ -22,11 +22,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "StudySpace — Courses, notes, deadlines and study tools",
+    default: "StudySpace — Your second brain for student life",
     template: "%s | StudySpace",
   },
   description:
-    "StudySpace keeps courses, lecture notes, assignments, deadlines, quizzes and an AI study partner together in one student workspace.",
+    "The second brain for students running 40 open tabs. Keep courses, notes, deadlines and study tools together — and survive midterms with a little less chaos.",
   applicationName: "StudySpace",
   keywords: [
     "student planner",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "StudySpace — Courses, notes, deadlines and study tools",
     description:
-      "Courses, notes, assignments and study tools in one place.",
+      "Built for cramming, keeping track, and surviving midterms.",
     siteName: "StudySpace",
     type: "website",
   },
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "StudySpace — Courses, notes, deadlines and study tools",
     description:
-      "Keep your courses, notes, deadlines and study tools together.",
+      "Your courses, notes, deadlines and study tools. One place to land.",
   },
   icons: { icon: "/icon.svg", shortcut: "/icon.svg", apple: "/icon.svg" },
   robots: {
