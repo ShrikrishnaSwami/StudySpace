@@ -699,6 +699,9 @@ export default function AppShell({
 
       updateUser(authUser);
       const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user.is_anonymous && session.refresh_token) {
+        window.localStorage.setItem("studyspace_guest_refresh_token", session.refresh_token);
+      }
       if (session?.access_token) void verifyAdmin(session.access_token);
     }
 
@@ -727,6 +730,9 @@ export default function AppShell({
           return;
         }
 
+        if (session.user.is_anonymous && session.refresh_token) {
+          window.localStorage.setItem("studyspace_guest_refresh_token", session.refresh_token);
+        }
         updateUser(session.user);
         if (session.access_token) void verifyAdmin(session.access_token);
         else setIsAdmin(false);
