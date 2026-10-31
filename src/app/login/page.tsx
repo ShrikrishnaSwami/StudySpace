@@ -30,6 +30,7 @@ export default function LoginPage() {
   const [notice, setNotice] = useState("");
   const [hasGuestBackup, setHasGuestBackup] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaKey, setCaptchaKey] = useState(0);
   const turnstileEnabled = Boolean(TURNSTILE_SITE_KEY);
 
   useEffect(() => {
@@ -78,6 +79,8 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not start guest access.");
+      setCaptchaToken("");
+      setCaptchaKey((key) => key + 1);
       setLoading(false);
     }
   }
@@ -105,11 +108,13 @@ export default function LoginPage() {
 
   async function handleForgotPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLoading(true);
     setError("");
     setResetSent(false);
+    if (turnstileEnabled && !captchaToken) { setError("Complete the bot-protection check before requesting a reset link."); return; }
+    setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        captchaToken: captchaToken || undefined,
         redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
       });
       if (error) throw error;
@@ -118,20 +123,23 @@ export default function LoginPage() {
       setError(cause instanceof Error ? cause.message : "Could not send the password reset email.");
     } finally {
       setLoading(false);
+      setCaptchaToken("");
+      setCaptchaKey((key) => key + 1);
     }
   }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLoading(true);
     setError("");
+    if (turnstileEnabled && !captchaToken) { setError("Complete the bot-protection check before signing in."); return; }
+    setLoading(true);
     try {
       const { data: previous } = await supabase.auth.getSession();
       if (previous.session?.user.is_anonymous && previous.session.refresh_token) {
         window.localStorage.setItem("studyspace_guest_refresh_token", previous.session.refresh_token);
         setHasGuestBackup(true);
       }
-      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password, options: { captchaToken: captchaToken || undefined } });
       if (error) throw error;
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.access_token) {
@@ -145,6 +153,8 @@ export default function LoginPage() {
       }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not sign in.");
+      setCaptchaToken("");
+      setCaptchaKey((key) => key + 1);
       setLoading(false);
     }
   }
@@ -214,7 +224,7 @@ export default function LoginPage() {
             </div>
 
             <div className="mb-6 space-y-3">
-              <TurnstileCaptcha onToken={setCaptchaToken} />
+              <TurnstileCaptcha key={captchaKey} onToken={setCaptchaToken} />
               <button type="button" onClick={handleGuestLogin} disabled={loading || (turnstileEnabled && !captchaToken && !hasGuestBackup)}
                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-purple-400/20 bg-purple-500/[0.07] py-3.5 text-sm font-semibold text-purple-200 transition hover:bg-purple-500/[0.13] disabled:opacity-60">
                 <UserRound size={18} /> Continue as guest
