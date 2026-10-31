@@ -23,9 +23,10 @@ function safeNext(value: string | null, origin: string) {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const tokenHash = url.searchParams.get("token_hash");
+  const code = url.searchParams.get("code");
   const next = safeNext(url.searchParams.get("next"), url.origin);
 
-  if (!tokenHash || tokenHash.length > 2048) {
+  if ((!tokenHash || tokenHash.length > 2048) && (!code || code.length > 2048)) {
     return NextResponse.redirect(new URL("/login?error=email_confirmation", url.origin));
   }
 
@@ -47,10 +48,9 @@ export async function GET(request: Request) {
     },
   );
 
-  const { error } = await supabase.auth.verifyOtp({
-    token_hash: tokenHash,
-    type: "email",
-  });
+  const { error } = tokenHash
+    ? await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "email" })
+    : await supabase.auth.exchangeCodeForSession(code!);
 
   if (error) {
     return NextResponse.redirect(new URL("/login?error=email_confirmation", url.origin));
