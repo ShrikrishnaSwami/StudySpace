@@ -264,7 +264,7 @@ export default function SettingsPage() {
     if (session?.user.is_anonymous && session.refresh_token) {
       window.localStorage.setItem("studyspace_guest_refresh_token", session.refresh_token);
     }
-    const { error } = await supabase.auth.signOut({ scope: "global" });
+    const { error } = await supabase.auth.signOut({ scope: session?.user.is_anonymous ? "local" : "global" });
     if (error) { setSecurityMessage(error.message); setSigningOut(false); return; }
     router.replace("/login");
   }
