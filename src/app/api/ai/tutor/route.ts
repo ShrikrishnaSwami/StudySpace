@@ -96,6 +96,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (user.is_anonymous === true) return NextResponse.json({ error: "AI features require a registered StudySpace account. Create an account to unlock AI tools." }, { status: 403 });
+
+
     /*
      * -------------------------------------------------------
      * REQUEST BODY
