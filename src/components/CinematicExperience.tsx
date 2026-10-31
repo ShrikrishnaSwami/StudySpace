@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { useGSAP } from "@gsap/react";
 import { usePathname } from "next/navigation";
 import * as THREE from "three";
 import { gsap } from "gsap";
@@ -70,8 +71,10 @@ const fragmentShader = `
   }
 `;
 
-export default function CinematicExperience() {
+export default function CinematicExperience({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const { contextSafe } = useGSAP({ scope: rootRef, dependencies: [pathname], revertOnUpdate: true });
 
   useEffect(() => {
     let disposed = false;
@@ -83,19 +86,7 @@ export default function CinematicExperience() {
     const routeCurtain = document.createElement("div");
     routeCurtain.className = "ss-route-curtain";
     document.body.appendChild(routeCurtain);
-    const curtainTween = gsap.fromTo(
-      routeCurtain,
-      { clipPath: "inset(0 0 0 0)" },
-      {
-        clipPath: "inset(0 0 100% 0)",
-        duration: 1.15,
-        delay: 0.08,
-        ease: "power4.inOut",
-        onComplete: () => routeCurtain.remove(),
-      },
-    );
-
-    async function boot() {
+    const boot = contextSafe(async () => {
       try {
         if (disposed) return;
 
@@ -492,7 +483,7 @@ export default function CinematicExperience() {
       } catch (error) {
         console.warn("StudySpace cinematic layer could not initialize:", error);
       }
-    }
+    });
 
     // Let Next.js finish hydrating the page before GSAP touches React-owned
     // elements. GSAP writes inline styles and data attributes, which otherwise
@@ -504,16 +495,16 @@ export default function CinematicExperience() {
     return () => {
       disposed = true;
       if (bootTimer !== undefined) window.clearTimeout(bootTimer);
-      curtainTween.kill();
       routeCurtain.remove();
       cleanup?.();
     };
-  }, [pathname]);
+  }, [pathname, contextSafe]);
 
   return (
-    <>
+    <div ref={rootRef} className="ss-cinematic-root">
+      {children}
       <canvas id="studyspace-atmosphere" className="studyspace-atmosphere" aria-hidden="true" />
       <div className="studyspace-atmosphere-vignette" aria-hidden="true" />
-    </>
+    </div>
   );
 }
