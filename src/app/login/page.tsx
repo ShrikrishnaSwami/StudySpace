@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import StudySpaceMark from "@/components/StudySpaceMark";
 import TurnstileCaptcha from "@/components/TurnstileCaptcha";
+import { TURNSTILE_SITE_KEY } from "@/lib/security-config";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -29,7 +30,7 @@ export default function LoginPage() {
   const [notice, setNotice] = useState("");
   const [hasGuestBackup, setHasGuestBackup] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
-  const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  const turnstileEnabled = Boolean(TURNSTILE_SITE_KEY);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
