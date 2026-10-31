@@ -463,7 +463,7 @@ export default function CinematicExperience({ children }: { children: ReactNode 
           }
 
           gsap.fromTo(document.body, { opacity: 0.96 }, { opacity: 1, duration: 0.55, ease: "power2.out" });
-        }, rootRef.current);
+        }, rootRef.current ?? undefined);
 
         const routeRefresh = window.setTimeout(() => {
           ScrollTrigger.refresh();
