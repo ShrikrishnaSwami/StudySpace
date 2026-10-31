@@ -138,6 +138,30 @@ export default function AdminPage() {
     }
   }, []);
 
+  async function sendBugReportReply(report: BugReport) {
+    const reply = (reportReplies[report.id] ?? report.admin_response ?? "").trim();
+    if (!reply) {
+      setReportsError("Write a reply before sending it to the student.");
+      return;
+    }
+    setSavingReportId(report.id);
+    setReportsError("");
+    try {
+      const { error } = await supabase.from("bug_reports").update({
+        admin_response: reply,
+        updated_at: new Date().toISOString(),
+      }).eq("id", report.id);
+      if (error) throw error;
+      await loadReports();
+      setReportReplies(current => ({ ...current, [report.id]: reply }));
+      setReportsError("");
+    } catch (cause) {
+      setReportsError(cause instanceof Error ? cause.message : "Could not send this reply.");
+    } finally {
+      setSavingReportId("");
+    }
+  }
+
   async function updateBugReport(report: BugReport, status: BugReport["status"]) {
     setSavingReportId(report.id);
     setReportsError("");
@@ -281,8 +305,8 @@ export default function AdminPage() {
             <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-white/75">{report.description}</p>
             {report.page_url && <p className="mt-3 break-all text-xs text-white/35">Page: {report.page_url}</p>}
             {report.browser_info && <p className="mt-1 break-all text-xs text-white/25">Browser: {report.browser_info}</p>}
-            <label className="mt-4 block space-y-2"><span className="text-xs font-medium text-white/55">Private admin response</span><textarea rows={3} maxLength={4000} value={reportReplies[report.id] ?? report.admin_response ?? ""} onChange={event => setReportReplies(current => ({ ...current, [report.id]: event.target.value }))} placeholder="Add investigation notes or a response for the student…" className="w-full resize-y rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white outline-none focus:border-violet-400/40"/></label>
-            <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => void updateBugReport(report, "in_progress")} disabled={savingReportId === report.id} className="rounded-lg border border-sky-400/20 bg-sky-400/[0.07] px-3 py-2 text-xs text-sky-100 disabled:opacity-50">{savingReportId === report.id ? "Saving…" : "Save / in progress"}</button><button type="button" onClick={() => void updateBugReport(report, "resolved")} disabled={savingReportId === report.id} className="rounded-lg border border-emerald-400/20 bg-emerald-400/[0.07] px-3 py-2 text-xs text-emerald-100 disabled:opacity-50">Mark resolved</button><button type="button" onClick={() => void updateBugReport(report, "new")} disabled={savingReportId === report.id} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white/60 disabled:opacity-50">Reopen</button></div>
+            <label className="mt-4 block space-y-2"><span className="text-xs font-medium text-white/55">Reply to this student (only they can see it)</span><textarea rows={3} maxLength={4000} value={reportReplies[report.id] ?? report.admin_response ?? ""} onChange={event => setReportReplies(current => ({ ...current, [report.id]: event.target.value }))} placeholder="Write a helpful reply. This message is visible only to the student who submitted this report…" className="w-full resize-y rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white outline-none focus:border-violet-400/40"/></label>
+            <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => void sendBugReportReply(report)} disabled={savingReportId === report.id || !(reportReplies[report.id] ?? report.admin_response ?? "").trim()} className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-50"><Send size={13}/>{savingReportId === report.id ? "Sending…" : "Send reply to student"}</button><button type="button" onClick={() => void updateBugReport(report, "in_progress")} disabled={savingReportId === report.id} className="rounded-lg border border-sky-400/20 bg-sky-400/[0.07] px-3 py-2 text-xs text-sky-100 disabled:opacity-50">{savingReportId === report.id ? "Saving…" : "Save / in progress"}</button><button type="button" onClick={() => void updateBugReport(report, "resolved")} disabled={savingReportId === report.id} className="rounded-lg border border-emerald-400/20 bg-emerald-400/[0.07] px-3 py-2 text-xs text-emerald-100 disabled:opacity-50">Mark resolved</button><button type="button" onClick={() => void updateBugReport(report, "new")} disabled={savingReportId === report.id} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white/60 disabled:opacity-50">Reopen</button></div>
           </article>)}
         </div>}
       </section>
