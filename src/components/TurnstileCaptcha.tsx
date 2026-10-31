@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { TURNSTILE_SITE_KEY } from "@/lib/security-config";
 
 declare global {
   interface Window {
@@ -22,7 +23,7 @@ export default function TurnstileCaptcha({ onToken }: { onToken: (token: string)
   const onTokenRef = useRef(onToken);
   const widgetIdRef = useRef<string | null>(null);
   onTokenRef.current = onToken;
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const siteKey = TURNSTILE_SITE_KEY;
 
   useEffect(() => {
     if (!siteKey || !containerRef.current) return;
