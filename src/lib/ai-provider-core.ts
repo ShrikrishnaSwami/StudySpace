@@ -14,6 +14,7 @@ type ChatCompletionInput = {
   temperature: number;
   extraHeaders?: Record<string, string>;
   fetcher?: typeof fetch;
+  onUsage?: (usage: { promptTokens?: number; outputTokens?: number; totalTokens?: number }) => void;
 };
 
 export function isFreeOpenRouterModel(model: string): boolean {
@@ -58,7 +59,15 @@ export async function requestChatCompletion(input: ChatCompletionInput): Promise
 
   const payload = await response.json() as {
     choices?: { message?: { content?: string | null } }[];
+    usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
   };
+  if (payload.usage) {
+    input.onUsage?.({
+      promptTokens: payload.usage.prompt_tokens,
+      outputTokens: payload.usage.completion_tokens,
+      totalTokens: payload.usage.total_tokens,
+    });
+  }
   const result = payload.choices?.[0]?.message?.content?.trim();
   if (!result) throw new Error(`${input.provider} provider returned an empty response.`);
   return result;
