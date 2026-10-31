@@ -7,6 +7,7 @@ export async function POST(request:NextRequest){
   const token=request.headers.get("authorization")?.replace(/^Bearer\s+/i,"");if(!token)return NextResponse.json({error:"Sign in to generate flashcards."},{status:401});
   const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY||process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;if(!url||!key)return NextResponse.json({error:"Supabase authentication is not configured on the server."},{status:503});
   const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:"Bearer "+token}}});const {data:{user},error}=await client.auth.getUser(token);if(error||!user)return NextResponse.json({error:"Your session expired. Sign in again."},{status:401});
+  if(user.is_anonymous===true)return NextResponse.json({error:"AI features require a registered StudySpace account. Create an account to unlock AI tools."},{status:403});
   let body: unknown;
   try { body = await readBoundedJson(request, 16384); } catch (error) {
    const tooLarge = error instanceof Error && error.message === "REQUEST_TOO_LARGE";
