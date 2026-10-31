@@ -162,6 +162,9 @@ test("guest sessions cannot call AI endpoints and signup requires policy consent
   assert.match(signup, /privacy_version/);
   assert.match(signup, /signup-website/);
   assert.match(signup, /captchaToken/);
+  assert.match(signup, /current\.session\?\.user\.is_anonymous/);
+  assert.match(signup, /supabase\.auth\.updateUser/);
+  assert.match(signup, /Convert the current guest identity/);
 
   const login = read("src/app/login/page.tsx");
   assert.match(login, /current\.session\?\.user\.is_anonymous/);
