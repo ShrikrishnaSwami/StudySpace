@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowLeft, ArrowRight, RefreshCw, Sparkles } from "lucide-react";
+import { AlertTriangle, ArrowLeft, RefreshCw, Sparkles } from "lucide-react";
 
 export default function ErrorBoundary({
   error,
@@ -39,7 +39,7 @@ export default function ErrorBoundary({
           <div className="ss-error-actions">
             <button type="button" onClick={() => reset()} className="ss-error-primary"><RefreshCw size={16} /> Try again</button>
             <Link href="/login" className="ss-error-secondary"><ArrowLeft size={16} /> Back to sign in</Link>
-            <a href="https://github.com/ShrikrishnaSwami/StudySpace/issues/new?template=beta-bug-report.yml" target="_blank" rel="noreferrer" className="ss-error-secondary">Report a bug <ArrowRight size={16} /></a>
+            <Link href="/report-bug" className="ss-error-secondary">Report a bug</Link>
           </div>
           {error.digest ? <p className="ss-error-reference">Support reference <span>{error.digest}</span></p> : null}
         </section>
