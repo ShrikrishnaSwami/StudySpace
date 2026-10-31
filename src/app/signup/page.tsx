@@ -32,17 +32,29 @@ export default function SignupPage() {
 
   useEffect(() => {
     signupStartedAt.current = Date.now();
-  }, []);
+
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active && data.session) router.replace("/dashboard");
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active && session) router.replace("/dashboard");
+    });
+
+    return () => {
+      active = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, [router]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   async function handleSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setError("");
-    setSuccess("");
 
     if (turnstileEnabled && !captchaToken) {
       setError("Complete the bot-protection check before creating your account.");
@@ -94,15 +106,25 @@ export default function SignupPage() {
         return;
       }
 
-      if (data.session) {
-        router.push("/dashboard");
-        return;
+      // When email confirmation is disabled, Supabase normally returns a
+      // session immediately. Sign in explicitly as a fallback so a newly
+      // created account is taken straight into its dashboard.
+      if (!data.session) {
+        const { data: signedIn, error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.trim().toLowerCase(),
+          password,
+          options: { captchaToken: captchaToken || undefined },
+        });
+
+        if (signInError || !signedIn.session) {
+          throw new Error(
+            signInError?.message ||
+            "Your account was created, but StudySpace could not start your session. Please sign in."
+          );
+        }
       }
 
-      setSuccess("Account created successfully! Check your email if confirmation is required, then sign in.");
-      setCaptchaToken("");
-      setCaptchaKey((key) => key + 1);
-      setLoading(false);
+      router.replace("/dashboard");
     } catch (err) {
 
       setCaptchaToken("");
@@ -285,13 +307,6 @@ export default function SignupPage() {
               {error && (
                 <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                   {error}
-                </div>
-              )}
-
-              {/* Success */}
-              {success && (
-                <div className="rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-300">
-                  {success}
                 </div>
               )}
 
