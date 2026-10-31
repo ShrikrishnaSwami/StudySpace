@@ -51,14 +51,15 @@ export default function ReportBugPage() {
         router.replace("/login");
         return;
       }
-      setUserId(data.user.id);
-      setUserEmail(data.user.email || "");
-      await refreshOwnReports(data.user.id);
+      const currentUser = data.user;
+      setUserId(currentUser.id);
+      setUserEmail(currentUser.email || "");
+      await refreshOwnReports(currentUser.id);
       if (alive) {
         setLoading(false);
         // Poll only this signed-in student's rows so admin replies appear without
         // exposing or requesting any other student's reports.
-        refreshTimer = setInterval(() => { void refreshOwnReports(data.user.id); }, 15000);
+        refreshTimer = setInterval(() => { void refreshOwnReports(currentUser.id); }, 15000);
       }
     }).catch(() => {
       if (alive) {
