@@ -17,12 +17,17 @@ for (const viewport of viewports) {
       expect(response?.status(), `${route} should load at ${viewport.width}px`).toBeLessThan(400);
 
       const dimensions = await page.evaluate(() => ({
-        viewportWidth: document.documentElement.clientWidth,
+        viewportWidth: window.innerWidth,
         documentWidth: document.documentElement.scrollWidth,
+        bodyWidth: document.body.scrollWidth,
       }));
       expect(
         dimensions.documentWidth,
         `${route} has horizontal overflow at ${viewport.width}px`,
+      ).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
+      expect(
+        dimensions.bodyWidth,
+        `${route} body has horizontal overflow at ${viewport.width}px`,
       ).toBeLessThanOrEqual(dimensions.viewportWidth + 1);
     }
   });
