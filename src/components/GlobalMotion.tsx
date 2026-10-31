@@ -187,10 +187,12 @@ export default function GlobalMotion({ children }: { children: React.ReactNode }
     const queueRows = Array.from(root.querySelectorAll<HTMLElement>(".ss-specimen-task"));
     if (queueRows.length > 1) {
       const queueTimeline = gsap.timeline({ repeat: -1, repeatDelay: 0.8 });
-      queueRows.forEach((row) => {
+      queueRows.forEach((row, index) => {
+        const nextRow = queueRows[(index + 1) % queueRows.length];
         queueTimeline
-          .to(row, { x: 6, duration: 0.22, ease: "power2.out" })
-          .to(row, { x: 0, duration: 0.42, ease: "power3.out" });
+          .to(row, { y: 34, x: 5, duration: 0.38, ease: "power3.inOut" })
+          .to(nextRow, { y: -34, x: -5, duration: 0.38, ease: "power3.inOut" }, "<")
+          .to([row, nextRow], { y: 0, x: 0, duration: 0.48, ease: "power3.out" }, ">");
       });
     }
 
