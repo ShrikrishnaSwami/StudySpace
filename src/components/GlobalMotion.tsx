@@ -26,6 +26,10 @@ function splitHeading(element: HTMLElement): HTMLElement[] {
   nodes.forEach((node) => {
     const fragment = document.createDocumentFragment();
     Array.from(node.textContent ?? "").forEach((character) => {
+      if (character === " ") {
+        fragment.appendChild(document.createTextNode(" "));
+        return;
+      }
       const mask = document.createElement("span");
       const glyph = document.createElement("span");
       mask.className = "ss-motion-char-mask";
