@@ -117,7 +117,7 @@ export default function GlobalMotion({ children }: { children: React.ReactNode }
 
     // Cards use quickTo rather than creating a new tween on every pointer event.
     const tiltTargets = Array.from(root.querySelectorAll<HTMLElement>(
-      "[data-motion-card], .ss-editorial-specimen, .ss-editorial-preview, .ss-dashboard-stats > div, .ss-dashboard-quick > a",
+      "[data-motion-card], .ss-editorial-specimen, .ss-editorial-preview",
     )).filter((element) => !isMotionExcluded(element));
 
     const removeTiltListeners: Array<() => void> = [];
