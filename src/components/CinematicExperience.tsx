@@ -85,7 +85,10 @@ export default function CinematicExperience({ children }: { children: ReactNode 
     // created only after hydration, so it cannot alter server-rendered markup.
     const routeCurtain = document.createElement("div");
     routeCurtain.className = "ss-route-curtain";
-    document.body.appendChild(routeCurtain);
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      document.body.appendChild(routeCurtain);
+      routeCurtain.addEventListener("animationend", () => routeCurtain.remove(), { once: true });
+    }
     const boot = contextSafe(async () => {
       try {
         if (disposed) return;
