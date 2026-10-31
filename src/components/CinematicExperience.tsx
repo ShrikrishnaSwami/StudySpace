@@ -74,7 +74,7 @@ const fragmentShader = `
 export default function CinematicExperience({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const rootRef = useRef<HTMLDivElement>(null);
-  const { contextSafe } = useGSAP({ scope: rootRef, dependencies: [pathname], revertOnUpdate: true });
+  const { contextSafe } = useGSAP(() => {}, { scope: rootRef, dependencies: [pathname], revertOnUpdate: true });
 
   useEffect(() => {
     let disposed = false;
@@ -365,7 +365,7 @@ export default function CinematicExperience({ children }: { children: ReactNode 
               // the cursor, then settle back when the pointer leaves.
               workspaceCards.forEach((card: HTMLElement) => {
                 if (card.matches("tr")) return;
-                const moveCard = (event: PointerEvent) => {
+                const moveCard = contextSafe((event: PointerEvent) => {
                   if (event.pointerType === "touch") return;
                   const bounds = card.getBoundingClientRect();
                   const x = (event.clientX - bounds.left) / bounds.width - 0.5;
@@ -379,10 +379,10 @@ export default function CinematicExperience({ children }: { children: ReactNode 
                     ease: "power2.out",
                     overwrite: "auto",
                   });
-                };
-                const resetCard = () => gsap.to(card, {
-                  rotateX: 0, rotateY: 0, z: 0, duration: 0.7, ease: "elastic.out(1, 0.55)", overwrite: "auto",
                 });
+                const resetCard = contextSafe(() => gsap.to(card, {
+                  rotateX: 0, rotateY: 0, z: 0, duration: 0.7, ease: "elastic.out(1, 0.55)", overwrite: "auto",
+                }));
                 card.addEventListener("pointermove", moveCard, { passive: true });
                 card.addEventListener("pointerleave", resetCard);
                 interactionCleanups.push(() => {
@@ -393,8 +393,8 @@ export default function CinematicExperience({ children }: { children: ReactNode 
             }
 
             gsap.utils.toArray<HTMLElement>(".atelier-shell main button, .atelier-shell main a, .atelier-home .atelier-primary, .atelier-home .atelier-enter").forEach((item: HTMLElement) => {
-              const lift = () => gsap.to(item, { y: -3, duration: 0.22, ease: "power2.out", overwrite: "auto" });
-              const settle = () => gsap.to(item, { y: 0, duration: 0.35, ease: "power3.out", overwrite: "auto" });
+              const lift = contextSafe(() => gsap.to(item, { y: -3, duration: 0.22, ease: "power2.out", overwrite: "auto" }));
+              const settle = contextSafe(() => gsap.to(item, { y: 0, duration: 0.35, ease: "power3.out", overwrite: "auto" }));
               item.addEventListener("mouseenter", lift);
               item.addEventListener("mouseleave", settle);
               gsap.set(item, { clearProps: "willChange" });
@@ -445,8 +445,8 @@ export default function CinematicExperience({ children }: { children: ReactNode 
               });
 
               gsap.utils.toArray<HTMLElement>(".ss-editorial-chapters button").forEach((tab: HTMLElement) => {
-                const hoverIn = () => gsap.to(tab, { x: 8, duration: .28, ease: "power3.out", overwrite: "auto" });
-                const hoverOut = () => gsap.to(tab, { x: 0, duration: .42, ease: "elastic.out(1,.6)", overwrite: "auto" });
+                const hoverIn = contextSafe(() => gsap.to(tab, { x: 8, duration: .28, ease: "power3.out", overwrite: "auto" }));
+                const hoverOut = contextSafe(() => gsap.to(tab, { x: 0, duration: .42, ease: "elastic.out(1,.6)", overwrite: "auto" }));
                 tab.addEventListener("mouseenter", hoverIn);
                 tab.addEventListener("mouseleave", hoverOut);
                 interactionCleanups.push(() => {
@@ -463,7 +463,7 @@ export default function CinematicExperience({ children }: { children: ReactNode 
           }
 
           gsap.fromTo(document.body, { opacity: 0.96 }, { opacity: 1, duration: 0.55, ease: "power2.out" });
-        });
+        }, rootRef.current);
 
         const routeRefresh = window.setTimeout(() => {
           ScrollTrigger.refresh();
