@@ -1,0 +1,35 @@
+/* Shared motion primitives. GSAP owns transforms; CSS only defines safe presentation. */
+.ss-motion-stage { display: contents; }
+.ss-motion-char-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: .08em;
+  margin-bottom: -.08em;
+  perspective: 700px;
+}
+.ss-motion-char { display: inline-block; transform-origin: 50% 100%; }
+.ss-motion-tilting {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+[data-motion-card] { transform-style: preserve-3d; }
+.ss-route-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: #100f0c;
+  animation: ss-route-wipe 1.15s cubic-bezier(.76,0,.24,1) .08s both;
+}
+@keyframes ss-route-wipe {
+  from { clip-path: inset(0 0 0 0); }
+  to { clip-path: inset(0 0 100% 0); }
+}
+@media (max-width: 760px) {
+  .ss-motion-tilting { will-change: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ss-motion-char-mask { overflow: visible; }
+  .ss-motion-tilting { transform: none !important; will-change: auto !important; }
+}
