@@ -5,6 +5,7 @@ import {
   Bell, Check, Download, Eye, Gauge, Lock, LogOut, Mail, Save, Shield, ShieldCheck, Trash2, User, RefreshCw,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
 
@@ -338,14 +339,27 @@ export default function SettingsPage() {
         <Section icon={Gauge} title="AI usage" description="View your rolling 24-hour generation limits.">
           <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm text-white/50">Limits help protect availability and keep AI usage predictable.</p><button type="button" onClick={()=>void loadAiUsage()} disabled={loadingUsage} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs text-white/70 disabled:opacity-50"><RefreshCw size={14}/>{loadingUsage?"Refreshing…":"Refresh usage"}</button></div>
           {usageError&&<p role="alert" className="text-xs text-red-300">{usageError}</p>}
-          {loadingUsage&&aiUsage.length===0&&<p role="status" className="text-xs text-white/40">Loading AI usage…</p>}
-          <div className="grid gap-3 sm:grid-cols-2">{aiUsage.map(item=><div key={item.feature} className="rounded-xl border border-white/[0.08] p-4"><div className="flex items-center justify-between gap-3"><p className="text-sm font-medium capitalize text-white">{item.feature==="tutor"?"AI Tutor":item.feature==="quiz"?"Quiz generation":item.feature==="flashcards"?"Flashcard generation":item.feature==="homework"?"Homework analysis":item.feature==="notes"?"Note extraction":item.feature==="grading"?"Assignment grading":item.feature==="syllabus"?"Syllabus importer":"Study recommendations"}</p><p className="text-xs tabular-nums text-white/45">{item.used}/{item.limit}</p></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-violet-500" style={{width:Math.min(100,item.used/Math.max(1,item.limit)*100)+"%"}}/></div><p className="mt-2 text-[11px] text-white/40">{item.remaining} requests remaining in the next 24 hours</p></div>)}</div>
+          {isAdmin && <p className="rounded-xl border border-violet-400/20 bg-violet-500/[0.07] p-4 text-sm leading-6 text-violet-100">Administrator access: personal AI daily quotas and burst limits are disabled for this account. Shared platform capacity and safety protections still apply.</p>}
+          {loadingUsage&&aiUsage.length===0&&!isAdmin&&<p role="status" className="text-xs text-white/40">Loading AI usage…</p>}
+          <div className="grid gap-3 sm:grid-cols-2">{(isAdmin ? [] : aiUsage).map(item=><div key={item.feature} className="rounded-xl border border-white/[0.08] p-4"><div className="flex items-center justify-between gap-3"><p className="text-sm font-medium capitalize text-white">{item.feature==="tutor"?"AI Tutor":item.feature==="quiz"?"Quiz generation":item.feature==="flashcards"?"Flashcard generation":item.feature==="homework"?"Homework analysis":item.feature==="notes"?"Note extraction":item.feature==="grading"?"Assignment grading":item.feature==="syllabus"?"Syllabus importer":"Study recommendations"}</p><p className="text-xs tabular-nums text-white/45">{item.used}/{item.limit}</p></div><div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-violet-500" style={{width:Math.min(100,item.used/Math.max(1,item.limit)*100)+"%"}}/></div><p className="mt-2 text-[11px] text-white/40">{item.remaining} requests remaining in the next 24 hours</p></div>)}</div>
         </Section>
 
         <Section icon={Download} title="Your data" description="Download a copy of the academic records associated with your account.">
           <div className="flex flex-wrap items-center justify-between gap-4"><div className="min-w-0 flex-1"><p className="text-sm font-medium text-white">Export StudySpace data</p><p className="mt-1 text-xs leading-5 text-white/40">Downloads a JSON file with your accessible courses, assignments, quizzes, grades, study records, notes, and other available workspace data. This is an export, not a backup restore.</p></div><button type="button" onClick={()=>void exportData()} disabled={exporting} className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/80 hover:bg-white/[0.05] disabled:opacity-50"><Download size={15}/>{exporting?"Preparing…":"Export data"}</button></div>
           {exportMessage&&<p role="status" className="text-xs text-white/55">{exportMessage}</p>}
         </Section>
+
+        {isAdmin && <Section icon={ShieldCheck} title="Administrator workspace" description="Owner-only controls for operating StudySpace.">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div><p className="text-sm font-semibold text-white">StudySpace owner account</p><p className="mt-1 text-xs text-white/45">{email}</p><p className="mt-2 text-xs text-violet-200">Trusted administrator role · Personal AI quotas disabled</p></div>
+            <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-200">Administrator</span>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/admin" className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-violet-500">Open admin dashboard</Link>
+            <Link href="/admin#bug-reports" className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/75 hover:bg-white/[0.05]">Open bug report inbox</Link>
+          </div>
+          <p className="text-xs leading-5 text-white/35">Admin-only access is controlled by server-managed Supabase app metadata, never by editable profile fields. Keep your authenticator enabled for access to reports and operational data.</p>
+        </Section>}
 
         <Section icon={Shield} title="Account security" description="Actions that affect your entire StudySpace account.">
           {isAdmin && <>
