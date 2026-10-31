@@ -9,7 +9,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CustomEase } from "gsap/CustomEase";
 import Lenis from "lenis";
 
-gsap.registerPlugin(ScrollTrigger, CustomEase);
+gsap.registerPlugin(useGSAP, ScrollTrigger, CustomEase);
 
 const vertexShader = `
   varying vec2 vUv;
