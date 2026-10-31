@@ -187,9 +187,9 @@ export default function GlobalMotion({ children }: { children: React.ReactNode }
     // Low-amplitude parallax on selected decorative surfaces, never on forms
     // or text-heavy content, and never on touch/reduced-motion devices.
     if (!window.matchMedia("(max-width: 760px)").matches) {
-      root.querySelectorAll<HTMLElement>("[data-motion-parallax]").forEach((element) => {
+      root.querySelectorAll<HTMLElement>("[data-motion-parallax], .atelier-shell .atelier-main > section, .atelier-shell .atelier-main > div > section, .ss-editorial-manifesto, .ss-editorial-method, .ss-editorial-closing").forEach((element) => {
         gsap.to(element, {
-          yPercent: -7,
+          yPercent: -4,
           ease: "none",
           scrollTrigger: {
             trigger: element,
