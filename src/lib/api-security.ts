@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
+import { isAdminUser } from "@/lib/admin";
 
 export type AiFeature = "tutor" | "quiz" | "flashcards" | "homework" | "notes" | "grading" | "syllabus" | "recommendations";
 
@@ -56,47 +57,25 @@ function adminClient() {
  */
 export async function consumeAiQuota(accessToken: string, feature: AiFeature) {
   const client = publicClient(accessToken);
-  const burst = await client.rpc("consume_my_api_rate_limit", {
-    p_route_key: "ai-" + feature,
-    p_limit: AI_BURST_LIMITS[feature],
-    p_window_seconds: 600,
-  });
-
-  if (burst.error) {
-    console.error("AI burst limit check failed", { feature, code: burst.error.code });
-    throw new Error("AI usage controls are temporarily unavailable. Please try again.");
+  const { data: { user }, error: userError } = await client.auth.getUser(accessToken);
+  if (userError || !user) throw new Error("Your session has expired. Sign in again.");
+  if (isAdminUser(user)) {
+    const { data, error } = await client.rpc("consume_admin_ai_quota", { p_feature: feature });
+    if (error) throw new Error("StudySpace AI capacity controls are temporarily unavailable.");
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) throw new Error("Admin AI capacity check returned no result.");
+    return { allowed: Boolean(row.allowed), limit: Number(row.limit_count ?? 0), used: Number(row.used ?? 0), remaining: Number(row.remaining ?? 0), resetAt: row.reset_at ? new Date(row.reset_at).toISOString() : new Date(Date.now() + 86400000).toISOString(), scope: "global" as const };
   }
-
+  const burst = await client.rpc("consume_my_api_rate_limit", { p_route_key: "ai-" + feature, p_limit: AI_BURST_LIMITS[feature], p_window_seconds: 600 });
+  if (burst.error) throw new Error("AI usage controls are temporarily unavailable. Please try again.");
   const burstRow = Array.isArray(burst.data) ? burst.data[0] : burst.data;
   if (!burstRow) throw new Error("AI burst limit returned no result.");
-  if (!burstRow.allowed) {
-    return {
-      allowed: false,
-      limit: AI_BURST_LIMITS[feature],
-      used: Number(burstRow.used ?? AI_BURST_LIMITS[feature]),
-      remaining: 0,
-      resetAt: burstRow.reset_at ? new Date(burstRow.reset_at).toISOString() : new Date(Date.now() + 600_000).toISOString(),
-      scope: "rate" as const,
-    };
-  }
-
-  const { data, error } = await client.rpc("consume_ai_quota_for_user", {
-    p_feature: feature,
-  });
-  if (error) {
-    console.error("Atomic AI quota check failed", { feature, code: error.code });
-    throw new Error("AI usage controls are temporarily unavailable. Please try again.");
-  }
+  if (!burstRow.allowed) return { allowed: false, limit: AI_BURST_LIMITS[feature], used: Number(burstRow.used ?? AI_BURST_LIMITS[feature]), remaining: 0, resetAt: burstRow.reset_at ? new Date(burstRow.reset_at).toISOString() : new Date(Date.now() + 600000).toISOString(), scope: "rate" as const };
+  const { data, error } = await client.rpc("consume_ai_quota_for_user", { p_feature: feature });
+  if (error) throw new Error("AI usage controls are temporarily unavailable. Please try again.");
   const row = Array.isArray(data) ? data[0] : data;
   if (!row) throw new Error("AI usage controls returned no result.");
-  return {
-    allowed: Boolean(row.allowed),
-    limit: Number(row.limit_count ?? AI_DAILY_LIMITS[feature]),
-    used: Number(row.used ?? 0),
-    remaining: Number(row.remaining ?? 0),
-    resetAt: row.reset_at ? new Date(row.reset_at).toISOString() : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    scope: row.scope === "global" ? "global" as const : "user" as const,
-  };
+  return { allowed: Boolean(row.allowed), limit: Number(row.limit_count ?? AI_DAILY_LIMITS[feature]), used: Number(row.used ?? 0), remaining: Number(row.remaining ?? 0), resetAt: row.reset_at ? new Date(row.reset_at).toISOString() : new Date(Date.now() + 86400000).toISOString(), scope: row.scope === "global" ? "global" as const : "user" as const };
 }
 
 export async function getAiUsage(accessToken: string) {
@@ -125,6 +104,12 @@ export async function consumeApiRateLimit(
   windowSeconds = 600,
   accessToken?: string,
 ) {
+  if (accessToken) {
+    const client = publicClient(accessToken);
+    const { data: { user }, error: authError } = await client.auth.getUser(accessToken);
+    if (!authError && user && isAdminUser(user)) return { allowed: true, used: 0, remaining: 0, resetAt: new Date(Date.now() + windowSeconds * 1000).toISOString() };
+  }
+
   const result = accessToken
     ? await publicClient(accessToken).rpc("consume_my_api_rate_limit", {
         p_route_key: routeKey,
