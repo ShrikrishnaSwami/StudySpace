@@ -10,7 +10,7 @@ import { supabase } from "@/lib/supabase";
 type MyReport = { id: string; title: string; status: string; admin_response: string; created_at: string; };
 const MAX_DESCRIPTION_WORDS = 1000;
 function countWords(value: string) {
-  return value.trim() ? value.trim().split(/\\s+/).length : 0;
+  return value.trim() ? value.trim().split(/\s+/).length : 0;
 }
 
 export default function ReportBugPage() {
