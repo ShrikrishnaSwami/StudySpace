@@ -144,6 +144,18 @@ export default function GlobalMotion({ children }: { children: React.ReactNode }
       });
     });
 
+    // A looping task-focus sequence makes the sample workspace feel active
+    // without pretending to mutate real student data.
+    const queueRows = Array.from(root.querySelectorAll<HTMLElement>(".ss-specimen-task"));
+    if (queueRows.length > 1) {
+      const queueTimeline = gsap.timeline({ repeat: -1, repeatDelay: 0.8 });
+      queueRows.forEach((row) => {
+        queueTimeline
+          .to(row, { x: 6, duration: 0.22, ease: "power2.out" })
+          .to(row, { x: 0, duration: 0.42, ease: "power3.out" });
+      });
+    }
+
     // Small status lights and marker strokes give live previews a little life.
     root.querySelectorAll<HTMLElement>("[data-live-pulse], .ss-specimen-marker").forEach((node, index) => {
       gsap.to(node, {
