@@ -81,7 +81,7 @@ export default function SignupPage() {
           email: email.trim().toLowerCase(),
           password,
           data: accountMetadata,
-        });
+        }, { emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard` });
         if (updateError) {
           setError(updateError.message);
           setLoading(false);
