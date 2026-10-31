@@ -70,31 +70,31 @@ export default function GlobalMotion({ children }: { children: React.ReactNode }
     const hasDedicatedDirection = Boolean(main.closest(".ss-editorial, .atelier-home, .atelier-shell"));
     const splitRecords: SplitRecord[] = [];
 
+    const headings = Array.from(main.querySelectorAll<HTMLElement>("h1, h2"))
+      .filter((heading) => !isMotionExcluded(heading) && heading.textContent?.trim());
+
+    headings.forEach((heading) => {
+      const record = {
+        element: heading,
+        html: heading.innerHTML,
+        ariaLabel: heading.getAttribute("aria-label"),
+      };
+      const chars = splitHeading(heading);
+      if (!chars.length) return;
+      splitRecords.push(record);
+      if (!record.ariaLabel) heading.setAttribute("aria-label", heading.textContent ?? "");
+      gsap.fromTo(chars,
+        { yPercent: 118, rotateX: -58, autoAlpha: 0, willChange: "transform, opacity" },
+        {
+          yPercent: 0, rotateX: 0, autoAlpha: 1, duration: 0.82,
+          stagger: { each: 0.018, from: "start" }, ease: "power4.out",
+          clearProps: "willChange",
+          scrollTrigger: { trigger: heading, start: "top 88%", once: true },
+        },
+      );
+    });
+
     if (!hasDedicatedDirection) {
-      const headings = Array.from(main.querySelectorAll<HTMLElement>("h1, h2"))
-        .filter((heading) => !isMotionExcluded(heading) && heading.textContent?.trim());
-
-      headings.forEach((heading) => {
-        const record = {
-          element: heading,
-          html: heading.innerHTML,
-          ariaLabel: heading.getAttribute("aria-label"),
-        };
-        const chars = splitHeading(heading);
-        if (!chars.length) return;
-        splitRecords.push(record);
-        if (!record.ariaLabel) heading.setAttribute("aria-label", heading.textContent ?? "");
-        gsap.fromTo(chars,
-          { yPercent: 118, rotateX: -58, autoAlpha: 0, willChange: "transform, opacity" },
-          {
-            yPercent: 0, rotateX: 0, autoAlpha: 1, duration: 0.82,
-            stagger: { each: 0.018, from: "start" }, ease: "power4.out",
-            clearProps: "willChange",
-            scrollTrigger: { trigger: heading, start: "top 88%", once: true },
-          },
-        );
-      });
-
       const revealTargets = Array.from(main.querySelectorAll<HTMLElement>(
         ":scope > section, :scope > div > section, [data-motion-reveal], [data-motion-card]",
       )).filter((element) => !isMotionExcluded(element));
