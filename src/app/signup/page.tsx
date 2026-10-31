@@ -86,7 +86,7 @@ export default function SignupPage() {
           password,
           data: accountMetadata,
         }, {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=%2Fdashboard`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=%2Fdashboard`,
         });
         if (updateError) {
           setError(updateError.message);
