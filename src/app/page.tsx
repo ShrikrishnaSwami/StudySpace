@@ -9,10 +9,10 @@ import {
 import StudySpaceMark from "@/components/StudySpaceMark";
 
 const chapters = [
-  { id: "courses", number: "01", title: "Get dates out of a messy syllabus", copy: "Upload the PDF your professor posted. StudySpace finds assignment, quiz and exam dates so you can check them instead of typing every one into your calendar.", icon: BookOpen, label: "SYLLABUS DATES", preview: ["MATH 1350 · SYLLABUS PDF", "Math assignment · due in 3 hours", "Syllabus quiz · tomorrow", "Midterm · November 12"] },
-  { id: "tutor", number: "02", title: "Ask the question you're stuck on", copy: "Use a built-in study partner that can answer from your course material. No need to make the question sound clever.", icon: BrainCircuit, label: "TUTOR SESSION", preview: ["AI TUTOR · PYTHON", "Why does this script throw", "KeyError: 'student_id'?", "Explain it without skipping steps."] },
-  { id: "work", number: "03", title: "Keep deadlines in sight", copy: "Track assignments, make practice quizzes, and see what is due before it turns into a midnight surprise.", icon: FileText, label: "WORK QUEUE", preview: ["UP NEXT", "Math assignment · due in 3 hours", "Syllabus quiz · tomorrow", "Group project chat link · Friday"] },
-  { id: "time", number: "04", title: "Know what is coming up", copy: "See classes, due dates and study sessions together. Add the dates yourself or pull them from a syllabus.", icon: CalendarDays, label: "THIS WEEK", preview: ["MON · Download lecture 4 slides", "TUE · Group project call", "THU · Math assignment due", "FRI · Check coffee budget"] },
+  { id: "courses", number: "01", title: "Turn the syllabus into a plan", copy: "Drop in the PDF. Pull out deadlines, quizzes and exams before they sneak up on you.", icon: BookOpen, label: "COURSE TIMELINE", preview: ["BIO 213 · COURSE PLAN", "Lab report · due Friday", "Tutorial quiz · tomorrow", "Midterm · November 12"] },
+  { id: "tutor", number: "02", title: "Get unstuck without the tab spiral", copy: "Ask your AI study partner to explain the hard bit using the material from your course.", icon: BrainCircuit, label: "STUDY SESSION", preview: ["ECON 101 · MIDTERM CRAM", "Supply and demand · review", "Elasticity · 3 questions left", "Explain the graph one more time."] },
+  { id: "work", number: "03", title: "Know what needs doing next", copy: "Keep assignments, submissions and practice work visible before a small task becomes a 2 a.m. emergency.", icon: FileText, label: "WORK QUEUE", preview: ["UP NEXT", "Organic Chem II · 24 flashcards", "Econ 101 · midterm cram session", "BIO 213 · lab report due Friday"] },
+  { id: "time", number: "04", title: "See the week before it gets messy", copy: "Put classes, deadlines and study sessions on one timeline. Your future self says thanks.", icon: CalendarDays, label: "THIS WEEK", preview: ["MON · Organic Chem flashcards", "TUE · Econ study group", "THU · Biology lab report", "FRI · Midterm review session"] },
 ];
 
 export default function Home() {
@@ -46,18 +46,18 @@ export default function Home() {
       <section className="ss-editorial-opening">
         <div className="ss-editorial-opening-copy">
           <p className="ss-editorial-kicker"><span/> MADE BY A STUDENT, FOR STUDENT WORK</p>
-          <h1 aria-label="Courses, notes, deadlines and an AI study partner."><span className="ss-word" aria-hidden="true">Courses,</span>{" "}<span className="ss-word" aria-hidden="true">notes,</span><br/><span className="ss-word" aria-hidden="true">deadlines</span>{" "}<span className="ss-word" aria-hidden="true">and</span>{" "}<span className="ss-word" aria-hidden="true">an</span><br/><em><span className="ss-word" aria-hidden="true">AI</span>{" "}<span className="ss-word" aria-hidden="true">study</span>{" "}<span className="ss-word" aria-hidden="true">partner.</span></em></h1>
-          <p className="ss-editorial-deck">StudySpace keeps your course files, notes, deadlines and study tools in one place. Add your classes, keep track of what is due, and ask the built-in tutor when something makes no sense.</p>
+          <h1 aria-label="The second brain for students running 40 open tabs."><span className="ss-word" aria-hidden="true">Your</span>{" "}<span className="ss-word" aria-hidden="true">second</span><br/><span className="ss-word" aria-hidden="true">brain for</span>{" "}<span className="ss-word" aria-hidden="true">student</span><br/><em><span className="ss-word" aria-hidden="true">life.</span></em></h1>
+          <p className="ss-editorial-deck">The second brain for students running 40 open tabs. Keep courses, notes, deadlines and study tools together — then get back to cramming, keeping track, and surviving midterms.</p>
           <div className="ss-editorial-actions"><Link href="/signup" className="ss-landing-primary">Create your StudySpace <ArrowUpRight size={17}/></Link><Link href="/login" className="ss-editorial-text-link">Already have an account? Sign in</Link></div>
         </div>
-        <aside className="ss-editorial-specimen" aria-label="A glimpse of the StudySpace workspace">
+        <aside className="ss-editorial-specimen" data-motion-card data-motion-parallax aria-label="A glimpse of the StudySpace workspace">
           <div className="ss-specimen-top"><span>YOUR DASHBOARD / RIGHT NOW</span><span>01—04</span></div>
           <div className="ss-specimen-date"><span>YOUR</span><strong>WEEK</strong><small>AT A GLANCE</small></div>
           <div className="ss-specimen-rule"/>
           <p className="ss-specimen-label">WHAT NEEDS DOING</p>
-          <div className="ss-specimen-task"><span className="ss-specimen-marker"/><div><b>Math assignment due in 3 hours</b><small>MATH · Submit before 2 PM</small></div><span>01</span></div>
-          <div className="ss-specimen-task"><span className="ss-specimen-marker"/><div><b>Download lecture 4 slides</b><small>BIO 213 · 8 pages</small></div><span>02</span></div>
-          <div className="ss-specimen-task is-muted"><span className="ss-specimen-marker"/><div><b>Ask AI about a Python KeyError</b><small>CS · Why is student_id missing?</small></div><span>03</span></div>
+          <div className="ss-specimen-task"><span className="ss-specimen-marker" data-live-pulse/><div><b>Organic Chem II flashcards</b><small>CHEM · 24 cards ready to review</small></div><span>01</span></div>
+          <div className="ss-specimen-task"><span className="ss-specimen-marker"/><div><b>Econ 101 midterm cram</b><small>ECON · 3 topics left to review</small></div><span>02</span></div>
+          <div className="ss-specimen-task is-muted"><span className="ss-specimen-marker"/><div><b>BIO 213 lab report</b><small>BIO · Due Friday</small></div><span>03</span></div>
           <div className="ss-specimen-foot"><span>A FEW THINGS ON YOUR LIST</span><Clock3 size={13}/></div>
           <div className="ss-specimen-note"><NotebookPen size={15}/><span>Notes, deadlines and questions stay with your courses.</span></div>
         </aside>
@@ -67,7 +67,7 @@ export default function Home() {
 
       <section className="ss-editorial-manifesto" id="about">
         <p className="ss-editorial-kicker">SCHOOL ALREADY HAS ENOUGH MOVING PARTS</p>
-        <div className="ss-editorial-manifesto-grid"><h2>Your coursework is already spread around.<br/><em>Your notes don&apos;t need to be too.</em></h2><div><p>Slides in one folder. The syllabus in your email. Assignment instructions in the course portal. A deadline you wrote down somewhere. It adds up fast.</p><p>StudySpace keeps the course material, deadlines and study tools together. You still have to do the assignment. At least you can find it.</p></div></div>
+        <div className="ss-editorial-manifesto-grid"><h2>Forty tabs open.<br/><em>One place to land.</em></h2><div><p>Lecture slides in one folder. The syllabus in your inbox. Flashcards in another app. A deadline buried in the course portal. You know the drill.</p><p>StudySpace pulls the moving parts into one workspace, so you spend less time hunting for what to do and more time actually doing it.</p></div></div>
       </section>
 
       <section className="ss-editorial-workspace" id="workspace">
@@ -77,7 +77,7 @@ export default function Home() {
             {chapters.map((chapter) => { const Icon = chapter.icon; const selected = activeChapter === chapter.id; return <button key={chapter.id} type="button" aria-pressed={selected} aria-controls="ss-feature-preview" onMouseEnter={() => setActiveChapter(chapter.id)} onFocus={() => setActiveChapter(chapter.id)} onClick={() => setActiveChapter(chapter.id)} className={selected ? "is-active" : ""}><span className="ss-chapter-number">{chapter.number}</span><span className="ss-chapter-copy"><b>{chapter.title}</b><small>{chapter.copy}</small></span><Icon className="ss-chapter-icon" size={18}/><ArrowUpRight className="ss-chapter-arrow" size={16}/></button>; })}
           </div>
           <div className="ss-editorial-preview-wrap">
-            <div className="ss-editorial-preview" id="ss-feature-preview" role="tabpanel" aria-label={active.title}>
+            <div className="ss-editorial-preview" data-motion-card id="ss-feature-preview" role="tabpanel" aria-label={active.title}>
               <div className="ss-preview-windowbar"><span/><span/><span/><small>STUDYSPACE / {active.label}</small></div>
               <div className="ss-preview-content"><div className="ss-preview-heading"><span>{active.number} / {active.label}</span><PreviewIcon size={19}/></div><h3>{active.title}</h3><p>{active.copy}</p><div className="ss-preview-paper">{active.preview.map((line, index) => <div key={line} className={index === 0 ? "ss-preview-paper-title" : ""}><span>{index === 0 ? "—" : "0" + (index + 1)}</span>{line}{index === 0 ? <Check size={13}/> : null}</div>)}</div><span className="ss-preview-caption">A QUICK LOOK AT YOUR WORKSPACE</span></div>
             </div>
