@@ -46,3 +46,7 @@
   opacity: .9;
 }
 .ss-heading-marker path { vector-effect: non-scaling-stroke; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-route-curtain { display: none !important; animation: none !important; }
+}
