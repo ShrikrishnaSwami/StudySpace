@@ -35,7 +35,7 @@
 - Current structured metrics intentionally omit prompts, completions, student identifiers, and filenames.
 
 ## Beta feedback
-Use the error-page Report a bug link or the repository beta bug-report issue template. Do not request passwords, tokens, real coursework, grades, or another student's personal information.
+Students submit reports through the in-app Report a bug form. Reports are stored in the private Supabase bug_reports table and reviewed, prioritized, answered, and resolved from StudySpace Admin. Reports are not sent to GitHub. Do not request passwords, tokens, real coursework, grades, or another student's personal information.
 
 ## Release checklist
 - [ ] Latest scheduled uptime checks are green.
