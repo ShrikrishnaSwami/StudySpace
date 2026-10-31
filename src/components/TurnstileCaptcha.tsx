@@ -6,7 +6,6 @@ import { TURNSTILE_SITE_KEY } from "@/lib/security-config";
 declare global {
   interface Window {
     turnstile?: {
-      ready: (callback: () => void) => void;
       render: (container: HTMLElement, options: {
         sitekey: string;
         callback: (token: string) => void;
@@ -45,26 +44,28 @@ export default function TurnstileCaptcha({ onToken }: { onToken: (token: string)
       onTokenRef.current("");
     };
 
+    // Cloudflare's ready() API throws when its script is loaded with async/defer.
+    // The explicit-render API is available as soon as window.turnstile exists,
+    // so render directly instead of invoking ready().
     const render = () => {
       if (disposed || widgetId || !window.turnstile || !containerRef.current) return;
-      window.turnstile.ready(() => {
-        if (disposed || widgetId || !window.turnstile || !containerRef.current) return;
-        try {
-          widgetId = window.turnstile.render(containerRef.current, {
-            sitekey: TURNSTILE_SITE_KEY,
-            theme: "dark",
-            callback: (token) => {
-              if (!disposed) onTokenRef.current(token);
-            },
-            "expired-callback": () => onTokenRef.current(""),
-            "error-callback": fail,
-          });
-          if (widgetId) setStatus("ready");
-          else fail();
-        } catch {
-          fail();
-        }
-      });
+
+      try {
+        const api = window.turnstile;
+        widgetId = api.render(containerRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "dark",
+          callback: (token) => {
+            if (!disposed) onTokenRef.current(token);
+          },
+          "expired-callback": () => onTokenRef.current(""),
+          "error-callback": fail,
+        });
+        if (widgetId) setStatus("ready");
+        else fail();
+      } catch {
+        fail();
+      }
     };
 
     const existingScript = document.getElementById(SCRIPT_ID) as HTMLScriptElement | null;
@@ -76,17 +77,18 @@ export default function TurnstileCaptcha({ onToken }: { onToken: (token: string)
       script.defer = true;
       script.onerror = fail;
       document.head.appendChild(script);
+    } else {
+      existingScript.addEventListener("error", fail, { once: true });
     }
 
-    // Polling handles cached scripts, late script execution, and SPA navigation.
+    // Handles cached scripts, late execution, and SPA navigation without
+    // calling turnstile.ready(), which is incompatible with async/defer.
     render();
     intervalId = window.setInterval(() => {
-      if (window.turnstile) {
-        render();
-        if (widgetId && intervalId) {
-          window.clearInterval(intervalId);
-          intervalId = undefined;
-        }
+      render();
+      if (widgetId && intervalId) {
+        window.clearInterval(intervalId);
+        intervalId = undefined;
       }
     }, 150);
 
