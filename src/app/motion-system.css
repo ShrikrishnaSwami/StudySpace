@@ -33,3 +33,5 @@
   .ss-motion-char-mask { overflow: visible; }
   .ss-motion-tilting { transform: none !important; will-change: auto !important; }
 }
+
+.ss-cinematic-root { display: contents; }
