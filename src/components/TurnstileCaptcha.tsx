@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TURNSTILE_SITE_KEY } from "@/lib/security-config";
 
 declare global {
@@ -22,22 +22,32 @@ export default function TurnstileCaptcha({ onToken }: { onToken: (token: string)
   const containerRef = useRef<HTMLDivElement>(null);
   const onTokenRef = useRef(onToken);
   const widgetIdRef = useRef<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
   onTokenRef.current = onToken;
   const siteKey = TURNSTILE_SITE_KEY;
 
   useEffect(() => {
     if (!siteKey || !containerRef.current) return;
     let script = document.querySelector<HTMLScriptElement>('script[data-studyspace-turnstile="true"]');
+    let disposed = false;
+
     const render = () => {
-      if (!window.turnstile || !containerRef.current || widgetIdRef.current) return;
-      widgetIdRef.current = window.turnstile.render(containerRef.current, {
-        sitekey: siteKey,
-        theme: "dark",
-        callback: (token) => onTokenRef.current(token),
-        "expired-callback": () => onTokenRef.current(""),
-        "error-callback": () => onTokenRef.current(""),
-      });
+      if (disposed || !window.turnstile || !containerRef.current || widgetIdRef.current) return;
+      try {
+        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+          sitekey: siteKey,
+          theme: "dark",
+          callback: (token) => onTokenRef.current(token),
+          "expired-callback": () => onTokenRef.current(""),
+          "error-callback": () => onTokenRef.current(""),
+        });
+        setLoadError(false);
+      } catch {
+        setLoadError(true);
+      }
     };
+    const handleScriptError = () => setLoadError(true);
+
     if (window.turnstile) {
       render();
     } else {
@@ -50,9 +60,13 @@ export default function TurnstileCaptcha({ onToken }: { onToken: (token: string)
         document.head.appendChild(script);
       }
       script.addEventListener("load", render);
+      script.addEventListener("error", handleScriptError);
     }
+
     return () => {
+      disposed = true;
       script?.removeEventListener("load", render);
+      script?.removeEventListener("error", handleScriptError);
       if (widgetIdRef.current && window.turnstile) {
         window.turnstile.remove(widgetIdRef.current);
         widgetIdRef.current = null;
@@ -61,7 +75,17 @@ export default function TurnstileCaptcha({ onToken }: { onToken: (token: string)
   }, [siteKey]);
 
   if (!siteKey) {
-    return <p className="text-xs leading-5 text-amber-200/80">Turnstile is not configured yet. Enable it with the setup steps in the beta security guide.</p>;
+    return <p role="alert" className="text-xs leading-5 text-amber-200/80">Bot protection is not configured. Please contact the StudySpace administrator.</p>;
   }
-  return <div ref={containerRef} className="min-h-[66px]" aria-label="Bot protection challenge" />;
+
+  return (
+    <div className="space-y-2">
+      <div ref={containerRef} className="min-h-[66px]" aria-label="Bot protection challenge" />
+      {loadError && (
+        <p role="alert" className="text-xs leading-5 text-red-300">
+          Bot protection could not load. Check your connection or browser content blocker, then reload this page.
+        </p>
+      )}
+    </div>
+  );
 }
