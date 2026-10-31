@@ -81,6 +81,9 @@ export async function POST(
       );
     }
 
+    if (user.is_anonymous === true) return NextResponse.json({ error: "AI features require a registered StudySpace account. Create an account to unlock AI tools." }, { status: 403 });
+
+
     const quota = await consumeAiQuota(token, "recommendations");
     if (!quota.allowed) {
       return NextResponse.json({ error: quota.scope === "rate" ? "Too many AI requests. Please wait a few minutes and try again." : quota.scope === "global" ? "StudySpace AI has reached its shared beta capacity. Please try again later." : "You have reached today's AI recommendations limit. Try again after the rolling 24-hour window.", usage: quota }, { status: 429 });
