@@ -38,6 +38,11 @@ CREATE POLICY "Students submit their own bug reports"
 ON public.bug_reports FOR INSERT TO authenticated
 WITH CHECK ((SELECT auth.uid()) = user_id);
 
+DROP POLICY IF EXISTS "Students read their own bug reports" ON public.bug_reports;
+CREATE POLICY "Students read their own bug reports"
+ON public.bug_reports FOR SELECT TO authenticated
+USING ((SELECT auth.uid()) = user_id);
+
 DROP POLICY IF EXISTS "Admins read bug reports with MFA" ON public.bug_reports;
 CREATE POLICY "Admins read bug reports with MFA"
 ON public.bug_reports FOR SELECT TO authenticated
