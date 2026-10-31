@@ -18,10 +18,10 @@ jobs:
     timeout-minutes: 3
     steps:
       - name: Check application liveness
-        run: curl --fail --silent --show-error --max-time 15 --retry 2 --retry-delay 3 https://studyspace-zeta.vercel.app/api/health
+        run: curl --fail --silent --show-error --max-time 15 --retry 2 --retry-delay 3 https://studyspace.wiki/api/health
 
       - name: Check database readiness
         run: |
-          response="$(curl --silent --show-error --max-time 20 --retry 2 --retry-delay 3 --output /tmp/readiness.json --write-out '%{http_code}' https://studyspace-zeta.vercel.app/api/health/ready)"
+          response="$(curl --silent --show-error --max-time 20 --retry 2 --retry-delay 3 --output /tmp/readiness.json --write-out '%{http_code}' https://studyspace.wiki/api/health/ready)"
           cat /tmp/readiness.json
           test "$response" = "200"
