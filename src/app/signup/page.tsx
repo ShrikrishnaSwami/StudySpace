@@ -65,17 +65,43 @@ export default function SignupPage() {
 
     try {
 
+      const accountMetadata = {
+        full_name: name.trim().slice(0, 100),
+        terms_accepted_at: new Date().toISOString(),
+        terms_version: "2026-10-31",
+        privacy_version: "2026-10-31",
+      };
+      const { data: current } = await supabase.auth.getSession();
+
+      if (current.session?.user.is_anonymous) {
+        // Convert the current guest identity instead of creating a new user.
+        // This keeps every course, note and upload attached to the same user ID.
+        const { error: updateError } = await supabase.auth.updateUser({
+          email: email.trim().toLowerCase(),
+          password,
+          data: accountMetadata,
+        });
+        if (updateError) {
+          setError(updateError.message);
+          setLoading(false);
+          return;
+        }
+        const { data: refreshed } = await supabase.auth.getSession();
+        if (refreshed.session?.user && !refreshed.session.user.is_anonymous) {
+          router.push("/dashboard");
+          return;
+        }
+        setSuccess("Check your email to confirm the address and finish converting your guest workspace into your account. Keep this browser session active until confirmation is complete.");
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
         options: {
           captchaToken: captchaToken || undefined,
-          data: {
-            full_name: name.trim().slice(0, 100),
-            terms_accepted_at: new Date().toISOString(),
-            terms_version: "2026-10-31",
-            privacy_version: "2026-10-31",
-          },
+          data: accountMetadata,
         },
       });
 
@@ -90,7 +116,7 @@ export default function SignupPage() {
         return;
       }
 
-      setSuccess("Account created successfully! You can now sign in.");
+      setSuccess("Account created successfully! Check your email if confirmation is required, then sign in.");
 
       setLoading(false);
     } catch (err) {
