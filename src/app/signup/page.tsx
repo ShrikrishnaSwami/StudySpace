@@ -85,6 +85,7 @@ export default function SignupPage() {
           email: email.trim().toLowerCase(),
           password,
           data: accountMetadata,
+          emailRedirectTo: `${window.location.origin}/auth/confirm?next=%2Fdashboard`,
         }, {
           emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         });
