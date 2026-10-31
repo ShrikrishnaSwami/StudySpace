@@ -68,6 +68,7 @@ export default function SignupPage() {
         email: email.trim().toLowerCase(),
         password,
         options: {
+          captchaToken: captchaToken || undefined,
           data: {
             full_name: name.trim().slice(0, 100),
             terms_accepted_at: new Date().toISOString(),
