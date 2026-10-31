@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { consumeApiRateLimit } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 import { getAiUsage } from "@/lib/api-security";
+import { isAdminUser } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     const rate = await consumeApiRateLimit(user.id, "usage-read", 120, 3600, token);
     if (!rate.allowed) return NextResponse.json({ error: "Too many usage requests. Please wait and try again." }, { status: 429 });
 
-    return NextResponse.json({ usage: await getAiUsage(token), windowHours: 24 }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ admin: isAdminUser(user), usage: isAdminUser(user) ? [] : await getAiUsage(token), windowHours: 24 }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     console.error("AI usage request failed.");
     return NextResponse.json({ error: "Could not load AI usage right now. Please try again shortly." }, { status: 503 });
