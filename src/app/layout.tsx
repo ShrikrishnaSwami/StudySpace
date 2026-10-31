@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     "flashcards",
   ],
   openGraph: {
-    title: "StudySpace — Courses, notes, deadlines and study tools",
+    title: "StudySpace — Your second brain for student life",
     description:
       "Built for cramming, keeping track, and surviving midterms.",
     siteName: "StudySpace",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "StudySpace — Courses, notes, deadlines and study tools",
+    title: "StudySpace — Your second brain for student life",
     description:
       "Your courses, notes, deadlines and study tools. One place to land.",
   },
