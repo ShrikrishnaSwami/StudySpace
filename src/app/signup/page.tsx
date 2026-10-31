@@ -83,7 +83,6 @@ export default function SignupPage() {
           data: accountMetadata,
         }, {
           emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-          captchaToken: captchaToken || undefined,
         });
         if (updateError) {
           setError(updateError.message);
