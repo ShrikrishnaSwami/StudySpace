@@ -12,7 +12,6 @@ import {
   EyeOff,
   Lock,
   Mail,
-  UserRound,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -28,7 +27,6 @@ export default function LoginPage() {
   const [forgotPassword, setForgotPassword] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [notice, setNotice] = useState("");
-  const [hasGuestBackup, setHasGuestBackup] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaKey, setCaptchaKey] = useState(0);
   const turnstileEnabled = Boolean(TURNSTILE_SITE_KEY);
@@ -41,73 +39,7 @@ export default function LoginPage() {
     if (params.get("error") === "email_confirmation") {
       setError("That confirmation link could not be verified. It may have expired or already been used. Request a fresh confirmation email and open the newest link.");
     }
-    setHasGuestBackup(Boolean(window.localStorage.getItem("studyspace_guest_refresh_token")));
   }, []);
-
-  async function handleGuestLogin() {
-    setLoading(true);
-    setError("");
-    try {
-      const { data: current } = await supabase.auth.getSession();
-      if (current.session?.user.is_anonymous) {
-        router.push("/dashboard");
-        return;
-      }
-      if (current.session?.user && !current.session.user.is_anonymous) {
-        throw new Error("You are already signed in with an account. Sign out before starting a guest workspace.");
-      }
-
-      const savedRefreshToken = window.localStorage.getItem("studyspace_guest_refresh_token");
-      if (savedRefreshToken) {
-        const restored = await supabase.auth.refreshSession({ refresh_token: savedRefreshToken });
-        if (!restored.error && restored.data.session?.user.is_anonymous) {
-          window.localStorage.removeItem("studyspace_guest_refresh_token");
-          setHasGuestBackup(false);
-          router.push("/dashboard");
-          return;
-        }
-        window.localStorage.removeItem("studyspace_guest_refresh_token");
-        setHasGuestBackup(false);
-      }
-
-      if (turnstileEnabled && !captchaToken) throw new Error("Complete the bot-protection check before starting a new guest workspace.");
-      const { error } = await supabase.auth.signInAnonymously({
-        options: { captchaToken: captchaToken || undefined, data: { full_name: "Guest Student", account_type: "guest" } },
-      });
-      if (error) {
-        throw new Error(error.message.includes("Anonymous sign-ins are disabled")
-          ? "Guest access is not enabled in Supabase yet. Enable Anonymous Sign-Ins in Supabase Authentication settings and try again."
-          : error.message);
-      }
-      router.push("/dashboard");
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not start guest access.");
-      setCaptchaToken("");
-      setCaptchaKey((key) => key + 1);
-      setLoading(false);
-    }
-  }
-
-  async function resumePreviousGuest() {
-    setLoading(true);
-    setError("");
-    try {
-      const refreshToken = window.localStorage.getItem("studyspace_guest_refresh_token");
-      if (!refreshToken) throw new Error("No previous guest workspace was found on this device.");
-      const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
-      if (error || !data.session?.user.is_anonymous) {
-        window.localStorage.removeItem("studyspace_guest_refresh_token");
-        setHasGuestBackup(false);
-        throw new Error("This guest session has expired and can no longer be restored.");
-      }
-      window.localStorage.removeItem("studyspace_guest_refresh_token");
-      setHasGuestBackup(false);
-      router.push("/dashboard");
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not restore the previous guest workspace.");
-      setLoading(false);
-    }
-  }
 
   async function handleForgotPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -137,11 +69,6 @@ export default function LoginPage() {
     if (turnstileEnabled && !captchaToken) { setError("Complete the bot-protection check before signing in."); return; }
     setLoading(true);
     try {
-      const { data: previous } = await supabase.auth.getSession();
-      if (previous.session?.user.is_anonymous && previous.session.refresh_token) {
-        window.localStorage.setItem("studyspace_guest_refresh_token", previous.session.refresh_token);
-        setHasGuestBackup(true);
-      }
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password, options: { captchaToken: captchaToken || undefined } });
       if (error) throw error;
       const { data: { session } } = await supabase.auth.getSession();
@@ -227,15 +154,8 @@ export default function LoginPage() {
               {error && <p role="alert" className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</p>}
             </div>
 
-            <div className="mb-6 space-y-3">
+            <div className="mb-6">
               <TurnstileCaptcha key={captchaKey} onToken={setCaptchaToken} />
-              <button type="button" onClick={handleGuestLogin} disabled={loading || (turnstileEnabled && !captchaToken && !hasGuestBackup)}
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-purple-400/20 bg-purple-500/[0.07] py-3.5 text-sm font-semibold text-purple-200 transition hover:bg-purple-500/[0.13] disabled:opacity-60">
-                <UserRound size={18} /> Continue as guest
-              </button>
-              <div className="flex items-center gap-3 py-1 text-[11px] uppercase tracking-wider text-white/25">
-                <span className="h-px flex-1 bg-white/10" /> or sign in with email <span className="h-px flex-1 bg-white/10" />
-              </div>
             </div>
 
             {forgotPassword ? (
