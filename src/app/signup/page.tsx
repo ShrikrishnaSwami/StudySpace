@@ -283,7 +283,7 @@ export default function SignupPage() {
               {/* Submit */}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !acceptedTerms || (turnstileEnabled && !captchaToken)}
                 className="group flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-3.5 text-sm font-semibold text-white shadow-lg shadow-purple-900/30 transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? "Creating account..." : "Create account"}
