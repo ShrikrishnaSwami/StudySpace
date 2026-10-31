@@ -148,6 +148,40 @@ export default function GlobalMotion({ children }: { children: React.ReactNode }
       });
     });
 
+    // CTAs use a restrained magnetic pull. quickTo keeps pointer movement
+    // fluid without allocating a new tween for every mouse event.
+    const actionTargets = Array.from(root.querySelectorAll<HTMLElement>(
+      "main .ss-landing-primary, main .ss-landing-signup, main .ss-error-primary, main .ss-404-actions a, main .atelier-primary, main .atelier-enter",
+    ));
+    actionTargets.forEach((action) => {
+      const xTo = gsap.quickTo(action, "x", { duration: 0.36, ease: "power3.out" });
+      const yTo = gsap.quickTo(action, "y", { duration: 0.36, ease: "power3.out" });
+      const rotateTo = gsap.quickTo(action, "rotationY", { duration: 0.36, ease: "power3.out" });
+      const onMove = contextSafe((event: PointerEvent) => {
+        if (event.pointerType === "touch" || window.matchMedia("(max-width: 760px)").matches) return;
+        const bounds = action.getBoundingClientRect();
+        const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+        const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+        action.classList.add("ss-motion-tilting");
+        xTo(x * 7);
+        yTo(y * 5);
+        rotateTo(x * 2.8);
+      });
+      const onLeave = contextSafe(() => {
+        xTo(0);
+        yTo(0);
+        rotateTo(0);
+        action.classList.remove("ss-motion-tilting");
+      });
+      action.addEventListener("pointermove", onMove, { passive: true });
+      action.addEventListener("pointerleave", onLeave);
+      removeTiltListeners.push(() => {
+        action.removeEventListener("pointermove", onMove);
+        action.removeEventListener("pointerleave", onLeave);
+        action.classList.remove("ss-motion-tilting");
+      });
+    });
+
     // A looping task-focus sequence makes the sample workspace feel active
     // without pretending to mutate real student data.
     const queueRows = Array.from(root.querySelectorAll<HTMLElement>(".ss-specimen-task"));
