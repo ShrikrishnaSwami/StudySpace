@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import StudySpaceMark from "@/components/StudySpaceMark";
+import TurnstileCaptcha from "@/components/TurnstileCaptcha";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -27,6 +28,8 @@ export default function LoginPage() {
   const [resetSent, setResetSent] = useState(false);
   const [notice, setNotice] = useState("");
   const [hasGuestBackup, setHasGuestBackup] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -62,8 +65,9 @@ export default function LoginPage() {
         setHasGuestBackup(false);
       }
 
+      if (turnstileEnabled && !captchaToken) throw new Error("Complete the bot-protection check before starting a new guest workspace.");
       const { error } = await supabase.auth.signInAnonymously({
-        options: { data: { full_name: "Guest Student", account_type: "guest" } },
+        options: { captchaToken: captchaToken || undefined, data: { full_name: "Guest Student", account_type: "guest" } },
       });
       if (error) {
         throw new Error(error.message.includes("Anonymous sign-ins are disabled")
@@ -209,7 +213,8 @@ export default function LoginPage() {
             </div>
 
             <div className="mb-6 space-y-3">
-              <button type="button" onClick={handleGuestLogin} disabled={loading}
+              <TurnstileCaptcha onToken={setCaptchaToken} />
+              <button type="button" onClick={handleGuestLogin} disabled={loading || (turnstileEnabled && !captchaToken && !hasGuestBackup)}
                 className="flex w-full items-center justify-center gap-3 rounded-xl border border-purple-400/20 bg-purple-500/[0.07] py-3.5 text-sm font-semibold text-purple-200 transition hover:bg-purple-500/[0.13] disabled:opacity-60">
                 <UserRound size={18} /> Continue as guest
               </button>
