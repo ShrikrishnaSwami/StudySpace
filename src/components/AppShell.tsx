@@ -15,6 +15,7 @@ import {
   Home,
   LogOut,
   Menu,
+  MessageSquare,
   Search,
   FileText,
   CalendarClock,
@@ -1012,6 +1013,20 @@ export default function AppShell({
                   onClick={() => setSidebarOpen(false)}
                 />
               ))}
+              <a
+                href="https://github.com/ShrikrishnaSwami/StudySpace/issues/new?template=beta-bug-report.yml"
+                target="_blank"
+                rel="noreferrer"
+                title={collapsed ? "Report a bug" : undefined}
+                onClick={() => setSidebarOpen(false)}
+                className={[
+                  "group flex items-center gap-3 px-3 py-2.5 text-sm text-white/40 transition hover:bg-white/[0.035] hover:text-white/75",
+                  collapsed ? "justify-center" : "",
+                ].join(" ")}
+              >
+                <MessageSquare size={17} className="shrink-0 text-white/30 group-hover:text-white/60" />
+                {!collapsed && <span className="font-medium">Report a bug</span>}
+              </a>
             </nav>
           </div>
         </div>
