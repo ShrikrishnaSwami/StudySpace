@@ -6,7 +6,9 @@ import "./polish.css";
 import "./atelier.css";
 import "./cinematic.css";
 import "./workspace-editorial.css";
+import "./motion-system.css";
 import CinematicExperience from "@/components/CinematicExperience";
+import GlobalMotion from "@/components/GlobalMotion";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -63,7 +65,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col"><CinematicExperience /><a className="ss-skip-link" href="#main-content">Skip to content</a>{children}</body>
+      <body className="min-h-full flex flex-col"><CinematicExperience><a className="ss-skip-link" href="#main-content">Skip to content</a><GlobalMotion>{children}</GlobalMotion></CinematicExperience></body>
     </html>
   );
 }
