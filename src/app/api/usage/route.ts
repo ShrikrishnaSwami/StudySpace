@@ -3,7 +3,6 @@ import { consumeApiRateLimit } from "@/lib/api-security";
 import { createClient } from "@supabase/supabase-js";
 import { getAiUsage } from "@/lib/api-security";
 import { isAdminUser } from "@/lib/admin";
-import { isAdminUser } from "@/lib/admin";
 
 export const dynamic = "force-dynamic";
 
