@@ -260,6 +260,10 @@ export default function SettingsPage() {
   async function signOutEverywhere() {
     if (!window.confirm("Sign out of StudySpace on this device and all other devices?")) return;
     setSigningOut(true); setSecurityMessage("");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user.is_anonymous && session.refresh_token) {
+      window.localStorage.setItem("studyspace_guest_refresh_token", session.refresh_token);
+    }
     const { error } = await supabase.auth.signOut({ scope: "global" });
     if (error) { setSecurityMessage(error.message); setSigningOut(false); return; }
     router.replace("/login");
