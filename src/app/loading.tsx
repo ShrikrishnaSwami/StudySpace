@@ -39,7 +39,7 @@ export default function Loading() {
           <span className="atelier-loading-edition">THE STUDENT EDITION</span>
         </header>
 
-        <section className="atelier-loading-center">
+        <section className="atelier-loading-center" data-motion-reveal>
           <div className="atelier-loading-orbit-stage" aria-hidden="true">
             <span className="atelier-loading-orbit atelier-loading-orbit-outer" />
             <span className="atelier-loading-orbit atelier-loading-orbit-inner" />
