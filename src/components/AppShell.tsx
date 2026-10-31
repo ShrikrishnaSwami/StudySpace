@@ -1024,9 +1024,7 @@ export default function AppShell({
                 />
               ))}
               <a
-                href="https://github.com/ShrikrishnaSwami/StudySpace/issues/new?template=beta-bug-report.yml"
-                target="_blank"
-                rel="noreferrer"
+                href="/report-bug"
                 title={collapsed ? "Report a bug" : undefined}
                 onClick={() => setSidebarOpen(false)}
                 className={[
