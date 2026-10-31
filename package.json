@@ -11,7 +11,7 @@
     "test:syllabus": "node --experimental-strip-types --test src/lib/syllabus-parser.test.ts",
     "test:security": "node --test tests/security-migrations.test.mjs",
     "test:hardening": "node --experimental-strip-types --test src/lib/request-body.test.ts src/lib/account-storage-cleanup.test.ts",
-    "test:ai": "node --experimental-strip-types --test src/lib/ai-routing.test.ts",
+    "test:ai": "node --experimental-strip-types --test src/lib/ai-routing.test.ts src/lib/ai-grading-validation.test.ts",
     "test:e2e:local-ai": "node --env-file=.env.e2e.local scripts/test-local-ai-e2e.mjs"
   },
   "dependencies": {
