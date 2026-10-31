@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
     const authClient = createClient(url, anonKey, { auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${token}` } } });
     const { data: { user }, error: authError } = await authClient.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Your session expired. Sign in again." }, { status: 401 });
+    if (user.is_anonymous === true) return NextResponse.json({ error: "AI features require a registered StudySpace account. Create an account to unlock AI tools." }, { status: 403 });
 
     const rate = await consumeApiRateLimit(user.id, "assignment-ai-grade", 5, 600, token);
     if (!rate.allowed) return NextResponse.json({ error: "Too many AI grading requests. Please wait before trying again." }, { status: 429 });
