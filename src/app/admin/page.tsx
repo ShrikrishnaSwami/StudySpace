@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Activity, Archive, CheckCircle2, Clock3, ExternalLink, RefreshCw, ShieldAlert, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { Activity, Archive, Bug, CheckCircle2, Clock3, ExternalLink, RefreshCw, Send, ShieldAlert, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
@@ -14,6 +14,7 @@ type Stats = {
   aiUnhelpful7d: number;
   generatedAt: string;
 };
+type BugReport = { id: string; user_id: string; reporter_email: string; category: string; severity: string; title: string; description: string; page_url: string; browser_info: string; status: "new" | "in_progress" | "resolved"; admin_response: string; created_at: string; updated_at: string; };
 type BackupStatus = {
   configured: boolean;
   status: "not_configured" | "running" | "success" | "failed";
@@ -47,6 +48,11 @@ export default function AdminPage() {
   const [mfaCode, setMfaCode] = useState("");
   const [mfaBusy, setMfaBusy] = useState(false);
   const [mfaError, setMfaError] = useState("");
+  const [reports, setReports] = useState<BugReport[]>([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsError, setReportsError] = useState("");
+  const [reportReplies, setReportReplies] = useState<Record<string, string>>({});
+  const [savingReportId, setSavingReportId] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -118,6 +124,38 @@ export default function AdminPage() {
     }
   }, [router]);
 
+  const loadReports = useCallback(async () => {
+    setReportsLoading(true);
+    setReportsError("");
+    try {
+      const { data, error } = await supabase.from("bug_reports").select("*").order("created_at", { ascending: false }).limit(100);
+      if (error) throw error;
+      setReports((data || []) as BugReport[]);
+    } catch (cause) {
+      setReportsError(cause instanceof Error ? cause.message : "Could not load bug reports. Verify administrator MFA and refresh.");
+    } finally {
+      setReportsLoading(false);
+    }
+  }, []);
+
+  async function updateBugReport(report: BugReport, status: BugReport["status"]) {
+    setSavingReportId(report.id);
+    setReportsError("");
+    try {
+      const reply = reportReplies[report.id] ?? report.admin_response ?? "";
+      const { error } = await supabase.from("bug_reports").update({
+        status,
+        admin_response: reply.trim(),
+      }).eq("id", report.id);
+      if (error) throw error;
+      await loadReports();
+    } catch (cause) {
+      setReportsError(cause instanceof Error ? cause.message : "Could not update this report.");
+    } finally {
+      setSavingReportId("");
+    }
+  }
+
   async function verifyAdminMfa(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const code = mfaCode.replace(/\s/g, "");
@@ -134,7 +172,7 @@ export default function AdminPage() {
       const { error: verifyError } = await supabase.auth.mfa.verify({ factorId: factor.id, challengeId: challenge.id, code });
       if (verifyError) throw verifyError;
       setAdminMfaVerified(true); setMfaChallengeRequired(false); setMfaCode(""); setError(""); setBackupError("");
-      await Promise.all([load(), loadBackup()]);
+      await Promise.all([load(), loadBackup(), loadReports()]);
     } catch (cause) { setMfaError(cause instanceof Error ? cause.message : "Could not verify your authenticator code."); }
     finally { setMfaBusy(false); }
   }
@@ -159,11 +197,12 @@ export default function AdminPage() {
       setChecking(false);
       void load();
       void loadBackup();
+      void loadReports();
     }
     void checkAccess();
-    const timer = window.setInterval(() => { void load(); void loadBackup(); }, 30000);
+    const timer = window.setInterval(() => { void load(); void loadBackup(); void loadReports(); }, 30000);
     return () => { alive = false; window.clearInterval(timer); };
-  }, [router, load, loadBackup]);
+  }, [router, load, loadBackup, loadReports]);
 
   if (checking) {
     return <div className="flex min-h-screen items-center justify-center bg-[#080611] text-white">
@@ -226,6 +265,27 @@ export default function AdminPage() {
           </div>
         </div>
       </section>}
+
+      <section id="bug-reports" aria-label="Private bug report inbox" className="scroll-mt-24 rounded-2xl border border-violet-400/15 bg-white/[0.025] p-5 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-start gap-3"><div className="rounded-xl border border-violet-400/15 bg-violet-500/10 p-2.5 text-violet-200"><Bug size={20}/></div><div><h2 className="text-lg font-semibold">Private bug report inbox</h2><p className="mt-1 text-sm text-white/45">Student reports arrive here directly. Reply, track progress, and resolve them without GitHub.</p></div></div>
+          <button type="button" onClick={() => void loadReports()} disabled={reportsLoading} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs text-white/70 disabled:opacity-50"><RefreshCw size={13} className={reportsLoading ? "animate-spin" : ""}/>Refresh inbox</button>
+        </div>
+        {reportsError && <p role="alert" className="mt-4 rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm text-red-200">{reportsError}</p>}
+        {reportsLoading && reports.length === 0 ? <p className="mt-6 text-sm text-white/40">Loading reports…</p> : reports.length === 0 ? <div className="mt-6 rounded-xl border border-white/[0.06] bg-black/10 p-6 text-center"><Bug size={22} className="mx-auto text-white/25"/><p className="mt-3 text-sm font-medium text-white/65">No reports yet</p><p className="mt-1 text-xs text-white/35">New student feedback will appear here.</p></div> : <div className="mt-5 space-y-4">
+          {reports.map(report => <article key={report.id} className="rounded-xl border border-white/[0.08] bg-black/10 p-4 sm:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold text-white">{report.title}</h3><span className={"rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide " + (report.severity === "critical" || report.severity === "high" ? "border-red-400/20 bg-red-400/10 text-red-200" : "border-white/10 text-white/45")}>{report.severity}</span><span className="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-white/45">{report.status.replace("_", " ")}</span></div><p className="mt-1 text-xs text-white/40">{report.reporter_email || report.user_id} · {report.category} · {dateLabel(report.created_at)}</p></div>
+              <span className="text-[10px] text-white/25">{report.id.slice(0, 8)}</span>
+            </div>
+            <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-white/75">{report.description}</p>
+            {report.page_url && <p className="mt-3 break-all text-xs text-white/35">Page: {report.page_url}</p>}
+            {report.browser_info && <p className="mt-1 break-all text-xs text-white/25">Browser: {report.browser_info}</p>}
+            <label className="mt-4 block space-y-2"><span className="text-xs font-medium text-white/55">Private admin response</span><textarea rows={3} maxLength={4000} value={reportReplies[report.id] ?? report.admin_response ?? ""} onChange={event => setReportReplies(current => ({ ...current, [report.id]: event.target.value }))} placeholder="Add investigation notes or a response for the student…" className="w-full resize-y rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white outline-none focus:border-violet-400/40"/></label>
+            <div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => void updateBugReport(report, "in_progress")} disabled={savingReportId === report.id} className="rounded-lg border border-sky-400/20 bg-sky-400/[0.07] px-3 py-2 text-xs text-sky-100 disabled:opacity-50">{savingReportId === report.id ? "Saving…" : "Save / in progress"}</button><button type="button" onClick={() => void updateBugReport(report, "resolved")} disabled={savingReportId === report.id} className="rounded-lg border border-emerald-400/20 bg-emerald-400/[0.07] px-3 py-2 text-xs text-emerald-100 disabled:opacity-50">Mark resolved</button><button type="button" onClick={() => void updateBugReport(report, "new")} disabled={savingReportId === report.id} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white/60 disabled:opacity-50">Reopen</button></div>
+          </article>)}
+        </div>}
+      </section>
 
       <section className="rounded-2xl border border-violet-400/15 bg-gradient-to-br from-violet-500/10 via-white/[0.035] to-fuchsia-500/[0.06] p-6 sm:p-8">
         <div className="flex items-start justify-between gap-4">
