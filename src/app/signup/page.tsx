@@ -4,6 +4,7 @@ import { FormEvent, useRef, useState } from "react";
 import Link from "next/link";
 import StudySpaceMark from "@/components/StudySpaceMark";
 import TurnstileCaptcha from "@/components/TurnstileCaptcha";
+import { TURNSTILE_SITE_KEY } from "@/lib/security-config";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
@@ -25,7 +26,7 @@ export default function SignupPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [website, setWebsite] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
-  const turnstileEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  const turnstileEnabled = Boolean(TURNSTILE_SITE_KEY);
   const signupStartedAt = useRef(Date.now());
 
   const [loading, setLoading] = useState(false);
