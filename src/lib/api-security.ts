@@ -60,11 +60,15 @@ export async function consumeAiQuota(accessToken: string, feature: AiFeature) {
   const { data: { user }, error: userError } = await client.auth.getUser(accessToken);
   if (userError || !user) throw new Error("Your session has expired. Sign in again.");
   if (isAdminUser(user)) {
-    const { data, error } = await client.rpc("consume_admin_ai_quota", { p_feature: feature });
+    // Use the existing server-only RPC: the trusted ceiling removes personal quotas
+    // while the database continues enforcing shared feature and total AI capacity.
+    const { data, error } = await adminClient().rpc("consume_ai_quota", {
+      p_user_id: user.id, p_feature: feature, p_limit: 1000,
+    });
     if (error) throw new Error("StudySpace AI capacity controls are temporarily unavailable.");
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) throw new Error("Admin AI capacity check returned no result.");
-    return { allowed: Boolean(row.allowed), limit: Number(row.limit_count ?? 0), used: Number(row.used ?? 0), remaining: Number(row.remaining ?? 0), resetAt: row.reset_at ? new Date(row.reset_at).toISOString() : new Date(Date.now() + 86400000).toISOString(), scope: "global" as const };
+    return { allowed: Boolean(row.allowed), limit: Number(row.limit_count ?? 1000), used: Number(row.used ?? 0), remaining: Number(row.remaining ?? 0), resetAt: row.reset_at ? new Date(row.reset_at).toISOString() : new Date(Date.now() + 86400000).toISOString(), scope: row.scope === "global" ? "global" as const : "user" as const };
   }
   const burst = await client.rpc("consume_my_api_rate_limit", { p_route_key: "ai-" + feature, p_limit: AI_BURST_LIMITS[feature], p_window_seconds: 600 });
   if (burst.error) throw new Error("AI usage controls are temporarily unavailable. Please try again.");
