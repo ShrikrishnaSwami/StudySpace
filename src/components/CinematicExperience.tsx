@@ -368,24 +368,25 @@ export default function CinematicExperience({ children }: { children: ReactNode 
               // the cursor, then settle back when the pointer leaves.
               workspaceCards.forEach((card: HTMLElement) => {
                 if (card.matches("tr")) return;
+                const rotateYTo = gsap.quickTo(card, "rotationY", { duration: 0.38, ease: "power2.out" });
+                const rotateXTo = gsap.quickTo(card, "rotationX", { duration: 0.38, ease: "power2.out" });
+                const depthTo = gsap.quickTo(card, "z", { duration: 0.38, ease: "power2.out" });
+                gsap.set(card, { transformPerspective: 1000, transformStyle: "preserve-3d" });
                 const moveCard = contextSafe((event: PointerEvent) => {
                   if (event.pointerType === "touch") return;
                   const bounds = card.getBoundingClientRect();
+                  if (!bounds.width || !bounds.height) return;
                   const x = (event.clientX - bounds.left) / bounds.width - 0.5;
                   const y = (event.clientY - bounds.top) / bounds.height - 0.5;
-                  gsap.to(card, {
-                    rotateY: x * 5.5,
-                    rotateX: y * -5.5,
-                    z: 18,
-                    transformPerspective: 1000,
-                    duration: 0.38,
-                    ease: "power2.out",
-                    overwrite: "auto",
-                  });
+                  rotateYTo(x * 5.5);
+                  rotateXTo(y * -5.5);
+                  depthTo(18);
                 });
-                const resetCard = contextSafe(() => gsap.to(card, {
-                  rotateX: 0, rotateY: 0, z: 0, duration: 0.7, ease: "elastic.out(1, 0.55)", overwrite: "auto",
-                }));
+                const resetCard = contextSafe(() => {
+                  rotateXTo(0);
+                  rotateYTo(0);
+                  depthTo(0);
+                });
                 card.addEventListener("pointermove", moveCard, { passive: true });
                 card.addEventListener("pointerleave", resetCard);
                 interactionCleanups.push(() => {
