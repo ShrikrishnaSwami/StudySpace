@@ -299,7 +299,9 @@ export default function SignupPage() {
                 </span>
               </label>
 
-              <TurnstileCaptcha key={captchaKey} onToken={setCaptchaToken} />\n\n              {/* Error */}
+              <TurnstileCaptcha key={captchaKey} onToken={setCaptchaToken} />
+
+              {/* Error */}
               {error && (
                 <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                   {error}
