@@ -136,3 +136,34 @@ test("bounded context never marks omitted student sources as deleted", () => {
   assert.match(semantic, /auth\.completeContext === true && allSourceCandidates\.length < 1000/);
   assert.doesNotMatch(tutor, /completeContext:/);
 });
+
+
+test("guest sessions cannot call AI endpoints and signup requires policy consent", () => {
+  for (const path of [
+    "src/app/api/ai/tutor/route.ts",
+    "src/app/api/ai/flashcards/route.ts",
+    "src/app/api/ai/quiz/route.ts",
+    "src/app/api/ai/recommendations/route.ts",
+    "src/app/api/ai/homework/route.ts",
+    "src/app/api/ai/notes/route.ts",
+    "src/app/api/ai/syllabus/route.ts",
+    "src/app/api/assignments/grade/route.ts",
+  ]) {
+    const route = read(path);
+    assert.match(route, /user\.is_anonymous\s*===\s*true/, path);
+    assert.match(route, /status:\s*403/, path);
+  }
+
+  const signup = read("src/app/signup/page.tsx");
+  assert.match(signup, /required checked=\{acceptedTerms\}/);
+  assert.match(signup, /terms_accepted_at/);
+  assert.match(signup, /terms_version/);
+  assert.match(signup, /privacy_version/);
+  assert.match(signup, /signup-website/);
+  assert.match(signup, /captchaToken/);
+
+  const login = read("src/app/login/page.tsx");
+  assert.match(login, /current\.session\?\.user\.is_anonymous/);
+  assert.match(login, /studyspace_guest_refresh_token/);
+  assert.match(login, /resumePreviousGuest/);
+});
