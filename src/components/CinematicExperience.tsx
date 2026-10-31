@@ -397,8 +397,9 @@ export default function CinematicExperience({ children }: { children: ReactNode 
             }
 
             gsap.utils.toArray<HTMLElement>(".atelier-shell main button, .atelier-shell main a, .atelier-home .atelier-primary, .atelier-home .atelier-enter").forEach((item: HTMLElement) => {
-              const lift = contextSafe(() => gsap.to(item, { y: -3, duration: 0.22, ease: "power2.out", overwrite: "auto" }));
-              const settle = contextSafe(() => gsap.to(item, { y: 0, duration: 0.35, ease: "power3.out", overwrite: "auto" }));
+              const moveY = gsap.quickTo(item, "y", { duration: 0.28, ease: "power3.out" });
+              const lift = contextSafe(() => moveY(-3));
+              const settle = contextSafe(() => moveY(0));
               item.addEventListener("mouseenter", lift);
               item.addEventListener("mouseleave", settle);
               gsap.set(item, { clearProps: "willChange" });
