@@ -156,6 +156,7 @@ test("guest sessions cannot call AI endpoints and signup requires policy consent
 
   const signup = read("src/app/signup/page.tsx");
   assert.match(signup, /required checked=\{acceptedTerms\}/);
+  assert.match(signup, /disabled=\{loading \|\| !acceptedTerms \|\| \(turnstileEnabled && !captchaToken\)\}/);
   assert.match(signup, /terms_accepted_at/);
   assert.match(signup, /terms_version/);
   assert.match(signup, /privacy_version/);
@@ -166,4 +167,8 @@ test("guest sessions cannot call AI endpoints and signup requires policy consent
   assert.match(login, /current\.session\?\.user\.is_anonymous/);
   assert.match(login, /studyspace_guest_refresh_token/);
   assert.match(login, /resumePreviousGuest/);
+  assert.match(read("src/components/AppShell.tsx"), /studyspace_guest_refresh_token/);
+  assert.match(read("src/app/settings/page.tsx"), /studyspace_guest_refresh_token/);
+  assert.match(read("src/components/TurnstileCaptcha.tsx"), /challenges\.cloudflare\.com\/turnstile/);
+  assert.match(read("src/lib/security-config.ts"), /0x4AAAAAAFuPioWbZG_4hsC-/);
 });
