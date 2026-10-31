@@ -35,3 +35,14 @@
 }
 
 .ss-cinematic-root { display: contents; }
+
+.ss-heading-marker {
+  display: block;
+  width: min(100%, 360px);
+  height: 22px;
+  margin: -2px 0 0 auto;
+  color: #c9ad7c;
+  overflow: visible;
+  opacity: .9;
+}
+.ss-heading-marker path { vector-effect: non-scaling-stroke; }
