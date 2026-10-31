@@ -21,7 +21,7 @@ export default function TermsPage() {
         <h1 className="mt-3 text-4xl font-bold tracking-tight">Terms of Service</h1>
         <p className="mt-3 text-sm text-zinc-500">Effective date: October 31, 2026 · Beta draft</p>
         <div className="mt-8 rounded-2xl border border-amber-400/20 bg-amber-400/[0.06] p-4 text-sm leading-6 text-amber-100/90">
-          This is the current beta terms draft. The operator's formal legal identity, contact details and governing-law information still need confirmation and legal review before broad public release.
+          This is the current beta terms draft. The operator&apos;s formal legal identity, contact details and governing-law information still need confirmation and legal review before broad public release.
         </div>
         <div className="mt-10 space-y-8">
           {sections.map(([heading, body]) => (

@@ -25,7 +25,9 @@ export default function TurnstileCaptcha({ onToken }: { onToken: (token: string)
   const containerRef = useRef<HTMLDivElement>(null);
   const onTokenRef = useRef(onToken);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  onTokenRef.current = onToken;
+  useEffect(() => {
+    onTokenRef.current = onToken;
+  }, [onToken]);
 
   useEffect(() => {
     if (!TURNSTILE_SITE_KEY) {
@@ -36,7 +38,6 @@ export default function TurnstileCaptcha({ onToken }: { onToken: (token: string)
     let disposed = false;
     let widgetId: string | null = null;
     let intervalId: number | undefined;
-    let timeoutId: number | undefined;
 
     const fail = () => {
       if (disposed) return;
@@ -92,7 +93,7 @@ export default function TurnstileCaptcha({ onToken }: { onToken: (token: string)
       }
     }, 150);
 
-    timeoutId = window.setTimeout(() => {
+    const timeoutId = window.setTimeout(() => {
       if (!widgetId) fail();
     }, 12000);
 

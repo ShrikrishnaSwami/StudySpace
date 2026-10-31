@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import StudySpaceMark from "@/components/StudySpaceMark";
 import TurnstileCaptcha from "@/components/TurnstileCaptcha";
@@ -28,7 +28,11 @@ export default function SignupPage() {
   const [captchaToken, setCaptchaToken] = useState("");
   const [captchaKey, setCaptchaKey] = useState(0);
   const turnstileEnabled = Boolean(TURNSTILE_SITE_KEY);
-  const signupStartedAt = useRef(Date.now());
+  const signupStartedAt = useRef(0);
+
+  useEffect(() => {
+    signupStartedAt.current = Date.now();
+  }, []);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");

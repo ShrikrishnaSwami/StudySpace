@@ -22,7 +22,7 @@ export default function PrivacyPage() {
         <h1 className="mt-3 text-4xl font-bold tracking-tight">Privacy Policy</h1>
         <p className="mt-3 text-sm text-zinc-500">Effective date: October 31, 2026 · Beta draft</p>
         <div className="mt-8 rounded-2xl border border-amber-400/20 bg-amber-400/[0.06] p-4 text-sm leading-6 text-amber-100/90">
-          This notice describes the current product at a high level. The operator's formal identity and contact details, exact provider list, data regions and retention periods still require verification and legal review before broad public release.
+          This notice describes the current product at a high level. The operator&apos;s formal identity and contact details, exact provider list, data regions and retention periods still require verification and legal review before broad public release.
         </div>
         <div className="mt-10 space-y-8">
           {sections.map(([heading, body]) => (
