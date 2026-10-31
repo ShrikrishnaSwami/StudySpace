@@ -8,6 +8,10 @@ import AppShell from "@/components/AppShell";
 import { supabase } from "@/lib/supabase";
 
 type MyReport = { id: string; title: string; status: string; admin_response: string; created_at: string; };
+const MAX_DESCRIPTION_WORDS = 1000;
+function countWords(value: string) {
+  return value.trim() ? value.trim().split(/\\s+/).length : 0;
+}
 
 export default function ReportBugPage() {
   const router = useRouter();
@@ -21,7 +25,7 @@ export default function ReportBugPage() {
   const [description, setDescription] = useState("");
   const [message, setMessage] = useState("");
   const [myReports, setMyReports] = useState<MyReport[]>([]);
-  const [error, setError] = useState("");
+  const [error, setError] = useState("");\n  const descriptionWords = countWords(description);
 
   useEffect(() => {
     let alive = true;
@@ -93,12 +97,12 @@ export default function ReportBugPage() {
             <label className="space-y-2 text-sm text-white/65"><span>Priority</span><select value={severity} onChange={e=>setSeverity(e.target.value)} className="h-11 w-full rounded-xl border border-white/10 bg-[#15131d] px-3 text-white"><option value="low">Low</option><option value="normal">Normal</option><option value="high">High</option><option value="critical">Critical</option></select></label>
           </div>
           <label className="block space-y-2 text-sm text-white/65"><span>Short title</span><input required minLength={4} maxLength={140} value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. Notes won't save" className="h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-white outline-none focus:border-violet-400/40"/></label>
-          <label className="block space-y-2 text-sm text-white/65"><span>What happened?</span><textarea required minLength={10} maxLength={8000} rows={7} value={description} onChange={e=>setDescription(e.target.value)} placeholder="What did you expect, what happened instead, and how can we reproduce it?" className="w-full resize-y rounded-xl border border-white/10 bg-black/20 p-3 text-sm leading-6 text-white outline-none focus:border-violet-400/40"/></label>
-          <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-white/30">We attach the current page and browser version to help investigate.</p><button type="submit" disabled={submitting || title.trim().length<4 || description.trim().length<10} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-violet-500 disabled:opacity-50">{submitting?"Sending…":"Send report"}<Send size={15}/></button></div>
+          <label className="block space-y-2 text-sm text-white/65"><span>What happened?</span><textarea required minLength={10} maxLength={8000} rows={7} value={description} onChange={e=>{setDescription(e.target.value);setMessage("");}} placeholder="What did you expect, what happened instead, and how can we reproduce it?" className="w-full resize-y rounded-xl border border-white/10 bg-black/20 p-3 text-sm leading-6 text-white outline-none focus:border-violet-400/40"/><span className="flex flex-wrap justify-between gap-2 text-[11px] text-white/35"><span>Maximum {MAX_DESCRIPTION_WORDS.toLocaleString()} words and 8,000 characters</span><span className={descriptionWords > MAX_DESCRIPTION_WORDS ? "text-red-300" : "text-white/45"}>{descriptionWords.toLocaleString()} / {MAX_DESCRIPTION_WORDS.toLocaleString()} words · {description.length.toLocaleString()} / 8,000 characters</span></span></label>
+          <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-xs text-white/30">We attach the current page and browser version to help investigate.</p><button type="submit" disabled={submitting || title.trim().length<4 || description.trim().length<10 || descriptionWords>MAX_DESCRIPTION_WORDS} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-violet-500 disabled:opacity-50">{submitting?"Sending…":"Send report"}<Send size={15}/></button></div>
         </form>
         <div className="mt-8 border-t border-white/[0.07] pt-6">
           <div className="flex items-center justify-between gap-3"><div><h2 className="text-sm font-semibold text-white">Your previous reports</h2><p className="mt-1 text-xs text-white/40">Check progress and read replies from the admin.</p></div><span className="text-xs text-white/30">{myReports.length} shown</span></div>
-          {myReports.length === 0 ? <p className="mt-4 text-sm text-white/35">No reports submitted yet.</p> : <div className="mt-4 space-y-3">{myReports.map(report => <article key={report.id} className="rounded-xl border border-white/[0.07] bg-black/10 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-medium text-white/85">{report.title}</p><span className="rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase text-white/50">{report.status.replace("_"," ")}</span></div><p className="mt-1 text-[11px] text-white/30">{new Date(report.created_at).toLocaleString()}</p>{report.admin_response && <div className="mt-3 rounded-lg border border-violet-400/15 bg-violet-500/[0.06] p-3"><p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200">StudySpace admin reply</p><p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-white/75">{report.admin_response}</p></div>}</article>)}</div>}
+          {myReports.length === 0 ? <p className="mt-4 text-sm text-white/35">No reports submitted yet.</p> : <div className="mt-4 space-y-3">{myReports.map(report => <article key={report.id} className="rounded-xl border border-white/[0.07] bg-black/10 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-sm font-medium text-white/85">{report.title}</p><span className="rounded-full border border-white/10 px-2 py-1 text-[10px] uppercase text-white/50">{report.status.replace("_"," ")}</span></div><p className="mt-1 text-[11px] text-white/30">{new Date(report.created_at).toLocaleString()}</p>{report.admin_response && <div className="mt-3 rounded-lg border border-violet-400/15 bg-violet-500/[0.06] p-3"><p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200">Private reply from the StudySpace admin team</p><p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-white/75">{report.admin_response}</p></div>}</article>)}</div>}
         </div>
       </section>
     </div>
