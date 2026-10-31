@@ -25,7 +25,7 @@ export default function ErrorBoundary({
           <span className="ss-error-brand-mark"><Sparkles size={17} /></span>
           <span>studyspace<span>.</span></span>
         </Link>
-        <section className="ss-error-card" aria-labelledby="error-title">
+        <section className="ss-error-card" data-motion-card data-motion-reveal aria-labelledby="error-title">
           <div className="ss-error-visual">
             <span className="ss-error-orbit ss-error-orbit-a" />
             <span className="ss-error-orbit ss-error-orbit-b" />
