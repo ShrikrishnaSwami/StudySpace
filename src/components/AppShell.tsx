@@ -740,6 +740,10 @@ export default function AppShell({
   }, [router]);
 
   async function handleLogout() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user.is_anonymous && session.refresh_token) {
+      window.localStorage.setItem("studyspace_guest_refresh_token", session.refresh_token);
+    }
     await supabase.auth.signOut();
     router.replace("/login");
   }
