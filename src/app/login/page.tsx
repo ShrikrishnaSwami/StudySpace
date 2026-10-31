@@ -26,18 +26,42 @@ export default function LoginPage() {
   const [forgotPassword, setForgotPassword] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [notice, setNotice] = useState("");
+  const [hasGuestBackup, setHasGuestBackup] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("account_deleted") === "1") {
       setNotice("Your StudySpace account has been deleted.");
     }
+    setHasGuestBackup(Boolean(window.localStorage.getItem("studyspace_guest_refresh_token")));
   }, []);
 
   async function handleGuestLogin() {
     setLoading(true);
     setError("");
     try {
+      const { data: current } = await supabase.auth.getSession();
+      if (current.session?.user.is_anonymous) {
+        router.push("/dashboard");
+        return;
+      }
+      if (current.session?.user && !current.session.user.is_anonymous) {
+        throw new Error("You are already signed in with an account. Sign out before starting a guest workspace.");
+      }
+
+      const savedRefreshToken = window.localStorage.getItem("studyspace_guest_refresh_token");
+      if (savedRefreshToken) {
+        const restored = await supabase.auth.refreshSession({ refresh_token: savedRefreshToken });
+        if (!restored.error && restored.data.session?.user.is_anonymous) {
+          window.localStorage.removeItem("studyspace_guest_refresh_token");
+          setHasGuestBackup(false);
+          router.push("/dashboard");
+          return;
+        }
+        window.localStorage.removeItem("studyspace_guest_refresh_token");
+        setHasGuestBackup(false);
+      }
+
       const { error } = await supabase.auth.signInAnonymously({
         options: { data: { full_name: "Guest Student", account_type: "guest" } },
       });
@@ -49,6 +73,27 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not start guest access.");
+      setLoading(false);
+    }
+  }
+
+  async function resumePreviousGuest() {
+    setLoading(true);
+    setError("");
+    try {
+      const refreshToken = window.localStorage.getItem("studyspace_guest_refresh_token");
+      if (!refreshToken) throw new Error("No previous guest workspace was found on this device.");
+      const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
+      if (error || !data.session?.user.is_anonymous) {
+        window.localStorage.removeItem("studyspace_guest_refresh_token");
+        setHasGuestBackup(false);
+        throw new Error("This guest session has expired and can no longer be restored.");
+      }
+      window.localStorage.removeItem("studyspace_guest_refresh_token");
+      setHasGuestBackup(false);
+      router.push("/dashboard");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not restore the previous guest workspace.");
       setLoading(false);
     }
   }
@@ -76,6 +121,11 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
+      const { data: previous } = await supabase.auth.getSession();
+      if (previous.session?.user.is_anonymous && previous.session.refresh_token) {
+        window.localStorage.setItem("studyspace_guest_refresh_token", previous.session.refresh_token);
+        setHasGuestBackup(true);
+      }
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) throw error;
       const { data: { session } } = await supabase.auth.getSession();
