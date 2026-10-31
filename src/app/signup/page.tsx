@@ -26,6 +26,7 @@ export default function SignupPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [website, setWebsite] = useState("");
   const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaKey, setCaptchaKey] = useState(0);
   const turnstileEnabled = Boolean(TURNSTILE_SITE_KEY);
   const signupStartedAt = useRef(Date.now());
 
@@ -107,6 +108,8 @@ export default function SignupPage() {
 
       if (error) {
         setError(error.message);
+        setCaptchaToken("");
+        setCaptchaKey((key) => key + 1);
         setLoading(false);
         return;
       }
@@ -117,10 +120,13 @@ export default function SignupPage() {
       }
 
       setSuccess("Account created successfully! Check your email if confirmation is required, then sign in.");
-
+      setCaptchaToken("");
+      setCaptchaKey((key) => key + 1);
       setLoading(false);
     } catch (err) {
 
+      setCaptchaToken("");
+      setCaptchaKey((key) => key + 1);
       setError(
         err instanceof Error
           ? err.message
@@ -293,7 +299,7 @@ export default function SignupPage() {
                 </span>
               </label>
 
-              <TurnstileCaptcha onToken={setCaptchaToken} />\n\n              {/* Error */}
+              <TurnstileCaptcha key={captchaKey} onToken={setCaptchaToken} />\n\n              {/* Error */}
               {error && (
                 <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                   {error}
