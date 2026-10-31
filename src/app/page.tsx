@@ -67,7 +67,7 @@ export default function Home() {
 
       <section className="ss-editorial-manifesto" id="about">
         <p className="ss-editorial-kicker">SCHOOL ALREADY HAS ENOUGH MOVING PARTS</p>
-        <div className="ss-editorial-manifesto-grid"><h2>Forty tabs open.<br/><em>One place to land.</em></h2><div><p>Lecture slides in one folder. The syllabus in your inbox. Flashcards in another app. A deadline buried in the course portal. You know the drill.</p><p>StudySpace pulls the moving parts into one workspace, so you spend less time hunting for what to do and more time actually doing it.</p></div></div>
+        <div className="ss-editorial-manifesto-grid"><h2>Forty tabs open.<br/><em>One place to land.</em><svg className="ss-heading-marker" viewBox="0 0 360 24" aria-hidden="true"><path data-marker-path d="M5 16 C 72 5, 148 8, 210 13 S 310 20, 355 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg></h2><div><p>Lecture slides in one folder. The syllabus in your inbox. Flashcards in another app. A deadline buried in the course portal. You know the drill.</p><p>StudySpace pulls the moving parts into one workspace, so you spend less time hunting for what to do and more time actually doing it.</p></div></div>
       </section>
 
       <section className="ss-editorial-workspace" id="workspace">
