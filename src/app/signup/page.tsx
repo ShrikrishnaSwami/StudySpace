@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import Link from "next/link";
 import StudySpaceMark from "@/components/StudySpaceMark";
 import { useRouter } from "next/navigation";
@@ -21,6 +21,9 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [website, setWebsite] = useState("");
+  const signupStartedAt = useRef(Date.now());
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -29,9 +32,22 @@ export default function SignupPage() {
   async function handleSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setLoading(true);
     setError("");
     setSuccess("");
+
+    if (!acceptedTerms) {
+      setError("You must agree to the Terms of Service and Privacy Policy before creating an account.");
+      return;
+    }
+    if (website.trim()) {
+      setError("We could not verify this sign-up. Please try again.");
+      return;
+    }
+    if (Date.now() - signupStartedAt.current < 1200) {
+      setError("Please wait a moment and try again.");
+      return;
+    }
+    setLoading(true);
 
     if (password.length < 8) {
       setError("Your password must be at least 8 characters.");
@@ -47,6 +63,9 @@ export default function SignupPage() {
         options: {
           data: {
             full_name: name.trim().slice(0, 100),
+            terms_accepted_at: new Date().toISOString(),
+            terms_version: "2026-10-31",
+            privacy_version: "2026-10-31",
           },
         },
       });
@@ -222,6 +241,22 @@ export default function SignupPage() {
                   </button>
                 </div>
               </div>
+
+              <div aria-hidden="true" className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
+                <label htmlFor="signup-website">Leave this field empty</label>
+                <input id="signup-website" name="website" type="text" tabIndex={-1} autoComplete="off" value={website} onChange={(event) => setWebsite(event.target.value)} />
+              </div>
+
+              <label htmlFor="signup-terms" className="flex cursor-pointer items-start gap-3 text-sm leading-6 text-zinc-400">
+                <input id="signup-terms" type="checkbox" required checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} className="mt-1 h-4 w-4 shrink-0 accent-purple-500" />
+                <span>
+                  I agree to the{" "}
+                  <Link href="/terms" target="_blank" className="font-medium text-purple-300 underline underline-offset-4 hover:text-purple-200">Terms of Service</Link>
+                  {" "}and acknowledge the{" "}
+                  <Link href="/privacy" target="_blank" className="font-medium text-purple-300 underline underline-offset-4 hover:text-purple-200">Privacy Policy</Link>.
+                  {" "}You must agree before creating an account.
+                </span>
+              </label>
 
               {/* Error */}
               {error && (
