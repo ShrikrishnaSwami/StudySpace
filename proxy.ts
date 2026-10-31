@@ -7,7 +7,7 @@ const PUBLIC_PATHS = ["/", "/login", "/signup", "/terms", "/privacy", "/auth/cal
 function allowedOrigin(origin: string, request: NextRequest) {
   if (origin === request.nextUrl.origin) return true;
   const configured = process.env.APP_ORIGIN?.trim();
-  if (configured && origin === configured.replace(/\\/$/, "")) return true;
+  if (configured && origin === (configured.endsWith("/") ? configured.slice(0, -1) : configured)) return true;
   if (origin === "https://studyspace.wiki" || origin === "https://www.studyspace.wiki") return true;
   const deploymentHost = process.env.VERCEL_URL;
   if (deploymentHost && origin === "https://" + deploymentHost) return true;
