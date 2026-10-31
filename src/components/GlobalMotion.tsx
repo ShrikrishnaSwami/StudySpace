@@ -195,7 +195,7 @@ export default function GlobalMotion({ children }: { children: React.ReactNode }
     }
 
     // Small status lights and marker strokes give live previews a little life.
-    root.querySelectorAll<HTMLElement>("[data-live-pulse], .ss-specimen-marker").forEach((node, index) => {
+    root.querySelectorAll<HTMLElement>("[data-live-pulse]:not(.ss-specimen-marker)").forEach((node, index) => {
       gsap.to(node, {
         scale: 1.22,
         boxShadow: "0 0 0 7px rgba(185,162,122,.11), 0 0 22px rgba(185,162,122,.2)",
