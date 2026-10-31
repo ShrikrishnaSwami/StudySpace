@@ -349,7 +349,7 @@ export default function SettingsPage() {
           {exportMessage&&<p role="status" className="text-xs text-white/55">{exportMessage}</p>}
         </Section>
 
-        {isAdmin && <Section icon={ShieldCheck} title="Administrator workspace" description="Owner-only controls for operating StudySpace.">
+        {!loading && isAdmin && <Section icon={ShieldCheck} title="Administrator workspace" description="Owner-only controls for operating StudySpace.">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div><p className="text-sm font-semibold text-white">StudySpace owner account</p><p className="mt-1 text-xs text-white/45">{email}</p><p className="mt-2 text-xs text-violet-200">Trusted administrator role · Personal AI quotas disabled</p></div>
             <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-200">Administrator</span>
