@@ -51,6 +51,7 @@ export default function AdminPage() {
   const [reports, setReports] = useState<BugReport[]>([]);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportsError, setReportsError] = useState("");
+  const [reportsNotice, setReportsNotice] = useState("");
   const [reportReplies, setReportReplies] = useState<Record<string, string>>({});
   const [savingReportId, setSavingReportId] = useState("");
 
@@ -165,14 +166,21 @@ export default function AdminPage() {
   async function updateBugReport(report: BugReport, status: BugReport["status"]) {
     setSavingReportId(report.id);
     setReportsError("");
+    setReportsNotice("");
     try {
       const reply = reportReplies[report.id] ?? report.admin_response ?? "";
-      const { error } = await supabase.from("bug_reports").update({
+      const { data, error } = await supabase.from("bug_reports").update({
         status,
         admin_response: reply.trim(),
-      }).eq("id", report.id);
+        updated_at: new Date().toISOString(),
+        resolved_at: status === "resolved" ? new Date().toISOString() : null,
+      }).eq("id", report.id).select("id,status").maybeSingle();
       if (error) throw error;
+      // PostgREST can return no error when RLS filters an UPDATE to zero rows.
+      // Require the updated row so the UI never reports a false success.
+      if (!data) throw new Error("The report was not updated. Your admin session may need MFA re-verification, or the database admin update policy may not be applied.");
       await loadReports();
+      setReportsNotice(status === "resolved" ? "Report marked as resolved." : status === "in_progress" ? "Report moved to in progress." : "Report reopened.");
     } catch (cause) {
       setReportsError(cause instanceof Error ? cause.message : "Could not update this report.");
     } finally {
@@ -296,6 +304,7 @@ export default function AdminPage() {
           <button type="button" onClick={() => void loadReports()} disabled={reportsLoading} className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-xs text-white/70 disabled:opacity-50"><RefreshCw size={13} className={reportsLoading ? "animate-spin" : ""}/>Refresh inbox</button>
         </div>
         {reportsError && <p role="alert" className="mt-4 rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-sm text-red-200">{reportsError}</p>}
+        {reportsNotice && <p role="status" className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-3 text-sm text-emerald-200">{reportsNotice}</p>}
         {reportsLoading && reports.length === 0 ? <p className="mt-6 text-sm text-white/40">Loading reports…</p> : reports.length === 0 ? <div className="mt-6 rounded-xl border border-white/[0.06] bg-black/10 p-6 text-center"><Bug size={22} className="mx-auto text-white/25"/><p className="mt-3 text-sm font-medium text-white/65">No reports yet</p><p className="mt-1 text-xs text-white/35">New student feedback will appear here.</p></div> : <div className="mt-5 space-y-4">
           {reports.map(report => <article key={report.id} className="rounded-xl border border-white/[0.08] bg-black/10 p-4 sm:p-5">
             <div className="flex flex-wrap items-start justify-between gap-3">
