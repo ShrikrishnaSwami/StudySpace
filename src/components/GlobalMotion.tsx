@@ -151,7 +151,7 @@ export default function GlobalMotion({ children }: { children: React.ReactNode }
     // CTAs use a restrained magnetic pull. quickTo keeps pointer movement
     // fluid without allocating a new tween for every mouse event.
     const actionTargets = Array.from(root.querySelectorAll<HTMLElement>(
-      "main .ss-landing-primary, main .ss-landing-signup, main .ss-error-primary, main .ss-404-actions a, main .atelier-primary, main .atelier-enter",
+      "main .ss-landing-primary, main .ss-landing-signup, main .ss-error-primary, main .ss-404-actions a",
     ));
     actionTargets.forEach((action) => {
       const xTo = gsap.quickTo(action, "x", { duration: 0.36, ease: "power3.out" });
