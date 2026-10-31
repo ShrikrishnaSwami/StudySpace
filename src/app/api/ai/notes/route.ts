@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
     const client = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }, global: { headers: { Authorization: "Bearer " + token } } });
     const { data: { user }, error: authError } = await client.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Your session expired. Sign in again." }, { status: 401 });
+    if (user.is_anonymous === true) return NextResponse.json({ error: "AI features require a registered StudySpace account. Create an account to unlock AI tools." }, { status: 403 });
     const rate = await consumeApiRateLimit(user.id, "ai-note-extraction", 5, 600, token);
     if (!rate.allowed) return NextResponse.json({ error: "Too many file conversions. Wait a few minutes and try again." }, { status: 429 });
 
