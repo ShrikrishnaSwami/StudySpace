@@ -2,7 +2,7 @@
 
 ## Monitoring configured
 - GitHub Actions checks production liveness and database readiness every 15 minutes.
-- /api/health is a dependency-free liveness check; /api/health/ready verifies database connectivity without exposing credentials or user data.
+- /api/health is a dependency-free liveness check; /api/health/ready verifies database and Supabase Storage connectivity without exposing credentials or user data.
 - AI Tutor logs request duration, time-to-first-token, context-load duration, retrieval wait, and streaming failures.
 - The shared Gemini generation path records task, provider, model, attempt duration, success/failure, and provider-reported input/output/total token counts. Note extraction and grading also emit request-level outcome and duration events. Logs omit prompts, completions, user IDs, and filenames.
 - Existing AI quota and global budget limits are usage guardrails. Request counts are not dollar-cost measurements.
