@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
     const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false }, global: { headers: { Authorization: "Bearer " + token } } });
     const { data: { user }, error: authError } = await client.auth.getUser(token);
     if (authError || !user) return NextResponse.json({ error: "Session expired." }, { status: 401 });
+    if (user.is_anonymous === true) return NextResponse.json({ error: "AI features require a registered StudySpace account. Create an account to unlock AI tools." }, { status: 403 });
 
     let body: unknown;
     try {
