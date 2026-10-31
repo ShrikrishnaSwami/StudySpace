@@ -60,7 +60,7 @@ export async function consumeAiQuota(accessToken: string, feature: AiFeature) {
   const { data: { user }, error: userError } = await client.auth.getUser(accessToken);
   if (userError || !user) throw new Error("Your session has expired. Sign in again.");
   if (isAdminUser(user)) {
-    // Use the existing server-only RPC: the trusted ceiling removes personal quotas
+    // Use the existing server-only RPC: the trusted ceiling substantially raises the owner's personal quota
     // while the database continues enforcing shared feature and total AI capacity.
     const { data, error } = await adminClient().rpc("consume_ai_quota", {
       p_user_id: user.id, p_feature: feature, p_limit: 1000,
