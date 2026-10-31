@@ -81,7 +81,10 @@ export default function SignupPage() {
           email: email.trim().toLowerCase(),
           password,
           data: accountMetadata,
-        }, { emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard` });
+        }, {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+          captchaToken: captchaToken || undefined,
+        });
         if (updateError) {
           setError(updateError.message);
           setLoading(false);
